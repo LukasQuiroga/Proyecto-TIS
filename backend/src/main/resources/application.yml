@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: exampass
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:exampass}
+    username: ${DB_USER:exampass}
+    password: ${DB_PASSWORD:exampass}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
