@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./Sidebar.css";
 
 function Sidebar() {
+  const [estudiantesAbierto, setEstudiantesAbierto] = useState(false);
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -27,15 +29,45 @@ function Sidebar() {
           <span>Inicio</span>
         </NavLink>
 
-        <NavLink
-          to="/estudiantes"
-          className={({ isActive }) =>
-            `sidebar-opcion ${isActive ? "sidebar-activa" : ""}`
-          }
+        <button
+          type="button"
+          className="sidebar-opcion sidebar-desplegable"
+          onClick={() => setEstudiantesAbierto(!estudiantesAbierto)}
         >
           <span className="sidebar-icono">♙</span>
-          <span>Estudiantes</span>
-        </NavLink>
+
+          <span className="sidebar-texto">Estudiantes</span>
+
+          <span className="sidebar-flecha">
+            {estudiantesAbierto ? "▾" : "▸"}
+          </span>
+        </button>
+
+        {estudiantesAbierto && (
+          <div className="sidebar-submenu">
+            <NavLink
+              to="/estudiantes/registrar"
+              className={({ isActive }) =>
+                `sidebar-subopcion ${
+                  isActive ? "sidebar-subopcion-activa" : ""
+                }`
+              }
+            >
+              Registrar
+            </NavLink>
+
+            <NavLink
+              to="/estudiantes/consultar"
+              className={({ isActive }) =>
+                `sidebar-subopcion ${
+                  isActive ? "sidebar-subopcion-activa" : ""
+                }`
+              }
+            >
+              Consultar
+            </NavLink>
+          </div>
+        )}
 
         <div className="sidebar-opcion">
           <span className="sidebar-icono">▣</span>
