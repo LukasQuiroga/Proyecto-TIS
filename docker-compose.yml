@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:15.10
     container_name: exampass-postgres
     restart: unless-stopped
     environment:
