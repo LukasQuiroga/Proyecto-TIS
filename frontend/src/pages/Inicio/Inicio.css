@@ -1,0 +1,848 @@
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  background: #f3f8fc;
+
+  color: #172b44;
+}
+
+
+/* =========================
+   PÁGINA COMPLETA
+========================= */
+
+.inicio-pagina {
+  width: 100%;
+  min-height: 100vh;
+
+  background: #f3f8fc;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 220px;
+  height: 100vh;
+
+  background:
+    linear-gradient(
+      180deg,
+      #075483 0%,
+      #06456f 100%
+    );
+
+  color: #ffffff;
+
+  z-index: 100;
+
+  box-shadow:
+    2px 0 6px rgba(0, 39, 70, 0.08);
+}
+
+
+/* Logo */
+
+.sidebar-logo {
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0 15px;
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-logo-icono {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+
+  font-size: 17px;
+}
+
+.sidebar-logo-texto {
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+}
+
+.sidebar-logo-texto strong {
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  line-height: 13px;
+}
+
+.sidebar-logo-texto span {
+  color: #d8e8f3;
+
+  font-size: 8px;
+
+  line-height: 11px;
+}
+
+
+/* Menú */
+
+.sidebar-menu {
+  width: 100%;
+
+  padding-top: 12px;
+}
+
+.sidebar-opcion {
+  width: 100%;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 0 17px;
+
+  color: #d9e9f4;
+
+  font-size: 12px;
+
+  user-select: none;
+}
+
+
+/*
+  Esta clase únicamente pinta la opción Inicio.
+  No funciona como botón.
+*/
+.sidebar-activa {
+  background:
+    linear-gradient(
+      90deg,
+      #0875dd 0%,
+      #0969cb 100%
+    );
+
+  color: #ffffff;
+
+  border-left: 3px solid #ffffff;
+
+  padding-left: 14px;
+}
+
+.sidebar-icono {
+  width: 19px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: inherit;
+
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   CONTENIDO A LA DERECHA
+   ========================================================= */
+
+.inicio-zona-principal {
+  min-height: 100vh;
+
+  margin-left: 220px;
+
+  display: flex;
+  flex-direction: column;
+
+  background:
+    linear-gradient(
+      120deg,
+      #f8fcff 0%,
+      #edf6fc 100%
+    );
+}
+
+
+/* =========================================================
+   NAVBAR SUPERIOR
+   ========================================================= */
+
+.navbar {
+  width: 100%;
+  height: 60px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 22px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #dde8f0;
+
+  box-shadow:
+    0 1px 5px rgba(28, 64, 93, 0.05);
+}
+
+
+/* Icono menú */
+
+.navbar-menu {
+  color: #174e76;
+
+  font-size: 17px;
+
+  user-select: none;
+}
+
+
+/* Usuario */
+
+.navbar-usuario {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  color: #173450;
+
+  font-size: 11px;
+
+  user-select: none;
+}
+
+.navbar-campana {
+  margin-right: 12px;
+
+  color: #173e60;
+
+  font-size: 17px;
+}
+
+.navbar-avatar {
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #0875df;
+
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.navbar-nombre {
+  color: #1a3048;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.navbar-flecha {
+  color: #7e909f;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   CONTENIDO DE INICIO
+   ========================================================= */
+
+.inicio-contenido {
+  width: 100%;
+
+  flex: 1;
+
+  padding:
+    18px
+    28px
+    35px;
+
+  background:
+    linear-gradient(
+      120deg,
+      #f8fcff 0%,
+      #eef7fd 100%
+    );
+}
+
+
+/* =========================
+   RUTA / BREADCRUMB
+========================= */
+
+.inicio-ruta {
+  margin-bottom: 12px;
+
+  color: #8193a5;
+
+  font-size: 10px;
+}
+
+
+/* =========================
+   TÍTULO DE PÁGINA
+========================= */
+
+.inicio-titulo {
+  margin-bottom: 21px;
+}
+
+.inicio-titulo h1 {
+  margin: 0 0 5px;
+
+  color: #183b5d;
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.inicio-titulo p {
+  margin: 0;
+
+  color: #71869a;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   PANEL DE BIENVENIDA
+   ========================================================= */
+
+.inicio-bienvenida {
+  width: 100%;
+
+  min-height: 175px;
+
+  margin-bottom: 28px;
+
+  padding: 30px 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background:
+    linear-gradient(
+      110deg,
+      #ffffff 0%,
+      #f1f8fe 100%
+    );
+
+  border: 1px solid #dce8f1;
+
+  border-radius: 9px;
+
+  box-shadow:
+    0 3px 11px rgba(34, 73, 105, 0.05);
+}
+
+
+.inicio-bienvenida-texto {
+  max-width: 650px;
+}
+
+
+/* Etiqueta */
+
+.inicio-etiqueta {
+  display: inline-block;
+
+  margin-bottom: 12px;
+
+  padding:
+    5px
+    11px;
+
+  border-radius: 15px;
+
+  background: #e7f3fe;
+
+  color: #0874d4;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+/* Título */
+
+.inicio-bienvenida h2 {
+  margin:
+    0
+    0
+    9px;
+
+  color: #173b60;
+
+  font-size: 21px;
+  font-weight: 700;
+}
+
+
+/* Descripción */
+
+.inicio-bienvenida p {
+  max-width: 570px;
+
+  margin: 0;
+
+  color: #71869a;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   ILUSTRACIÓN DEL PANEL
+   ========================================================= */
+
+.inicio-bienvenida-imagen {
+  width: 190px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.inicio-documento {
+  width: 115px;
+  height: 88px;
+
+  padding:
+    17px
+    14px;
+
+  background: #d7e6f3;
+
+  border-radius: 8px;
+
+  transform: rotate(4deg);
+
+  box-shadow:
+    0 8px 20px rgba(36, 76, 108, 0.08);
+}
+
+
+.inicio-documento-icono {
+  width: 34px;
+  height: 34px;
+
+  margin-bottom: 8px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #2189dc;
+
+  border-radius: 50%;
+
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+
+/* Líneas decorativas */
+
+.inicio-linea {
+  height: 5px;
+
+  margin-bottom: 5px;
+
+  background: #9db9cf;
+
+  border-radius: 5px;
+}
+
+.linea-1 {
+  width: 55px;
+}
+
+.linea-2 {
+  width: 72px;
+}
+
+.linea-3 {
+  width: 45px;
+}
+
+
+/* =========================================================
+   FUNCIONALIDADES
+   ========================================================= */
+
+.inicio-modulos {
+  width: 100%;
+
+  margin-bottom: 27px;
+}
+
+
+/* Encabezado de sección */
+
+.inicio-subtitulo {
+  margin-bottom: 15px;
+}
+
+.inicio-subtitulo h2 {
+  margin:
+    0
+    0
+    4px;
+
+  color: #193b5e;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.inicio-subtitulo p {
+  margin: 0;
+
+  color: #7c8fa1;
+
+  font-size: 10px;
+}
+
+
+/* =========================
+   GRID
+========================= */
+
+.inicio-grid {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 15px;
+}
+
+
+/* =========================================================
+   TARJETAS DE FUNCIONALIDADES
+   ========================================================= */
+
+.inicio-tarjeta {
+  min-height: 165px;
+
+  padding: 20px;
+
+  background: #ffffff;
+
+  border: 1px solid #dae7f0;
+
+  border-radius: 8px;
+
+  box-shadow:
+    0 3px 10px rgba(43, 76, 104, 0.04);
+
+  cursor: default;
+}
+
+
+/* Icono */
+
+.inicio-icono-modulo {
+  width: 43px;
+  height: 43px;
+
+  margin-bottom: 13px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #e7f4ff;
+
+  border-radius: 9px;
+}
+
+
+/* SVG */
+
+.inicio-icono-modulo svg {
+  width: 22px;
+  height: 22px;
+
+  fill: none;
+
+  stroke: #0877dd;
+
+  stroke-width: 1.8;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* Información */
+
+.inicio-tarjeta-informacion {
+  width: 100%;
+}
+
+.inicio-tarjeta h3 {
+  margin:
+    0
+    0
+    7px;
+
+  color: #1c3d5f;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inicio-tarjeta p {
+  min-height: 32px;
+
+  margin: 0;
+
+  color: #788b9d;
+
+  font-size: 10px;
+
+  line-height: 1.5;
+}
+
+
+.inicio-ver-modulo {
+  margin-top: 14px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #0876da;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: default;
+
+  user-select: none;
+}
+
+
+/* =========================================================
+   PANEL DE INFORMACIÓN
+   ========================================================= */
+
+.inicio-aviso {
+  width: 100%;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  padding:
+    14px
+    16px;
+
+  background: #eaf6ff;
+
+  border: 1px solid #cfe4f5;
+
+  border-radius: 7px;
+}
+
+
+.inicio-aviso-icono {
+  width: 22px;
+  height: 22px;
+
+  min-width: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #0878df;
+
+  border-radius: 50%;
+
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+.inicio-aviso strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #184d78;
+
+  font-size: 11px;
+}
+
+
+.inicio-aviso p {
+  margin: 0;
+
+  color: #647f96;
+
+  font-size: 10px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.inicio-footer {
+  width: 100%;
+
+  min-height: 30px;
+
+  padding:
+    0
+    20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #0875dc;
+
+  color: #ffffff;
+
+  font-size: 8px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1150px) {
+
+  .inicio-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 850px) {
+
+  .sidebar {
+    width: 190px;
+  }
+
+  .inicio-zona-principal {
+    margin-left: 190px;
+  }
+
+  .inicio-contenido {
+    padding:
+      18px
+      20px
+      30px;
+  }
+
+  .inicio-bienvenida-imagen {
+    width: 140px;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .sidebar {
+    display: none;
+  }
+
+  .inicio-zona-principal {
+    margin-left: 0;
+  }
+
+  .inicio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inicio-bienvenida-imagen {
+    display: none;
+  }
+
+  .inicio-bienvenida {
+    padding: 25px;
+  }
+
+  .inicio-footer {
+    gap: 20px;
+
+    padding:
+      8px
+      15px;
+  }
+
+}
