@@ -6,7 +6,7 @@ import {
 
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 import Inicio from "./pages/Inicio/Inicio.jsx";
-import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
+import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
 
 function Aplicacion() {
   return (
@@ -20,7 +20,7 @@ function Aplicacion() {
 
           <Route
             path="/estudiantes"
-            element={<Estudiantes />}
+            element={<RegistrarEstudiante />}
           />
         </Route>
       </Routes>
