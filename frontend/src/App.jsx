@@ -1,10 +1,7 @@
+import Inicio from "./pages/Inicio/Inicio";
+
 function App() {
-  return (
-    <div>
-      <h1>ExamPass</h1>
-      <p>Frontend funcionando correctamente.</p>
-    </div>
-  )
+  return <Inicio />;
 }
 
-export default App
+export default App;
