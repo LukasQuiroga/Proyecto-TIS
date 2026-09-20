@@ -1,0 +1,78 @@
+.navbar {
+  width: 100%;
+  height: 60px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 22px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #dde8f0;
+
+  box-shadow: 0 1px 5px rgba(28, 64, 93, 0.05);
+}
+
+.navbar-menu {
+  color: #174e76;
+
+  font-size: 20px;
+
+  user-select: none;
+}
+
+.navbar-usuario {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  color: #173450;
+
+  font-size: 13px;
+
+  user-select: none;
+}
+
+.navbar-campana {
+  margin-right: 12px;
+
+  color: #173e60;
+
+  font-size: 17px;
+}
+
+.navbar-avatar {
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #0875df;
+
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.navbar-nombre {
+  color: #1a3048;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.navbar-flecha {
+  color: #7e909f;
+
+  font-size: 12px;
+}
