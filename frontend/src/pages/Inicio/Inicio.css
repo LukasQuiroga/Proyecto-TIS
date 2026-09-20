@@ -844,5 +844,7 @@ body {
       8px
       15px;
   }
-
+  .sidebar-opcion-enlace {
+  text-decoration: none;
+  }
 }
