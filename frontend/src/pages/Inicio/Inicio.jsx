@@ -1,5 +1,6 @@
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
+import "../../components/Layout/PlantillaPrincipal.css";
 import "./Inicio.css";
 
 function IconoModulo({ tipo }) {
