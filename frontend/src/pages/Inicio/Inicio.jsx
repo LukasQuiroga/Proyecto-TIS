@@ -1,6 +1,3 @@
-import Navbar from "../../components/Navbar/Navbar";
-import Sidebar from "../../components/Sidebar/Sidebar";
-import "../../components/Layout/PlantillaPrincipal.css";
 import "./Inicio.css";
 
 function IconoModulo({ tipo }) {
@@ -111,120 +108,99 @@ const funcionalidades = [
 
 function Inicio() {
   return (
-    <div className="inicio-pagina">
-      <Sidebar />
-
-      <div className="inicio-zona-principal">
-        <Navbar />
-
-        <main className="inicio-contenido">
-          <div className="inicio-ruta">
-            <span>Inicio</span>
-          </div>
-
-          <div className="inicio-titulo">
-            <h1>Inicio</h1>
-
-            <p>
-              Bienvenido al Sistema de Control de Ingreso a
-              Exámenes Masivos.
-            </p>
-          </div>
-
-          <section className="inicio-bienvenida">
-            <div className="inicio-bienvenida-texto">
-              <span className="inicio-etiqueta">
-                Panel principal
-              </span>
-
-              <h2>
-                Sistema de Control de Ingreso a Exámenes
-              </h2>
-
-              <p>
-                Consulte las principales funcionalidades
-                disponibles para la administración y control
-                de los exámenes.
-              </p>
-            </div>
-
-            <div className="inicio-bienvenida-imagen">
-              <div className="inicio-documento">
-                <div className="inicio-documento-icono">
-                  ✓
-                </div>
-
-                <div className="inicio-linea linea-1"></div>
-                <div className="inicio-linea linea-2"></div>
-                <div className="inicio-linea linea-3"></div>
-              </div>
-            </div>
-          </section>
-
-          <section className="inicio-modulos">
-            <div className="inicio-subtitulo">
-              <h2>Funcionalidades del sistema</h2>
-
-              <p>
-                Módulos disponibles para la gestión del
-                sistema.
-              </p>
-            </div>
-
-            <div className="inicio-grid">
-              {funcionalidades.map((funcionalidad) => (
-                <article
-                  className="inicio-tarjeta"
-                  key={funcionalidad.titulo}
-                >
-                  <IconoModulo tipo={funcionalidad.tipo} />
-
-                  <div className="inicio-tarjeta-informacion">
-                    <h3>
-                      {funcionalidad.titulo}
-                    </h3>
-
-                    <p>
-                      {funcionalidad.descripcion}
-                    </p>
-
-                    <span className="inicio-ver-modulo">
-                      Ver módulo
-                      <span>→</span>
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="inicio-aviso">
-            <div className="inicio-aviso-icono">
-              i
-            </div>
-
-            <div>
-              <strong>Información</strong>
-
-              <p>
-                Seleccione una opción del menú lateral para
-                acceder a las funcionalidades correspondientes.
-              </p>
-            </div>
-          </section>
-        </main>
-
-        <footer className="inicio-footer">
-          <span>
-            Sistema de Control de Ingreso a Exámenes Masivos
-          </span>
-
-          <span>
-            © 2026. Todos los derechos reservados.
-          </span>
-        </footer>
+    <>
+      <div className="inicio-ruta">
+        <span>Inicio</span>
       </div>
-    </div>
+
+      <div className="inicio-titulo">
+        <h1>Inicio</h1>
+
+        <p>
+          Bienvenido al Sistema de Control de Ingreso a Exámenes Masivos.
+        </p>
+      </div>
+
+      <section className="inicio-bienvenida">
+        <div className="inicio-bienvenida-texto">
+          <span className="inicio-etiqueta">
+            Panel principal
+          </span>
+
+          <h2>
+            Sistema de Control de Ingreso a Exámenes
+          </h2>
+
+          <p>
+            Consulte las principales funcionalidades disponibles para la
+            administración y control de los exámenes.
+          </p>
+        </div>
+
+        <div className="inicio-bienvenida-imagen">
+          <div className="inicio-documento">
+            <div className="inicio-documento-icono">
+              ✓
+            </div>
+
+            <div className="inicio-linea linea-1"></div>
+            <div className="inicio-linea linea-2"></div>
+            <div className="inicio-linea linea-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="inicio-modulos">
+        <div className="inicio-subtitulo">
+          <h2>Funcionalidades del sistema</h2>
+
+          <p>
+            Módulos disponibles para la gestión del sistema.
+          </p>
+        </div>
+
+        <div className="inicio-grid">
+          {funcionalidades.map((funcionalidad) => (
+            <article
+              className="inicio-tarjeta"
+              key={funcionalidad.titulo}
+            >
+              <IconoModulo tipo={funcionalidad.tipo} />
+
+              <div className="inicio-tarjeta-informacion">
+                <h3>
+                  {funcionalidad.titulo}
+                </h3>
+
+                <p>
+                  {funcionalidad.descripcion}
+                </p>
+
+                <span className="inicio-ver-modulo">
+                  Ver módulo
+                  <span>→</span>
+                </span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="inicio-aviso">
+        <div className="inicio-aviso-icono">
+          i
+        </div>
+
+        <div>
+          <strong>Información</strong>
+
+          <p>
+            Seleccione una opción del menú lateral para acceder a las
+            funcionalidades correspondientes.
+          </p>
+        </div>
+      </section>
+    </>
   );
 }
 

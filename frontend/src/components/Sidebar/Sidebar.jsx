@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 import "./Sidebar.css";
 
 function Sidebar() {
@@ -15,15 +16,26 @@ function Sidebar() {
       </div>
 
       <nav className="sidebar-menu">
-        <div className="sidebar-opcion sidebar-activa">
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) =>
+            `sidebar-opcion ${isActive ? "sidebar-activa" : ""}`
+          }
+        >
           <span className="sidebar-icono">⌂</span>
           <span>Inicio</span>
-        </div>
+        </NavLink>
 
-        <div className="sidebar-opcion">
+        <NavLink
+          to="/estudiantes"
+          className={({ isActive }) =>
+            `sidebar-opcion ${isActive ? "sidebar-activa" : ""}`
+          }
+        >
           <span className="sidebar-icono">♙</span>
           <span>Estudiantes</span>
-        </div>
+        </NavLink>
 
         <div className="sidebar-opcion">
           <span className="sidebar-icono">▣</span>

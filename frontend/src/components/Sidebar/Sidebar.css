@@ -91,6 +91,9 @@
 
   font-size: 14px;
 
+  text-decoration: none;
+  cursor: pointer;
+
   user-select: none;
 }
 
