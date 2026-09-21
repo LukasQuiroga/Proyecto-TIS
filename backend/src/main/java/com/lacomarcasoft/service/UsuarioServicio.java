@@ -1,5 +1,6 @@
 package com.lacomarcasoft.service;
 
+
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
 
@@ -8,7 +9,10 @@ import com.lacomarcasoft.repository.UsuarioRepositorio;
 
 import org.springframework.stereotype.Service;
 
+
 import java.util.List;
+
+
 
 @Service
 public class UsuarioServicio {
@@ -16,6 +20,7 @@ public class UsuarioServicio {
     private final UsuarioRepositorio usuarioRepositorio;
 
     private final RolRepositorio rolRepositorio;
+
 
     public UsuarioServicio(
             UsuarioRepositorio usuarioRepositorio,
@@ -27,76 +32,82 @@ public class UsuarioServicio {
 
     }
 
+
     public List<Usuario> listar(){
 
         return usuarioRepositorio.findAll();
 
     }
 
+
     public Usuario buscar(Long id){
 
+
         return usuarioRepositorio.findById(id)
+
                 .orElseThrow(
-                        () ->
-                        new RuntimeException(
+
+                        () -> new RuntimeException(
                                 "Usuario no encontrado"
                         )
+
                 );
 
     }
 
-    public Usuario registrar(
-            Usuario usuario,
-            Long idRol
-    ){
 
-        Rol rol =
-                rolRepositorio.findById(idRol)
-                .orElseThrow(
-                        () ->
-                        new RuntimeException(
-                                "Rol no encontrado"
-                        )
-                );
-
-        usuario.setRol(rol);
-
-        usuario.setActivo(true);
-
-        return usuarioRepositorio.save(usuario);
-
-    }
 
     public Usuario modificar(
+
             Long id,
+
             Usuario datos,
+
             Long idRol
+
     ){
+
 
         Usuario usuario = buscar(id);
 
         Rol rol =
+
                 rolRepositorio.findById(idRol)
+
                 .orElseThrow(
-                        () ->
-                        new RuntimeException(
+
+                        () -> new RuntimeException(
                                 "Rol no encontrado"
                         )
+
                 );
 
-        usuario.setNombre(datos.getNombre());
+        usuario.setNombre(
+                datos.getNombre()
+        );
 
-        usuario.setApellido(datos.getApellido());
+        usuario.setApellido(
+                datos.getApellido()
+        );
 
-        usuario.setCorreo(datos.getCorreo());
+        usuario.setCorreo(
+                datos.getCorreo()
+        );
 
-        usuario.setContrasena(datos.getContrasena());
+        usuario.setContrasena(
+                datos.getContrasena()
+        );
 
-        usuario.setActivo(datos.getActivo());
+        usuario.setActivo(
+                datos.getActivo()
+        );
 
-        usuario.setRol(rol);
+        usuario.setRol(
+                rol
+        );
 
         return usuarioRepositorio.save(usuario);
 
     }
+
 }

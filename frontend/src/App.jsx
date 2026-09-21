@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
-
+import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import Inicio from "./pages/Inicio/Inicio.jsx";
 import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
 import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
@@ -26,6 +26,11 @@ function App() {
           <Route
             path="/"
             element={<Inicio />}
+          />
+          
+          <Route
+          path="/usuarios"
+          element={<Usuarios />}
           />
 
           <Route

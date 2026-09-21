@@ -2,7 +2,9 @@ package com.lacomarcasoft.controller;
 
 
 import com.lacomarcasoft.dto.request.ModificarUsuarioSolicitud;
+
 import com.lacomarcasoft.modelo.Usuario;
+
 import com.lacomarcasoft.service.UsuarioServicio;
 
 
@@ -23,7 +25,10 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class UsuarioControlador {
 
+
+
     private final UsuarioServicio usuarioServicio;
+
 
 
     public UsuarioControlador(
@@ -34,24 +39,31 @@ public class UsuarioControlador {
 
     }
 
+
     @GetMapping
     public ResponseEntity<List<Usuario>> listarUsuarios(){
 
 
         return ResponseEntity.ok(
+
                 usuarioServicio.listar()
+
         );
 
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> obtenerUsuario(
+
             @PathVariable Long id
+
     ){
 
 
         return ResponseEntity.ok(
+
                 usuarioServicio.buscar(id)
+
         );
 
     }
@@ -65,6 +77,7 @@ public class UsuarioControlador {
             @RequestBody ModificarUsuarioSolicitud solicitud
 
     ){
+
         Usuario datos = new Usuario();
 
         datos.setNombre(
@@ -87,17 +100,24 @@ public class UsuarioControlador {
                 solicitud.activo()
         );
 
+
         Usuario actualizado =
 
                 usuarioServicio.modificar(
+
                         id,
+
                         datos,
+
                         solicitud.idRol()
+
                 );
 
 
         return ResponseEntity.ok(
+
                 actualizado
+
         );
 
     }
