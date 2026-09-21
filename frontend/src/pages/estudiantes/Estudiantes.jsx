@@ -201,17 +201,24 @@ function Estudiantes() {
 
   useEffect(() => {
 
-    cargarEstudiantes(
+  const ejecutarConsulta = async () => {
+
+    await cargarEstudiantes(
       consultaAplicada,
       pagina
     );
 
-  }, [
-    cargarEstudiantes,
-    consultaAplicada,
-    pagina
-  ]);
+  };
 
+
+  ejecutarConsulta();
+
+
+}, [
+  cargarEstudiantes,
+  consultaAplicada,
+  pagina
+]);
 
   useEffect(() => {
 

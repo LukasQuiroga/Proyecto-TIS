@@ -76,9 +76,9 @@ function DetalleEstudiante() {
   ] = useState(null);
 
   const [
-    cargando,
-    setCargando
-  ] = useState(true);
+  cargando,
+  setCargando
+   ] = useState(false);
 
   const [
     error,
@@ -88,36 +88,50 @@ function DetalleEstudiante() {
 
   useEffect(() => {
 
-    setCargando(true);
+  async function cargarEstudiante() {
 
-    obtenerEstudiante(idUsuario)
+    setCargando(false);
 
-      .then((respuesta) => {
+    try {
 
-        setEstudiante(
-          respuesta
-        );
+      const respuesta =
+        await obtenerEstudiante(idUsuario);
 
-        setError("");
 
-      })
-
-      .catch((excepcion) => {
-
-        setEstudiante(null);
-
-        setError(
-          excepcion.message
-        );
-
-      })
-
-      .finally(
-        () =>
-          setCargando(false)
+      setEstudiante(
+        respuesta
       );
 
-  }, [idUsuario]);
+
+      setError("");
+
+
+    } catch (excepcion) {
+
+
+      setEstudiante(null);
+
+
+      setError(
+        excepcion.message
+      );
+
+
+    } finally {
+
+
+      setCargando(false);
+
+
+    }
+
+  }
+
+
+  cargarEstudiante();
+
+
+}, [idUsuario]);
 
 
   return (
