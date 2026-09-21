@@ -1,21 +1,43 @@
 package com.lacomarcasoft.modelo;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "usuario")
 public class Usuario {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_usuario")
     private Long idUsuario;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_rol")
     private Rol rol;
 
+    @Column(nullable = false)
     private String nombre;
+
+    @Column(nullable = false)
     private String apellido;
+
     private String carrera;
+
+    @Column(unique = true)
     private String correo;
+
     private String contrasena;
+
     private String carnetIdentidad;
-    private Boolean activo;
+
+    private Boolean activo = true;
+
     private LocalDateTime fechaCreacion;
+
     private String codigoSis;
+
     private String celular;
 
     public Usuario() {
