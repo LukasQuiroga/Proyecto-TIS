@@ -1,6 +1,6 @@
-import {
-  NavLink
-} from "react-router-dom";
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import "./Sidebar.css";
 
 
 function Opcion({
@@ -11,26 +11,17 @@ function Opcion({
 }) {
 
   return (
-
     <NavLink
-
       to={to}
-
       end={exacta}
-
-      className={
-        ({ isActive }) =>
-          `sidebar-opcion sidebar-opcion-enlace${
-            isActive
-              ? " sidebar-activa"
-              : ""
-          }`
+      className={({ isActive }) =>
+        `sidebar-opcion sidebar-opcion-enlace ${
+          isActive ? "sidebar-activa" : ""
+        }`
       }
     >
 
-      <span
-        className="sidebar-icono"
-      >
+      <span className="sidebar-icono">
         {icono}
       </span>
 
@@ -43,32 +34,25 @@ function Opcion({
 }
 
 
+
 function Sidebar() {
+
+  const [estudiantesAbierto, setEstudiantesAbierto] = useState(false);
+
 
   return (
 
-    <aside
-      className="sidebar"
-    >
+    <aside className="sidebar">
 
-      <div
-        className="sidebar-logo"
-      >
 
-        <div
-          className="
-            sidebar-logo-icono
-          "
-        >
+      <div className="sidebar-logo">
+
+        <div className="sidebar-logo-icono">
           ◆
         </div>
 
 
-        <div
-          className="
-            sidebar-logo-texto
-          "
-        >
+        <div className="sidebar-logo-texto">
 
           <strong>
             Sistema de Control
@@ -83,9 +67,9 @@ function Sidebar() {
       </div>
 
 
-      <nav
-        className="sidebar-menu"
-      >
+
+      <nav className="sidebar-menu">
+
 
         <Opcion
           to="/"
@@ -96,21 +80,85 @@ function Sidebar() {
         </Opcion>
 
 
-        <Opcion
-          to="/estudiantes"
-          icono="♙"
-        >
-          Estudiantes
-        </Opcion>
 
-
-        <div
-          className="sidebar-opcion"
+        <button
+          type="button"
+          className="sidebar-opcion sidebar-desplegable"
+          onClick={() =>
+            setEstudiantesAbierto(!estudiantesAbierto)
+          }
         >
 
-          <span
-            className="sidebar-icono"
-          >
+          <span className="sidebar-icono">
+            ♙
+          </span>
+
+
+          <span>
+            Estudiantes
+          </span>
+
+
+          <span className="sidebar-flecha">
+
+            {
+              estudiantesAbierto
+                ? "▾"
+                : "▸"
+            }
+
+          </span>
+
+
+        </button>
+
+
+
+        {
+          estudiantesAbierto && (
+
+            <div className="sidebar-submenu">
+
+
+              <NavLink
+                to="/estudiantes/registrar"
+                className={({isActive}) =>
+                  `sidebar-subopcion ${
+                    isActive
+                      ? "sidebar-subopcion-activa"
+                      : ""
+                  }`
+                }
+              >
+                Registrar
+              </NavLink>
+
+
+
+              <NavLink
+                to="/estudiantes/consultar"
+                className={({isActive}) =>
+                  `sidebar-subopcion ${
+                    isActive
+                      ? "sidebar-subopcion-activa"
+                      : ""
+                  }`
+                }
+              >
+                Consultar
+              </NavLink>
+
+
+            </div>
+
+          )
+        }
+
+
+
+        <div className="sidebar-opcion">
+
+          <span className="sidebar-icono">
             ▣
           </span>
 
@@ -121,13 +169,10 @@ function Sidebar() {
         </div>
 
 
-        <div
-          className="sidebar-opcion"
-        >
 
-          <span
-            className="sidebar-icono"
-          >
+        <div className="sidebar-opcion">
+
+          <span className="sidebar-icono">
             ▤
           </span>
 
@@ -138,13 +183,10 @@ function Sidebar() {
         </div>
 
 
-        <div
-          className="sidebar-opcion"
-        >
 
-          <span
-            className="sidebar-icono"
-          >
+        <div className="sidebar-opcion">
+
+          <span className="sidebar-icono">
             ▦
           </span>
 
@@ -155,13 +197,10 @@ function Sidebar() {
         </div>
 
 
-        <div
-          className="sidebar-opcion"
-        >
 
-          <span
-            className="sidebar-icono"
-          >
+        <div className="sidebar-opcion">
+
+          <span className="sidebar-icono">
             ◉
           </span>
 
@@ -172,13 +211,10 @@ function Sidebar() {
         </div>
 
 
-        <div
-          className="sidebar-opcion"
-        >
 
-          <span
-            className="sidebar-icono"
-          >
+        <div className="sidebar-opcion">
+
+          <span className="sidebar-icono">
             ▥
           </span>
 
@@ -189,13 +225,10 @@ function Sidebar() {
         </div>
 
 
-        <div
-          className="sidebar-opcion"
-        >
 
-          <span
-            className="sidebar-icono"
-          >
+        <div className="sidebar-opcion">
+
+          <span className="sidebar-icono">
             ♙
           </span>
 
@@ -205,10 +238,14 @@ function Sidebar() {
 
         </div>
 
+
       </nav>
 
+
     </aside>
+
   );
 }
+
 
 export default Sidebar;

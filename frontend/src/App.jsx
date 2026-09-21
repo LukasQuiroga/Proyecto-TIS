@@ -5,14 +5,12 @@ import {
   Routes
 } from "react-router-dom";
 
-import Inicio
-  from "./pages/Inicio/Inicio";
+import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 
-import Estudiantes
-  from "./pages/estudiantes/Estudiantes";
-
-import DetalleEstudiante
-  from "./pages/estudiantes/DetalleEstudiante";
+import Inicio from "./pages/Inicio/Inicio.jsx";
+import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
+import ConsultarEstudiante from "./pages/estudiantes/ConsultarEstudiante.jsx";
+import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
 
 
 function App() {
@@ -23,29 +21,34 @@ function App() {
 
       <Routes>
 
-        <Route
-          path="/"
-          element={<Inicio />}
-        />
+        <Route element={<PlantillaPrincipal />}>
 
-        <Route
-          path="/estudiantes"
-          element={<Estudiantes />}
-        />
+          <Route
+            path="/"
+            element={<Inicio />}
+          />
 
-        <Route
-          path="/estudiantes/:idUsuario"
-          element={<DetalleEstudiante />}
-        />
+          <Route
+            path="/estudiantes/registrar"
+            element={<RegistrarEstudiante />}
+          />
+
+          <Route
+            path="/estudiantes/consultar"
+            element={<ConsultarEstudiante />}
+          />
+
+          <Route
+            path="/estudiantes/:idUsuario"
+            element={<DetalleEstudiante />}
+          />
+
+        </Route>
+
 
         <Route
           path="*"
-          element={
-            <Navigate
-              to="/"
-              replace
-            />
-          }
+          element={<Navigate to="/" replace />}
         />
 
       </Routes>
