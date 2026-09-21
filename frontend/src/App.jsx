@@ -9,7 +9,7 @@ import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 
 import Inicio from "./pages/Inicio/Inicio.jsx";
 import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
-import ConsultarEstudiante from "./pages/estudiantes/ConsultarEstudiante.jsx";
+import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
 import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
 
 
@@ -35,7 +35,7 @@ function App() {
 
           <Route
             path="/estudiantes/consultar"
-            element={<ConsultarEstudiante />}
+            element={<Estudiantes />}
           />
 
           <Route
