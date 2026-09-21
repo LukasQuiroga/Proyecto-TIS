@@ -11,5 +11,13 @@ export const obtenerUsuario = (id) => {
 };
 
 export const modificarUsuario = (id, usuario) => {
-  return axios.put(`${API}/${id}`, usuario);
+  return axios.put(
+    `${API}/${id}`,
+
+    usuario,
+  );
+};
+
+export const obtenerRoles = () => {
+  return axios.get("http://localhost:8080/api/roles");
 };

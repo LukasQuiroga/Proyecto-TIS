@@ -3,6 +3,7 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.ModificarUsuarioSolicitud;
 
+import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 
 import com.lacomarcasoft.service.UsuarioServicio;
@@ -41,7 +42,7 @@ public class UsuarioControlador {
 
 
     @GetMapping
-    public ResponseEntity<List<Usuario>> listarUsuarios(){
+    public ResponseEntity<List<UsuarioRespuesta>> listarUsuarios(){
 
 
         return ResponseEntity.ok(
@@ -53,16 +54,16 @@ public class UsuarioControlador {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> obtenerUsuario(
+    public ResponseEntity<UsuarioRespuesta> obtenerUsuario(
 
             @PathVariable Long id
 
     ){
-
+    
 
         return ResponseEntity.ok(
 
-                usuarioServicio.buscar(id)
+                usuarioServicio.buscarRespuesta(id)
 
         );
 

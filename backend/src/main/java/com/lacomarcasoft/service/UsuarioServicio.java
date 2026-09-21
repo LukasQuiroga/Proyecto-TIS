@@ -1,6 +1,7 @@
 package com.lacomarcasoft.service;
 
 
+import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
 
@@ -32,10 +33,15 @@ public class UsuarioServicio {
 
     }
 
+    public List<UsuarioRespuesta> listar(){
 
-    public List<Usuario> listar(){
+        return usuarioRepositorio.findAll()
 
-        return usuarioRepositorio.findAll();
+                .stream()
+
+                .map(this::convertirRespuesta)
+
+                .toList();
 
     }
 
@@ -55,7 +61,13 @@ public class UsuarioServicio {
 
     }
 
+    public UsuarioRespuesta buscarRespuesta(Long id){
 
+        return convertirRespuesta(
+                buscar(id)
+        );
+
+    }
 
     public Usuario modificar(
 
@@ -66,7 +78,7 @@ public class UsuarioServicio {
             Long idRol
 
     ){
-
+    
 
         Usuario usuario = buscar(id);
 
@@ -107,6 +119,30 @@ public class UsuarioServicio {
         );
 
         return usuarioRepositorio.save(usuario);
+
+    }
+
+    private UsuarioRespuesta convertirRespuesta(
+            Usuario usuario
+    ){
+
+        return new UsuarioRespuesta(
+
+                usuario.getIdUsuario(),
+
+                usuario.getNombre(),
+
+                usuario.getApellido(),
+
+                usuario.getCorreo(),
+
+                usuario.getRol().getIdRol(),
+
+                usuario.getRol().getNombreRol(),
+
+                usuario.getActivo()
+
+        );
 
     }
 

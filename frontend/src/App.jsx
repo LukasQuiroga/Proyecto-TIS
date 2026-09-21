@@ -4,7 +4,7 @@ import {
   Route,
   Routes
 } from "react-router-dom";
-
+import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import Inicio from "./pages/Inicio/Inicio.jsx";
@@ -27,10 +27,15 @@ function App() {
             path="/"
             element={<Inicio />}
           />
-          
+
           <Route
           path="/usuarios"
           element={<Usuarios />}
+          />
+
+          <Route
+          path="/usuarios/:id/editar"
+          element={<EditarUsuario />}
           />
 
           <Route
