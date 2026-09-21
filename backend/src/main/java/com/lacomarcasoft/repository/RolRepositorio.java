@@ -1,13 +1,16 @@
 package com.lacomarcasoft.repository;
 
+
 import com.lacomarcasoft.modelo.Rol;
 
-import java.util.List;
-import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface RolRepositorio {
 
-    List<Rol> listarTodos();
 
-    Optional<Rol> buscarPorId(Long idRol);
+@Repository
+public interface RolRepositorio 
+        extends JpaRepository<Rol,Long> {
+
+
 }

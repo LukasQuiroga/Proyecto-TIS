@@ -1,13 +1,28 @@
 package com.lacomarcasoft.modelo;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "rol")
 public class Rol {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_rol")
     private Long idRol;
+
+    @Column(nullable = false)
     private String nombreRol;
+
     private String descripcionRol;
+
     private LocalDateTime fechaAsignacion;
+
+    @OneToMany(mappedBy = "rol")
+    private List<Usuario> usuarios;
 
     public Rol() {
     }
@@ -42,5 +57,13 @@ public class Rol {
 
     public void setFechaAsignacion(LocalDateTime fechaAsignacion) {
         this.fechaAsignacion = fechaAsignacion;
+    }
+
+    public List<Usuario> getUsuarios() {
+        return usuarios;
+    }
+
+    public void setUsuarios(List<Usuario> usuarios) {
+        this.usuarios = usuarios;
     }
 }
