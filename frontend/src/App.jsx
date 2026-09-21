@@ -1,19 +1,28 @@
 import {
   BrowserRouter,
+  Navigate,
   Route,
-  Routes,
+  Routes
 } from "react-router-dom";
 
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
+
 import Inicio from "./pages/Inicio/Inicio.jsx";
 import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
-import ConsultarEstudiante from "./pages/estudiantes/ConsultarEstudiante.jsx";
+import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
+import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
 
-function Aplicacion() {
+
+function App() {
+
   return (
+
     <BrowserRouter>
+
       <Routes>
+
         <Route element={<PlantillaPrincipal />}>
+
           <Route
             path="/"
             element={<Inicio />}
@@ -26,12 +35,27 @@ function Aplicacion() {
 
           <Route
             path="/estudiantes/consultar"
-            element={<ConsultarEstudiante />}
-            />
-        </Route> 
+            element={<Estudiantes />}
+          />
+
+          <Route
+            path="/estudiantes/:idUsuario"
+            element={<DetalleEstudiante />}
+          />
+
+        </Route>
+
+
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
+
       </Routes>
+
     </BrowserRouter>
+
   );
 }
 
-export default Aplicacion;
+export default App;

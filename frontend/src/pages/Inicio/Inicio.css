@@ -369,4 +369,15 @@
   .inicio-bienvenida {
     padding: 25px;
   }
+
+  .inicio-footer {
+    gap: 20px;
+
+    padding:
+      8px
+      15px;
+  }
+  .sidebar-opcion-enlace {
+  text-decoration: none;
+  }
 }
