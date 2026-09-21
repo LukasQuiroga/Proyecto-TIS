@@ -6,7 +6,8 @@ import {
 
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 import Inicio from "./pages/Inicio/Inicio.jsx";
-import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
+import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
+import ConsultarEstudiante from "./pages/estudiantes/ConsultarEstudiante.jsx";
 
 function Aplicacion() {
   return (
@@ -19,10 +20,15 @@ function Aplicacion() {
           />
 
           <Route
-            path="/estudiantes"
-            element={<Estudiantes />}
+            path="/estudiantes/registrar"
+            element={<RegistrarEstudiante />}
           />
-        </Route>
+
+          <Route
+            path="/estudiantes/consultar"
+            element={<ConsultarEstudiante />}
+            />
+        </Route> 
       </Routes>
     </BrowserRouter>
   );

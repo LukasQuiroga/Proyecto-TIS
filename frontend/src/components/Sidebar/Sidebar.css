@@ -123,6 +123,48 @@
   font-size: 17px;
 }
 
+.sidebar-desplegable {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-texto {
+  flex: 1;
+}
+
+.sidebar-flecha {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-subopcion {
+  padding: 10px 20px 10px 50px;
+
+  color: #d9e9f4;
+
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.sidebar-subopcion:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-subopcion-activa {
+  background: rgba(255, 255, 255, 0.12);
+
+  color: #ffffff;
+}
+
 @media (max-width: 850px) {
   .sidebar {
     width: 190px;
