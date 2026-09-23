@@ -15,3 +15,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  security:
+    admin-password: ${ADMIN_PASSWORD:exampass}
