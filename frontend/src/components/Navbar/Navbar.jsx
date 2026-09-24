@@ -1,29 +1,63 @@
+import { useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
+
 function Navbar() {
+
+
+  const navigate = useNavigate();
+
+
+
   return (
+
     <header className="navbar">
+
+
       <div className="navbar-menu">
+
         ☰
+
       </div>
 
-      <div className="navbar-usuario">
-        <span className="navbar-campana">♢</span>
+
+
+
+      <div
+
+        className="navbar-login"
+
+        onClick={() => navigate("/login")}
+
+      >
+
 
         <div className="navbar-avatar">
-          AM
+
+          👤
+
         </div>
 
-        <span className="navbar-nombre">
-          Administrador
+
+
+        <span>
+
+          Inicio de sesión
+
         </span>
 
-        <span className="navbar-flecha">
-          ▾
-        </span>
+
+
       </div>
+
+
+
     </header>
+
   );
+
 }
+
+
 
 export default Navbar;
