@@ -8,12 +8,6 @@ import {
   useParams
 } from "react-router-dom";
 
-import Navbar
-  from "../../components/Navbar/Navbar";
-
-import Sidebar
-  from "../../components/Sidebar/Sidebar";
-
 import {
   obtenerEstudiante
 } from "../../services/estudianteService";
@@ -57,6 +51,7 @@ function Valor({
       </span>
 
     </div>
+
   );
 }
 
@@ -67,18 +62,22 @@ function DetalleEstudiante() {
     idUsuario
   } = useParams();
 
+
   const navigate =
     useNavigate();
+
 
   const [
     estudiante,
     setEstudiante
   ] = useState(null);
 
+
   const [
-  cargando,
-  setCargando
-   ] = useState(false);
+    cargando,
+    setCargando
+  ] = useState(true);
+
 
   const [
     error,
@@ -88,538 +87,508 @@ function DetalleEstudiante() {
 
   useEffect(() => {
 
-  async function cargarEstudiante() {
+    async function cargarEstudiante() {
 
-    setCargando(false);
+      try {
 
-    try {
-
-      const respuesta =
-        await obtenerEstudiante(idUsuario);
-
-
-      setEstudiante(
-        respuesta
-      );
+        const respuesta =
+          await obtenerEstudiante(
+            idUsuario
+          );
 
 
-      setError("");
+        setEstudiante(
+          respuesta
+        );
 
 
-    } catch (excepcion) {
+        setError("");
 
 
-      setEstudiante(null);
+      } catch (excepcion) {
+
+        setEstudiante(null);
+
+        setError(
+          excepcion.message
+        );
 
 
-      setError(
-        excepcion.message
-      );
+      } finally {
 
+        setCargando(false);
 
-    } finally {
-
-
-      setCargando(false);
-
+      }
 
     }
 
-  }
 
+    cargarEstudiante();
 
-  cargarEstudiante();
-
-
-}, [idUsuario]);
+  }, [idUsuario]);
 
 
   return (
 
-    <div className="inicio-pagina">
+    <main
+      className="
+        estudiantes-contenido
+        estudiantes-zona-principal
+        detalle-contenido
+      "
+    >
 
-      <Sidebar />
+      <button
+
+        type="button"
+
+        className="detalle-volver"
+
+        onClick={
+          () =>
+            navigate(
+              "/estudiantes/consultar"
+            )
+        }
+      >
+
+        ← Volver a resultados
+
+      </button>
 
 
-      <div
+      <header
         className="
-          inicio-zona-principal
-          estudiantes-zona-principal
+          estudiantes-encabezado
+          detalle-encabezado
         "
       >
 
-        <Navbar />
+        <h1>
+          Información del estudiante
+        </h1>
+
+        <p>
+          Visualiza la información
+          detallada del estudiante
+          seleccionado.
+        </p>
+
+      </header>
 
 
-        <main
-          className="
-            estudiantes-contenido
-            detalle-contenido
-          "
-        >
+      {
+        cargando && (
 
-          <button
-
-            type="button"
-
-            className="detalle-volver"
-
-            onClick={
-              () =>
-                navigate(
-                  "/estudiantes"
-                )
-            }
-          >
-
-            ← Volver a resultados
-
-          </button>
-
-
-          <header
+          <section
             className="
-              estudiantes-encabezado
-              detalle-encabezado
+              estudiantes-panel-resultados
             "
           >
 
-            <h1>
-              Información del estudiante
-            </h1>
-
-            <p>
-              Visualiza la información
-              detallada del estudiante
-              seleccionado.
-            </p>
-
-          </header>
-
-
-          {
-            cargando && (
-
-              <section
-                className="
-                  estudiantes-panel-resultados
-                "
-              >
-
-                <div
-                  className="
-                    estudiantes-estado-vacio
-                  "
-                >
-
-                  <div
-                    className="
-                      estudiantes-cargando
-                    "
-                  />
-
-                  <h2>
-                    Consultando estudiante
-                  </h2>
-
-                </div>
-
-              </section>
-            )
-          }
-
-
-          {
-            !cargando &&
-            error && (
+            <div
+              className="
+                estudiantes-estado-vacio
+              "
+            >
 
               <div
                 className="
-                  estudiantes-alerta
-                  estudiantes-alerta-error
+                  estudiantes-cargando
+                "
+              />
+
+              <h2>
+                Consultando estudiante
+              </h2>
+
+              <p>
+                Espera un momento
+                mientras recuperamos
+                la información.
+              </p>
+
+            </div>
+
+          </section>
+
+        )
+      }
+
+
+      {
+        !cargando &&
+        error && (
+
+          <div
+            className="
+              estudiantes-alerta
+              estudiantes-alerta-error
+            "
+          >
+
+            <span
+              className="
+                estudiantes-alerta-icono
+              "
+            >
+              !
+            </span>
+
+
+            <div>
+
+              <strong>
+                Estudiante no encontrado
+              </strong>
+
+              <p>
+                {error}
+              </p>
+
+            </div>
+
+          </div>
+
+        )
+      }
+
+
+      {
+        !cargando &&
+        estudiante && (
+
+          <section
+            className="
+              estudiante-detalle-tarjeta
+            "
+          >
+
+            <div
+              className="
+                estudiante-detalle-resumen
+              "
+            >
+
+              <div
+                className="
+                  estudiante-avatar
                 "
               >
 
-                <span
-                  className="
-                    estudiantes-alerta-icono
-                  "
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
-                  !
-                </span>
 
-                <div>
+                  <circle
+                    cx="12"
+                    cy="8"
+                    r="4"
+                  />
 
-                  <strong>
-                    Estudiante no encontrado
-                  </strong>
+                  <path
+                    d="
+                      M4 21
+                      c0-4 3.6-7 8-7
+                      s8 3 8 7
+                    "
+                  />
 
-                  <p>
-                    {error}
-                  </p>
-
-                </div>
+                </svg>
 
               </div>
-            )
-          }
 
 
-          {
-            !cargando &&
-            estudiante && (
-
-              <section
+              <div
                 className="
-                  estudiante-detalle-tarjeta
+                  estudiante-resumen-texto
                 "
               >
 
-                <div
-                  className="
-                    estudiante-detalle-resumen
-                  "
-                >
+                <h2>
 
-                  <div
-                    className="
-                      estudiante-avatar
-                    "
-                  >
+                  {estudiante.nombres}
+                  {" "}
+                  {estudiante.apellidos}
 
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-
-                      <circle
-                        cx="12"
-                        cy="8"
-                        r="4"
-                      />
-
-                      <path
-                        d="
-                          M4 21
-                          c0-4 3.6-7 8-7
-                          s8 3 8 7
-                        "
-                      />
-
-                    </svg>
-
-                  </div>
+                </h2>
 
 
-                  <div
-                    className="
-                      estudiante-resumen-texto
-                    "
-                  >
+                <p>
 
-                    <h2>
+                  Código universitario:
+                  {" "}
 
-                      {estudiante.nombres}
-                      {" "}
-                      {estudiante.apellidos}
-
-                    </h2>
+                  {
+                    estudiante
+                      .codigoUniversitario
+                    || "No registrado"
+                  }
 
 
-                    <p>
-
-                      Código universitario:
-                      {" "}
-
-                      {
-                        estudiante
-                          .codigoUniversitario
-                        ||
-                        "No registrado"
-                      }
-
-
-                      <span
-                        className={
-                          `estudiantes-estado ${
-                            estudiante.activo
-                              ? "estudiantes-estado-activo"
-                              : "estudiantes-estado-inactivo"
-                          }`
-                        }
-                      >
-
-                        {
-                          estudiante.activo
-                            ? "Activo"
-                            : "Inactivo"
-                        }
-
-                      </span>
-
-                    </p>
-
-                  </div>
-
-
-                  <button
-
-                    type="button"
-
-                    className="
-                      detalle-editar
-                    "
-
-                    aria-disabled="true"
-
-                    title="
-                      La modificación
-                      corresponde a la HU07
-                    "
-                  >
-
-                    ✎ Editar información
-
-                  </button>
-
-                </div>
-
-
-                <div
-                  className="
-                    estudiante-tabs
-                  "
-                >
-
-                  <button
-                    type="button"
-                    className="
-                      estudiante-tab
-                      activo
-                    "
-                  >
-                    Información general
-                  </button>
-
-
-                  <button
-                    type="button"
-                    className="
-                      estudiante-tab
-                    "
-                    disabled
-                  >
-                    Información académica
-                  </button>
-
-
-                  <button
-                    type="button"
-                    className="
-                      estudiante-tab
-                    "
-                    disabled
-                  >
-                    Historial de ingreso
-                  </button>
-
-                </div>
-
-
-                <div
-                  className="
-                    estudiante-detalle-grid
-                  "
-                >
-
-                  <div
-                    className="
-                      estudiante-detalle-columna
-                    "
-                  >
-
-                    <Valor
-                      etiqueta="
-                        Código universitario
-                      "
-                    >
-                      {
-                        estudiante
-                          .codigoUniversitario
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="
-                        Documento de identidad
-                      "
-                    >
-                      {
-                        estudiante.documento
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="Nombres"
-                    >
-                      {
-                        estudiante.nombres
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="Apellidos"
-                    >
-                      {
-                        estudiante.apellidos
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="
-                        Fecha de nacimiento
-                      "
-                    >
-                      No registrado
-                    </Valor>
-
-                  </div>
-
-
-                  <div
-                    className="
-                      estudiante-detalle-columna
-                    "
-                  >
-
-                    <Valor
-                      etiqueta="
-                        Correo electrónico
-                      "
-                    >
-                      {
-                        estudiante
-                          .correoElectronico
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="Teléfono"
-                    >
-                      {
-                        estudiante.telefono
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="Dirección"
-                    >
-                      No registrado
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="Estado"
-                    >
-                      {
+                  <span
+                    className={
+                      `estudiantes-estado ${
                         estudiante.activo
-                          ? "Activo"
-                          : "Inactivo"
-                      }
-                    </Valor>
-
-
-                    <Valor
-                      etiqueta="
-                        Fecha de registro
-                      "
-                    >
-
-                      {
-                        formatearFecha(
-                          estudiante
-                            .fechaRegistro
-                        )
-                      }
-
-                    </Valor>
-
-                  </div>
-
-
-                  <div
-                    className="
-                      estudiante-detalle-columna
-                    "
+                          ? "estudiantes-estado-activo"
+                          : "estudiantes-estado-inactivo"
+                      }`
+                    }
                   >
 
-                    <Valor
-                      etiqueta="Carrera"
-                    >
-                      {
-                        estudiante.carrera
-                      }
-                    </Valor>
+                    {
+                      estudiante.activo
+                        ? "Activo"
+                        : "Inactivo"
+                    }
+
+                  </span>
+
+                </p>
+
+              </div>
 
 
-                    <Valor
-                      etiqueta="Facultad"
-                    >
-                      No registrado
-                    </Valor>
+              <button
+
+                type="button"
+
+                className="
+                  detalle-editar
+                "
+
+                disabled
+
+                title="
+                  La modificación corresponde
+                  a la HU07
+                "
+              >
+
+                ✎ Editar información
+
+              </button>
+
+            </div>
 
 
-                    <Valor
-                      etiqueta="Sede"
-                    >
-                      No registrado
-                    </Valor>
+            <div
+              className="
+                estudiante-tabs
+              "
+            >
+
+              <button
+                type="button"
+                className="
+                  estudiante-tab
+                  activo
+                "
+              >
+                Información general
+              </button>
 
 
-                    <Valor
-                      etiqueta="Observaciones"
-                    >
-                      Sin observaciones
-                      registradas
-                    </Valor>
-
-                  </div>
-
-                </div>
-
-              </section>
-            )
-          }
-
-        </main>
+              <button
+                type="button"
+                className="
+                  estudiante-tab
+                "
+                disabled
+              >
+                Información académica
+              </button>
 
 
-        <footer
-          className="inicio-footer"
-        >
+              <button
+                type="button"
+                className="
+                  estudiante-tab
+                "
+                disabled
+              >
+                Historial de ingreso
+              </button>
 
-          <span>
-            Sistema de Control de
-            Ingreso a Exámenes Masivos
-          </span>
+            </div>
 
-          <span>
-            © 2026. Todos los derechos
-            reservados.
-          </span>
 
-        </footer>
+            <div
+              className="
+                estudiante-detalle-grid
+              "
+            >
 
-      </div>
+              <div
+                className="
+                  estudiante-detalle-columna
+                "
+              >
 
-    </div>
+                <Valor
+                  etiqueta="
+                    Código universitario
+                  "
+                >
+                  {
+                    estudiante
+                      .codigoUniversitario
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="
+                    Documento de identidad
+                  "
+                >
+                  {
+                    estudiante.documento
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Nombres"
+                >
+                  {
+                    estudiante.nombres
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Apellidos"
+                >
+                  {
+                    estudiante.apellidos
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="
+                    Fecha de nacimiento
+                  "
+                >
+                  No registrado
+                </Valor>
+
+              </div>
+
+
+              <div
+                className="
+                  estudiante-detalle-columna
+                "
+              >
+
+                <Valor
+                  etiqueta="
+                    Correo electrónico
+                  "
+                >
+                  {
+                    estudiante
+                      .correoElectronico
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Teléfono"
+                >
+                  {
+                    estudiante.telefono
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Dirección"
+                >
+                  No registrado
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Estado"
+                >
+                  {
+                    estudiante.activo
+                      ? "Activo"
+                      : "Inactivo"
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="
+                    Fecha de registro
+                  "
+                >
+
+                  {
+                    formatearFecha(
+                      estudiante.fechaRegistro
+                    )
+                  }
+
+                </Valor>
+
+              </div>
+
+
+              <div
+                className="
+                  estudiante-detalle-columna
+                "
+              >
+
+                <Valor
+                  etiqueta="Carrera"
+                >
+                  {
+                    estudiante.carrera
+                  }
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Facultad"
+                >
+                  No registrado
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Sede"
+                >
+                  No registrado
+                </Valor>
+
+
+                <Valor
+                  etiqueta="Observaciones"
+                >
+                  Sin observaciones
+                  registradas
+                </Valor>
+
+              </div>
+
+            </div>
+
+          </section>
+
+        )
+      }
+
+    </main>
+
   );
 }
+
 
 export default DetalleEstudiante;
