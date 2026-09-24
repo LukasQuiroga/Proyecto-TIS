@@ -94,6 +94,41 @@
 
 
 
+/* MENSAJE DE ERROR */
+
+.login-error {
+
+
+    background:#ffe8e8;
+
+
+    color:#c62828;
+
+
+    border:1px solid #ffcdd2;
+
+
+    border-radius:8px;
+
+
+    padding:12px;
+
+
+    margin-bottom:15px;
+
+
+    text-align:center;
+
+
+    font-size:14px;
+
+
+}
+
+
+
+
+
 /* LABELS */
 
 .login-card label {
@@ -302,7 +337,8 @@
 
 
 
-/* BOTON */
+
+/* BOTON PRINCIPAL */
 
 .btn-login {
 
@@ -364,9 +400,73 @@
 }
 
 
+.btn-login:disabled {
 
 
+    opacity:0.7;
 
+
+    cursor:not-allowed;
+
+
+}
+
+/* BOTON VOLVER AL INICIO */
+
+.btn-volver {
+
+
+    width:100%;
+
+
+    height:50px;
+
+
+    margin-top:12px;
+
+
+    border-radius:8px;
+
+
+    border:1px solid #0869d8;
+
+
+    background:white;
+
+
+    color:#0869d8;
+
+
+    font-size:16px;
+
+
+    font-weight:600;
+
+
+    cursor:pointer;
+
+
+    display:flex;
+
+
+    justify-content:center;
+
+
+    align-items:center;
+
+
+    transition:0.2s;
+
+
+}
+
+.btn-volver:hover {
+
+
+    background:#eaf3ff;
+
+
+}
 
 /* FOOTER */
 

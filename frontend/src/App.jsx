@@ -24,7 +24,10 @@ import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
 
 import Login from "./pages/auth/Login.jsx";
 
+
+
 function App(){
+
 
 return (
 
@@ -34,30 +37,54 @@ return (
 
 <Routes>
 
+
+
+{/* Layout público */}
+
+<Route element={<PlantillaPrincipal />}>
+
+    <Route
+        path="/"
+        element={<Inicio />}
+    />
+
+
+</Route>
+
+
+
+
+
+{/* Login */}
+
 <Route
 
-path="/login"
+    path="/login"
 
-element={<Login />}
+    element={<Login />}
 
 />
+
+
+
+
+
+
+{/* Layout protegido */}
+
 <Route
+
 element={
+
 <ProtectedRoute>
+
 <PlantillaPrincipal />
+
 </ProtectedRoute>
 
 }
 
 >
-
-<Route
-
-path="/"
-
-element={<Inicio />}
-
-/>
 
 <Route
 
@@ -67,6 +94,8 @@ element={<Usuarios />}
 
 />
 
+
+
 <Route
 
 path="/usuarios/:id/editar"
@@ -74,6 +103,8 @@ path="/usuarios/:id/editar"
 element={<EditarUsuario />}
 
 />
+
+
 
 <Route
 
@@ -83,6 +114,8 @@ element={<RegistrarEstudiante />}
 
 />
 
+
+
 <Route
 
 path="/estudiantes/consultar"
@@ -90,6 +123,8 @@ path="/estudiantes/consultar"
 element={<Estudiantes />}
 
 />
+
+
 
 <Route
 
@@ -99,18 +134,33 @@ element={<DetalleEstudiante />}
 
 />
 
+
 </Route>
+
+
+
+
+
 
 <Route
 
 path="*"
 
-element={<Navigate to="/login" replace />}
+element={<Navigate to="/" replace />}
+
 />
+
+
+
 </Routes>
+
+
 </BrowserRouter>
+
 </AuthProvider>
+
 );
+
 
 }
 

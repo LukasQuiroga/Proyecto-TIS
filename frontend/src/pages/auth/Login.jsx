@@ -338,6 +338,22 @@ function Login(){
 
 
 
+                    <button
+
+                        type="button"
+
+                        className="btn-volver"
+
+                        onClick={() => navigate("/")}
+
+                    >
+
+                        ← Volver al inicio
+
+                    </button>
+
+
+
 
 
                 </form>
