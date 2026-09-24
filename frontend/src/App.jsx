@@ -6,6 +6,13 @@ import {
 } from "react-router-dom";
 
 
+import { AuthProvider } from "./context/AuthContext.jsx";
+
+
+import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+
+
+
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
@@ -17,101 +24,93 @@ import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
 
 import Login from "./pages/auth/Login.jsx";
 
+function App(){
 
+return (
 
-function App() {
+<AuthProvider>
 
+<BrowserRouter>
 
-  return (
+<Routes>
 
+<Route
 
-    <BrowserRouter>
+path="/login"
 
+element={<Login />}
 
-      <Routes>
+/>
+<Route
+element={
+<ProtectedRoute>
+<PlantillaPrincipal />
+</ProtectedRoute>
 
+}
 
+>
 
-        {/* Sistema principal */}
+<Route
 
-        <Route element={<PlantillaPrincipal />}>
+path="/"
 
+element={<Inicio />}
 
-          <Route
-            path="/"
-            element={<Inicio />}
-          />
+/>
 
+<Route
 
+path="/usuarios"
 
-          <Route
-            path="/usuarios"
-            element={<Usuarios />}
-          />
+element={<Usuarios />}
 
+/>
 
+<Route
 
-          <Route
-            path="/usuarios/:id/editar"
-            element={<EditarUsuario />}
-          />
+path="/usuarios/:id/editar"
 
+element={<EditarUsuario />}
 
+/>
 
-          <Route
-            path="/estudiantes/registrar"
-            element={<RegistrarEstudiante />}
-          />
+<Route
 
+path="/estudiantes/registrar"
 
+element={<RegistrarEstudiante />}
 
-          <Route
-            path="/estudiantes/consultar"
-            element={<Estudiantes />}
-          />
+/>
 
+<Route
 
+path="/estudiantes/consultar"
 
-          <Route
-            path="/estudiantes/:idUsuario"
-            element={<DetalleEstudiante />}
-          />
+element={<Estudiantes />}
 
+/>
 
+<Route
 
-        </Route>
+path="/estudiantes/:idUsuario"
 
+element={<DetalleEstudiante />}
 
+/>
 
+</Route>
 
+<Route
 
-        {/* HU01 Inicio de sesión */}
+path="*"
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-
-
-
-
-        {/* rutas inexistentes */}
-
-        <Route
-          path="*"
-          element={<Navigate to="/" replace />}
-        />
-
-
-
-      </Routes>
-
-
-    </BrowserRouter>
-
-
-  );
+element={<Navigate to="/login" replace />}
+/>
+</Routes>
+</BrowserRouter>
+</AuthProvider>
+);
 
 }
 

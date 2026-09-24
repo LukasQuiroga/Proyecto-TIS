@@ -1,39 +1,125 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import "./Login.css";
 
+import { login } from "../../services/authService";
+import { useAuth } from "../../context/useAuth";
 
-function Login() {
+
+
+function Login(){
 
 
     const navigate = useNavigate();
 
 
+    const { iniciarSesion } = useAuth();
+
+
+
+
     const [correo, setCorreo] = useState("");
+
     const [password, setPassword] = useState("");
 
+    const [mostrar, setMostrar] = useState(false);
+
+    const [recordar, setRecordar] = useState(false);
+
+    const [error, setError] = useState("");
+
+    const [cargando, setCargando] = useState(false);
 
 
-    const handleLogin = (e) => {
+
+
+
+
+    async function manejarLogin(e){
+
 
         e.preventDefault();
 
-        // Login temporal frontend
-        navigate("/");
 
-    };
+        setError("");
+
+
+
+        if(!correo || !password){
+
+
+            setError(
+                "Debe completar todos los campos."
+            );
+
+
+            return;
+
+        }
+
+
+
+
+
+        try{
+
+
+            setCargando(true);
+
+
+
+            const respuesta = await login(
+                correo,
+                password
+            );
+
+
+
+            iniciarSesion(
+                respuesta.usuario,
+                recordar
+            );
+
+
+
+            navigate("/");
+
+
+
+        }
+        catch{
+
+
+            setError(
+                "Credenciales incorrectas."
+            );
+
+
+        }
+        finally{
+
+
+            setCargando(false);
+
+
+        }
+
+
+    }
+
+
+
+
 
 
 
     return (
 
-
         <div className="login-page">
 
 
-
             <div className="login-card">
-
 
 
 
@@ -53,7 +139,23 @@ function Login() {
 
 
 
-                <form onSubmit={handleLogin}>
+                {
+                    error &&
+
+                    <div className="login-error">
+
+                        {error}
+
+                    </div>
+
+                }
+
+
+
+
+
+
+                <form onSubmit={manejarLogin}>
 
 
                     <label>
@@ -69,11 +171,13 @@ function Login() {
 
                             type="email"
 
-                            placeholder="202001068@edu.est.umss"
-
                             value={correo}
 
-                            onChange={(e)=>setCorreo(e.target.value)}
+                            placeholder="202001068@edu.est.umss"
+
+                            onChange={
+                                (e)=>setCorreo(e.target.value)
+                            }
 
                         />
 
@@ -94,24 +198,51 @@ function Login() {
 
                     <div className="input-container">
 
+
+
                         <input
 
-                            type="password"
 
-                            placeholder="Ingresa tu contraseña"
+                            type={
+                                mostrar
+                                ?
+                                "text"
+                                :
+                                "password"
+                            }
+
 
                             value={password}
 
-                            onChange={(e)=>setPassword(e.target.value)}
+
+                            placeholder="Ingresa tu contraseña"
+
+
+                            onChange={
+                                (e)=>setPassword(e.target.value)
+                            }
+
 
                         />
 
 
-                        <span className="eye">
+
+
+
+                        <span
+
+                            className="eye"
+
+                            onClick={
+                                ()=>setMostrar(!mostrar)
+                            }
+
+                        >
 
                             ◉
 
                         </span>
+
 
 
                     </div>
@@ -121,19 +252,37 @@ function Login() {
 
 
 
+
+
                     <div className="login-options">
+
 
 
                         <label className="remember">
 
 
-                            <input type="checkbox"/>
+                            <input
+
+
+                                type="checkbox"
+
+
+                                checked={recordar}
+
+
+                                onChange={
+                                    (e)=>setRecordar(e.target.checked)
+                                }
+
+
+                            />
 
 
                             Recordarme
 
 
                         </label>
+
 
 
 
@@ -147,7 +296,10 @@ function Login() {
 
 
 
+
                     </div>
+
+
 
 
 
@@ -157,20 +309,33 @@ function Login() {
 
                     <button
 
+
                         className="btn-login"
 
-                        type="submit"
+
+                        disabled={cargando}
+
 
                     >
 
-                        Iniciar sesión
 
-                        <span>
-                            →
-                        </span>
+                        {
+
+                            cargando
+
+                            ?
+
+                            "Procesando..."
+
+                            :
+
+                            "Iniciar sesión →"
+
+                        }
 
 
                     </button>
+
 
 
 
@@ -184,36 +349,10 @@ function Login() {
 
 
 
-
-
-
-
-            <footer className="login-footer">
-
-
-                <span>
-
-                    Sistema de Control de Ingreso a Exámenes Masivos
-
-                </span>
-
-
-                <span>
-
-                    © 2026. Todos los derechos reservados.
-
-                </span>
-
-
-            </footer>
-
-
-
-
         </div>
 
-
     );
+
 
 }
 
