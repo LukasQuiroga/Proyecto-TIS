@@ -6,6 +6,11 @@ import react
   from "@vitejs/plugin-react";
 
 
+const proxyTarget =
+  process.env.VITE_PROXY_TARGET
+  || "http://localhost:8080";
+
+
 export default defineConfig({
 
   plugins: [
@@ -19,7 +24,7 @@ export default defineConfig({
       "/api": {
 
         target:
-          "http://localhost:8080",
+          proxyTarget,
 
         changeOrigin:
           true,

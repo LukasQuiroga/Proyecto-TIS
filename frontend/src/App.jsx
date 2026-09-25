@@ -21,6 +21,7 @@ import Inicio from "./pages/Inicio/Inicio.jsx";
 import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
 import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
 import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
+import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Login from "./pages/auth/Login.jsx";
 
@@ -131,6 +132,16 @@ element={<Estudiantes />}
 path="/estudiantes/:idUsuario"
 
 element={<DetalleEstudiante />}
+
+/>
+
+
+
+<Route
+
+path="/auditoria"
+
+element={<Auditoria />}
 
 />
 
