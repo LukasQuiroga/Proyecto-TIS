@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./RolesPermisos.css";
-import { obtenerRoles } from "../../services/rolService";
+import { obtenerRoles, obtenerPermisos } from "../../services/rolService";
 
 const permisosDisponibles = [
   "Gestionar usuarios",
@@ -14,19 +14,33 @@ function RolesPermisos() {
 
     const [roles, setRoles] = useState([]);
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
+    const [permisos, setPermisos] = useState([]);
+    const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
 
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const respuesta = await obtenerRoles();
-                const rolesAdaptados = respuesta.data.map((rol) => ({
+                const [
+                    respuestaRoles,
+                    respuestaPermisos
+                ] = await Promise.all([
+                    obtenerRoles(),
+                    obtenerPermisos()
+                ]);
 
+
+                setPermisos(
+                    respuestaPermisos.data
+                );
+
+
+                const rolesAdaptados = respuestaRoles.data.map((rol) => ({
                     id: rol.idRol,
                     nombre: rol.nombreRol,
                     descripcion: rol.descripcionRol,
                     permisos: rol.permisos || []
-
                 }));
+
                 setRoles(rolesAdaptados);
             } catch(error) {
                 console.error(
@@ -164,7 +178,15 @@ function RolesPermisos() {
                   roles.map((rol) => (
                     <tr
                       key={rol.id}
-                      onClick={() => setRolSeleccionado(rol)}
+                      onClick={() => {
+
+                          setRolSeleccionado(rol);
+                          setPermisosSeleccionados(
+                              rol.permisos.map(
+                                  permiso => permiso.idPermiso
+                              )
+                          );
+                      }}
                     >
                       <td>{rol.id}</td>
                       <td>{rol.nombre}</td>
@@ -204,12 +226,43 @@ function RolesPermisos() {
             {
               rolSeleccionado ? (
 
-                rolSeleccionado.permisos.map((permiso) => (
-                  <label key={permiso.idPermiso}>
+                permisos.map((permiso) => (
+
+                  <label
+                    key={permiso.idPermiso}
+                  >
+
                     <input
-                      type="checkbox"
-                      checked
-                      readOnly
+                        type="checkbox"
+                        checked={
+                            permisosSeleccionados.includes(
+                                permiso.idPermiso
+                            )
+                        }
+                        onChange={() => {
+
+                            if(
+                                permisosSeleccionados.includes(
+                                    permiso.idPermiso
+                                )
+                            ){
+
+                                setPermisosSeleccionados(
+                                    permisosSeleccionados.filter(
+                                        id => id !== permiso.idPermiso
+                                    )
+                                );
+
+                            }else{
+
+                                setPermisosSeleccionados([
+                                    ...permisosSeleccionados,
+                                    permiso.idPermiso
+                                ]);
+
+                            }
+
+                        }}
                     />
                     {permiso.nombrePermiso}
                   </label>

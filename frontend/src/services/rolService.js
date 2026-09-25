@@ -9,3 +9,7 @@ export const obtenerRoles = () => {
 export const obtenerRol = (id) => {
   return axios.get(`${API}/${id}`)
 }
+
+export const obtenerPermisos = () => {
+  return axios.get('http://localhost:8080/api/permisos')
+}
