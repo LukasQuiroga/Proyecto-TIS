@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import "./RolesPermisos.css";
-import { obtenerRoles, obtenerPermisos, actualizarPermisosRol} from "../../services/rolService";
-const permisosDisponibles = [
-  "Gestionar usuarios",
-  "Gestionar estudiantes",
-  "Gestionar exámenes",
-  "Control de ingreso",
-  "Generar reportes"
-];
+import { obtenerRoles, obtenerPermisos, actualizarPermisosRol,
+  crearRol as crearRolServicio
+} from "../../services/rolService";
 
 function RolesPermisos() {
 
@@ -89,46 +84,68 @@ function RolesPermisos() {
 
     const cambiarPermisoNuevoRol = (permiso) => {
 
-    const permisosActualizados = nuevoRol.permisos.includes(permiso)
-        ? nuevoRol.permisos.filter((item) => item !== permiso)
-        : [...nuevoRol.permisos, permiso];
+    const permisosActualizados =
+            nuevoRol.permisos.includes(
+                permiso.idPermiso
+            )
 
+            ?
+            nuevoRol.permisos.filter(
+                (item) =>
+                item !== permiso.idPermiso
+            )
 
-    setNuevoRol({
-        ...nuevoRol,
-        permisos: permisosActualizados
-    });
-
+            :
+            [
+                ...nuevoRol.permisos,
+                permiso.idPermiso
+            ];
+        setNuevoRol({
+            ...nuevoRol,
+            permisos: permisosActualizados
+        });
     };
 
 
-    const crearRol = () => {
+    const crearRol = async () => {
+        try {
+            setProcesandoCrearRol(true);
 
-    setProcesandoCrearRol(true);
+            const respuesta = await crearRolServicio({
 
+                nombreRol: nuevoRol.nombre,
+                descripcionRol: nuevoRol.descripcion,
+                permisos: nuevoRol.permisos
 
-    setTimeout(() => {
+            });
 
-        const rolCreado = {
-        id: roles.length + 1,
-        nombre: nuevoRol.nombre,
-        descripcion: nuevoRol.descripcion,
-        permisos: nuevoRol.permisos
-        };
+            const rolCreado = {
 
+                id: respuesta.data.idRol,
+                nombre: respuesta.data.nombreRol,
+                descripcion: respuesta.data.descripcionRol,
+                permisos: respuesta.data.permisos
 
-        setRoles([
-        ...roles,
-        rolCreado
-        ]);
+            };
 
+            setRoles([
+                ...roles,
+                rolCreado
+            ]);
 
-        setProcesandoCrearRol(false);
-        setMostrarExito(true);
+            setMostrarExito(true);
+            cerrarModalNuevoRol();
 
-        cerrarModalNuevoRol();
+        } catch(error) {
 
-    }, 1500);
+            console.error(
+                "Error creando rol:",
+                error
+            );
+
+        } finally {
+            setProcesandoCrearRol(false);
+        }
 
     };
 
@@ -413,22 +430,26 @@ function RolesPermisos() {
                 </label>
 
                 {
-                  permisosDisponibles.map((permiso) => (
+                  permisos.map((permiso) => (
 
                     <label
-                      key={permiso}
+                      key={permiso.idPermiso}
                       className="permiso-checkbox"
                     >
 
                       <input
                         type="checkbox"
-                        checked={nuevoRol.permisos.includes(permiso)}
+                        checked={
+                            nuevoRol.permisos.includes(
+                               permiso.idPermiso
+                            )
+                        }
                         onChange={() =>
                           cambiarPermisoNuevoRol(permiso)
                         }
                       />
 
-                      {permiso}
+                      {permiso.nombrePermiso}
 
                     </label>
 
