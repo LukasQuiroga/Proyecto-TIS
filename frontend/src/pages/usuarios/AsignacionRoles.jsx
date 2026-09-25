@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./AsignacionRoles.css";
-import { obtenerUsuarios } from "../../services/usuarioService";
+import { obtenerUsuarios, cambiarRolUsuario} from "../../services/usuarioService";
 import { obtenerRoles } from "../../services/rolService";
 
 function AsignacionRoles() {
@@ -9,7 +9,8 @@ function AsignacionRoles() {
     const [cargando, setCargando] = useState(true);
     const [roles, setRoles] = useState([]);
     const [rolesSeleccionados, setRolesSeleccionados] = useState({});
-
+    const [guardando, setGuardando] = useState(false);
+    const [mostrarExito, setMostrarExito] = useState(false);
 
 
     useEffect(() => {
@@ -60,6 +61,44 @@ function AsignacionRoles() {
         });
     };
 
+    const guardarRol = async (usuario) => {
+        try {
+            const nuevoRol =
+                rolesSeleccionados[usuario.idUsuario];
+
+            if(!nuevoRol){
+                return;
+            }
+
+            setGuardando(true);
+
+            await cambiarRolUsuario(
+                usuario.idUsuario,
+                nuevoRol
+            );
+
+            const respuesta =
+                await obtenerUsuarios();
+
+            setUsuarios(
+                respuesta.data
+            );
+
+            setMostrarExito(true);
+
+        } catch(error) {
+
+            console.error(
+                "Error actualizando rol:",
+                error.response?.data
+            );
+
+        } finally {
+            setGuardando(false);
+        }
+
+    };
+
     return (
         <div className="asignacion-roles">
             <div className="asignacion-header">
@@ -81,6 +120,7 @@ function AsignacionRoles() {
                                     <th>Correo</th>
                                     <th>Rol actual</th>
                                     <th>Nuevo rol</th>
+                                    <th>Acción</th>
                                 </tr>
                             </thead>
 
@@ -127,11 +167,26 @@ function AsignacionRoles() {
                                                 }
                                                 </select>
                                                 </td>
+                                                <td>
+
+                                                    <button
+                                                        className="guardar-rol"
+                                                        disabled={guardando}
+                                                        onClick={() => guardarRol(usuario)}
+                                                    >
+                                                        {
+                                                            guardando
+                                                            ? "Guardando..."
+                                                            : "Guardar"
+                                                        }
+                                                    </button>
+
+                                                </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="3" className="sin-datos">
+                                            <td colSpan="5" className="sin-datos">
                                                 No existen usuarios registrados.
                                             </td>
                                         </tr>
@@ -142,6 +197,34 @@ function AsignacionRoles() {
                     )
                 }
             </div>
+            {
+                mostrarExito && (
+
+                    <div className="modal-fondo">
+
+                        <div className="modal-exito">
+
+                            <div className="icono-exito">
+                                ✓
+                            </div>
+
+                            <h2>
+                                Rol actualizado correctamente
+                            </h2>
+
+                            <button
+                                className="guardar-rol"
+                                onClick={() => setMostrarExito(false)}
+                            >
+                                Aceptar
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                )
+            }
         </div>
     );
 }

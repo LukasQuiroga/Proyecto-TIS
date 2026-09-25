@@ -17,3 +17,9 @@ export const modificarUsuario = (id, usuario) => {
     usuario
   )
 }
+
+export const cambiarRolUsuario = (id, idRol) => {
+  return axios.put(`${API}/${id}/rol`, {
+    idRol
+  })
+}
