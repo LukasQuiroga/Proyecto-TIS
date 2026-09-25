@@ -27,6 +27,7 @@ public class RecuperacionContrasenaServicio {
     private final UsuarioRepositorio usuarioRepositorio;
     private final RecuperacionContrasenaRepositorio recuperacionRepositorio;
     private final PasswordEncoder passwordEncoder;
+    private final CorreoServicio correoServicio;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -35,11 +36,13 @@ public class RecuperacionContrasenaServicio {
             UsuarioRepositorio usuarioRepositorio,
             RecuperacionContrasenaRepositorio recuperacionRepositorio,
             PasswordEncoder passwordEncoder
+            CorreoServicio correoServicio
     ){
 
         this.usuarioRepositorio = usuarioRepositorio;
         this.recuperacionRepositorio = recuperacionRepositorio;
         this.passwordEncoder = passwordEncoder;
+        this.correoServicio = correoServicio;
 
     }
 
@@ -137,6 +140,11 @@ public class RecuperacionContrasenaServicio {
         recuperacionRepositorio.save(
                 recuperacion
         );
+        
+        correoServicio.enviarCodigoRecuperacion(
+        usuario.getCorreo(),
+        codigo
+);
 
     }
 
