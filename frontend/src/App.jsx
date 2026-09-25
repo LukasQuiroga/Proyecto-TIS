@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 
 
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+import ProtectedPermission from "./routes/ProtectedPermission";
 
 
 
@@ -71,7 +72,13 @@ function App() {
 
             <Route
               path="/usuarios/roles-permisos"
-              element={<RolesPermisos />}
+              element={
+                  <ProtectedPermission
+                      permiso="GESTIONAR_ROLES"
+                  >
+                      <RolesPermisos/>
+                  </ProtectedPermission>
+              }
             />
 
             <Route

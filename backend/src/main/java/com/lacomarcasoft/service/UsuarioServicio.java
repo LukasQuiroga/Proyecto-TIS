@@ -122,28 +122,32 @@ public class UsuarioServicio {
 
     }
 
-    private UsuarioRespuesta convertirRespuesta(
-            Usuario usuario
-    ){
+        private UsuarioRespuesta convertirRespuesta(
+                Usuario usuario
+        ){
+
+        List<String> permisos =
+                usuario.getRol()
+                        .getPermisos()
+                        .stream()
+                        .map(permiso ->
+                                permiso.getNombrePermiso()
+                        )
+                        .toList();
 
         return new UsuarioRespuesta(
 
                 usuario.getIdUsuario(),
-
                 usuario.getNombre(),
-
                 usuario.getApellido(),
-
                 usuario.getCorreo(),
-
                 usuario.getRol().getIdRol(),
-
                 usuario.getRol().getNombreRol(),
-
-                usuario.getActivo()
+                usuario.getActivo(),
+                permisos
 
         );
 
-    }
+        }
 
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 import "./Sidebar.css";
 
 
@@ -49,7 +50,14 @@ function Sidebar() {
 
 
   const [usuariosAbierto, setUsuariosAbierto] = useState(false);
+  const { usuario } = useAuth();
 
+
+  const tienePermiso = (permiso) => {
+
+    return usuario?.permisos?.includes(permiso);
+
+  };
 
 
   return (
@@ -203,18 +211,24 @@ function Sidebar() {
 
 
 
-              <NavLink
-                to="/usuarios/roles-permisos"
-                className={({ isActive }) =>
-                  `sidebar-subopcion ${
-                    isActive
-                      ? "sidebar-subopcion-activa"
-                      : ""
-                  }`
-                }
-              >
-                Roles y permisos
-              </NavLink>
+              {
+                tienePermiso("GESTIONAR_ROLES") && (
+
+                  <NavLink
+                    to="/usuarios/roles-permisos"
+                    className={({ isActive }) =>
+                      `sidebar-subopcion ${
+                        isActive
+                          ? "sidebar-subopcion-activa"
+                          : ""
+                      }`
+                    }
+                  >
+                    Roles y permisos
+                  </NavLink>
+
+                )
+              }
 
 
 
