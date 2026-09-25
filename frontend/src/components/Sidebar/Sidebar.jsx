@@ -239,6 +239,15 @@ function Sidebar() {
         </div>
 
 
+
+        <Opcion
+          to="/auditoria"
+          icono="◎"
+        >
+          Auditoría
+        </Opcion>
+
+
       </nav>
 
 
