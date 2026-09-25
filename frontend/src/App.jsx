@@ -1,169 +1,83 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes
-} from "react-router-dom";
-
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext.jsx";
-
-
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
-
-
-import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
-import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import Inicio from "./pages/Inicio/Inicio.jsx";
-
-import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
-import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
-import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
+import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
+import Usuarios from "./pages/usuarios/Usuarios.jsx";
 
 import Login from "./pages/auth/Login.jsx";
+import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
+import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
+import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+
+          {/* Rutas públicas */}
+
+          <Route path="/login" element={<Login />} />
+
+          <Route
+            path="/recuperar-contrasena"
+            element={<RecuperarContrasena />}
+          />
+
+          <Route
+            path="/verificar-codigo"
+            element={<VerificarCodigo />}
+          />
+
+          <Route
+            path="/nueva-contrasena"
+            element={<NuevaContrasena />}
+          />
 
 
+          {/* Inicio */}
 
-function App(){
-
-
-return (
-
-<AuthProvider>
-
-<BrowserRouter>
-
-<Routes>
+          <Route element={<PlantillaPrincipal />}>
+            <Route path="/" element={<Inicio />} />
+          </Route>
 
 
+          {/* Rutas protegidas basadas en usuarios */}
 
-{/* Layout público */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <PlantillaPrincipal />
+              </ProtectedRoute>
+            }
+          >
 
-<Route element={<PlantillaPrincipal />}>
+            <Route
+              path="/usuarios"
+              element={<Usuarios />}
+            />
 
-    <Route
-        path="/"
-        element={<Inicio />}
-    />
+            <Route
+              path="/usuarios/:id/editar"
+              element={<EditarUsuario />}
+            />
 
-
-</Route>
-
-
-
-
-
-{/* Login */}
-
-<Route
-
-    path="/login"
-
-    element={<Login />}
-
-/>
+          </Route>
 
 
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
 
-
-
-
-{/* Layout protegido */}
-
-<Route
-
-element={
-
-<ProtectedRoute>
-
-<PlantillaPrincipal />
-
-</ProtectedRoute>
-
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
-
->
-
-<Route
-
-path="/usuarios"
-
-element={<Usuarios />}
-
-/>
-
-
-
-<Route
-
-path="/usuarios/:id/editar"
-
-element={<EditarUsuario />}
-
-/>
-
-
-
-<Route
-
-path="/estudiantes/registrar"
-
-element={<RegistrarEstudiante />}
-
-/>
-
-
-
-<Route
-
-path="/estudiantes/consultar"
-
-element={<Estudiantes />}
-
-/>
-
-
-
-<Route
-
-path="/estudiantes/:idUsuario"
-
-element={<DetalleEstudiante />}
-
-/>
-
-
-</Route>
-
-
-
-
-
-
-<Route
-
-path="*"
-
-element={<Navigate to="/" replace />}
-
-/>
-
-
-
-</Routes>
-
-
-</BrowserRouter>
-
-</AuthProvider>
-
-);
-
-
-}
-
-
 
 export default App;

@@ -5,7 +5,9 @@
          http://maven.apache.org/POM/4.0.0
          https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+
     <modelVersion>4.0.0</modelVersion>
+
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -14,31 +16,72 @@
         <relativePath/>
     </parent>
 
+
+
     <groupId>com.lacomarcasoft</groupId>
+
     <artifactId>exampass</artifactId>
+
     <version>0.0.1-SNAPSHOT</version>
+
     <name>ExamPass</name>
 
+
+
     <properties>
+
         <java.version>21</java.version>
+
     </properties>
 
+
+
     <dependencies>
+
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
+
+
+        <!-- NUEVO HU02:
+             BCryptPasswordEncoder
+             PasswordEncoder
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+
+
+        <!-- NUEVO HU02:
+             JavaMailSender
+             SimpleMailMessage
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+
 
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -46,10 +89,14 @@
             <scope>runtime</scope>
         </dependency>
 
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
+
+
 
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -57,28 +104,52 @@
             <scope>runtime</scope>
         </dependency>
 
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
+
+
     </dependencies>
 
+
+
     <build>
+
         <sourceDirectory>backend/src/main/java</sourceDirectory>
+
         <testSourceDirectory>backend/src/test/java</testSourceDirectory>
+
+
         <resources>
+
             <resource>
                 <directory>backend/src/main/resources</directory>
             </resource>
+
         </resources>
+
+
         <plugins>
+
             <plugin>
+
                 <groupId>org.springframework.boot</groupId>
+
                 <artifactId>spring-boot-maven-plugin</artifactId>
+
             </plugin>
+
+
         </plugins>
+
+
     </build>
+
+
 
 </project>

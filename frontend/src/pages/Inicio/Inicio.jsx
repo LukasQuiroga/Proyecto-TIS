@@ -4,13 +4,6 @@ function IconoModulo({ tipo }) {
 
   const iconos = {
 
-    estudiantes: (
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
-      </svg>
-    ),
-
     examenes: (
       <svg viewBox="0 0 24 24">
         <rect x="5" y="3" width="14" height="18" rx="2" />
@@ -71,13 +64,6 @@ function IconoModulo({ tipo }) {
 const funcionalidades = [
 
   {
-    tipo: "estudiantes",
-    titulo: "Estudiantes",
-    descripcion:
-      "Registro, consulta y administración de estudiantes del sistema.",
-  },
-
-  {
     tipo: "examenes",
     titulo: "Exámenes",
     descripcion:
@@ -95,14 +81,14 @@ const funcionalidades = [
     tipo: "habilitaciones",
     titulo: "Habilitaciones",
     descripcion:
-      "Control de estudiantes habilitados para cada examen.",
+      "Control de usuarios habilitados para cada examen.",
   },
 
   {
     tipo: "ingreso",
     titulo: "Control de ingreso",
     descripcion:
-      "Validación de estudiantes durante el ingreso a los exámenes.",
+      "Validación de usuarios durante el ingreso a los exámenes.",
   },
 
   {

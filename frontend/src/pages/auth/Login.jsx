@@ -35,7 +35,6 @@ function Login(){
 
 
 
-
     async function manejarLogin(e){
 
 
@@ -57,7 +56,6 @@ function Login(){
             return;
 
         }
-
 
 
 
@@ -112,11 +110,11 @@ function Login(){
 
 
 
-
-
     return (
 
+
         <div className="login-page">
+
 
 
             <div className="login-card">
@@ -126,6 +124,7 @@ function Login(){
                 <h1>
                     Acceso al sistema
                 </h1>
+
 
 
 
@@ -149,7 +148,6 @@ function Login(){
                     </div>
 
                 }
-
 
 
 
@@ -189,15 +187,14 @@ function Login(){
 
 
 
-
                     <label>
                         Contraseña
                     </label>
 
 
 
-                    <div className="input-container">
 
+                    <div className="input-container">
 
 
                         <input
@@ -288,11 +285,23 @@ function Login(){
 
 
 
-                        <a href="#">
+
+                        <button
+
+                            type="button"
+
+                            className="forgot-password"
+
+                            onClick={
+                                ()=>navigate("/recuperar-contrasena")
+                            }
+
+                        >
 
                             ¿Olvidaste tu contraseña?
 
-                        </a>
+                        </button>
+
 
 
 
@@ -319,6 +328,7 @@ function Login(){
                     >
 
 
+
                         {
 
                             cargando
@@ -334,7 +344,11 @@ function Login(){
                         }
 
 
+
                     </button>
+
+
+
 
 
 
@@ -349,6 +363,7 @@ function Login(){
                     >
 
                         ← Volver al inicio
+
 
                     </button>
 
@@ -365,7 +380,9 @@ function Login(){
 
 
 
+
         </div>
+
 
     );
 

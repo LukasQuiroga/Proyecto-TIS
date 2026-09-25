@@ -510,3 +510,25 @@
 
 
 }
+.forgot-password{
+
+    border:none;
+
+    background:none;
+
+    color:#2563eb;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    padding:0;
+
+}
+
+
+.forgot-password:hover{
+
+    text-decoration:underline;
+
+}
