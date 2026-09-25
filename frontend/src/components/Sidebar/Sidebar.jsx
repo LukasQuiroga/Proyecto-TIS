@@ -204,16 +204,16 @@ function Sidebar() {
 
 
               <NavLink
-
-                to="/usuarios/roles"
-
-                className="sidebar-subopcion"
-
+                to="/usuarios/roles-permisos"
+                className={({ isActive }) =>
+                  `sidebar-subopcion ${
+                    isActive
+                      ? "sidebar-subopcion-activa"
+                      : ""
+                  }`
+                }
               >
-
                 Roles y permisos
-
-
               </NavLink>
 
 

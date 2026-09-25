@@ -14,6 +14,7 @@ import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
 
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
+import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import Inicio from "./pages/Inicio/Inicio.jsx";
@@ -27,154 +28,88 @@ import Login from "./pages/auth/Login.jsx";
 
 
 
-function App(){
+function App() {
+
+  return (
+    <AuthProvider>
+
+      <BrowserRouter>
+
+        <Routes>
+
+          {/* Layout público */}
+          <Route element={<PlantillaPrincipal />}>
+
+            <Route
+              path="/"
+              element={<Inicio />}
+            />
+
+          </Route>
 
 
-return (
-
-<AuthProvider>
-
-<BrowserRouter>
-
-<Routes>
+          {/* Login */}
+          <Route
+            path="/login"
+            element={<Login />}
+          />
 
 
+          {/* Layout protegido */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <PlantillaPrincipal />
+              </ProtectedRoute>
+            }
+          >
 
-{/* Layout público */}
+            <Route
+              path="/usuarios"
+              element={<Usuarios />}
+            />
 
-<Route element={<PlantillaPrincipal />}>
+            <Route
+              path="/usuarios/roles-permisos"
+              element={<RolesPermisos />}
+            />
 
-    <Route
-        path="/"
-        element={<Inicio />}
-    />
+            <Route
+              path="/usuarios/:id/editar"
+              element={<EditarUsuario />}
+            />
+
+            <Route
+              path="/estudiantes/registrar"
+              element={<RegistrarEstudiante />}
+            />
+
+            <Route
+              path="/estudiantes/consultar"
+              element={<Estudiantes />}
+            />
+
+            <Route
+              path="/estudiantes/:idUsuario"
+              element={<DetalleEstudiante />}
+            />
+
+          </Route>
 
 
-</Route>
+          {/* Ruta no encontrada */}
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
 
+        </Routes>
 
+      </BrowserRouter>
 
-
-
-{/* Login */}
-
-<Route
-
-    path="/login"
-
-    element={<Login />}
-
-/>
-
-
-
-
-
-
-{/* Layout protegido */}
-
-<Route
-
-element={
-
-<ProtectedRoute>
-
-<PlantillaPrincipal />
-
-</ProtectedRoute>
-
+    </AuthProvider>
+  );
 }
-
->
-
-<Route
-
-path="/usuarios"
-
-element={<Usuarios />}
-
-/>
-
-
-
-<Route
-
-path="/usuarios/:id/editar"
-
-element={<EditarUsuario />}
-
-/>
-
-
-
-<Route
-
-path="/estudiantes/registrar"
-
-element={<RegistrarEstudiante />}
-
-/>
-
-
-
-<Route
-
-path="/estudiantes/consultar"
-
-element={<Estudiantes />}
-
-/>
-
-
-
-<Route
-
-path="/estudiantes/:idUsuario"
-
-element={<DetalleEstudiante />}
-
-/>
-
-
-
-<Route
-
-path="/auditoria"
-
-element={<Auditoria />}
-
-/>
-
-
-</Route>
-
-
-
-
-
-
-<Route
-
-path="*"
-
-element={<Navigate to="/" replace />}
-
-/>
-
-
-
-</Routes>
-
-
-</BrowserRouter>
-
-</AuthProvider>
-
-);
-
-
-}
-
 
 
 export default App;
