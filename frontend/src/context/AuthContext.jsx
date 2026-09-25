@@ -10,7 +10,8 @@ export function AuthProvider({ children }) {
 
 
         const usuarioGuardado =
-            localStorage.getItem("usuario");
+            localStorage.getItem("usuario")||
+            sessionStorage.getItem("usuario");
 
 
         return usuarioGuardado

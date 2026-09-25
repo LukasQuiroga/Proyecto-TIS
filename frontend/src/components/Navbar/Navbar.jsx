@@ -1,63 +1,36 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 import "./Navbar.css";
 
+function Navbar(){
 
-function Navbar() {
+    const navigate = useNavigate();
+    const { usuario } = useAuth();
 
+    return(
+        <header className="navbar">
 
-  const navigate = useNavigate();
+            <div className="navbar-menu">
+                ☰
+            </div>
 
+            <div 
+                className="navbar-login"
+                onClick={() => navigate("/login")}
+            >
 
+                <div className="navbar-avatar">
+                    👤
+                </div>
 
-  return (
+                <span>
+                    {usuario ? usuario.nombre : "Inicio de sesión"}
+                </span>
 
-    <header className="navbar">
+            </div>
 
-
-      <div className="navbar-menu">
-
-        ☰
-
-      </div>
-
-
-
-
-      <div
-
-        className="navbar-login"
-
-        onClick={() => navigate("/login")}
-
-      >
-
-
-        <div className="navbar-avatar">
-
-          👤
-
-        </div>
-
-
-
-        <span>
-
-          Inicio de sesión
-
-        </span>
-
-
-
-      </div>
-
-
-
-    </header>
-
-  );
-
+        </header>
+    );
 }
-
-
 
 export default Navbar;

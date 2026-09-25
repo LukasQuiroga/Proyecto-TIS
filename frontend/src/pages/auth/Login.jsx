@@ -86,15 +86,24 @@ function Login(){
 
 
         }
-        catch{
+            catch(error){
+
+        console.log(
+            "ERROR LOGIN:",
+            error
+        );
+
+        console.log(
+            "RESPUESTA BACKEND:",
+            error.response?.data
+        );
 
 
-            setError(
-                "Credenciales incorrectas."
-            );
+        setError(
+            error.response?.data || "Error desconocido"
+        );
 
-
-        }
+    }
         finally{
 
 

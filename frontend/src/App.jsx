@@ -1,109 +1,136 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext.jsx";
+
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+import ProtectedPermission from "./routes/ProtectedPermission.jsx";
 
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 
 import Inicio from "./pages/Inicio/Inicio.jsx";
-
-import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
-import Usuarios from "./pages/usuarios/Usuarios.jsx";
-
-
-
-import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Login from "./pages/auth/Login.jsx";
 import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
 import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
 import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
 
+import Usuarios from "./pages/usuarios/Usuarios.jsx";
+import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
+import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 
-function App(){
-
-    return(
-        <AuthProvider>
-            <BrowserRouter>
-
-                <Routes>
-
-                    {/* Rutas públicas */}
-
-                    <Route
-                        path="/login"
-                        element={<Login />}
-                    />
-
-                    <Route
-                        path="/recuperar-contrasena"
-                        element={<RecuperarContrasena />}
-                    />
-
-                    <Route
-                        path="/verificar-codigo"
-                        element={<VerificarCodigo />}
-                    />
-
-                    <Route
-                        path="/nueva-contrasena"
-                        element={<NuevaContrasena />}
-                    />
+import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 
-                    {/* Inicio */}
+function App() {
 
-                    <Route element={<PlantillaPrincipal />}>
+  return (
+    <AuthProvider>
 
-                        <Route
-                            path="/"
-                            element={<Inicio />}
-                        />
+      <BrowserRouter>
 
-                    </Route>
+        <Routes>
 
 
-                    {/* Rutas protegidas */}
+          {/* RUTAS PUBLICAS */}
 
-                    <Route
-                        element={
-                            <ProtectedRoute>
-                                <PlantillaPrincipal />
-                            </ProtectedRoute>
-                        }
-                    >
+          <Route
+            path="/login"
+            element={<Login />}
+          />
 
-                        <Route
-                            path="/usuarios"
-                            element={<Usuarios />}
-                        />
+          <Route
+            path="/recuperar-contrasena"
+            element={<RecuperarContrasena />}
+          />
 
-                        <Route
-                            path="/usuarios/:id/editar"
-                            element={<EditarUsuario />}
-                        />
+          <Route
+            path="/verificar-codigo"
+            element={<VerificarCodigo />}
+          />
 
-                        <Route
-                            path="/auditoria"
-                            element={<Auditoria />}
-                        />
-
-                    </Route>
+          <Route
+            path="/nueva-contrasena"
+            element={<NuevaContrasena />}
+          />
 
 
-                    {/* Ruta no encontrada */}
 
-                    <Route
-                        path="*"
-                        element={<Navigate to="/" replace />}
-                    />
+          {/* PAGINA INICIAL */}
 
-                </Routes>
+          <Route
+            element={<PlantillaPrincipal />}
+          >
 
-            </BrowserRouter>
-        </AuthProvider>
-    );
+            <Route
+              path="/"
+              element={<Inicio />}
+            />
 
+          </Route>
+
+
+
+          {/* RUTAS PROTEGIDAS */}
+
+          <Route
+            element={
+              <ProtectedRoute>
+                <PlantillaPrincipal />
+              </ProtectedRoute>
+            }
+          >
+
+
+            {/* Gestión Usuarios */}
+
+            <Route
+              path="/usuarios"
+              element={<Usuarios />}
+            />
+
+
+            <Route
+              path="/usuarios/:id/editar"
+              element={<EditarUsuario />}
+            />
+
+
+            <Route
+              path="/usuarios/roles-permisos"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_ROLES">
+                  <RolesPermisos />
+                </ProtectedPermission>
+              }
+            />
+
+
+            {/* Auditoría */}
+
+            <Route
+              path="/auditoria"
+              element={<Auditoria />}
+            />
+
+
+          </Route>
+
+
+
+          {/* RUTA DESCONOCIDA */}
+
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
+
+
+        </Routes>
+
+      </BrowserRouter>
+
+    </AuthProvider>
+  );
 }
 
 
