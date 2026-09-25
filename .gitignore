@@ -1,0 +1,29 @@
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+target/
+*.class
+
+# Node
+node_modules/
+dist/
+
+# Logs
+*.log
+
+# Referencias de diseño
+image.png
+image2.png
+image3.png
