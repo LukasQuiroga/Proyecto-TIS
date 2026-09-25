@@ -10,9 +10,7 @@ import Inicio from "./pages/Inicio/Inicio.jsx";
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
 
-import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
-import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
-import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
+
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -83,22 +81,6 @@ function App(){
                         <Route
                             path="/usuarios/:id/editar"
                             element={<EditarUsuario />}
-                        />
-
-
-                        <Route
-                            path="/estudiantes/registrar"
-                            element={<RegistrarEstudiante />}
-                        />
-
-                        <Route
-                            path="/estudiantes/consultar"
-                            element={<Estudiantes />}
-                        />
-
-                        <Route
-                            path="/estudiantes/:idUsuario"
-                            element={<DetalleEstudiante />}
                         />
 
                         <Route
