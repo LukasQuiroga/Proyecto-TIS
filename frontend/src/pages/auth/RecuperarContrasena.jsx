@@ -54,7 +54,7 @@ function RecuperarContrasena() {
             },1000);
 
 
-        } catch(error){
+        } catch{
 
             setError(
                 "No se pudo procesar la solicitud"

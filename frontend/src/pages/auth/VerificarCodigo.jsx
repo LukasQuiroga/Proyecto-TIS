@@ -56,12 +56,10 @@ codigo
 );
 
 
-
 navigate("/nueva-contrasena");
 
 
-
-}catch(error){
+}catch{
 
 setError(
 "Código incorrecto o expirado"
@@ -69,11 +67,7 @@ setError(
 
 }
 
-
-
 };
-
-
 
 return (
 
@@ -98,7 +92,6 @@ Ingresa el código enviado a tu correo.
 
 
 <input
-
 type="text"
 
 maxLength="6"
