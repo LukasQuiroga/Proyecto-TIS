@@ -4,6 +4,7 @@ import com.lacomarcasoft.dto.request.ActualizarPermisosSolicitud;
 import com.lacomarcasoft.dto.response.RolRespuesta;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.service.RolServicio;
+import com.lacomarcasoft.dto.request.CrearRolSolicitud;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +45,19 @@ public class RolControlador {
         return ResponseEntity.ok(
                 rolServicio.buscarRespuesta(id)
         );
+    }
+
+    @PostMapping
+        public ResponseEntity<RolRespuesta> crearRol(
+                @RequestBody CrearRolSolicitud solicitud
+        ){
+
+        return ResponseEntity.ok(
+                rolServicio.crear(
+                        solicitud
+                )
+        );
+
     }
 
     @PutMapping("/{id}/permisos")
