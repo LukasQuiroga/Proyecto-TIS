@@ -40,19 +40,28 @@ localStorage.getItem(
 );
 
 
+console.log("ENVIANDO VERIFICACION:");
+console.log({
+    correo,
+    codigo
+});
+
 
 try{
 
 
-await verificarCodigoRecuperacion(
-correo,
-codigo
+const respuesta = await verificarCodigoRecuperacion(
+    correo,
+    codigo
 );
 
 
+console.log("RESPUESTA BACKEND:");
+console.log(respuesta);
+
 localStorage.setItem(
-"codigoRecuperacion",
-codigo
+    "tokenRecuperacion",
+    respuesta.token
 );
 
 
