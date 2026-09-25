@@ -24,25 +24,21 @@ public class SecurityConfig {
     private final String adminPassword;
 
     public SecurityConfig(
-            @Value("${app.security.admin-password:exampass}")
-            String adminPassword
+            @Value("${app.security.admin-password:exampass}") String adminPassword
     ) {
         this.adminPassword = adminPassword;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/logs/**")
-                        .hasRole("ADMIN")
-                        .anyRequest()
-                        .permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/logs/**").hasRole("ADMIN")
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
@@ -63,8 +59,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories
-                .createDelegatingPasswordEncoder();
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
@@ -78,6 +73,7 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
 
         return source;
