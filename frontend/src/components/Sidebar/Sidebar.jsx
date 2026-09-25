@@ -316,6 +316,12 @@ function Sidebar() {
 
 
 
+<Opcion
+          to="/auditoria"
+          icono="◎"
+        >
+          Auditoría
+        </Opcion>
 
 
 
@@ -368,27 +374,6 @@ function Sidebar() {
 
 
 
-
-
-
-        <div className="sidebar-opcion">
-
-
-          <span className="sidebar-icono">
-
-            ◴
-
-          </span>
-
-
-          <span>
-
-            Auditoría
-
-          </span>
-
-
-        </div>
 
 
 

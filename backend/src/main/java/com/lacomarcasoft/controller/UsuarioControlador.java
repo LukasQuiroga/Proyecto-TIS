@@ -6,12 +6,16 @@ import com.lacomarcasoft.dto.request.ModificarUsuarioSolicitud;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 
+import com.lacomarcasoft.service.LogActividadServicio;
 import com.lacomarcasoft.service.UsuarioServicio;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
@@ -28,15 +32,27 @@ public class UsuarioControlador {
 
 
 
+    private static final Logger LOG =
+            LoggerFactory.getLogger(
+                    UsuarioControlador.class
+            );
+
+
+
     private final UsuarioServicio usuarioServicio;
+
+    private final LogActividadServicio logActividadServicio;
 
 
 
     public UsuarioControlador(
-            UsuarioServicio usuarioServicio
+            UsuarioServicio usuarioServicio,
+            LogActividadServicio logActividadServicio
     ){
 
         this.usuarioServicio = usuarioServicio;
+
+        this.logActividadServicio = logActividadServicio;
 
     }
 
@@ -74,8 +90,16 @@ public class UsuarioControlador {
 
             @PathVariable Long id,
 
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
             @Valid
-            @RequestBody ModificarUsuarioSolicitud solicitud
+            @RequestBody ModificarUsuarioSolicitud solicitud,
+
+            HttpServletRequest request
 
     ){
 
@@ -114,12 +138,46 @@ public class UsuarioControlador {
 
                 );
 
+        registrarAuditoria(
+                idUsuarioResponsable,
+                id,
+                request
+        );
+
 
         return ResponseEntity.ok(
 
                 actualizado
 
         );
+
+    }
+
+    private void registrarAuditoria(
+            Long idUsuarioResponsable,
+            Long idUsuarioModificado,
+            HttpServletRequest request
+    ) {
+
+        try {
+
+            logActividadServicio.registrar(
+                    idUsuarioResponsable,
+                    "MODIFICAR_USUARIO",
+                    "Se modificó el usuario con id " +
+                            idUsuarioModificado,
+                    request.getRemoteAddr(),
+                    true
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
 
     }
 

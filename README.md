@@ -52,6 +52,20 @@ Tablas esperadas: `rol`, `usuario`, `log_actividad` y `flyway_schema_history`.
 - **BD / usuario / contraseña (por defecto):** `exampass` / `exampass` / `exampass` (configurable en `.env`)
 - **Migraciones:** Flyway, scripts en `backend/src/main/resources/db/migration/`
   - `V1__init.sql` — esquema inicial (rol, usuario, log_actividad) + roles semilla (ADMINISTRADOR, DOCENTE, ESTUDIANTE)
+  - `V2__log_actividad_exitosa.sql` — columna `exitosa` en log_actividad (HU04)
+
+## Base de datos en la nube (Neon)
+
+Para que todo el equipo comparta una misma base de datos:
+
+1. Crear un proyecto en [Neon](https://neon.tech) y copiar el *connection string*:
+   `postgres://usuario:CONTRASENA@ep-xxxx-yyyy-0000.us-east-2.aws.neon.tech/neondb?sslmode=require`
+2. Copiar `.env.cloud.example` → `.env` y rellenar `DB_HOST`, `DB_USER`, `DB_PASSWORD` con esos valores.
+3. Levantar la aplicación con `.\run.ps1` (carga el `.env` y arranca Spring Boot; Flyway crea/actualiza el esquema).
+
+> Las credenciales van en el `.env` (ignorado por git). No se suben contraseñas al repositorio.
+> Para usar el Postgres local de Docker en lugar de la nube, quita o comenta las variables `DB_*`
+> (la app vuelve a `localhost:5432/exampass/exampass`) y levanta con `.\mvnw.cmd spring-boot:run`.
 
 ## Convenciones
 

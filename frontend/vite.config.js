@@ -1,33 +1,19 @@
-import {
-  defineConfig
-} from "vite";
+import { defineConfig } from "vite";
 
-import react
-  from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react";
 
+const proxyTarget = process.env.VITE_PROXY_TARGET || "http://localhost:8080";
 
 export default defineConfig({
-
-  plugins: [
-    react()
-  ],
+  plugins: [react()],
 
   server: {
-
     proxy: {
-
       "/api": {
+        target: proxyTarget,
 
-        target:
-          "http://localhost:8080",
-
-        changeOrigin:
-          true,
-
+        changeOrigin: true,
       },
-
     },
-
   },
-
 });
