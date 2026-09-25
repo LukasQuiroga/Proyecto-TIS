@@ -1,6 +1,8 @@
 package com.lacomarcasoft.controller;
 
+import com.lacomarcasoft.dto.request.ActualizarPermisosSolicitud;
 import com.lacomarcasoft.dto.response.RolRespuesta;
+import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.service.RolServicio;
 
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,27 @@ public class RolControlador {
         return ResponseEntity.ok(
                 rolServicio.buscarRespuesta(id)
         );
+    }
+
+    @PutMapping("/{id}/permisos")
+    public ResponseEntity<RolRespuesta> actualizarPermisos(
+            @PathVariable Long id,
+            @RequestBody ActualizarPermisosSolicitud solicitud
+    ){
+
+        Rol rol =
+                rolServicio.actualizarPermisos(
+                        id,
+                        solicitud.permisos()
+                );
+
+
+        return ResponseEntity.ok(
+                rolServicio.buscarRespuesta(
+                        rol.getIdRol()
+                )
+        );
+
     }
 
 }
