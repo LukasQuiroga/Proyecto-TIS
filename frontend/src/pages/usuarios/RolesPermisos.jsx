@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./RolesPermisos.css";
+import { obtenerRoles } from "../../services/rolService";
 
 const permisosDisponibles = [
   "Gestionar usuarios",
@@ -13,6 +14,31 @@ function RolesPermisos() {
 
     const [roles, setRoles] = useState([]);
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
+
+    useEffect(() => {
+        const cargarDatos = async () => {
+            try {
+                const respuesta = await obtenerRoles();
+                const rolesAdaptados = respuesta.data.map((rol) => ({
+
+                    id: rol.idRol,
+                    nombre: rol.nombreRol,
+                    descripcion: rol.descripcionRol,
+                    permisos: rol.permisos || []
+
+                }));
+                setRoles(rolesAdaptados);
+            } catch(error) {
+                console.error(
+                    "Error al cargar roles:",
+                    error
+                );
+            }
+        };
+        cargarDatos();
+
+    }, []);
+
 
     const [modalNuevoRol, setModalNuevoRol] = useState(false);
 
@@ -179,13 +205,13 @@ function RolesPermisos() {
               rolSeleccionado ? (
 
                 rolSeleccionado.permisos.map((permiso) => (
-                  <label key={permiso}>
+                  <label key={permiso.idPermiso}>
                     <input
                       type="checkbox"
                       checked
                       readOnly
                     />
-                    {permiso}
+                    {permiso.nombrePermiso}
                   </label>
                 ))
 
