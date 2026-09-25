@@ -58,8 +58,7 @@ public class RolServicio {
                 buscar(id)
         );
 
-    }
-
+    }    
 
     private RolRespuesta convertirRespuesta(
             Rol rol

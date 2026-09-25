@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import "./RolesPermisos.css";
-import { obtenerRoles, obtenerPermisos } from "../../services/rolService";
-
+import { obtenerRoles, obtenerPermisos, actualizarPermisosRol} from "../../services/rolService";
 const permisosDisponibles = [
   "Gestionar usuarios",
   "Gestionar estudiantes",
@@ -65,6 +64,8 @@ function RolesPermisos() {
     const [procesandoCrearRol, setProcesandoCrearRol] = useState(false);
 
     const [mostrarExito, setMostrarExito] = useState(false);
+    const [guardandoPermisos, setGuardandoPermisos] = useState(false);
+    const [mostrarExitoPermisos, setMostrarExitoPermisos] = useState(false);
 
     const abrirModalNuevoRol = () => {
 
@@ -128,6 +129,50 @@ function RolesPermisos() {
         cerrarModalNuevoRol();
 
     }, 1500);
+
+    };
+
+    const guardarPermisos = async () => {
+
+        try {
+            setGuardandoPermisos(true);
+            await actualizarPermisosRol(
+                rolSeleccionado.id,
+                permisosSeleccionados
+            );
+
+            const respuesta = await obtenerRoles();
+
+            const rolesAdaptados = respuesta.data.map((rol) => ({
+                id: rol.idRol,
+                nombre: rol.nombreRol,
+                descripcion: rol.descripcionRol,
+                permisos: rol.permisos || []
+            }));
+
+            setRoles(rolesAdaptados);
+
+            const rolActualizado =
+                rolesAdaptados.find(
+                    rol =>
+                    rol.id === rolSeleccionado.id
+                );
+
+            setRolSeleccionado(
+                rolActualizado
+            );
+            setMostrarExitoPermisos(true);
+
+        } catch(error) {
+
+            console.error(
+                "Error actualizando permisos:",
+                error
+            );
+
+        } finally {
+            setGuardandoPermisos(false);
+        }
 
     };
     
@@ -291,9 +336,17 @@ function RolesPermisos() {
 
                 <button
                     className="guardar"
-                    disabled={!rolSeleccionado}
+                    disabled={
+                        !rolSeleccionado ||
+                        guardandoPermisos
+                    }
+                    onClick={guardarPermisos}
                 >
-                    Guardar modificaciones
+                    {
+                        guardandoPermisos
+                        ? "Guardando..."
+                        : "Guardar modificaciones"
+                    }
                 </button>
 
             </div>
@@ -447,7 +500,45 @@ function RolesPermisos() {
             </div>
 
         )
+       }
+       {
+            mostrarExitoPermisos && (
+
+                <div className="modal-fondo">
+
+                    <div className="modal-exito">
+
+                        <div className="icono-exito">
+                            ✓
+                        </div>
+
+
+                        <h2>
+                            Modificación exitosa
+                        </h2>
+
+
+                        <p>
+                            Los permisos del rol fueron actualizados correctamente.
+                        </p>
+
+
+                        <button
+                            className="guardar"
+                            onClick={() =>
+                                setMostrarExitoPermisos(false)
+                            }
+                        >
+                            Aceptar
+                        </button>
+
+                    </div>
+
+                </div>
+
+            )
         }
+
     </div>
   );
 }
