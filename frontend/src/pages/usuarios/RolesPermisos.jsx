@@ -22,6 +22,9 @@ function RolesPermisos() {
     permisos: []
     });
 
+    const [procesandoCrearRol, setProcesandoCrearRol] = useState(false);
+
+    const [mostrarExito, setMostrarExito] = useState(false);
 
     const abrirModalNuevoRol = () => {
 
@@ -60,21 +63,31 @@ function RolesPermisos() {
 
     const crearRol = () => {
 
-    const rolCreado = {
+    setProcesandoCrearRol(true);
+
+
+    setTimeout(() => {
+
+        const rolCreado = {
         id: roles.length + 1,
         nombre: nuevoRol.nombre,
         descripcion: nuevoRol.descripcion,
         permisos: nuevoRol.permisos
-    };
+        };
 
 
-    setRoles([
+        setRoles([
         ...roles,
         rolCreado
-    ]);
+        ]);
 
 
-    cerrarModalNuevoRol();
+        setProcesandoCrearRol(false);
+        setMostrarExito(true);
+
+        cerrarModalNuevoRol();
+
+    }, 1500);
 
     };
     
@@ -304,12 +317,20 @@ function RolesPermisos() {
 
 
                 <button
-                  className="guardar"
-                  onClick={crearRol}
-                  disabled={!nuevoRol.nombre || !nuevoRol.descripcion}
-                >
-                  Crear rol
-                </button>
+                    className="guardar"
+                    onClick={crearRol}
+                    disabled={
+                        procesandoCrearRol ||
+                        !nuevoRol.nombre ||
+                        !nuevoRol.descripcion
+                    }
+                    >
+                    {
+                        procesandoCrearRol
+                        ? "Creando..."
+                        : "Crear rol"
+                    }
+                    </button>
 
               </div>
 
@@ -317,8 +338,37 @@ function RolesPermisos() {
 
           </div>
 
-        )
+        )     
       }
+
+      {
+        mostrarExito && (
+
+            <div className="modal-fondo">
+
+            <div className="modal-exito">
+
+                <div className="icono-exito">
+                    ✓
+                </div>
+
+                <h2>
+                    Registro exitoso
+                </h2>
+
+                <button
+                    className="guardar"
+                    onClick={() => setMostrarExito(false)}
+                    >
+                    Aceptar
+                </button>
+
+            </div>
+
+            </div>
+
+        )
+        }
     </div>
   );
 }
