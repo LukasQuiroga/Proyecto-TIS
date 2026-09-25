@@ -1,0 +1,94 @@
+.asignacion-roles{
+    width:100%;
+}
+
+.asignacion-header{
+    margin-bottom:25px;
+}
+
+.asignacion-header h2{
+    color:#123b69;
+    margin-bottom:8px;
+    font-size:22px;
+}
+
+.asignacion-header p{
+    color:#607d9f;
+    margin:0;
+    font-size:15px;
+}
+
+.tabla-contenedor{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    border:1px solid #dce6f2;
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+
+.tabla-contenedor table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.tabla-contenedor thead{
+    background:#eaf2fb;
+}
+
+.tabla-contenedor th{
+    text-align:left;
+    padding:14px;
+    color:#123b69;
+    font-weight:600;
+    font-size:14px;
+}
+
+.tabla-contenedor td{
+    padding:14px;
+    border-bottom:1px solid #e5edf5;
+    color:#38506b;
+    font-size:14px;
+}
+
+.tabla-contenedor tbody tr:hover{
+    background:#f8fbff;
+}
+
+.rol{
+    display:inline-block;
+    background:#e8f1ff;
+    color:#1b5da8;
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:500;
+}
+
+.cargando{
+    text-align:center;
+    padding:30px;
+    color:#607d9f;
+}
+
+.sin-datos{
+    text-align:center;
+    padding:30px;
+    color:#607d9f;
+}
+
+.select-rol{
+    width:100%;
+    padding:8px;
+    border:1px solid #cfdceb;
+    border-radius:6px;
+    color:#123b69;
+    background:white;
+}
+
+select{
+    width:100%;
+    padding:8px 12px;
+    border-radius:6px;
+    border:1px solid #cfdceb;
+    color:#123b69;
+}
