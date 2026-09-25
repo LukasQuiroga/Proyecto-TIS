@@ -22,193 +22,279 @@ public class RecuperacionContrasenaServicio {
 
     private static final int MINUTOS_VIGENCIA = 10;
     private static final int MAX_INTENTOS = 5;
-    private static final int SEGUNDOS_ENTRE_ENVIOS = 60;
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final RecuperacionContrasenaRepositorio recuperacionRepositorio;
     private final PasswordEncoder passwordEncoder;
-    private final CorreoServicio correoServicio;
+
     private final SecureRandom secureRandom = new SecureRandom();
 
     public RecuperacionContrasenaServicio(
             UsuarioRepositorio usuarioRepositorio,
             RecuperacionContrasenaRepositorio recuperacionRepositorio,
-            PasswordEncoder passwordEncoder,
-            CorreoServicio correoServicio
+            PasswordEncoder passwordEncoder
     ) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.recuperacionRepositorio = recuperacionRepositorio;
         this.passwordEncoder = passwordEncoder;
-        this.correoServicio = correoServicio;
     }
+
 
     @Transactional
     public void solicitarRecuperacion(String correo) {
 
-        Optional<Usuario> usuarioOptional = usuarioRepositorio.findByCorreo(correo.trim());
+        Optional<Usuario> usuarioOptional =
+                usuarioRepositorio.findByCorreo(correo.trim());
 
-        // La respuesta HTTP es genérica aunque el correo no exista.
         if (usuarioOptional.isEmpty()) {
+            System.out.println("Correo no encontrado");
             return;
         }
 
         Usuario usuario = usuarioOptional.get();
 
-        Optional<RecuperacionContrasena> solicitudActual =
-                recuperacionRepositorio
-                        .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario);
-
-        if (solicitudActual.isPresent()) {
-            LocalDateTime siguienteEnvioPermitido =
-                    solicitudActual.get().getFechaCreacion().plusSeconds(SEGUNDOS_ENTRE_ENVIOS);
-
-            if (LocalDateTime.now().isBefore(siguienteEnvioPermitido)) {
-                return;
-            }
-        }
-
         invalidarSolicitudesPendientes(usuario);
 
-        String codigo = String.format("%06d", secureRandom.nextInt(1_000_000));
+
+        String codigo =
+                String.format("%06d",
+                        secureRandom.nextInt(1000000));
+
+
+        System.out.println("==============================");
+        System.out.println("CODIGO DE RECUPERACION");
+        System.out.println("Usuario: " + usuario.getCorreo());
+        System.out.println("Codigo: " + codigo);
+        System.out.println("==============================");
+
+
         LocalDateTime ahora = LocalDateTime.now();
 
-        RecuperacionContrasena recuperacion = new RecuperacionContrasena();
+
+        RecuperacionContrasena recuperacion =
+                new RecuperacionContrasena();
+
         recuperacion.setUsuario(usuario);
-        recuperacion.setCodigoHash(passwordEncoder.encode(codigo));
+        recuperacion.setCodigoHash(
+                passwordEncoder.encode(codigo)
+        );
+
         recuperacion.setFechaCreacion(ahora);
-        recuperacion.setFechaExpiracion(ahora.plusMinutes(MINUTOS_VIGENCIA));
+        recuperacion.setFechaExpiracion(
+                ahora.plusMinutes(MINUTOS_VIGENCIA)
+        );
+
         recuperacion.setIntentosFallidos(0);
         recuperacion.setCodigoVerificado(false);
         recuperacion.setUsado(false);
 
+
         recuperacionRepositorio.save(recuperacion);
-        correoServicio.enviarCodigoRecuperacion(usuario.getCorreo(), codigo);
     }
 
+
+
     @Transactional
-    public VerificarCodigoRespuesta verificarCodigo(VerificarCodigoSolicitud solicitud) {
+    public VerificarCodigoRespuesta verificarCodigo(
+            VerificarCodigoSolicitud solicitud
+    ){
 
-        Usuario usuario = usuarioRepositorio.findByCorreo(solicitud.correo().trim())
-                .orElseThrow(() -> new IllegalArgumentException("El código ingresado no es válido."));
+        Usuario usuario =
+                usuarioRepositorio
+                .findByCorreo(solicitud.correo().trim())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Usuario no encontrado"
+                        ));
 
-        RecuperacionContrasena recuperacion = obtenerSolicitudActiva(usuario);
+
+        RecuperacionContrasena recuperacion =
+                recuperacionRepositorio
+                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No existe codigo activo"
+                        ));
+
+
         validarVigencia(recuperacion);
 
-        if (recuperacion.getIntentosFallidos() >= MAX_INTENTOS) {
+
+
+        if(recuperacion.getIntentosFallidos() >= MAX_INTENTOS){
+
             recuperacion.setUsado(true);
             recuperacionRepositorio.save(recuperacion);
+
             throw new IllegalArgumentException(
-                    "Se superó el límite de intentos. Solicita un nuevo código."
+                    "Maximo de intentos alcanzado"
             );
         }
 
-        if (!passwordEncoder.matches(solicitud.codigo(), recuperacion.getCodigoHash())) {
-            int intentos = recuperacion.getIntentosFallidos() + 1;
-            recuperacion.setIntentosFallidos(intentos);
 
-            if (intentos >= MAX_INTENTOS) {
-                recuperacion.setUsado(true);
-            }
+
+        if(!passwordEncoder.matches(
+                solicitud.codigo(),
+                recuperacion.getCodigoHash()
+        )){
+
+
+            int intentos =
+                    recuperacion.getIntentosFallidos()+1;
+
+
+            recuperacion.setIntentosFallidos(intentos);
 
             recuperacionRepositorio.save(recuperacion);
 
-            if (intentos >= MAX_INTENTOS) {
-                throw new IllegalArgumentException(
-                        "Se superó el límite de intentos. Solicita un nuevo código."
-                );
-            }
 
-            throw new IllegalArgumentException("El código ingresado no es válido.");
+            throw new IllegalArgumentException(
+                    "Codigo incorrecto"
+            );
         }
 
-        String token = generarTokenSeguro();
+
+
+        String token = generarToken();
+
+
         recuperacion.setCodigoVerificado(true);
-        recuperacion.setTokenHash(passwordEncoder.encode(token));
+
+        recuperacion.setTokenHash(
+                passwordEncoder.encode(token)
+        );
+
+
         recuperacionRepositorio.save(recuperacion);
 
+
+
         return new VerificarCodigoRespuesta(
-                "Código validado correctamente.",
+                "Codigo correcto",
                 token
         );
     }
 
+
     @Transactional
-    public void restablecerContrasena(RestablecerContrasenaSolicitud solicitud) {
+    public void restablecerContrasena(
+            RestablecerContrasenaSolicitud solicitud
+    ){
 
-        if (!solicitud.nuevaContrasena().equals(solicitud.confirmarContrasena())) {
-            throw new IllegalArgumentException("Las contraseñas no coinciden.");
+        if(!solicitud.nuevaContrasena()
+                .equals(solicitud.confirmarContrasena())){
+
+            throw new IllegalArgumentException(
+                    "Las contraseñas no coinciden"
+            );
         }
 
-        Usuario usuario = usuarioRepositorio.findByCorreo(solicitud.correo().trim())
-                .orElseThrow(() -> new IllegalArgumentException("La solicitud de recuperación no es válida."));
 
-        RecuperacionContrasena recuperacion = obtenerSolicitudActiva(usuario);
-        validarVigencia(recuperacion);
 
-        if (!Boolean.TRUE.equals(recuperacion.getCodigoVerificado()) || recuperacion.getTokenHash() == null) {
-            throw new IllegalArgumentException("Primero debes validar el código de verificación.");
+        Usuario usuario =
+                usuarioRepositorio
+                .findByCorreo(solicitud.correo())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Usuario no encontrado"
+                        ));
+
+
+
+        RecuperacionContrasena recuperacion =
+                recuperacionRepositorio
+                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Solicitud no encontrada"
+                        ));
+
+
+
+        if(!Boolean.TRUE.equals(
+                recuperacion.getCodigoVerificado()
+        )){
+            throw new IllegalArgumentException(
+                    "Codigo no verificado"
+            );
         }
 
-        if (!passwordEncoder.matches(solicitud.token(), recuperacion.getTokenHash())) {
-            throw new IllegalArgumentException("La solicitud de recuperación no es válida o ya expiró.");
+
+
+        if(!passwordEncoder.matches(
+                solicitud.token(),
+                recuperacion.getTokenHash()
+        )){
+            throw new IllegalArgumentException(
+                    "Token incorrecto"
+            );
         }
 
-        if (esMismaContrasena(solicitud.nuevaContrasena(), usuario.getContrasena())) {
-            throw new IllegalArgumentException("La nueva contraseña debe ser diferente de la anterior.");
-        }
 
-        usuario.setContrasena(passwordEncoder.encode(solicitud.nuevaContrasena()));
+
+        usuario.setContrasena(
+                passwordEncoder.encode(
+                        solicitud.nuevaContrasena()
+                )
+        );
+
+
         usuarioRepositorio.save(usuario);
 
-        invalidarSolicitudesPendientes(usuario);
+
+        recuperacion.setUsado(true);
+
+        recuperacionRepositorio.save(recuperacion);
     }
 
-    private RecuperacionContrasena obtenerSolicitudActiva(Usuario usuario) {
-        return recuperacionRepositorio
-                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No existe una solicitud de recuperación vigente."
-                ));
-    }
 
-    private void validarVigencia(RecuperacionContrasena recuperacion) {
-        if (Boolean.TRUE.equals(recuperacion.getUsado()) ||
-                LocalDateTime.now().isAfter(recuperacion.getFechaExpiracion())) {
+    private void validarVigencia(
+            RecuperacionContrasena recuperacion
+    ){
+
+        if(LocalDateTime.now()
+                .isAfter(
+                        recuperacion.getFechaExpiracion()
+                )){
+
             recuperacion.setUsado(true);
+
             recuperacionRepositorio.save(recuperacion);
+
             throw new IllegalArgumentException(
-                    "El código expiró o ya fue utilizado. Solicita uno nuevo."
+                    "Codigo expirado"
             );
         }
     }
 
-    private void invalidarSolicitudesPendientes(Usuario usuario) {
-        List<RecuperacionContrasena> solicitudes =
-                recuperacionRepositorio.findByUsuarioAndUsadoFalse(usuario);
 
-        solicitudes.forEach(solicitud -> solicitud.setUsado(true));
-        recuperacionRepositorio.saveAll(solicitudes);
+    private void invalidarSolicitudesPendientes(
+            Usuario usuario
+    ){
+
+        List<RecuperacionContrasena> lista =
+                recuperacionRepositorio
+                .findByUsuarioAndUsadoFalse(usuario);
+
+
+        lista.forEach(
+                r -> r.setUsado(true)
+        );
+
+
+        recuperacionRepositorio.saveAll(lista);
     }
 
-    private boolean esMismaContrasena(String nuevaContrasena, String contrasenaActual) {
-        if (contrasenaActual == null || contrasenaActual.isBlank()) {
-            return false;
-        }
+    private String generarToken(){
 
-        if (contrasenaActual.startsWith("$2a$") ||
-                contrasenaActual.startsWith("$2b$") ||
-                contrasenaActual.startsWith("$2y$")) {
-            return passwordEncoder.matches(nuevaContrasena, contrasenaActual);
-        }
-
-        // Compatibilidad temporal con registros antiguos guardados sin hash.
-        return nuevaContrasena.equals(contrasenaActual);
-    }
-
-    private String generarTokenSeguro() {
         byte[] bytes = new byte[32];
+
         secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
+
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(bytes);
     }
 
 }
