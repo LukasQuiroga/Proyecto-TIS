@@ -1,11 +1,83 @@
 import { useState } from "react";
 import "./RolesPermisos.css";
 
+const permisosDisponibles = [
+  "Gestionar usuarios",
+  "Gestionar estudiantes",
+  "Gestionar exámenes",
+  "Control de ingreso",
+  "Generar reportes"
+];
+
 function RolesPermisos() {
 
-  const [roles] = useState([]);
-  const [rolSeleccionado, setRolSeleccionado] = useState(null);
+    const [roles, setRoles] = useState([]);
+    const [rolSeleccionado, setRolSeleccionado] = useState(null);
 
+    const [modalNuevoRol, setModalNuevoRol] = useState(false);
+
+    const [nuevoRol, setNuevoRol] = useState({
+    nombre: "",
+    descripcion: "",
+    permisos: []
+    });
+
+
+    const abrirModalNuevoRol = () => {
+
+    setNuevoRol({
+        nombre: "",
+        descripcion: "",
+        permisos: []
+    });
+
+    setModalNuevoRol(true);
+
+    };
+
+
+    const cerrarModalNuevoRol = () => {
+
+    setModalNuevoRol(false);
+
+    };
+
+
+    const cambiarPermisoNuevoRol = (permiso) => {
+
+    const permisosActualizados = nuevoRol.permisos.includes(permiso)
+        ? nuevoRol.permisos.filter((item) => item !== permiso)
+        : [...nuevoRol.permisos, permiso];
+
+
+    setNuevoRol({
+        ...nuevoRol,
+        permisos: permisosActualizados
+    });
+
+    };
+
+
+    const crearRol = () => {
+
+    const rolCreado = {
+        id: roles.length + 1,
+        nombre: nuevoRol.nombre,
+        descripcion: nuevoRol.descripcion,
+        permisos: nuevoRol.permisos
+    };
+
+
+    setRoles([
+        ...roles,
+        rolCreado
+    ]);
+
+
+    cerrarModalNuevoRol();
+
+    };
+    
   return (
     <div className="roles-permisos">
 
@@ -31,8 +103,10 @@ function RolesPermisos() {
           <div className="lista-roles-titulo">
             <h2>Lista de Roles</h2>
 
-            <button>
-              + Nuevo rol
+            <button
+            onClick={abrirModalNuevoRol}
+            >
+            + Nuevo rol
             </button>
           </div>
 
@@ -136,6 +210,115 @@ function RolesPermisos() {
 
       </div>
 
+      {
+        modalNuevoRol && (
+
+          <div className="modal-fondo">
+
+            <div className="modal-contenedor">
+
+              <h2>
+                Crear nuevo rol
+              </h2>
+
+
+              <div className="modal-campo">
+
+                <label>
+                  Nombre del rol
+                </label>
+
+                <input
+                  type="text"
+                  value={nuevoRol.nombre}
+                  onChange={(e) =>
+                    setNuevoRol({
+                      ...nuevoRol,
+                      nombre: e.target.value
+                    })
+                  }
+                />
+
+              </div>
+
+
+              <div className="modal-campo">
+
+                <label>
+                  Descripción
+                </label>
+
+                <textarea
+                  value={nuevoRol.descripcion}
+                  onChange={(e) =>
+                    setNuevoRol({
+                      ...nuevoRol,
+                      descripcion: e.target.value
+                    })
+                  }
+                />
+
+              </div>
+
+
+              <div className="modal-permisos">
+
+                <label>
+                  Permisos
+                </label>
+
+                {
+                  permisosDisponibles.map((permiso) => (
+
+                    <label
+                      key={permiso}
+                      className="permiso-checkbox"
+                    >
+
+                      <input
+                        type="checkbox"
+                        checked={nuevoRol.permisos.includes(permiso)}
+                        onChange={() =>
+                          cambiarPermisoNuevoRol(permiso)
+                        }
+                      />
+
+                      {permiso}
+
+                    </label>
+
+                  ))
+                }
+
+              </div>
+
+
+              <div className="modal-acciones">
+
+                <button
+                  className="cancelar"
+                  onClick={cerrarModalNuevoRol}
+                >
+                  Cancelar
+                </button>
+
+
+                <button
+                  className="guardar"
+                  onClick={crearRol}
+                  disabled={!nuevoRol.nombre || !nuevoRol.descripcion}
+                >
+                  Crear rol
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
     </div>
   );
 }

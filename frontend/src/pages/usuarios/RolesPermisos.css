@@ -197,6 +197,106 @@
   cursor: not-allowed;
 }
 
+.modal-fondo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+.modal-contenedor {
+  width: 450px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.modal-contenedor h2 {
+  margin: 0 0 20px;
+  color: #183b5d;
+  font-size: 20px;
+}
+
+.modal-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.modal-campo label,
+.modal-permisos > label {
+  color: #173b60;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-campo input,
+.modal-campo textarea {
+  padding: 10px;
+  border: 1px solid #ccd9e5;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #526b82;
+}
+
+.modal-campo textarea {
+  height: 80px;
+  resize: none;
+}
+
+.modal-permisos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.permiso-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #edf5fc;
+  border-radius: 6px;
+  color: #173b60;
+  font-size: 13px;
+  font-weight: normal !important;
+}
+
+.permiso-checkbox input {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 18px;
+  border-top: 1px solid #e2ebf2;
+}
+
+.modal-acciones button {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.modal-acciones button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 @media (max-width: 1000px) {
   .roles-permisos-contenido {
