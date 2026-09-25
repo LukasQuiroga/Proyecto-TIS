@@ -94,6 +94,11 @@ function App() {
               element={<DetalleEstudiante />}
             />
 
+            <Route
+                path="/auditoria"
+                element={<Auditoria />}
+            />
+
           </Route>
 
 
