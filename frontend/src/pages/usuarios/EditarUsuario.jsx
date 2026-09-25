@@ -10,11 +10,8 @@ import {
 } from "react-router-dom";
 
 
-import {
-    obtenerUsuario,
-    modificarUsuario,
-    obtenerRoles
-} from "../../services/usuarioService";
+import { obtenerUsuario, modificarUsuario } from "../../services/usuarioService";
+import { obtenerRoles } from "../../services/rolService";
 
 
 

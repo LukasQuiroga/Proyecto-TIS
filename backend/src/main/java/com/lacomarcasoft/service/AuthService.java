@@ -65,7 +65,14 @@ public class AuthService {
                         usuario.getCorreo(),
                         usuario.getRol().getIdRol(),
                         usuario.getRol().getNombreRol(),
-                        usuario.getActivo()
+                        usuario.getActivo(),
+                        usuario.getRol()
+                        .getPermisos()
+                        .stream()
+                        .map(permiso ->
+                                permiso.getNombrePermiso()
+                        )
+                        .toList()
                 );
 
 

@@ -1,4 +1,5 @@
 package com.lacomarcasoft.dto.response;
+import java.util.List;
 
 public record UsuarioRespuesta(
 
@@ -8,7 +9,8 @@ public record UsuarioRespuesta(
         String correo,
         Long idRol,
         String nombreRol,
-        Boolean activo
+        Boolean activo,
+        List<String> permisos
 
 ) {
 }

@@ -1,15 +1,12 @@
 package com.lacomarcasoft.controller;
 
-
+import com.lacomarcasoft.dto.request.ActualizarPermisosSolicitud;
+import com.lacomarcasoft.dto.response.RolRespuesta;
 import com.lacomarcasoft.modelo.Rol;
-
-import com.lacomarcasoft.repository.RolRepositorio;
-
+import com.lacomarcasoft.service.RolServicio;
 
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 
@@ -18,25 +15,54 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class RolControlador {
 
-    private final RolRepositorio rolRepositorio;
+    private final RolServicio rolServicio;
 
 
     public RolControlador(
-            RolRepositorio rolRepositorio
+            RolServicio rolServicio
     ){
 
-        this.rolRepositorio = rolRepositorio;
+        this.rolServicio = rolServicio;
 
     }
 
+
     @GetMapping
-    public ResponseEntity<List<Rol>> listarRoles(){
+    public ResponseEntity<List<RolRespuesta>> listarRoles(){
+
+        return ResponseEntity.ok(
+                rolServicio.listar()
+        );
+    }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RolRespuesta> obtenerRol(
+            @PathVariable Long id
+    ){
+
+        return ResponseEntity.ok(
+                rolServicio.buscarRespuesta(id)
+        );
+    }
+
+    @PutMapping("/{id}/permisos")
+    public ResponseEntity<RolRespuesta> actualizarPermisos(
+            @PathVariable Long id,
+            @RequestBody ActualizarPermisosSolicitud solicitud
+    ){
+
+        Rol rol =
+                rolServicio.actualizarPermisos(
+                        id,
+                        solicitud.permisos()
+                );
 
 
         return ResponseEntity.ok(
-
-                rolRepositorio.findAll()
-
+                rolServicio.buscarRespuesta(
+                        rol.getIdRol()
+                )
         );
 
     }
