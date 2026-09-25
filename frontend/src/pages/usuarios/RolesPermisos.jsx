@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import "./RolesPermisos.css";
-import { obtenerRoles, obtenerPermisos, actualizarPermisosRol} from "../../services/rolService";
-const permisosDisponibles = [
-  "Gestionar usuarios",
-  "Gestionar estudiantes",
-  "Gestionar exámenes",
-  "Control de ingreso",
-  "Generar reportes"
-];
+import { obtenerRoles, obtenerPermisos, actualizarPermisosRol,
+  crearRol as crearRolServicio
+} from "../../services/rolService";
+import AsignacionRoles from "./AsignacionRoles";
 
 function RolesPermisos() {
 
@@ -15,6 +11,7 @@ function RolesPermisos() {
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
     const [permisos, setPermisos] = useState([]);
     const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
+    const [pestana, setPestana] = useState("roles");
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -89,46 +86,68 @@ function RolesPermisos() {
 
     const cambiarPermisoNuevoRol = (permiso) => {
 
-    const permisosActualizados = nuevoRol.permisos.includes(permiso)
-        ? nuevoRol.permisos.filter((item) => item !== permiso)
-        : [...nuevoRol.permisos, permiso];
+    const permisosActualizados =
+            nuevoRol.permisos.includes(
+                permiso.idPermiso
+            )
 
+            ?
+            nuevoRol.permisos.filter(
+                (item) =>
+                item !== permiso.idPermiso
+            )
 
-    setNuevoRol({
-        ...nuevoRol,
-        permisos: permisosActualizados
-    });
-
+            :
+            [
+                ...nuevoRol.permisos,
+                permiso.idPermiso
+            ];
+        setNuevoRol({
+            ...nuevoRol,
+            permisos: permisosActualizados
+        });
     };
 
 
-    const crearRol = () => {
+    const crearRol = async () => {
+        try {
+            setProcesandoCrearRol(true);
 
-    setProcesandoCrearRol(true);
+            const respuesta = await crearRolServicio({
 
+                nombreRol: nuevoRol.nombre,
+                descripcionRol: nuevoRol.descripcion,
+                permisos: nuevoRol.permisos
 
-    setTimeout(() => {
+            });
 
-        const rolCreado = {
-        id: roles.length + 1,
-        nombre: nuevoRol.nombre,
-        descripcion: nuevoRol.descripcion,
-        permisos: nuevoRol.permisos
-        };
+            const rolCreado = {
 
+                id: respuesta.data.idRol,
+                nombre: respuesta.data.nombreRol,
+                descripcion: respuesta.data.descripcionRol,
+                permisos: respuesta.data.permisos
 
-        setRoles([
-        ...roles,
-        rolCreado
-        ]);
+            };
 
+            setRoles([
+                ...roles,
+                rolCreado
+            ]);
 
-        setProcesandoCrearRol(false);
-        setMostrarExito(true);
+            setMostrarExito(true);
+            cerrarModalNuevoRol();
 
-        cerrarModalNuevoRol();
+        } catch(error) {
 
-    }, 1500);
+            console.error(
+                "Error creando rol:",
+                error
+            );
+
+        } finally {
+            setProcesandoCrearRol(false);
+        }
 
     };
 
@@ -185,175 +204,206 @@ function RolesPermisos() {
       </div>
 
       <div className="roles-permisos-tabs">
-        <button className="activo">
-          Roles
+        <button
+            className={pestana === "roles" ? "activo" : ""}
+            onClick={() => setPestana("roles")}
+        >
+            Roles
         </button>
 
-        <button>
-          Asignación de Roles
+        <button
+            className={pestana === "asignacion" ? "activo" : ""}
+            onClick={() => setPestana("asignacion")}
+        >
+            Asignación de Roles
         </button>
       </div>
 
-      <div className="roles-permisos-contenido">
+      {
+        pestana === "roles" && (
 
-        <section className="lista-roles">
+            <div className="roles-permisos-contenido">
 
-          <div className="lista-roles-titulo">
-            <h2>Lista de Roles</h2>
+                <section className="lista-roles">
 
-            <button
-            onClick={abrirModalNuevoRol}
-            >
-            + Nuevo rol
-            </button>
-          </div>
+                    <div className="lista-roles-titulo">
 
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre del rol</th>
-                <th>Descripción</th>
-              </tr>
-            </thead>
+                        <h2>
+                            Lista de Roles
+                        </h2>
 
-            <tbody>
-              {
-                roles.length > 0 ? (
-                  roles.map((rol) => (
-                    <tr
-                      key={rol.id}
-                      onClick={() => {
-
-                          setRolSeleccionado(rol);
-                          setPermisosSeleccionados(
-                              rol.permisos.map(
-                                  permiso => permiso.idPermiso
-                              )
-                          );
-                      }}
-                    >
-                      <td>{rol.id}</td>
-                      <td>{rol.nombre}</td>
-                      <td>{rol.descripcion}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                        colSpan="3"
-                        className="sin-datos"
+                        <button
+                            onClick={abrirModalNuevoRol}
                         >
-                        <div>
-                            <p>No existen roles registrados</p>
-                            <span>
-                            Los roles disponibles aparecerán cuando sean registrados en el sistema.
-                            </span>
-                        </div>
-                        </td>
-                  </tr>
-                )
-              }
-            </tbody>
-          </table>
+                            + Nuevo rol
+                        </button>
 
-        </section>
+                    </div>
 
 
-        <section className="panel-permisos">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre del rol</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
 
-          <h2>
-            Permisos del rol
-          </h2>
+                        <tbody>
 
-          <div className="lista-permisos">
+                            {
+                                roles.length > 0 ? (
+                                    roles.map((rol) => (
+                                        <tr
+                                            key={rol.id}
+                                            onClick={() => {
 
-            {
-              rolSeleccionado ? (
+                                                setRolSeleccionado(rol);
 
-                permisos.map((permiso) => (
+                                                setPermisosSeleccionados(
+                                                    rol.permisos.map(
+                                                        permiso => permiso.idPermiso
+                                                    )
+                                                );
 
-                  <label
-                    key={permiso.idPermiso}
-                  >
+                                            }}
+                                        >
 
-                    <input
-                        type="checkbox"
-                        checked={
-                            permisosSeleccionados.includes(
-                                permiso.idPermiso
+                                            <td>
+                                                {rol.id}
+                                            </td>
+
+                                            <td>
+                                                {rol.nombre}
+                                            </td>
+
+                                            <td>
+                                                {rol.descripcion}
+                                            </td>
+
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td
+                                            colSpan="3"
+                                            className="sin-datos"
+                                        >
+
+                                            <div>
+                                                <p>
+                                                    No existen roles registrados
+                                                </p>
+                                                <span>
+                                                    Los roles disponibles aparecerán cuando sean registrados en el sistema.
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            }
+                        </tbody>
+                    </table>
+                </section>
+
+                <section className="panel-permisos">
+
+                    <h2>
+                        Permisos del rol
+                    </h2>
+
+                    <div className="lista-permisos">
+                        {
+                            rolSeleccionado ? (
+
+                                permisos.map((permiso) => (
+
+                                    <label
+                                        key={permiso.idPermiso}
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                permisosSeleccionados.includes(
+                                                    permiso.idPermiso
+                                                )
+                                            }
+                                            onChange={() => {
+
+                                                if(
+                                                    permisosSeleccionados.includes(
+                                                        permiso.idPermiso
+                                                    )
+                                                ){
+
+                                                    setPermisosSeleccionados(
+                                                        permisosSeleccionados.filter(
+                                                            id => id !== permiso.idPermiso
+                                                        )
+                                                    );
+
+                                                }else{
+
+                                                    setPermisosSeleccionados([
+                                                        ...permisosSeleccionados,
+                                                        permiso.idPermiso
+                                                    ]);
+
+                                                }
+
+                                            }}
+                                        />
+
+                                        {permiso.nombrePermiso}
+
+                                    </label>
+
+                                ))
+
+                            ) : (
+
+                                <p className="mensaje-permisos">
+                                    Seleccione un rol para visualizar sus permisos.
+                                </p>
+
                             )
                         }
-                        onChange={() => {
 
-                            if(
-                                permisosSeleccionados.includes(
-                                    permiso.idPermiso
-                                )
-                            ){
+                    </div>
 
-                                setPermisosSeleccionados(
-                                    permisosSeleccionados.filter(
-                                        id => id !== permiso.idPermiso
-                                    )
-                                );
+                    <div className="acciones">
+                        <button
+                            className="cancelar"
+                            disabled={!rolSeleccionado}
+                        >
+                            Cancelar
+                        </button>
 
-                            }else{
-
-                                setPermisosSeleccionados([
-                                    ...permisosSeleccionados,
-                                    permiso.idPermiso
-                                ]);
-
+                        <button
+                            className="guardar"
+                            disabled={!rolSeleccionado || guardandoPermisos}
+                            onClick={guardarPermisos}
+                        >
+                            {
+                                guardandoPermisos
+                                ? "Guardando..."
+                                : "Guardar modificaciones"
                             }
-
-                        }}
-                    />
-                    {permiso.nombrePermiso}
-                  </label>
-                ))
-
-              ) : (
-
-                <p className="mensaje-permisos">
-                  Seleccione un rol para visualizar sus permisos.
-                </p>
-
-              )
-            }
-
-          </div>
-
-
-            <div className="acciones">
-
-                <button
-                    className="cancelar"
-                    disabled={!rolSeleccionado}
-                >
-                    Cancelar
-                </button>
-
-                <button
-                    className="guardar"
-                    disabled={
-                        !rolSeleccionado ||
-                        guardandoPermisos
-                    }
-                    onClick={guardarPermisos}
-                >
-                    {
-                        guardandoPermisos
-                        ? "Guardando..."
-                        : "Guardar modificaciones"
-                    }
-                </button>
-
+                        </button>
+                    </div>
+                </section>
             </div>
 
-        </section>
+        )
+      }
 
-      </div>
+      {
+          pestana === "asignacion" && (
+              <AsignacionRoles />
+          )
+      }
 
       {
         modalNuevoRol && (
@@ -413,22 +463,26 @@ function RolesPermisos() {
                 </label>
 
                 {
-                  permisosDisponibles.map((permiso) => (
+                  permisos.map((permiso) => (
 
                     <label
-                      key={permiso}
+                      key={permiso.idPermiso}
                       className="permiso-checkbox"
                     >
 
                       <input
                         type="checkbox"
-                        checked={nuevoRol.permisos.includes(permiso)}
+                        checked={
+                            nuevoRol.permisos.includes(
+                               permiso.idPermiso
+                            )
+                        }
                         onChange={() =>
                           cambiarPermisoNuevoRol(permiso)
                         }
                       />
 
-                      {permiso}
+                      {permiso.nombrePermiso}
 
                     </label>
 

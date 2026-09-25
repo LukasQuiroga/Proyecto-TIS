@@ -19,3 +19,7 @@ export const actualizarPermisosRol = (id, permisos) => {
     permisos
   })
 }
+
+export const crearRol = (rol) => {
+  return axios.post(API, rol)
+}

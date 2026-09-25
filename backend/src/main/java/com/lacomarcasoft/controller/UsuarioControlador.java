@@ -5,6 +5,7 @@ import com.lacomarcasoft.dto.request.ModificarUsuarioSolicitud;
 
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 
 import com.lacomarcasoft.service.LogActividadServicio;
 import com.lacomarcasoft.service.UsuarioServicio;
@@ -152,6 +153,27 @@ public class UsuarioControlador {
         );
 
     }
+
+    @PutMapping("/{id}/rol")
+        public ResponseEntity<UsuarioRespuesta> cambiarRol(
+                @PathVariable Long id,
+                @Valid @RequestBody CambiarRolSolicitud solicitud
+        ){
+
+        Usuario usuario =
+                usuarioServicio.cambiarRol(
+                        id,
+                        solicitud.idRol()
+                );
+
+
+        return ResponseEntity.ok(
+                usuarioServicio.buscarRespuesta(
+                        usuario.getIdUsuario()
+                )
+        );
+
+        }
 
     private void registrarAuditoria(
             Long idUsuarioResponsable,

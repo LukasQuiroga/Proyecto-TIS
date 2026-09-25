@@ -1,5 +1,6 @@
 package com.lacomarcasoft.service;
 
+import com.lacomarcasoft.dto.request.CrearRolSolicitud;
 import com.lacomarcasoft.dto.response.PermisoRespuesta;
 import com.lacomarcasoft.dto.response.RolRespuesta;
 import com.lacomarcasoft.modelo.Permiso;
@@ -9,6 +10,7 @@ import com.lacomarcasoft.repository.RolRepositorio;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -105,6 +107,48 @@ public class RolServicio {
 
         return rolRepositorio.save(rol);
 
-     }
+        }
+
+        public RolRespuesta crear(
+                CrearRolSolicitud solicitud
+        ){
+
+                Rol rol = new Rol();
+
+
+                rol.setNombreRol(
+                        solicitud.nombreRol()
+                );
+
+
+                rol.setDescripcionRol(
+                        solicitud.descripcionRol()
+                );
+
+                rol.setFechaAsignacion(
+                        LocalDateTime.now()
+                );
+
+
+                List<Permiso> permisos =
+                        permisoRepositorio.findAllById(
+                                solicitud.permisos()
+                        );
+
+
+                rol.setPermisos(
+                        permisos
+                );
+
+
+                Rol guardado =
+                        rolRepositorio.save(rol);
+
+
+                return convertirRespuesta(
+                        guardado
+                );
+
+        }
 
 }
