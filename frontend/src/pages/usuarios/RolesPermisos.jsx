@@ -356,7 +356,7 @@ function RolesPermisos() {
                                             }}
                                         />
 
-                                        {permiso.nombrePermiso}
+                                        {permiso.descripcion}
 
                                     </label>
 

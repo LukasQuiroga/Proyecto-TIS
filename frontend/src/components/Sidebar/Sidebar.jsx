@@ -124,6 +124,14 @@ function Sidebar() {
 
         {/* USUARIOS */}
 
+        {
+        (
+            tienePermiso("GESTIONAR_USUARIOS") ||
+            tienePermiso("IMPORTAR_USUARIOS") ||
+            tienePermiso("GESTIONAR_ROLES") ||
+            tienePermiso("REGISTRAR_USUARIOS")
+        ) && (
+
         <button
 
           type="button"
@@ -136,30 +144,22 @@ function Sidebar() {
 
         >
 
-
           <span className="sidebar-icono">
-
             ♙
-
           </span>
-
 
           <span>
-
             Usuarios
-
           </span>
-
-
 
           <span className="sidebar-flecha">
-
             {usuariosAbierto ? "⌃" : "⌄"}
-
           </span>
 
-
         </button>
+
+        )
+        }
 
 
 
@@ -172,43 +172,47 @@ function Sidebar() {
 
 
 
-              <NavLink
-
-                to="/usuarios"
-
-                className={({isActive}) =>
-                  `sidebar-subopcion ${
-                    isActive
-                    ? "sidebar-subopcion-activa"
-                    : ""
-                  }`
-                }
-
-              >
-
-                Listado de usuarios
-
-
-              </NavLink>
-
-
-
+              {
+              tienePermiso("GESTIONAR_USUARIOS") && (
 
               <NavLink
 
-                to="/usuarios/importar"
+                  to="/usuarios"
 
-                className="sidebar-subopcion"
+                  className={({isActive}) =>
+                      `sidebar-subopcion ${
+                          isActive
+                          ? "sidebar-subopcion-activa"
+                          : ""
+                      }`
+                  }
 
               >
 
-                Importar usuarios
-
+                  Listado de usuarios
 
               </NavLink>
 
+              )
+              }
 
+              {
+              tienePermiso("IMPORTAR_USUARIOS") && (
 
+              <NavLink
+
+                  to="/usuarios/importar"
+
+                  className="sidebar-subopcion"
+
+              >
+
+                  Importar usuarios
+
+              </NavLink>
+
+              )
+              }
 
 
               {
@@ -234,18 +238,23 @@ function Sidebar() {
 
 
 
+              {
+              tienePermiso("REGISTRAR_USUARIOS") && (
+
               <NavLink
 
-                to="/usuarios/registro"
+                  to="/usuarios/registro"
 
-                className="sidebar-subopcion"
+                  className="sidebar-subopcion"
 
               >
 
-                Registro manual
-
+                  Registro manual
 
               </NavLink>
+
+              )
+              }
 
 
 
@@ -260,136 +269,112 @@ function Sidebar() {
 
 
 
-        <div className="sidebar-opcion">
-
-
-          <span className="sidebar-icono">
-
-            ▣
-
-          </span>
-
-
-          <span>
-
-            Exámenes
-
-          </span>
-
-
-        </div>
-
-
-
-
-
+        {
+        tienePermiso("GESTIONAR_EXAMENES") && (
 
         <div className="sidebar-opcion">
 
+            <span className="sidebar-icono">
+                ▣
+            </span>
 
-          <span className="sidebar-icono">
-
-            ▥
-
-          </span>
-
-
-          <span>
-
-            Ambientes
-
-          </span>
-
+            <span>
+                Exámenes
+            </span>
 
         </div>
 
+        )
+        }
 
 
-
-
-
+        {
+        tienePermiso("GESTIONAR_AMBIENTES") && (
 
         <div className="sidebar-opcion">
 
+            <span className="sidebar-icono">
+                ▥
+            </span>
 
-          <span className="sidebar-icono">
-
-            ▦
-
-          </span>
-
-
-          <span>
-
-            Habilitaciones
-
-          </span>
-
+            <span>
+                Ambientes
+            </span>
 
         </div>
 
+        )
+        }
 
 
-<Opcion
-          to="/auditoria"
-          icono="◎"
+        {
+        tienePermiso("GESTIONAR_HABILITACIONES") && (
+
+        <div className="sidebar-opcion">
+
+            <span className="sidebar-icono">
+                ▦
+            </span>
+
+            <span>
+                Habilitaciones
+            </span>
+
+        </div>
+
+        )
+        }
+
+        {
+        tienePermiso("VER_AUDITORIA") && (
+
+        <Opcion
+            to="/auditoria"
+            icono="◎"
         >
-          Auditoría
+            Auditoría
         </Opcion>
 
+        )
+        }
 
 
-
-        <div className="sidebar-opcion">
-
-
-          <span className="sidebar-icono">
-
-            ◉
-
-          </span>
-
-
-          <span>
-
-            Control de ingreso
-
-          </span>
-
-
-        </div>
-
-
-
-
-
-
+        {
+        tienePermiso("CONTROL_INGRESO") && (
 
         <div className="sidebar-opcion">
 
+            <span className="sidebar-icono">
+                ◉
+            </span>
 
-          <span className="sidebar-icono">
-
-            ▥
-
-          </span>
-
-
-          <span>
-
-            Reportes
-
-          </span>
-
+            <span>
+                Control de ingreso
+            </span>
 
         </div>
 
+        )
+        }
 
 
+        {
+        tienePermiso("GENERAR_REPORTES") && (
 
+        <div className="sidebar-opcion">
 
+            <span className="sidebar-icono">
+                ▥
+            </span>
 
+            <span>
+                Reportes
+            </span>
 
+        </div>
+
+        )
+        }
 
 
 
