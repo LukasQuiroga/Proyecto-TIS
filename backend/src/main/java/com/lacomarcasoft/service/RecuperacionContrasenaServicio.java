@@ -35,7 +35,7 @@ public class RecuperacionContrasenaServicio {
     public RecuperacionContrasenaServicio(
             UsuarioRepositorio usuarioRepositorio,
             RecuperacionContrasenaRepositorio recuperacionRepositorio,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
             CorreoServicio correoServicio
     ){
 

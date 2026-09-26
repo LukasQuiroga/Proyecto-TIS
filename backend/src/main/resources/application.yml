@@ -1,45 +1,33 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
 
   application:
     name: exampass
 
-
   datasource:
-
     url: jdbc:postgresql://ep-cool-cake-b5cbzcnx-pooler.c-7.us-east-2.aws.neon.tech:5432/neondb?sslmode=require
-
     username: neondb_owner
-
     password: npg_8nRp1WiBScJQ
 
-
   jpa:
-
     hibernate:
-
       ddl-auto: validate
-
     open-in-view: false
 
-
   flyway:
-
     enabled: true
-
     locations: classpath:db/migration
 
 
-
 app:
-
   security:
-
     admin-password: exampass
-
 
 
 brevo:
   api-key: ${BREVO_API_KEY}
+
   remitente:
-    email: ${BREVO_EMAIL}
+    email: abadon200324@gmail.com
     nombre: ExamPass

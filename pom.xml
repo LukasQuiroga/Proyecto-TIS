@@ -5,7 +5,6 @@
          http://maven.apache.org/POM/4.0.0
          https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -15,26 +14,24 @@
         <relativePath/>
     </parent>
 
-
     <groupId>com.lacomarcasoft</groupId>
     <artifactId>exampass</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ExamPass</name>
 
     <properties>
-
         <java.version>21</java.version>
-
     </properties>
+
 
     <dependencies>
 
-
-        <!-- REST API + RestTemplate -->
+        <!-- REST API -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
 
         <!-- Validaciones -->
         <dependency>
@@ -43,18 +40,19 @@
         </dependency>
 
 
-
         <!-- Seguridad + BCrypt -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+
         <!-- JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
 
         <!-- PostgreSQL -->
         <dependency>
@@ -63,17 +61,21 @@
             <scope>runtime</scope>
         </dependency>
 
+
         <!-- Flyway -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
 
+
+        <!-- Flyway PostgreSQL -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
 
         <!-- Testing -->
         <dependency>
@@ -92,6 +94,7 @@
 
         <testSourceDirectory>backend/src/test/java</testSourceDirectory>
 
+
         <resources>
 
             <resource>
@@ -99,6 +102,7 @@
             </resource>
 
         </resources>
+
 
         <plugins>
 
@@ -112,6 +116,8 @@
 
         </plugins>
 
+
     </build>
+
 
 </project>
