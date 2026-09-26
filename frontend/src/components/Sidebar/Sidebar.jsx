@@ -46,7 +46,7 @@ function Opcion({
 
 
 
-function Sidebar() {
+function Sidebar({sidebarAbierto}) {
 
 
   const [usuariosAbierto, setUsuariosAbierto] = useState(false);
@@ -63,7 +63,13 @@ function Sidebar() {
   return (
 
 
-    <aside className="sidebar">
+    <aside 
+        className={
+            sidebarAbierto
+            ? "sidebar abierto"
+            : "sidebar cerrado"
+        }
+    >
 
 
 
