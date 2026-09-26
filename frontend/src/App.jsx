@@ -20,129 +20,145 @@ import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
-
-function App() {
-
-  return (
-    <AuthProvider>
-
-      <BrowserRouter>
-
-        <Routes>
+import Perfil from "./pages/perfil/Perfil.jsx";
 
 
-          {/* RUTAS PUBLICAS */}
+function App(){
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+    return(
+        <AuthProvider>
 
-          <Route
-            path="/recuperar-contrasena"
-            element={<RecuperarContrasena />}
-          />
+            <BrowserRouter>
 
-          <Route
-            path="/verificar-codigo"
-            element={<VerificarCodigo />}
-          />
-
-          <Route
-            path="/nueva-contrasena"
-            element={<NuevaContrasena />}
-          />
+                <Routes>
 
 
+                    {/* RUTAS PUBLICAS */}
 
-          {/* PAGINA INICIAL */}
+                    <Route
+                        path="/login"
+                        element={<Login />}
+                    />
 
-          <Route
-            element={<PlantillaPrincipal />}
-          >
 
-            <Route
-              path="/"
-              element={<Inicio />}
-            />
+                    <Route
+                        path="/recuperar-contrasena"
+                        element={<RecuperarContrasena />}
+                    />
 
-          </Route>
+
+                    <Route
+                        path="/verificar-codigo"
+                        element={<VerificarCodigo />}
+                    />
+
+
+                    <Route
+                        path="/nueva-contrasena"
+                        element={<NuevaContrasena />}
+                    />
 
 
 
-          {/* RUTAS PROTEGIDAS */}
+                    {/* PAGINA PRINCIPAL PUBLICA */}
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <PlantillaPrincipal />
-              </ProtectedRoute>
-            }
-          >
+                    <Route
+                        element={<PlantillaPrincipal />}
+                    >
 
+                        <Route
+                            path="/"
+                            element={<Inicio />}
+                        />
 
-            {/* Gestión Usuarios */}
-
-            <Route
-              path="/usuarios"
-              element={
-                  <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                      <Usuarios />
-                  </ProtectedPermission>
-              }
-            />
-
-
-            <Route
-              path="/usuarios/:id/editar"
-              element={
-                  <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                      <EditarUsuario />
-                  </ProtectedPermission>
-              }
-            />
-
-
-            <Route
-              path="/usuarios/roles-permisos"
-              element={
-                <ProtectedPermission permiso="GESTIONAR_ROLES">
-                  <RolesPermisos />
-                </ProtectedPermission>
-              }
-            />
-
-
-            {/* Auditoría */}
-
-            <Route
-              path="/auditoria"
-              element={
-                  <ProtectedPermission permiso="VER_AUDITORIA">
-                      <Auditoria />
-                  </ProtectedPermission>
-              }
-            />
-
-
-          </Route>
+                    </Route>
 
 
 
-          {/* RUTA DESCONOCIDA */}
+                    {/* RUTAS PROTEGIDAS */}
 
-          <Route
-            path="*"
-            element={<Navigate to="/" replace />}
-          />
+                    <Route
+                        element={
+                            <ProtectedRoute>
+                                <PlantillaPrincipal />
+                            </ProtectedRoute>
+                        }
+                    >
 
 
-        </Routes>
+                        {/* PERFIL */}
 
-      </BrowserRouter>
+                        <Route
+                            path="/perfil"
+                            element={<Perfil />}
+                        />
 
-    </AuthProvider>
-  );
+
+
+                        {/* USUARIOS */}
+
+                        <Route
+                            path="/usuarios"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <Usuarios />
+                                </ProtectedPermission>
+                            }
+                        />
+
+
+                        <Route
+                            path="/usuarios/:id/editar"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <EditarUsuario />
+                                </ProtectedPermission>
+                            }
+                        />
+
+
+                        <Route
+                            path="/usuarios/roles-permisos"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_ROLES">
+                                    <RolesPermisos />
+                                </ProtectedPermission>
+                            }
+                        />
+
+
+
+                        {/* AUDITORIA */}
+
+                        <Route
+                            path="/auditoria"
+                            element={
+                                <ProtectedPermission permiso="VER_AUDITORIA">
+                                    <Auditoria />
+                                </ProtectedPermission>
+                            }
+                        />
+
+
+                    </Route>
+
+
+
+                    {/* RUTA NO EXISTENTE */}
+
+                    <Route
+                        path="*"
+                        element={<Navigate to="/" replace />}
+                    />
+
+
+                </Routes>
+
+            </BrowserRouter>
+
+        </AuthProvider>
+    );
+
 }
 
 
