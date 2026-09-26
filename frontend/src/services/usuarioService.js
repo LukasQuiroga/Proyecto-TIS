@@ -1,25 +1,25 @@
-import axios from 'axios'
+import axios from "axios";
 
-const API = 'http://localhost:8080/api/usuarios'
+const API = "http://localhost:8080/api/usuarios";
 
 export const obtenerUsuarios = () => {
-  return axios.get(API)
-}
+  return axios.get(API);
+};
 
 export const obtenerUsuario = (id) => {
-  return axios.get(`${API}/${id}`)
-}
+  return axios.get(`${API}/${id}`);
+};
 
 export const modificarUsuario = (id, usuario) => {
   return axios.put(
     `${API}/${id}`,
 
-    usuario
-  )
-}
+    usuario,
+  );
+};
 
 export const cambiarRolUsuario = (id, idRol) => {
   return axios.put(`${API}/${id}/rol`, {
-    idRol
-  })
-}
+    idRol,
+  });
+};

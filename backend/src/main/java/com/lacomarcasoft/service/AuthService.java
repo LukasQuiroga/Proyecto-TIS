@@ -17,15 +17,17 @@ public class AuthService {
 
 
     public AuthService(
-            UsuarioRepositorio usuarioRepositorio
-    ){
-        this.usuarioRepositorio = usuarioRepositorio;
-    }
+        UsuarioRepositorio usuarioRepositorio
+     ){
+    this.usuarioRepositorio = usuarioRepositorio;
+     }
+
 
 
     public LoginRespuesta login(
             LoginRequest request
     ){
+
 
         Usuario usuario =
                 usuarioRepositorio
@@ -37,6 +39,7 @@ public class AuthService {
                 );
 
 
+
         if(!usuario.getActivo()){
 
             throw new RuntimeException(
@@ -46,15 +49,17 @@ public class AuthService {
         }
 
 
+
         if(!usuario.getContrasena()
-                .equals(request.password())){
+        .equals(request.password())){
 
-
-            throw new RuntimeException(
-                    "Credenciales incorrectas"
-            );
+          throw new RuntimeException(
+            "Credenciales incorrectas"
+           );
 
         }
+
+
 
 
         UsuarioRespuesta respuesta =
@@ -67,13 +72,14 @@ public class AuthService {
                         usuario.getRol().getNombreRol(),
                         usuario.getActivo(),
                         usuario.getRol()
-                        .getPermisos()
-                        .stream()
-                        .map(permiso ->
-                                permiso.getNombrePermiso()
-                        )
-                        .toList()
+                                .getPermisos()
+                                .stream()
+                                .map(permiso ->
+                                        permiso.getNombrePermiso()
+                                )
+                                .toList()
                 );
+
 
 
         return new LoginRespuesta(

@@ -1,32 +1,24 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes
-} from "react-router-dom";
-
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext.jsx";
 
-
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
-import ProtectedPermission from "./routes/ProtectedPermission";
+import ProtectedPermission from "./routes/ProtectedPermission.jsx";
 
-
-
-import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
-import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
-import Usuarios from "./pages/usuarios/Usuarios.jsx";
+
 import Inicio from "./pages/Inicio/Inicio.jsx";
 
-import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
-import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
-import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
-import Auditoria from "./pages/auditoria/Auditoria.jsx";
-
 import Login from "./pages/auth/Login.jsx";
+import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
+import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
+import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
 
+import Usuarios from "./pages/usuarios/Usuarios.jsx";
+import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
+import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
+
+import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 
 function App() {
@@ -38,8 +30,36 @@ function App() {
 
         <Routes>
 
-          {/* Layout público */}
-          <Route element={<PlantillaPrincipal />}>
+
+          {/* RUTAS PUBLICAS */}
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/recuperar-contrasena"
+            element={<RecuperarContrasena />}
+          />
+
+          <Route
+            path="/verificar-codigo"
+            element={<VerificarCodigo />}
+          />
+
+          <Route
+            path="/nueva-contrasena"
+            element={<NuevaContrasena />}
+          />
+
+
+
+          {/* PAGINA INICIAL */}
+
+          <Route
+            element={<PlantillaPrincipal />}
+          >
 
             <Route
               path="/"
@@ -49,14 +69,9 @@ function App() {
           </Route>
 
 
-          {/* Login */}
-          <Route
-            path="/login"
-            element={<Login />}
-          />
 
+          {/* RUTAS PROTEGIDAS */}
 
-          {/* Layout protegido */}
           <Route
             element={
               <ProtectedRoute>
@@ -65,55 +80,50 @@ function App() {
             }
           >
 
+
+            {/* Gestión Usuarios */}
+
             <Route
               path="/usuarios"
               element={<Usuarios />}
             />
 
-            <Route
-              path="/usuarios/roles-permisos"
-              element={
-                  <ProtectedPermission
-                      permiso="GESTIONAR_ROLES"
-                  >
-                      <RolesPermisos/>
-                  </ProtectedPermission>
-              }
-            />
 
             <Route
               path="/usuarios/:id/editar"
               element={<EditarUsuario />}
             />
 
-            <Route
-              path="/estudiantes/registrar"
-              element={<RegistrarEstudiante />}
-            />
 
             <Route
-              path="/estudiantes/consultar"
-              element={<Estudiantes />}
+              path="/usuarios/roles-permisos"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_ROLES">
+                  <RolesPermisos />
+                </ProtectedPermission>
+              }
             />
 
-            <Route
-              path="/estudiantes/:idUsuario"
-              element={<DetalleEstudiante />}
-            />
+
+            {/* Auditoría */}
 
             <Route
-                path="/auditoria"
-                element={<Auditoria />}
+              path="/auditoria"
+              element={<Auditoria />}
             />
+
 
           </Route>
 
 
-          {/* Ruta no encontrada */}
+
+          {/* RUTA DESCONOCIDA */}
+
           <Route
             path="*"
             element={<Navigate to="/" replace />}
           />
+
 
         </Routes>
 

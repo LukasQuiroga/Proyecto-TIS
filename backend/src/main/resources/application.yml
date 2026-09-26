@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   application:
     name: exampass
 
@@ -20,3 +23,11 @@ spring:
 app:
   security:
     admin-password: exampass
+
+
+brevo:
+  api-key: ${BREVO_API_KEY}
+
+  remitente:
+    email: abadon200324@gmail.com
+    nombre: ExamPass
