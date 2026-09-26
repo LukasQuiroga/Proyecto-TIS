@@ -85,13 +85,21 @@ function App() {
 
             <Route
               path="/usuarios"
-              element={<Usuarios />}
+              element={
+                  <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                      <Usuarios />
+                  </ProtectedPermission>
+              }
             />
 
 
             <Route
               path="/usuarios/:id/editar"
-              element={<EditarUsuario />}
+              element={
+                  <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                      <EditarUsuario />
+                  </ProtectedPermission>
+              }
             />
 
 
@@ -109,7 +117,11 @@ function App() {
 
             <Route
               path="/auditoria"
-              element={<Auditoria />}
+              element={
+                  <ProtectedPermission permiso="VER_AUDITORIA">
+                      <Auditoria />
+                  </ProtectedPermission>
+              }
             />
 
 
