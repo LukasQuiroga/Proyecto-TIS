@@ -390,12 +390,8 @@ public class RecuperacionContrasenaServicio {
         }
 
 
-
-
         usuario.setContrasena(
-                passwordEncoder.encode(
-                        solicitud.nuevaContrasena()
-                )
+        solicitud.nuevaContrasena()
         );
 
 
