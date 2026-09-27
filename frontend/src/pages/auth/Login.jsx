@@ -1,12 +1,9 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {FaEye,FaEyeSlash} from "react-icons/fa";
-
 import "./Login.css";
-
 import {login} from "../../services/authService";
 import {useAuth} from "../../context/useAuth";
-
 
 function Login(){
 
@@ -17,17 +14,16 @@ function Login(){
     const [password,setPassword]=useState("");
     const [mostrar,setMostrar]=useState(false);
     const [recordar,setRecordar]=useState(false);
-    const [error,setError]=useState("");
     const [cargando,setCargando]=useState(false);
+    const [modal,setModal]=useState({mostrar:false,tipo:""});
 
 
     async function manejarLogin(e){
 
         e.preventDefault();
-        setError("");
 
         if(!correo || !password){
-            setError("Debe completar todos los campos.");
+            setModal({mostrar:true,tipo:"error"});
             return;
         }
 
@@ -37,18 +33,31 @@ function Login(){
 
             const respuesta=await login(correo,password);
 
-            iniciarSesion(respuesta.usuario,recordar);
+            iniciarSesion(
+                respuesta.usuario,
+                recordar
+            );
 
-            navigate("/");
+            setModal({
+                mostrar:true,
+                tipo:"success"
+            });
+
+            setTimeout(()=>{
+                navigate("/");
+            },2000);
 
         }catch(error){
 
-            console.log("ERROR LOGIN:",error);
-
-            setError(
-                error.response?.data ||
-                "Correo o contraseña incorrectos."
+            console.log(
+                "ERROR LOGIN:",
+                error
             );
+
+            setModal({
+                mostrar:true,
+                tipo:"error"
+            });
 
         }finally{
 
@@ -72,36 +81,23 @@ function Login(){
                 </p>
 
 
-                {
-                    error &&
-                    <div className="login-error">
-                        {error}
-                    </div>
-                }
-
-
                 <form onSubmit={manejarLogin}>
 
-                    <label>
-                        Correo electrónico
-                    </label>
+                    <label>Correo electrónico</label>
 
                     <div className="input-container">
 
                         <input
                             type="email"
                             value={correo}
-                            placeholder="202001068@est.umss.edu"
+                            placeholder="202001068@edu.est.umss"
                             onChange={(e)=>setCorreo(e.target.value)}
                         />
 
                     </div>
 
 
-                    <label>
-                        Contraseña
-                    </label>
-
+                    <label>Contraseña</label>
 
                     <div className="input-container">
 
@@ -117,11 +113,7 @@ function Login(){
                             onClick={()=>setMostrar(!mostrar)}
                         >
                             {
-                                mostrar
-                                ?
-                                <FaEyeSlash/>
-                                :
-                                <FaEye/>
+                                mostrar?<FaEyeSlash/>:<FaEye/>
                             }
                         </span>
 
@@ -160,10 +152,8 @@ function Login(){
                     >
                         {
                             cargando
-                            ?
-                            "Procesando..."
-                            :
-                            "Iniciar sesión →"
+                            ?"Procesando..."
+                            :"Iniciar sesión →"
                         }
                     </button>
 
@@ -176,16 +166,80 @@ function Login(){
                         ← Volver al inicio
                     </button>
 
-
                 </form>
 
             </div>
+
+
+            {
+                modal.mostrar &&
+
+                <div className="modal-fondo">
+
+                    <div className="modal-login">
+
+                        <div
+                            className={
+                                modal.tipo==="error"
+                                ?"modal-icon modal-error"
+                                :"modal-icon modal-success"
+                            }
+                        >
+                            {
+                                modal.tipo==="error"
+                                ?"!"
+                                :"✓"
+                            }
+                        </div>
+
+
+                        <h2>
+                            {
+                                modal.tipo==="error"
+                                ?"Credenciales incorrectas"
+                                :"Acceso exitoso"
+                            }
+                        </h2>
+
+
+                        <p>
+                            {
+                                modal.tipo==="error"
+                                ?"Verifica tu correo electrónico y contraseña e intenta nuevamente."
+                                :"Bienvenido al sistema. Redirigiendo..."
+                            }
+                        </p>
+
+
+                        {
+                            modal.tipo==="error"
+                            ?
+
+                            <button
+                                onClick={()=>
+                                    setModal({
+                                        mostrar:false,
+                                        tipo:""
+                                    })
+                                }
+                            >
+                                Aceptar
+                            </button>
+
+                            :
+
+                            <div className="progreso"></div>
+                        }
+
+                    </div>
+
+                </div>
+            }
 
         </div>
 
     );
 
 }
-
 
 export default Login;
