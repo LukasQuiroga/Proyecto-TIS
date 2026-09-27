@@ -57,6 +57,40 @@ public class UsuarioServicio {
         ActualizarUsuarioSolicitud datos
        
     ){
+        if(datos.nombre() == null || datos.nombre().isBlank()){
+
+            throw new RuntimeException(
+                    "El nombre es obligatorio"
+            );
+
+        }
+
+
+        if(datos.apellido() == null || datos.apellido().isBlank()){
+
+            throw new RuntimeException(
+                    "El apellido es obligatorio"
+            );
+
+        }
+
+
+        if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
+
+            throw new RuntimeException(
+                    "El carnet de identidad es obligatorio"
+            );
+
+        }
+
+
+        if(datos.correo() == null || datos.correo().isBlank()){
+
+            throw new RuntimeException(
+                    "El correo es obligatorio"
+            );
+
+        }
 
         Usuario usuario = buscar(id);
 
