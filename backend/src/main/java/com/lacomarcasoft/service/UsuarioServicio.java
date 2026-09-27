@@ -33,7 +33,6 @@ public class UsuarioServicio {
 
     }
 
-
     public Usuario buscar(Long id){
 
         return usuarioRepositorio.findById(id)
@@ -45,7 +44,6 @@ public class UsuarioServicio {
 
     }
 
-
     public UsuarioRespuesta buscarRespuesta(Long id){
 
         return convertirRespuesta(
@@ -54,11 +52,10 @@ public class UsuarioServicio {
 
     }
 
-
     public Usuario modificar(
-            Long id,
-            Usuario datos,
-            Long idRol
+        Long id,
+        ActualizarUsuarioSolicitud datos
+       
     ){
 
         Usuario usuario = buscar(id);
@@ -131,10 +128,7 @@ public class UsuarioServicio {
 
 
         return usuarioRepositorio.save(usuario);
-
     }
-
-
 
     private UsuarioRespuesta convertirRespuesta(
             Usuario usuario
@@ -149,7 +143,6 @@ public class UsuarioServicio {
                                         permiso.getNombrePermiso()
                         )
                         .toList();
-
 
 
         return new UsuarioRespuesta(
