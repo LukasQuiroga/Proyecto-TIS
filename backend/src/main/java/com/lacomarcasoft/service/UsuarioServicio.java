@@ -92,6 +92,22 @@ public class UsuarioServicio {
 
         }
 
+        Usuario usuarioExistenteCorreo =
+        usuarioRepositorio.findByCorreo(
+                datos.correo()
+        )
+        .orElse(null);
+
+
+       if(usuarioExistenteCorreo != null &&
+        !usuarioExistenteCorreo.getIdUsuario().equals(id)){
+
+           throw new RuntimeException(
+            "El correo ya está registrado"
+          );
+
+        }
+
         Usuario usuario = buscar(id);
 
         Rol rol =
