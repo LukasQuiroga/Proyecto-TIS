@@ -1,12 +1,13 @@
 package com.lacomarcasoft.dto.request;
 
 public record ActualizarUsuarioSolicitud(
-        String nombres,
-        String apellidos,
-        String documentoIdentidad,
+
+        String nombre,
+        String apellido,
+        String carnetIdentidad,
         String correo,
-        String telefono,
-        Long rolId,
-        String codigoUniversitario,
-        String carrera
-) {}
+        Boolean activo,
+        Long idRol
+
+) {
+}
