@@ -17,6 +17,7 @@ import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
+import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -106,6 +107,14 @@ function App(){
                             }
                         />
 
+                        <Route
+                            path="/usuarios/:id"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <VerUsuario />
+                                </ProtectedPermission>
+                            }
+                        />
 
                         <Route
                             path="/usuarios/:id/editar"
