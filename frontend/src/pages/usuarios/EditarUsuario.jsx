@@ -31,6 +31,8 @@ function EditarUsuario(){
 
     const [roles,setRoles] = useState([]);
 
+    const [error,setError] = useState("");
+
 
     useEffect(()=>{
 
@@ -88,25 +90,40 @@ function EditarUsuario(){
 
 
     const guardar = async(e)=>{
-        e.preventDefault();
 
-        try{
+    e.preventDefault();
 
-            await modificarUsuario(
-                id,
-                usuario
+    try{
+        setError("");
+
+        await modificarUsuario(
+            id,
+            usuario
+        );
+
+        navigate("/usuarios");
+
+    }catch(error){
+         console.error(
+            "Error modificando usuario:",
+            error
+        );
+
+        if(error.response){
+            setError(
+                error.response.data.message ||
+                "No se pudo modificar el usuario"
             );
-        
-            navigate("/usuarios");
 
-        }catch(error){
-            console.error(
-                "Error modificando usuario:",
-                error
+        }else{
+            setError(
+                "Error de conexión con el servidor"
             );
         }
 
-    };
+    }
+
+};
 
     if(!usuario){
 
@@ -126,6 +143,19 @@ function EditarUsuario(){
                 Editar usuario
             </h1>
 
+             {
+                  error && (
+
+             <p
+                    style={{
+                color:"red",
+                marginBottom:"10px"
+              }}
+             >
+            {error}
+        </p>
+    )
+}
 
             <form onSubmit={guardar}>
 
