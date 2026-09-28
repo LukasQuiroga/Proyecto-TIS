@@ -14,44 +14,28 @@ import { obtenerUsuario, modificarUsuario } from "../../services/usuarioService"
 import { obtenerRoles } from "../../services/rolService";
 
 
-
 function EditarUsuario(){
-
 
     const { id } = useParams();
 
-
     const navigate = useNavigate();
 
-
-
     const [usuario,setUsuario] = useState(null);
-
 
     const [roles,setRoles] = useState([]);
 
 
-
-
     useEffect(()=>{
-
 
         const cargarDatos = async()=>{
 
-
             try{
-
 
                 const usuarioRespuesta =
                     await obtenerUsuario(id);
 
-
-
                 const rolesRespuesta =
                     await obtenerRoles();
-
-
-
 
                 setUsuario({
 
@@ -75,9 +59,6 @@ function EditarUsuario(){
 
                 });
 
-
-
-
                 setRoles(
 
                     rolesRespuesta.data
@@ -85,63 +66,34 @@ function EditarUsuario(){
                 );
 
 
-
             }catch(error){
-
 
                 console.error(
 
                     "Error cargando usuario:",
-
                     error
-
                 );
-
 
             }
 
-
         };
 
-
-
         cargarDatos();
-
-
 
     },[id]);
 
 
-
-
-
-
-
     const guardar = async(e)=>{
-
-
         e.preventDefault();
 
-
-
         await modificarUsuario(
-
             id,
-
             usuario
-
         );
-
-
 
         navigate("/usuarios");
 
-
     };
-
-
-
-
 
 
     if(!usuario){
@@ -156,29 +108,17 @@ function EditarUsuario(){
 
     }
 
-
-
-
-
-
-
     return (
 
         <div>
-
 
             <h1>
                 Editar usuario
             </h1>
 
-
-
             <form onSubmit={guardar}>
 
-
-
                 <input
-
                     value={usuario.nombre}
 
                     onChange={
@@ -198,22 +138,14 @@ function EditarUsuario(){
 
                 />
 
-
-
-
                 <input
 
                     value={usuario.apellido}
-
                     onChange={
                         e=>
-
                         setUsuario({
-
                             ...usuario,
-
                             apellido:e.target.value
-
                         })
 
                     }
@@ -221,10 +153,20 @@ function EditarUsuario(){
                     placeholder="Apellido"
 
                 />
+                <input
 
+                     value={usuario.carnetIdentidad}
+                     onChange={
+                       e=>
+                      setUsuario({
+                         ...usuario,
+                          carnetIdentidad:e.target.value
+                       })
+                   }
 
+                    placeholder="Carnet de identidad"
 
-
+                />
 
                 <input
 
@@ -238,24 +180,14 @@ function EditarUsuario(){
                             ...usuario,
 
                             correo:e.target.value
-
                         })
-
                     }
-
                     placeholder="Correo"
 
                 />
 
-
-
-
-
-
                 <select
-
                     value={usuario.idRol}
-
                     onChange={
                         e=>
 
@@ -271,49 +203,31 @@ function EditarUsuario(){
 
                 >
 
-
                     {
                         roles.map(
-
                             rol=>(
 
-
                                 <option
-
                                     key={rol.idRol}
-
                                     value={rol.idRol}
 
                                 >
 
                                     {rol.nombreRol}
-
-
                                 </option>
-
 
                             )
 
                         )
                     }
-
-
-
                 </select>
 
 
-
-
-
                 <select
-
                     value={usuario.activo}
-
                     onChange={
                         e=>
-
                         setUsuario({
-
                             ...usuario,
 
                             activo:
@@ -325,13 +239,11 @@ function EditarUsuario(){
 
                 >
 
-
                     <option value="true">
 
                         Activo
 
                     </option>
-
 
 
                     <option value="false">
@@ -340,11 +252,7 @@ function EditarUsuario(){
 
                     </option>
 
-
                 </select>
-
-
-
 
 
                 <button>
@@ -353,19 +261,12 @@ function EditarUsuario(){
 
                 </button>
 
-
-
-
             </form>
-
 
         </div>
 
     );
 
-
 }
-
-
 
 export default EditarUsuario;
