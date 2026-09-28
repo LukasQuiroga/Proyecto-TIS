@@ -90,10 +90,58 @@ function EditarUsuario(){
 
     },[id]);
 
+    const validarFormulario = ()=>{
+
+    if(!usuario.nombre.trim()){
+        return "El nombre es obligatorio";
+    }
+
+
+    if(!usuario.apellido.trim()){
+        return "El apellido es obligatorio";
+    }
+
+
+    if(!usuario.carnetIdentidad.trim()){
+        return "El carnet de identidad es obligatorio";
+    }
+
+
+    if(!/^[0-9]+$/.test(usuario.carnetIdentidad)){
+        return "El carnet de identidad solo debe contener números";
+    }
+
+
+    if(!usuario.correo.trim()){
+        return "El correo es obligatorio";
+    }
+
+    const correoValido =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if(!correoValido.test(usuario.correo)){
+
+        return "El correo no tiene un formato válido";
+
+    }
+
+    return null;
+    };
+
 
     const guardar = async(e)=>{
 
     e.preventDefault();
+
+    const mensajeValidacion =
+            validarFormulario();
+
+    if(mensajeValidacion){
+        setError(
+            mensajeValidacion
+        );
+        return;
+    }
 
     try{
         setError("");
