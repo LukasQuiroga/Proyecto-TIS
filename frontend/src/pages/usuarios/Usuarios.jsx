@@ -325,13 +325,12 @@ function Usuarios(){
 
 
 
-                <button className="usuarios-boton-nuevo">
-
-
-                    + Nuevo usuario
-
-
-                </button>
+                    <button
+                        className="usuarios-boton-nuevo"
+                        onClick={() => navigate("/usuarios/registrar")}
+                    >
+                        + Nuevo usuario
+                    </button>
 
 
             </header>

@@ -4,6 +4,7 @@ import {
   Route,
   Routes
 } from "react-router-dom";
+import RegistrarUsuario from "./pages/usuarios/RegistrarUsuario.jsx";
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
@@ -31,6 +32,11 @@ function App() {
           <Route
           path="/usuarios"
           element={<Usuarios />}
+          />
+
+          <Route
+          path="/usuarios/registrar"
+          element={<RegistrarUsuario />}
           />
 
           <Route
