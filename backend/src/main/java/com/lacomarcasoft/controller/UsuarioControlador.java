@@ -1,29 +1,19 @@
 package com.lacomarcasoft.controller;
 
 
-import com.lacomarcasoft.dto.request.ModificarUsuarioSolicitud;
-
+import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
+import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
-import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
-
 import com.lacomarcasoft.service.LogActividadServicio;
 import com.lacomarcasoft.service.UsuarioServicio;
-
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
-
-
 import java.util.List;
-
 
 
 @RestController
@@ -31,19 +21,15 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class UsuarioControlador {
 
-
-
     private static final Logger LOG =
             LoggerFactory.getLogger(
                     UsuarioControlador.class
             );
 
 
-
     private final UsuarioServicio usuarioServicio;
 
     private final LogActividadServicio logActividadServicio;
-
 
 
     public UsuarioControlador(
@@ -52,42 +38,34 @@ public class UsuarioControlador {
     ){
 
         this.usuarioServicio = usuarioServicio;
-
         this.logActividadServicio = logActividadServicio;
 
     }
 
-
     @GetMapping
     public ResponseEntity<List<UsuarioRespuesta>> listarUsuarios(){
 
-
         return ResponseEntity.ok(
-
                 usuarioServicio.listar()
-
         );
 
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioRespuesta> obtenerUsuario(
-
             @PathVariable Long id
-
     ){
-    
 
         return ResponseEntity.ok(
-
                 usuarioServicio.buscarRespuesta(id)
-
         );
 
     }
 
+
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> modificarUsuario(
+    public ResponseEntity<UsuarioRespuesta> modificarUsuario(
 
             @PathVariable Long id,
 
@@ -98,69 +76,47 @@ public class UsuarioControlador {
             Long idUsuarioResponsable,
 
             @Valid
-            @RequestBody ModificarUsuarioSolicitud solicitud,
+            @RequestBody ActualizarUsuarioSolicitud solicitud,
 
             HttpServletRequest request
 
     ){
 
-        Usuario datos = new Usuario();
-
-        datos.setNombre(
-                solicitud.nombre()
+        usuarioServicio.modificar(
+                id,
+                solicitud
         );
 
-        datos.setApellido(
-                solicitud.apellido()
-        );
-
-        datos.setCorreo(
-                solicitud.correo()
-        );
-
-        datos.setContrasena(
-                solicitud.contrasena()
-        );
-
-        datos.setActivo(
-                solicitud.activo()
-        );
-
-
-        Usuario actualizado =
-
-                usuarioServicio.modificar(
-
-                        id,
-
-                        datos,
-
-                        solicitud.idRol()
-
-                );
 
         registrarAuditoria(
                 idUsuarioResponsable,
                 id,
+                solicitud,
                 request
+
         );
 
-
         return ResponseEntity.ok(
-
-                actualizado
+                usuarioServicio.buscarRespuesta(id)
 
         );
 
     }
 
+
     @PutMapping("/{id}/rol")
-        public ResponseEntity<UsuarioRespuesta> cambiarRol(
-                @PathVariable Long id,
-                @Valid @RequestBody CambiarRolSolicitud solicitud
-        ){
+    public ResponseEntity<UsuarioRespuesta> cambiarRol(
+
+            @PathVariable Long id,
+
+            @Valid
+            @RequestBody CambiarRolSolicitud solicitud
+
+
+    ){
 
         Usuario usuario =
+
                 usuarioServicio.cambiarRol(
                         id,
                         solicitud.idRol()
@@ -171,24 +127,44 @@ public class UsuarioControlador {
                 usuarioServicio.buscarRespuesta(
                         usuario.getIdUsuario()
                 )
+
         );
 
-        }
+
+    }
+
 
     private void registrarAuditoria(
+
             Long idUsuarioResponsable,
             Long idUsuarioModificado,
+            ActualizarUsuarioSolicitud solicitud,
             HttpServletRequest request
-    ) {
+
+    ){
 
         try {
 
             logActividadServicio.registrar(
+
                     idUsuarioResponsable,
+
                     "MODIFICAR_USUARIO",
-                    "Se modificó el usuario con id " +
-                            idUsuarioModificado,
+
+                    "Se modificó usuario con id "
+                    +
+                    idUsuarioModificado
+                    +
+                    ", correo actualizado: "
+                    +
+                    solicitud.correo()
+                    +
+                    ", rol asignado: "
+                    +
+                    solicitud.idRol(),
+
                     request.getRemoteAddr(),
+
                     true
             );
 
@@ -200,8 +176,6 @@ public class UsuarioControlador {
             );
 
         }
-
     }
-
 
 }
