@@ -1,3 +1,5 @@
+import "./EditarUsuario.css";
+
 import {
     useEffect,
     useState
@@ -21,17 +23,24 @@ import {
 } from "../../services/rolService";
 
 
+
 function EditarUsuario(){
+
 
     const { id } = useParams();
 
+
     const navigate = useNavigate();
+
 
     const [usuario,setUsuario] = useState(null);
 
+
     const [roles,setRoles] = useState([]);
 
+
     const [error,setError] = useState("");
+
 
     const [mensaje,setMensaje] = useState("");
 
@@ -46,6 +55,7 @@ function EditarUsuario(){
                     await obtenerUsuario(id);
 
 
+
                 const rolesRespuesta =
                     await obtenerRoles();
 
@@ -55,28 +65,34 @@ function EditarUsuario(){
                     nombre:
                         usuarioRespuesta.data.nombre || "",
 
+
                     apellido:
                         usuarioRespuesta.data.apellido || "",
+
 
                     carnetIdentidad:
                         usuarioRespuesta.data.carnetIdentidad || "",
 
+
                     correo:
                         usuarioRespuesta.data.correo || "",
+
 
                     idRol:
                         usuarioRespuesta.data.idRol || "",
 
+
                     activo:
                         usuarioRespuesta.data.activo ?? true
-                });
 
+                });
 
                 setRoles(
                     rolesRespuesta.data
                 );
 
             }catch(error){
+
                 console.error(
                     "Error cargando usuario:",
                     error
@@ -90,106 +106,133 @@ function EditarUsuario(){
 
     },[id]);
 
+
     const validarFormulario = ()=>{
 
-    if(!usuario.nombre.trim()){
-        return "El nombre es obligatorio";
-    }
+
+        if(!usuario.nombre.trim()){
+
+            return "El nombre es obligatorio";
+
+        }
 
 
-    if(!usuario.apellido.trim()){
-        return "El apellido es obligatorio";
-    }
+        if(!usuario.apellido.trim()){
+
+            return "El apellido es obligatorio";
+
+        }
 
 
-    if(!usuario.carnetIdentidad.trim()){
-        return "El carnet de identidad es obligatorio";
-    }
+        if(!usuario.carnetIdentidad.trim()){
+
+            return "El carnet de identidad es obligatorio";
+
+        }
 
 
-    if(!/^[0-9]+$/.test(usuario.carnetIdentidad)){
-        return "El carnet de identidad solo debe contener números";
-    }
+        if(!/^[0-9]+$/.test(usuario.carnetIdentidad)){
+
+            return "El carnet de identidad solo debe contener números";
+
+        }
+
+        if(!usuario.correo.trim()){
+
+            return "El correo es obligatorio";
+
+        }
+
+        const correoValido =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
-    if(!usuario.correo.trim()){
-        return "El correo es obligatorio";
-    }
+        if(!correoValido.test(usuario.correo)){
 
-    const correoValido =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return "El correo no tiene un formato válido";
 
-    if(!correoValido.test(usuario.correo)){
+        }
 
-        return "El correo no tiene un formato válido";
+        return null;
 
-    }
-
-    return null;
     };
 
 
     const guardar = async(e)=>{
 
-    e.preventDefault();
+        e.preventDefault();
 
-    const mensajeValidacion =
+        const mensajeValidacion =
             validarFormulario();
 
-    if(mensajeValidacion){
-        setError(
-            mensajeValidacion
-        );
-        return;
-    }
 
-    try{
-        setError("");
+        if(mensajeValidacion){
 
-        await modificarUsuario(
-           id,
-           usuario
-     );
-
-
-     setMensaje(
-        "Usuario modificado correctamente"
-     );
-
-
-     setTimeout(()=>{
-
-       navigate("/usuarios");
-
-    },1500);
-
-    }catch(error){
-         console.error(
-            "Error modificando usuario:",
-            error
-        );
-
-        if(error.response){
             setError(
-                error.response.data.message ||
-                "No se pudo modificar el usuario"
+                mensajeValidacion
             );
 
-        }else{
-            setError(
-                "Error de conexión con el servidor"
-            );
+            return;
+
         }
 
-    }
+        try{
 
-};
+            setError("");
+
+            await modificarUsuario(
+                id,
+                usuario
+            );
+
+
+            setMensaje(
+                "Usuario modificado correctamente"
+            );
+
+            setTimeout(()=>{
+
+                navigate("/usuarios");
+
+            },1500);
+
+
+        }catch(error){
+
+            console.error(
+                "Error modificando usuario:",
+                error
+            );
+
+
+            if(error.response){
+
+                setError(
+                    error.response.data.message ||
+                    "No se pudo modificar el usuario"
+
+                );
+
+
+            }else{
+
+                setError(
+                    "Error de conexión con el servidor"
+                );
+
+            }
+
+        }
+
+    };
+
 
     if(!usuario){
 
         return (
             <p>
                 Cargando...
+
             </p>
         );
 
@@ -197,196 +240,199 @@ function EditarUsuario(){
 
     return (
 
-        <div>
+        <div className="editar-container">
 
-            <h1>
-                Editar usuario
-            </h1>
+            <div className="editar-card">
 
-             {
-                  error && (
-
-             <p
-                    style={{
-                color:"red",
-                marginBottom:"10px"
-              }}
-             >
-            {error}
-        </p>
-    )
-}
-{
-    mensaje && (
-
-        <p
-            style={{
-                color:"green",
-                marginBottom:"10px"
-            }}
-        >
-            {mensaje}
-        </p>
-
-    )
-}
-
-            <form onSubmit={guardar}>
-
-                <input
-                    value={
-                        usuario.nombre || ""
-                    }
-
-                    onChange={
-                        e=>
-                        setUsuario({
-                            ...usuario,
-                            nombre:e.target.value
-                        })
-                    }
-                    placeholder="Nombre"
-                />
+                <h1>
+                    Editar usuario
+                </h1>
 
 
-                <input
-                    value={
-                        usuario.apellido || ""
-                    }
+                {
+                    error && (
+                        <p className="mensaje-error">
+                            {error}
+                        </p>
 
-                    onChange={
-                        e=>
-                        setUsuario({
-                            ...usuario,
-                            apellido:e.target.value
-                        })
-                    }
-                    placeholder="Apellido"
-
-                />
+                    )
+                }
 
 
-                <input
-                    value={
-                        usuario.carnetIdentidad || ""
-                    }
+                {
+                    mensaje && (
 
-                    onChange={
-                        e=>
-                        setUsuario({
-                            ...usuario,
-                            carnetIdentidad:e.target.value
-                        })
-                    }
-                    placeholder="Carnet de identidad"
+                        <p className="mensaje-exito">
+                            {mensaje}
+                        </p>
 
-                />
+                    )
+                }
 
 
-                <input
-                    value={
-                        usuario.correo || ""
-                    }
-
-                    onChange={
-                        e=>
-                        setUsuario({
-                            ...usuario,
-                            correo:e.target.value
-                        })
-                    }
-                    placeholder="Correo"
-
-                />
-
-
-                <select
-
-                    value={
-                        usuario.idRol || ""
-                    }
-
-                    onChange={
-                        e=>
-                        setUsuario({
-                            ...usuario,
-                            idRol:Number(e.target.value)
-
-                        })
-                    }
+                <form
+                    className="editar-form"
+                    onSubmit={guardar}
 
                 >
 
-                    <option value="">
-                        Seleccione un rol
-                    </option>
+                    <input
 
-                    {
+                        value={
+                            usuario.nombre || ""
+                        }
 
-                        roles.map(
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                nombre:e.target.value
+                            })
 
-                            rol=>(
+                        }
 
-                                <option
-                                    key={rol.idRol}
-                                    value={rol.idRol}
+                        placeholder="Nombre"
 
-                                >
-                                    {rol.nombreRol}
-                                </option>
+                    />
+
+
+                    <input
+
+                        value={
+                            usuario.apellido || ""
+                        }
+
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                apellido:e.target.value
+                            })
+                        }
+                        placeholder="Apellido"
+
+                    />
+
+
+                    <input
+
+                        value={
+                            usuario.carnetIdentidad || ""
+                        }
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                carnetIdentidad:e.target.value
+                            })
+                        }
+                        placeholder="Carnet de identidad"
+                    />
+
+
+                    <input
+
+                        value={
+                            usuario.correo || ""
+                        }
+
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                correo:e.target.value
+                            })
+
+                        }
+
+                        placeholder="Correo"
+
+                    />
+
+
+                    <select
+
+                        value={
+                            usuario.idRol || ""
+                        }
+
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                idRol:Number(e.target.value)
+                            })
+
+                        }
+                    >
+
+                        <option value="">
+                            Seleccione un rol
+                        </option>
+
+
+                        {
+                            roles.map(
+                                rol => (
+                                    <option
+                                        key={rol.idRol}
+                                        value={rol.idRol}
+
+                                    >
+
+                                        {rol.nombreRol}
+
+                                    </option>
+
+                                )
 
                             )
-                        )
-                    }
-                </select>
+                        }
+
+                    </select>
 
 
-                <select
-                    value={
-                        String(usuario.activo)
-                    }
+                    <select
+                        value={
+                            String(usuario.activo)
+                        }
 
-                    onChange={
-                        e=>
-                        setUsuario({
-                           ...usuario,
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                activo:
+                                    e.target.value === "true"
 
-                            activo:
-                                e.target.value === "true"
+                            })
 
-                        })
+                        }
 
-                    }
-
-                >
-
-                    <option value="true">
-
-                        Activo
-
-                    </option>
-
-                    <option value="false">
-
-                        Inactivo
-
-                    </option>
-
-                </select>
+                    >
 
 
-                <button>
+                        <option value="true">
+                            Activo
+                        </option>
 
-                    Guardar
 
-                </button>
+                        <option value="false">
+                            Inactivo
+                        </option>
 
-            </form>
+                    </select>
+
+
+                    <button type="submit">
+                        Guardar cambios
+                    </button>
+
+                </form>
+
+            </div>
 
         </div>
-
     );
-
 }
 
 export default EditarUsuario;
