@@ -1,5 +1,6 @@
 package com.lacomarcasoft.controller;
 
+
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 
@@ -26,8 +26,11 @@ public class UsuarioControlador {
                     UsuarioControlador.class
             );
 
+
     private final UsuarioServicio usuarioServicio;
+
     private final LogActividadServicio logActividadServicio;
+
 
     public UsuarioControlador(
             UsuarioServicio usuarioServicio,
@@ -35,7 +38,6 @@ public class UsuarioControlador {
     ){
 
         this.usuarioServicio = usuarioServicio;
-
         this.logActividadServicio = logActividadServicio;
 
     }
@@ -43,63 +45,64 @@ public class UsuarioControlador {
     @GetMapping
     public ResponseEntity<List<UsuarioRespuesta>> listarUsuarios(){
 
-
         return ResponseEntity.ok(
-
                 usuarioServicio.listar()
-
         );
 
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioRespuesta> obtenerUsuario(
-
             @PathVariable Long id
-
     ){
 
         return ResponseEntity.ok(
+                usuarioServicio.buscarRespuesta(id)
+        );
 
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioRespuesta> modificarUsuario(
+
+            @PathVariable Long id,
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @Valid
+            @RequestBody ActualizarUsuarioSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        usuarioServicio.modificar(
+                id,
+                solicitud
+        );
+
+
+        registrarAuditoria(
+                idUsuarioResponsable,
+                id,
+                solicitud,
+                request
+
+        );
+
+        return ResponseEntity.ok(
                 usuarioServicio.buscarRespuesta(id)
 
         );
 
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UsuarioRespuesta> modificarUsuario(
-        @PathVariable Long id,
-        
-        @RequestHeader(
-                value = "X-Usuario-Id",
-                required = false
-        )
-        Long idUsuarioResponsable,
-
-        @Valid
-        @RequestBody ActualizarUsuarioSolicitud solicitud,
-
-        HttpServletRequest request
-    ){
-
-    usuarioServicio.modificar(
-            id,
-            solicitud
-    );
-
-    registrarAuditoria(
-            idUsuarioResponsable,
-            id,
-            request
-    );
-
-    return ResponseEntity.ok(
-
-            usuarioServicio.buscarRespuesta(id)
-    );
-
-   }
 
     @PutMapping("/{id}/rol")
     public ResponseEntity<UsuarioRespuesta> cambiarRol(
@@ -108,6 +111,7 @@ public class UsuarioControlador {
 
             @Valid
             @RequestBody CambiarRolSolicitud solicitud
+
 
     ){
 
@@ -118,29 +122,47 @@ public class UsuarioControlador {
                         solicitud.idRol()
                 );
 
+
         return ResponseEntity.ok(
                 usuarioServicio.buscarRespuesta(
-
                         usuario.getIdUsuario()
                 )
+
         );
+
 
     }
 
+
     private void registrarAuditoria(
+
             Long idUsuarioResponsable,
             Long idUsuarioModificado,
+            ActualizarUsuarioSolicitud solicitud,
             HttpServletRequest request
-    ) {
+
+    ){
 
         try {
 
             logActividadServicio.registrar(
+
                     idUsuarioResponsable,
+
                     "MODIFICAR_USUARIO",
-                    "Se modificó el usuario con id "
-                            +
-                            idUsuarioModificado,
+
+                    "Se modificó usuario con id "
+                    +
+                    idUsuarioModificado
+                    +
+                    ", correo actualizado: "
+                    +
+                    solicitud.correo()
+                    +
+                    ", rol asignado: "
+                    +
+                    solicitud.idRol(),
+
                     request.getRemoteAddr(),
 
                     true
@@ -149,15 +171,11 @@ public class UsuarioControlador {
         } catch (Exception e) {
 
             LOG.error(
-
                     "No se pudo registrar la auditoría",
                     e
-
             );
 
         }
-
     }
-
 
 }
