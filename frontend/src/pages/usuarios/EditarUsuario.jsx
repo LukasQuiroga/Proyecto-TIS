@@ -33,6 +33,8 @@ function EditarUsuario(){
 
     const [error,setError] = useState("");
 
+    const [mensaje,setMensaje] = useState("");
+
 
     useEffect(()=>{
 
@@ -97,11 +99,21 @@ function EditarUsuario(){
         setError("");
 
         await modificarUsuario(
-            id,
-            usuario
-        );
+           id,
+           usuario
+     );
 
-        navigate("/usuarios");
+
+     setMensaje(
+        "Usuario modificado correctamente"
+     );
+
+
+     setTimeout(()=>{
+
+       navigate("/usuarios");
+
+    },1500);
 
     }catch(error){
          console.error(
@@ -154,6 +166,20 @@ function EditarUsuario(){
              >
             {error}
         </p>
+    )
+}
+{
+    mensaje && (
+
+        <p
+            style={{
+                color:"green",
+                marginBottom:"10px"
+            }}
+        >
+            {mensaje}
+        </p>
+
     )
 }
 
