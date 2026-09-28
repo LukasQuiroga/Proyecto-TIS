@@ -14,8 +14,11 @@ import {
     obtenerUsuario
 } from "../../services/usuarioService";
 
+import "./DetalleUsuario.css";
+
 
 function DetalleUsuario(){
+
 
     const { id } = useParams();
 
@@ -35,11 +38,13 @@ function DetalleUsuario(){
 
 
                 setUsuario(
+
                     respuesta.data
+
                 );
 
-            }catch(error){
 
+            }catch(error){
 
                 console.error(
                     "Error cargando usuario:",
@@ -47,7 +52,6 @@ function DetalleUsuario(){
                 );
 
             }
-
 
         };
 
@@ -73,139 +77,172 @@ function DetalleUsuario(){
 
     return (
 
-
-        <div>
-
-            <h1>
-
-                Detalle del usuario
-
-            </h1>
-
-            <p>
-
-                <strong>
-                    Nombre:
-                </strong>
-
-                {" "}
-
-                {usuario.nombre}
-
-            </p>
-
-            <p>
-
-                <strong>
-                    Apellido:
-                </strong>
-
-                {" "}
-
-                {usuario.apellido}
-
-            </p>
-
-            <p>
-
-                <strong>
-                    Carnet:
-                </strong>
-
-                {" "}
-
-                {usuario.carnetIdentidad}
-
-            </p>
-
-            <p>
-
-                <strong>
-                    Correo:
-                </strong>
-
-                {" "}
-
-                {usuario.correo}
-
-            </p>
-
-            <p>
-
-                <strong>
-                    Rol:
-                </strong>
-
-                {" "}
-
-                {usuario.nombreRol}
-
-            </p>
-
-            <p>
-
-                <strong>
-                    Estado:
-                </strong>
-
-                {" "}
-
-                {
-                    usuario.activo
-                    ?
-                    "Activo"
-                    :
-                    "Inactivo"
-                }
-
-            </p>
+        <div className="detalle-container">
 
 
-            <h3>
-                Permisos
-            </h3>
+            <div className="detalle-card">
 
-            <ul>
 
-                {
+                <h1>
 
-                    usuario.permisos?.map(
+                    Detalle del usuario
 
-                        permiso=>(
+                </h1>
 
-                            <li
-                                key={permiso}
-                            >
 
-                                {permiso}
-                            </li>
+                <div className="detalle-item">
+
+                    <strong>
+                        Nombre:
+                    </strong>
+
+                    <span>
+                        {usuario.nombre}
+                    </span>
+
+                </div>
+
+
+                <div className="detalle-item">
+
+                    <strong>
+                        Apellido:
+                    </strong>
+
+                    <span>
+                        {usuario.apellido}
+                    </span>
+
+                </div>
+
+
+                <div className="detalle-item">
+
+                    <strong>
+                        Carnet:
+                    </strong>
+
+                    <span>
+                        {usuario.carnetIdentidad}
+                    </span>
+
+                </div>
+
+
+                <div className="detalle-item">
+
+                    <strong>
+                        Correo:
+                    </strong>
+
+                    <span>
+                        {usuario.correo}
+                    </span>
+
+                </div>
+
+                <div className="detalle-item">
+
+                    <strong>
+                        Rol:
+                    </strong>
+
+                    <span>
+                        {usuario.nombreRol}
+                    </span>
+
+                </div>
+
+                <div className="detalle-item">
+
+                    <strong>
+                        Estado:
+                    </strong>
+
+                    <span>
+
+                        {
+                            usuario.activo
+                            ?
+                            "Activo"
+                            :
+                            "Inactivo"
+                        }
+
+                    </span>
+
+                </div>
+
+
+                <h3>
+
+                    Permisos
+
+                </h3>
+
+
+                <ul className="detalle-permisos">
+
+                    {
+                        usuario.permisos?.map(
+
+                            permiso=>(
+
+                                <li
+
+                                    key={permiso}
+
+                                >
+                                    {permiso}
+
+                                </li>
+
+                            )
                         )
+                    }
 
-                    )
+                </ul>
 
-                }
+                <div className="detalle-botones">
 
-            </ul>
 
-            <button
+                    <button
 
-                onClick={
+                        onClick={
 
-                    ()=>navigate(
-                        `/usuarios/${id}/editar`
-                    )
+                            ()=>navigate("/usuarios")
 
-                }
+                        }
 
-            >
-                Editar usuario
-            </button>
+                    >
+                        Volver
 
+                    </button>
+
+
+                    <button
+
+                        onClick={
+
+                            ()=>navigate(
+                                `/usuarios/${id}/editar`
+                            )
+
+                        }
+
+                    >
+
+                        Editar usuario
+
+                    </button>
+
+                </div>
+
+            </div>
         </div>
 
     );
 
 }
-
 
 export default DetalleUsuario;
