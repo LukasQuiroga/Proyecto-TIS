@@ -58,21 +58,17 @@ function EditarUsuario(){
                     nombre:
                         usuarioRespuesta.data.nombre,
 
-
                     apellido:
                         usuarioRespuesta.data.apellido,
 
-
+                    carnetIdentidad:
+                        usuarioRespuesta.data.carnetIdentidad,
+                   
                     correo:
                         usuarioRespuesta.data.correo,
 
-
-                    contrasena:"",
-
-
                     idRol:
                         usuarioRespuesta.data.idRol,
-
 
                     activo:
                         usuarioRespuesta.data.activo
