@@ -1,5 +1,6 @@
 package com.lacomarcasoft.service;
 
+import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
@@ -53,10 +54,11 @@ public class UsuarioServicio {
     }
 
     public Usuario modificar(
-        Long id,
-        ActualizarUsuarioSolicitud datos
-       
+            Long id,
+            ActualizarUsuarioSolicitud datos
     ){
+
+
         if(datos.nombre() == null || datos.nombre().isBlank()){
 
             throw new RuntimeException(
@@ -92,26 +94,44 @@ public class UsuarioServicio {
 
         }
 
+
         Usuario usuarioExistenteCorreo =
-        usuarioRepositorio.findByCorreo(
-                datos.correo()
-        )
-        .orElse(null);
+                usuarioRepositorio.findByCorreo(
+                        datos.correo()
+                )
+                .orElse(null);
 
 
-       if(usuarioExistenteCorreo != null &&
-        !usuarioExistenteCorreo.getIdUsuario().equals(id)){
+        if(usuarioExistenteCorreo != null &&
+                !usuarioExistenteCorreo.getIdUsuario().equals(id)){
 
-           throw new RuntimeException(
-            "El correo ya está registrado"
-          );
+            throw new RuntimeException(
+                    "El correo ya está registrado"
+            );
+
+        }
+
+
+        Usuario usuarioExistenteCarnet =
+                usuarioRepositorio.findByCarnetIdentidad(
+                        datos.carnetIdentidad()
+                )
+                .orElse(null);
+
+
+        if(usuarioExistenteCarnet != null &&
+                !usuarioExistenteCarnet.getIdUsuario().equals(id)){
+
+            throw new RuntimeException(
+                    "El carnet de identidad ya está registrado"
+            );
 
         }
 
         Usuario usuario = buscar(id);
 
         Rol rol =
-                rolRepositorio.findById(idRol)
+                rolRepositorio.findById(datos.idRol())
                         .orElseThrow(
                                 () -> new RuntimeException(
                                         "Rol no encontrado"
@@ -120,27 +140,27 @@ public class UsuarioServicio {
 
 
         usuario.setNombre(
-                datos.getNombre()
+                datos.nombre()
         );
 
 
         usuario.setApellido(
-                datos.getApellido()
+                datos.apellido()
+        );
+
+
+        usuario.setCarnetIdentidad(
+                datos.carnetIdentidad()
         );
 
 
         usuario.setCorreo(
-                datos.getCorreo()
-        );
-
-
-        usuario.setContrasena(
-                datos.getContrasena()
+                datos.correo()
         );
 
 
         usuario.setActivo(
-                datos.getActivo()
+                datos.activo()
         );
 
 
@@ -148,12 +168,9 @@ public class UsuarioServicio {
                 rol
         );
 
-
         return usuarioRepositorio.save(usuario);
 
     }
-
-
 
     public Usuario cambiarRol(
             Long idUsuario,
@@ -161,7 +178,6 @@ public class UsuarioServicio {
     ){
 
         Usuario usuario = buscar(idUsuario);
-
 
         Rol rol =
                 rolRepositorio.findById(idRol)
@@ -176,8 +192,8 @@ public class UsuarioServicio {
                 rol
         );
 
-
         return usuarioRepositorio.save(usuario);
+
     }
 
     private UsuarioRespuesta convertirRespuesta(

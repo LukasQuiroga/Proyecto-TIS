@@ -13,5 +13,9 @@ public interface UsuarioRepositorio
 
     Optional<Usuario> findByCorreo(String correo);
 
+    Optional<Usuario> findByCarnetIdentidad(
+        String carnetIdentidad
+   );
+
 
 }
