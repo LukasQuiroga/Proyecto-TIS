@@ -68,43 +68,38 @@ public class UsuarioControlador {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> modificarUsuario(
+    public ResponseEntity<UsuarioRespuesta> modificarUsuario(
+        @PathVariable Long id,
+        
+        @RequestHeader(
+                value = "X-Usuario-Id",
+                required = false
+        )
+        Long idUsuarioResponsable,
 
-            @PathVariable Long id,
+        @Valid
+        @RequestBody ActualizarUsuarioSolicitud solicitud,
 
-            @RequestHeader(
-                    value = "X-Usuario-Id",
-                    required = false
-            )
-            Long idUsuarioResponsable,
-
-            @Valid
-            @RequestBody ActualizarUsuarioSolicitud solicitud,
-
-            HttpServletRequest request
-
+        HttpServletRequest request
     ){
 
-        Usuario actualizado =
+    usuarioServicio.modificar(
+            id,
+            solicitud
+    );
 
-                usuarioServicio.modificar(
-                        id,
-                        solicitud
-                );
+    registrarAuditoria(
+            idUsuarioResponsable,
+            id,
+            request
+    );
 
-        registrarAuditoria(
-                idUsuarioResponsable,
-                id,
-                request
-        );
+    return ResponseEntity.ok(
 
-        return ResponseEntity.ok(
+            usuarioServicio.buscarRespuesta(id)
+    );
 
-                actualizado
-
-        );
-
-    }
+   }
 
     @PutMapping("/{id}/rol")
     public ResponseEntity<UsuarioRespuesta> cambiarRol(
