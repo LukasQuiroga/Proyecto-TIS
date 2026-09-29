@@ -18,6 +18,7 @@ function RegistroIndividual() {
             <section className="usuarios-panel">
                 <form className="usuarios-formulario">
                     <div className="usuarios-formulario-grid">
+
                         <div className="usuarios-campo">
                             <label htmlFor="nombres">Nombres</label>
                             <input
@@ -51,7 +52,9 @@ function RegistroIndividual() {
                         </div>
 
                         <div className="usuarios-campo">
-                            <label htmlFor="correo">Correo electrónico</label>
+                            <label htmlFor="correo">
+                                Correo electrónico
+                            </label>
                             <input
                                 id="correo"
                                 name="correo"
@@ -69,25 +72,64 @@ function RegistroIndividual() {
                                 placeholder="Ingrese el teléfono"
                             />
                         </div>
-                    </div>
 
-                    <div className="usuarios-campo">
-                        <label htmlFor="rol">Rol</label>
+                        <div className="usuarios-campo">
+                            <label htmlFor="rol">Rol</label>
+                            <select
+                                id="rol"
+                                name="rol"
+                                value={rol}
+                                onChange={(event) => setRol(event.target.value)}
+                            >
+                                <option value="">
+                                    Seleccione un rol
+                                </option>
+                                <option value="Administrador">
+                                    Administrador
+                                </option>
+                                <option value="Docente">
+                                    Docente
+                                </option>
+                                <option value="Personal de ingreso">
+                                    Personal de ingreso
+                                </option>
+                                <option value="Estudiante">
+                                    Estudiante
+                                </option>
+                            </select>
+                        </div>
 
-                        <select
-                            id="rol"
-                            name="rol"
-                            value={rol}
-                            onChange={(event) => setRol(event.target.value)}
-                        >
-                            <option value="">Seleccione un rol</option>
-                            <option value="Administrador">Administrador</option>
-                            <option value="Docente">Docente</option>
-                            <option value="Personal de ingreso">
-                                Personal de ingreso
-                            </option>
-                            <option value="Estudiante">Estudiante</option>
-                        </select>
+                        {rol === "Estudiante" && (
+                            <>
+                                <div className="usuarios-campo">
+                                    <label htmlFor="codigoUniversitario">
+                                        Código universitario
+                                    </label>
+                                    <input
+                                        id="codigoUniversitario"
+                                        name="codigoUniversitario"
+                                        type="text"
+                                        placeholder="Ingrese el código universitario"
+                                    />
+                                </div>
+
+                                <div className="usuarios-campo">
+                                    <label htmlFor="carrera">
+                                        Carrera
+                                    </label>
+                                    <select
+                                        id="carrera"
+                                        name="carrera"
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>
+                                            Seleccione una carrera
+                                        </option>
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
                     </div>
 
                     <div className="usuarios-formulario-acciones">
