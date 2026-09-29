@@ -328,3 +328,13 @@
     color: #b33a3a;
     font-size: 11px;
 }
+
+.usuarios-campo input.usuarios-input-error,
+.usuarios-campo select.usuarios-input-error {
+    border-color: #b33a3a;
+}
+
+.usuarios-campo input.usuarios-input-error:focus,
+.usuarios-campo select.usuarios-input-error:focus {
+    border-color: #b33a3a;
+}

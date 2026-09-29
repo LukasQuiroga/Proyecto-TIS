@@ -18,14 +18,21 @@ function RegistroIndividual() {
 
     const [errores, setErrores] = useState({});
 
-    const manejarCambio = (event) => {
-        const { name, value } = event.target;
+const manejarCambio = (event) => {
+    const { name, value } = event.target;
 
-        setFormulario((anterior) => ({
-            ...anterior,
-            [name]: value,
+    setFormulario((anterior) => ({
+        ...anterior,
+        [name]: value,
+    }));
+
+    if (errores[name]) {
+        setErrores((anteriores) => ({
+            ...anteriores,
+            [name]: "",
         }));
-    };
+    }
+};
 
     const validarFormulario = () => {
     const nuevosErrores = {};
@@ -126,6 +133,7 @@ const manejarRegistro = () => {
                                 placeholder="Ingrese los nombres"
                                 value={formulario.nombres}
                                 onChange={manejarCambio}
+                                className={errores.nombres ? "usuarios-input-error" : ""}
                             />
 
                             {errores.nombres && (
@@ -144,6 +152,7 @@ const manejarRegistro = () => {
                                 placeholder="Ingrese los apellidos"
                                 value={formulario.apellidos}
                                 onChange={manejarCambio}
+                                className={errores.apellidos ? "usuarios-input-error" : ""}
                             />
 
                             {errores.apellidos && (
@@ -164,6 +173,9 @@ const manejarRegistro = () => {
                                 placeholder="Ingrese el documento"
                                 value={formulario.documentoIdentidad}
                                 onChange={manejarCambio}
+                                className={
+                                    errores.documentoIdentidad ? "usuarios-input-error" : ""
+                                }
                             />
 
                             {errores.documentoIdentidad && (
@@ -184,6 +196,7 @@ const manejarRegistro = () => {
                                 placeholder="ejemplo@correo.com"
                                 value={formulario.correo}
                                 onChange={manejarCambio}
+                                className={errores.correo ? "usuarios-input-error" : ""}
                             />
 
                             {errores.correo && (
@@ -202,6 +215,7 @@ const manejarRegistro = () => {
                                 placeholder="Ingrese el teléfono"
                                 value={formulario.telefono}
                                 onChange={manejarCambio}
+                                className={errores.telefono ? "usuarios-input-error" : ""}
                             />
 
                             {errores.telefono && (
@@ -218,6 +232,7 @@ const manejarRegistro = () => {
                                 name="rol"
                                 value={formulario.rol}
                                 onChange={manejarCambio}
+                                className={errores.rol ? "usuarios-input-error" : ""}
                             >
                                 <option value="">Seleccione un rol</option>
                                 <option value="Administrador">
@@ -254,6 +269,9 @@ const manejarRegistro = () => {
                                         placeholder="Ingrese el código universitario"
                                         value={formulario.codigoUniversitario}
                                         onChange={manejarCambio}
+                                        className={
+                                            errores.codigoUniversitario ? "usuarios-input-error" : ""
+                                        }
                                     />
 
                                     {errores.codigoUniversitario && (
@@ -272,6 +290,7 @@ const manejarRegistro = () => {
                                         name="carrera"
                                         value={formulario.carrera}
                                         onChange={manejarCambio}
+                                        className={errores.carrera ? "usuarios-input-error" : ""}
                                     >
                                         <option value="" disabled>
                                             Seleccione una carrera
