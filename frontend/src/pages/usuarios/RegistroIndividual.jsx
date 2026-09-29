@@ -4,7 +4,82 @@ import "./Usuarios.css";
 
 function RegistroIndividual() {
     const navigate = useNavigate();
-    const [rol, setRol] = useState("");
+
+    const [formulario, setFormulario] = useState({
+        nombres: "",
+        apellidos: "",
+        documentoIdentidad: "",
+        correo: "",
+        telefono: "",
+        rol: "",
+        codigoUniversitario: "",
+        carrera: "",
+    });
+
+    const [errores, setErrores] = useState({});
+
+    const manejarCambio = (event) => {
+        const { name, value } = event.target;
+
+        setFormulario((anterior) => ({
+            ...anterior,
+            [name]: value,
+        }));
+    };
+
+    const validarCamposObligatorios = () => {
+        const nuevosErrores = {};
+
+        if (!formulario.nombres.trim()) {
+            nuevosErrores.nombres = "Los nombres son obligatorios.";
+        }
+
+        if (!formulario.apellidos.trim()) {
+            nuevosErrores.apellidos = "Los apellidos son obligatorios.";
+        }
+
+        if (!formulario.documentoIdentidad.trim()) {
+            nuevosErrores.documentoIdentidad =
+                "El documento de identidad es obligatorio.";
+        }
+
+        if (!formulario.correo.trim()) {
+            nuevosErrores.correo = "El correo electrónico es obligatorio.";
+        }
+
+        if (!formulario.telefono.trim()) {
+            nuevosErrores.telefono = "El teléfono es obligatorio.";
+        }
+
+        if (!formulario.rol) {
+            nuevosErrores.rol = "Debe seleccionar un rol.";
+        }
+
+        if (formulario.rol === "Estudiante") {
+            if (!formulario.codigoUniversitario.trim()) {
+                nuevosErrores.codigoUniversitario =
+                    "El código universitario es obligatorio.";
+            }
+
+            if (!formulario.carrera) {
+                nuevosErrores.carrera = "Debe seleccionar una carrera.";
+            }
+        }
+
+        setErrores(nuevosErrores);
+
+        return Object.keys(nuevosErrores).length === 0;
+    };
+
+    const manejarRegistro = () => {
+        const formularioValido = validarCamposObligatorios();
+
+        if (!formularioValido) {
+            return;
+        }
+
+        // El registro en backend se implementará en una task posterior.
+    };
 
     return (
         <div className="usuarios-pagina">
@@ -18,7 +93,6 @@ function RegistroIndividual() {
             <section className="usuarios-panel">
                 <form className="usuarios-formulario">
                     <div className="usuarios-formulario-grid">
-
                         <div className="usuarios-campo">
                             <label htmlFor="nombres">Nombres</label>
                             <input
@@ -26,7 +100,15 @@ function RegistroIndividual() {
                                 name="nombres"
                                 type="text"
                                 placeholder="Ingrese los nombres"
+                                value={formulario.nombres}
+                                onChange={manejarCambio}
                             />
+
+                            {errores.nombres && (
+                                <span className="usuarios-error">
+                                    {errores.nombres}
+                                </span>
+                            )}
                         </div>
 
                         <div className="usuarios-campo">
@@ -36,7 +118,15 @@ function RegistroIndividual() {
                                 name="apellidos"
                                 type="text"
                                 placeholder="Ingrese los apellidos"
+                                value={formulario.apellidos}
+                                onChange={manejarCambio}
                             />
+
+                            {errores.apellidos && (
+                                <span className="usuarios-error">
+                                    {errores.apellidos}
+                                </span>
+                            )}
                         </div>
 
                         <div className="usuarios-campo">
@@ -48,7 +138,15 @@ function RegistroIndividual() {
                                 name="documentoIdentidad"
                                 type="text"
                                 placeholder="Ingrese el documento"
+                                value={formulario.documentoIdentidad}
+                                onChange={manejarCambio}
                             />
+
+                            {errores.documentoIdentidad && (
+                                <span className="usuarios-error">
+                                    {errores.documentoIdentidad}
+                                </span>
+                            )}
                         </div>
 
                         <div className="usuarios-campo">
@@ -60,7 +158,15 @@ function RegistroIndividual() {
                                 name="correo"
                                 type="email"
                                 placeholder="ejemplo@correo.com"
+                                value={formulario.correo}
+                                onChange={manejarCambio}
                             />
+
+                            {errores.correo && (
+                                <span className="usuarios-error">
+                                    {errores.correo}
+                                </span>
+                            )}
                         </div>
 
                         <div className="usuarios-campo">
@@ -70,7 +176,15 @@ function RegistroIndividual() {
                                 name="telefono"
                                 type="tel"
                                 placeholder="Ingrese el teléfono"
+                                value={formulario.telefono}
+                                onChange={manejarCambio}
                             />
+
+                            {errores.telefono && (
+                                <span className="usuarios-error">
+                                    {errores.telefono}
+                                </span>
+                            )}
                         </div>
 
                         <div className="usuarios-campo">
@@ -78,12 +192,10 @@ function RegistroIndividual() {
                             <select
                                 id="rol"
                                 name="rol"
-                                value={rol}
-                                onChange={(event) => setRol(event.target.value)}
+                                value={formulario.rol}
+                                onChange={manejarCambio}
                             >
-                                <option value="">
-                                    Seleccione un rol
-                                </option>
+                                <option value="">Seleccione un rol</option>
                                 <option value="Administrador">
                                     Administrador
                                 </option>
@@ -97,9 +209,15 @@ function RegistroIndividual() {
                                     Estudiante
                                 </option>
                             </select>
+
+                            {errores.rol && (
+                                <span className="usuarios-error">
+                                    {errores.rol}
+                                </span>
+                            )}
                         </div>
 
-                        {rol === "Estudiante" && (
+                        {formulario.rol === "Estudiante" && (
                             <>
                                 <div className="usuarios-campo">
                                     <label htmlFor="codigoUniversitario">
@@ -110,7 +228,15 @@ function RegistroIndividual() {
                                         name="codigoUniversitario"
                                         type="text"
                                         placeholder="Ingrese el código universitario"
+                                        value={formulario.codigoUniversitario}
+                                        onChange={manejarCambio}
                                     />
+
+                                    {errores.codigoUniversitario && (
+                                        <span className="usuarios-error">
+                                            {errores.codigoUniversitario}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="usuarios-campo">
@@ -120,16 +246,22 @@ function RegistroIndividual() {
                                     <select
                                         id="carrera"
                                         name="carrera"
-                                        defaultValue=""
+                                        value={formulario.carrera}
+                                        onChange={manejarCambio}
                                     >
                                         <option value="" disabled>
                                             Seleccione una carrera
                                         </option>
                                     </select>
+
+                                    {errores.carrera && (
+                                        <span className="usuarios-error">
+                                            {errores.carrera}
+                                        </span>
+                                    )}
                                 </div>
                             </>
                         )}
-
                     </div>
 
                     <div className="usuarios-formulario-acciones">
@@ -144,6 +276,7 @@ function RegistroIndividual() {
                         <button
                             type="button"
                             className="usuarios-boton-nuevo"
+                            onClick={manejarRegistro}
                         >
                             Registrar usuario
                         </button>

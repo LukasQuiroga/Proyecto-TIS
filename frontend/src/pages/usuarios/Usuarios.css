@@ -323,3 +323,8 @@
         grid-template-columns: 1fr;
     }
 }
+
+.usuarios-error {
+    color: #b33a3a;
+    font-size: 11px;
+}
