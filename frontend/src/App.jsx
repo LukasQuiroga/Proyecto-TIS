@@ -12,6 +12,8 @@ import Inicio from "./pages/Inicio/Inicio.jsx";
 import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
 import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
 import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
+import RegistroIndividual from "./pages/usuarios/RegistroIndividual.jsx";
+import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 
 
 function App() {
@@ -37,6 +39,16 @@ function App() {
           <Route
           path="/usuarios/registrar"
           element={<RegistrarUsuario />}
+          />
+
+          <Route
+              path="/usuarios/registrar/individual"
+              element={<RegistroIndividual />}
+          />
+
+          <Route
+              path="/usuarios/importar"
+              element={<ImportarUsuarios />}
           />
 
           <Route
