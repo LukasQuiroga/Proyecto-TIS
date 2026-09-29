@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Usuarios.css";
 
 function RegistroIndividual() {
     const navigate = useNavigate();
+    const [rol, setRol] = useState("");
 
     return (
         <div className="usuarios-pagina">
@@ -67,6 +69,25 @@ function RegistroIndividual() {
                                 placeholder="Ingrese el teléfono"
                             />
                         </div>
+                    </div>
+
+                    <div className="usuarios-campo">
+                        <label htmlFor="rol">Rol</label>
+
+                        <select
+                            id="rol"
+                            name="rol"
+                            value={rol}
+                            onChange={(event) => setRol(event.target.value)}
+                        >
+                            <option value="">Seleccione un rol</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Docente">Docente</option>
+                            <option value="Personal de ingreso">
+                                Personal de ingreso
+                            </option>
+                            <option value="Estudiante">Estudiante</option>
+                        </select>
                     </div>
 
                     <div className="usuarios-formulario-acciones">
