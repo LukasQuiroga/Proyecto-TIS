@@ -94,6 +94,7 @@
 
 .ver-dato b{
     color:#17386b;
+    text-align:right;
 }
 
 .ver-boton-volver{
@@ -104,5 +105,15 @@
     background:#e5edf6;
     color:#082867;
     cursor:pointer;
+    font-size:13px;
+}
+
+.ver-usuario-cargando{
+    width:100%;
+    min-height:300px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#45659a;
     font-size:13px;
 }
