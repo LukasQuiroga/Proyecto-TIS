@@ -27,59 +27,83 @@ function RegistroIndividual() {
         }));
     };
 
-    const validarCamposObligatorios = () => {
-        const nuevosErrores = {};
+    const validarFormulario = () => {
+    const nuevosErrores = {};
 
-        if (!formulario.nombres.trim()) {
-            nuevosErrores.nombres = "Los nombres son obligatorios.";
+    const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]+$/;
+    const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regexDocumento = /^[A-Za-z0-9.-]+$/;
+    const regexTelefono = /^[0-9+\-\s()]+$/;
+
+    if (!formulario.nombres.trim()) {
+        nuevosErrores.nombres = "Los nombres son obligatorios.";
+    } else if (!regexNombre.test(formulario.nombres.trim())) {
+        nuevosErrores.nombres =
+            "Los nombres contienen caracteres no válidos.";
+    }
+
+    if (!formulario.apellidos.trim()) {
+        nuevosErrores.apellidos = "Los apellidos son obligatorios.";
+    } else if (!regexNombre.test(formulario.apellidos.trim())) {
+        nuevosErrores.apellidos =
+            "Los apellidos contienen caracteres no válidos.";
+    }
+
+    if (!formulario.documentoIdentidad.trim()) {
+        nuevosErrores.documentoIdentidad =
+            "El documento de identidad es obligatorio.";
+    } else if (
+        !regexDocumento.test(formulario.documentoIdentidad.trim())
+    ) {
+        nuevosErrores.documentoIdentidad =
+            "El documento de identidad tiene un formato inválido.";
+    }
+
+    if (!formulario.correo.trim()) {
+        nuevosErrores.correo =
+            "El correo electrónico es obligatorio.";
+    } else if (!regexCorreo.test(formulario.correo.trim())) {
+        nuevosErrores.correo =
+            "Ingrese un correo electrónico válido.";
+    }
+
+    if (
+        formulario.telefono.trim() &&
+        !regexTelefono.test(formulario.telefono.trim())
+    ) {
+        nuevosErrores.telefono =
+            "El teléfono tiene un formato inválido.";
+    }
+
+    if (!formulario.rol) {
+        nuevosErrores.rol = "Debe seleccionar un rol.";
+    }
+
+    if (formulario.rol === "Estudiante") {
+        if (!formulario.codigoUniversitario.trim()) {
+            nuevosErrores.codigoUniversitario =
+                "El código universitario es obligatorio.";
         }
 
-        if (!formulario.apellidos.trim()) {
-            nuevosErrores.apellidos = "Los apellidos son obligatorios.";
+        if (!formulario.carrera) {
+            nuevosErrores.carrera =
+                "Debe seleccionar una carrera.";
         }
+    }
 
-        if (!formulario.documentoIdentidad.trim()) {
-            nuevosErrores.documentoIdentidad =
-                "El documento de identidad es obligatorio.";
-        }
+    setErrores(nuevosErrores);
 
-        if (!formulario.correo.trim()) {
-            nuevosErrores.correo = "El correo electrónico es obligatorio.";
-        }
+    return Object.keys(nuevosErrores).length === 0;
+};
 
-        if (!formulario.telefono.trim()) {
-            nuevosErrores.telefono = "El teléfono es obligatorio.";
-        }
+const manejarRegistro = () => {
+    const formularioValido = validarFormulario();
 
-        if (!formulario.rol) {
-            nuevosErrores.rol = "Debe seleccionar un rol.";
-        }
+    if (!formularioValido) {
+        return;
+    }
 
-        if (formulario.rol === "Estudiante") {
-            if (!formulario.codigoUniversitario.trim()) {
-                nuevosErrores.codigoUniversitario =
-                    "El código universitario es obligatorio.";
-            }
-
-            if (!formulario.carrera) {
-                nuevosErrores.carrera = "Debe seleccionar una carrera.";
-            }
-        }
-
-        setErrores(nuevosErrores);
-
-        return Object.keys(nuevosErrores).length === 0;
-    };
-
-    const manejarRegistro = () => {
-        const formularioValido = validarCamposObligatorios();
-
-        if (!formularioValido) {
-            return;
-        }
-
-        // El registro en backend se implementará en una task posterior.
-    };
+};
 
     return (
         <div className="usuarios-pagina">
