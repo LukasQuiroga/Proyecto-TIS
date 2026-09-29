@@ -87,17 +87,28 @@ const manejarCambio = (event) => {
         nuevosErrores.rol = "Debe seleccionar un rol.";
     }
 
-    if (formulario.rol === "Estudiante") {
-        if (!formulario.codigoUniversitario.trim()) {
-            nuevosErrores.codigoUniversitario =
-                "El código universitario es obligatorio.";
-        }
-
-        if (!formulario.carrera) {
-            nuevosErrores.carrera =
-                "Debe seleccionar una carrera.";
-        }
+if (formulario.rol === "Estudiante") {
+    if (!formulario.codigoUniversitario.trim()) {
+        nuevosErrores.codigoUniversitario =
+            "El código universitario es obligatorio.";
     }
+
+    if (!formulario.carrera) {
+        nuevosErrores.carrera =
+            "Debe seleccionar una carrera.";
+    }
+
+    if (!formulario.estado) {
+        nuevosErrores.estado =
+            "Debe seleccionar un estado.";
+    } else if (
+        formulario.estado !== "Activo" &&
+        formulario.estado !== "Inactivo"
+    ) {
+        nuevosErrores.estado =
+            "El estado seleccionado no es válido.";
+    }
+}
 
     setErrores(nuevosErrores);
 
