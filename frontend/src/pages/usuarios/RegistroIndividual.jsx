@@ -5,16 +5,17 @@ import "./Usuarios.css";
 function RegistroIndividual() {
     const navigate = useNavigate();
 
-    const [formulario, setFormulario] = useState({
-        nombres: "",
-        apellidos: "",
-        documentoIdentidad: "",
-        correo: "",
-        telefono: "",
-        rol: "",
-        codigoUniversitario: "",
-        carrera: "",
-    });
+const [formulario, setFormulario] = useState({
+    nombres: "",
+    apellidos: "",
+    documentoIdentidad: "",
+    correo: "",
+    telefono: "",
+    rol: "",
+    codigoUniversitario: "",
+    carrera: "",
+    estado: "",
+});
 
     const [errores, setErrores] = useState({});
 
@@ -303,6 +304,41 @@ const manejarRegistro = () => {
                                         </span>
                                     )}
                                 </div>
+
+                                <div className="usuarios-campo">
+                                    <label htmlFor="estado">
+                                        Estado
+                                    </label>
+
+                                    <select
+                                        id="estado"
+                                        name="estado"
+                                        value={formulario.estado}
+                                        onChange={manejarCambio}
+                                        className={
+                                            errores.estado ? "usuarios-input-error" : ""
+                                        }
+                                    >
+                                        <option value="" disabled>
+                                            Seleccione un estado
+                                        </option>
+
+                                        <option value="Activo">
+                                            Activo
+                                        </option>
+
+                                        <option value="Inactivo">
+                                            Inactivo
+                                        </option>
+                                    </select>
+
+                                    {errores.estado && (
+                                        <span className="usuarios-error">
+                                            {errores.estado}
+                                        </span>
+                                    )}
+                                </div>
+
                             </>
                         )}
                     </div>
