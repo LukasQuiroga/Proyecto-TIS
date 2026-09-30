@@ -133,6 +133,8 @@ function ImportarUsuarios() {
         ];
 
         const errores = [];
+        const documentosEncontrados = new Set();
+        const correosEncontrados = new Set();
 
         for (let indice = 1; indice < lineas.length; indice++) {
             const columnas = lineas[indice]
@@ -189,6 +191,30 @@ function ImportarUsuarios() {
                 errores.push(
                     `Fila ${numeroFila}: el correo electrónico tiene un formato inválido.`
                 );
+            }
+
+            if (documento) {
+                const documentoNormalizado = documento.toLowerCase();
+
+                if (documentosEncontrados.has(documentoNormalizado)) {
+                    errores.push(
+                        `Fila ${numeroFila}: el documento de identidad "${documento}" está duplicado en el archivo.`
+                    );
+                } else {
+                    documentosEncontrados.add(documentoNormalizado);
+                }
+            }
+
+            if (correo) {
+                const correoNormalizado = correo.toLowerCase();
+
+                if (correosEncontrados.has(correoNormalizado)) {
+                    errores.push(
+                        `Fila ${numeroFila}: el correo electrónico "${correo}" está duplicado en el archivo.`
+                    );
+                } else {
+                    correosEncontrados.add(correoNormalizado);
+                }
             }
 
             if (telefono && !regexTelefono.test(telefono)) {
