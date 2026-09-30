@@ -13,6 +13,7 @@ function ImportarUsuarios() {
     const [archivoValido, setArchivoValido] = useState(false);
     const [erroresRegistros, setErroresRegistros] = useState([]);
     const [resumenValidacion, setResumenValidacion] = useState(null);
+    const [registrosValidos, setRegistrosValidos] = useState([]);
 
     const abrirSelectorArchivo = () => {
         inputArchivoRef.current?.click();
@@ -273,6 +274,33 @@ function ImportarUsuarios() {
         });
 
         return erroresAgrupados;
+        };
+
+        const obtenerRegistrosCSV = (lineas) => {
+        if (lineas.length <= 1) {
+            return [];
+        }
+
+        const encabezados = lineas[0]
+            .split(",")
+            .map((encabezado) => encabezado.trim());
+
+        return lineas.slice(1).map((linea, indice) => {
+            const valores = linea
+                .split(",")
+                .map((valor) => valor.trim());
+
+            const registro = {};
+
+            encabezados.forEach((encabezado, posicion) => {
+                registro[encabezado] = valores[posicion] || "";
+            });
+
+            return {
+                numeroFila: indice + 2,
+                ...registro,
+            };
+        });
     };
 
     const procesarArchivo = (archivoSeleccionado) => {
@@ -280,6 +308,7 @@ function ImportarUsuarios() {
         setArchivoValido(false);
         setErroresRegistros([]);
         setResumenValidacion(null);
+        setRegistrosValidos([]);
 
         if (!validarArchivoCSV(archivoSeleccionado)) {
             return;
@@ -332,15 +361,19 @@ function ImportarUsuarios() {
             setArchivo(archivoSeleccionado);
 
             if (erroresEncontrados.length > 0) {
-                setArchivoValido(false);
-                setErroresRegistros(erroresEncontrados);
-                setErrorArchivo("");
-                return;
-            }
-
-            setErroresRegistros([]);
+            setArchivoValido(false);
+            setErroresRegistros(erroresEncontrados);
+            setRegistrosValidos([]);
             setErrorArchivo("");
-            setArchivoValido(true);
+            return;
+        }
+
+        const registros = obtenerRegistrosCSV(lineas);
+
+        setRegistrosValidos(registros);
+        setErroresRegistros([]);
+        setErrorArchivo("");
+        setArchivoValido(true);
             };
 
         lector.onerror = () => {
@@ -348,6 +381,7 @@ function ImportarUsuarios() {
             setArchivoValido(false);
             setErroresRegistros([]);
             setResumenValidacion(null);
+            setRegistrosValidos([]);
             setErrorArchivo(
                 "No se pudo leer el archivo seleccionado."
             );
@@ -493,6 +527,51 @@ function ImportarUsuarios() {
                                             {resumenValidacion.registrosConErrores}
                                         </strong>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {archivoValido && registrosValidos.length > 0 && (
+                            <div className="usuarios-vista-previa">
+                                <h3>Registros listos para importar</h3>
+
+                                <div className="usuarios-vista-previa-tabla">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Fila</th>
+                                                <th>Nombre</th>
+                                                <th>Documento</th>
+                                                <th>Correo</th>
+                                                <th>Rol</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {registrosValidos.map((registro) => (
+                                                <tr key={registro.numeroFila}>
+                                                    <td>{registro.numeroFila}</td>
+
+                                                    <td>
+                                                        {registro.nombres}{" "}
+                                                        {registro.apellidos}
+                                                    </td>
+
+                                                    <td>
+                                                        {registro.documentoIdentidad}
+                                                    </td>
+
+                                                    <td>
+                                                        {registro.correo}
+                                                    </td>
+
+                                                    <td>
+                                                        {registro.rol}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         )}
