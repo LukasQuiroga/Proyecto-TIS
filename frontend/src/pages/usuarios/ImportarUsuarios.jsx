@@ -7,6 +7,7 @@ function ImportarUsuarios() {
 
     const inputArchivoRef = useRef(null);
     const [archivo, setArchivo] = useState(null);
+    const [arrastrando, setArrastrando] = useState(false);
 
     const abrirSelectorArchivo = () => {
         inputArchivoRef.current?.click();
@@ -22,6 +23,29 @@ function ImportarUsuarios() {
         setArchivo(archivoSeleccionado);
     };
 
+    const manejarDragOver = (event) => {
+        event.preventDefault();
+        setArrastrando(true);
+    };
+
+    const manejarDragLeave = (event) => {
+        event.preventDefault();
+        setArrastrando(false);
+    };
+
+    const manejarDrop = (event) => {
+        event.preventDefault();
+        setArrastrando(false);
+
+        const archivoArrastrado = event.dataTransfer.files[0];
+
+        if (!archivoArrastrado) {
+            return;
+        }
+
+        setArchivo(archivoArrastrado);
+    };
+
     return (
         <div className="usuarios-pagina">
             <header className="usuarios-encabezado">
@@ -35,7 +59,16 @@ function ImportarUsuarios() {
 
             <section className="usuarios-panel">
                 <div className="usuarios-importacion">
-                    <div className="usuarios-zona-archivo">
+                    <div
+                        className={`usuarios-zona-archivo ${
+                            arrastrando
+                                ? "usuarios-zona-archivo-activa"
+                                : ""
+                        }`}
+                        onDragOver={manejarDragOver}
+                        onDragLeave={manejarDragLeave}
+                        onDrop={manejarDrop}
+                    >
                         <div className="usuarios-icono-archivo">
                             CSV
                         </div>

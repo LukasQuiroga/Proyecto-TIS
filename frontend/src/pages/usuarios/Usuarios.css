@@ -413,3 +413,8 @@
     font-size: 12px;
     word-break: break-word;
 }
+
+.usuarios-zona-archivo-activa {
+    border-color: #0864e8;
+    background: #eef6ff;
+}
