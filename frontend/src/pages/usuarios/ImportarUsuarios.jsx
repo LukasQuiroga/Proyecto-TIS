@@ -6,17 +6,39 @@ function ImportarUsuarios() {
     const navigate = useNavigate();
 
     const inputArchivoRef = useRef(null);
+
     const [archivo, setArchivo] = useState(null);
     const [arrastrando, setArrastrando] = useState(false);
+    const [errorArchivo, setErrorArchivo] = useState("");
 
     const abrirSelectorArchivo = () => {
         inputArchivoRef.current?.click();
+    };
+
+    const validarArchivoCSV = (archivoSeleccionado) => {
+        const nombreArchivo = archivoSeleccionado.name.toLowerCase();
+
+        if (!nombreArchivo.endsWith(".csv")) {
+            setArchivo(null);
+            setErrorArchivo(
+                "El archivo seleccionado debe tener formato CSV."
+            );
+            return false;
+        }
+
+        setErrorArchivo("");
+        return true;
     };
 
     const manejarSeleccionArchivo = (event) => {
         const archivoSeleccionado = event.target.files[0];
 
         if (!archivoSeleccionado) {
+            return;
+        }
+
+        if (!validarArchivoCSV(archivoSeleccionado)) {
+            event.target.value = "";
             return;
         }
 
@@ -40,6 +62,10 @@ function ImportarUsuarios() {
         const archivoArrastrado = event.dataTransfer.files[0];
 
         if (!archivoArrastrado) {
+            return;
+        }
+
+        if (!validarArchivoCSV(archivoArrastrado)) {
             return;
         }
 
@@ -104,6 +130,12 @@ function ImportarUsuarios() {
                         ) : (
                             <span className="usuarios-ayuda-archivo">
                                 Formato permitido: .csv
+                            </span>
+                        )}
+
+                        {errorArchivo && (
+                            <span className="usuarios-error-archivo">
+                                {errorArchivo}
                             </span>
                         )}
                     </div>
