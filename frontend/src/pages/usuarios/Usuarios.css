@@ -398,3 +398,18 @@
     color: #7b8da8;
     font-size: 10px;
 }
+
+.usuarios-archivo-seleccionado {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 5px;
+    color: #62799b;
+    font-size: 11px;
+}
+
+.usuarios-archivo-seleccionado strong {
+    color: #17386b;
+    font-size: 12px;
+    word-break: break-word;
+}

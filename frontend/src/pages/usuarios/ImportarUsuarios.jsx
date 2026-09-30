@@ -1,8 +1,26 @@
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Usuarios.css";
 
 function ImportarUsuarios() {
     const navigate = useNavigate();
+
+    const inputArchivoRef = useRef(null);
+    const [archivo, setArchivo] = useState(null);
+
+    const abrirSelectorArchivo = () => {
+        inputArchivoRef.current?.click();
+    };
+
+    const manejarSeleccionArchivo = (event) => {
+        const archivoSeleccionado = event.target.files[0];
+
+        if (!archivoSeleccionado) {
+            return;
+        }
+
+        setArchivo(archivoSeleccionado);
+    };
 
     return (
         <div className="usuarios-pagina">
@@ -29,16 +47,32 @@ function ImportarUsuarios() {
                             la importación.
                         </p>
 
+                        <input
+                            ref={inputArchivoRef}
+                            type="file"
+                            accept=".csv,text/csv"
+                            onChange={manejarSeleccionArchivo}
+                            hidden
+                        />
+
                         <button
                             type="button"
                             className="usuarios-boton-seleccionar"
+                            onClick={abrirSelectorArchivo}
                         >
                             Seleccionar archivo
                         </button>
 
-                        <span className="usuarios-ayuda-archivo">
-                            Formato permitido: .csv
-                        </span>
+                        {archivo ? (
+                            <div className="usuarios-archivo-seleccionado">
+                                <span>Archivo seleccionado:</span>
+                                <strong>{archivo.name}</strong>
+                            </div>
+                        ) : (
+                            <span className="usuarios-ayuda-archivo">
+                                Formato permitido: .csv
+                            </span>
+                        )}
                     </div>
 
                     <div className="usuarios-formulario-acciones">
