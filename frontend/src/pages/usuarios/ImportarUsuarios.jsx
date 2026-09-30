@@ -252,6 +252,29 @@ function ImportarUsuarios() {
         return errores;
     };
 
+        const agruparErroresPorFila = (errores) => {
+        const erroresAgrupados = {};
+
+        errores.forEach((error) => {
+            const coincidencia = error.match(/^Fila (\d+):\s*(.*)$/);
+
+            if (!coincidencia) {
+                return;
+            }
+
+            const numeroFila = coincidencia[1];
+            const mensaje = coincidencia[2];
+
+            if (!erroresAgrupados[numeroFila]) {
+                erroresAgrupados[numeroFila] = [];
+            }
+
+            erroresAgrupados[numeroFila].push(mensaje);
+        });
+
+        return erroresAgrupados;
+    };
+
     const procesarArchivo = (archivoSeleccionado) => {
         setErrorArchivo("");
         setArchivoValido(false);
@@ -359,15 +382,17 @@ function ImportarUsuarios() {
         event.preventDefault();
         setArrastrando(false);
 
-        const archivoArrastrado =
+        const archivoSeleccionado =
             event.dataTransfer.files[0];
 
-        if (!archivoArrastrado) {
-            return;
+        if (archivoSeleccionado) {
+            procesarArchivo(archivoSeleccionado);
         }
-
-        procesarArchivo(archivoArrastrado);
     };
+
+    const erroresAgrupados = agruparErroresPorFila(
+        erroresRegistros
+    );
 
     return (
         <div className="usuarios-pagina">
@@ -480,16 +505,29 @@ function ImportarUsuarios() {
                         )}
 
                         {erroresRegistros.length > 0 && (
-                            <div className="usuarios-error-archivo">
-                                <strong>
-                                    Se encontraron errores en los registros
-                                </strong>
+                            <div className="usuarios-detalle-errores">
+                                <h3>Detalle de errores</h3>
 
-                                {erroresRegistros.map(
-                                    (error, indice) => (
-                                        <span key={indice}>
-                                            {error}
-                                        </span>
+                                {Object.entries(erroresAgrupados).map(
+                                    ([numeroFila, erroresFila]) => (
+                                        <div
+                                            className="usuarios-error-fila"
+                                            key={numeroFila}
+                                        >
+                                            <strong>
+                                                Fila {numeroFila}
+                                            </strong>
+
+                                            <ul>
+                                                {erroresFila.map(
+                                                    (error, indice) => (
+                                                        <li key={indice}>
+                                                            {error}
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        </div>
                                     )
                                 )}
                             </div>
