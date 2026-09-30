@@ -459,10 +459,41 @@ function ImportarUsuarios() {
                             </span>
                         )}
 
-                        {archivoValido && archivo && (
-                            <div className="usuarios-archivo-valido">
-                                Archivo CSV válido. Los registros fueron
-                                verificados.
+                        {archivoValido && archivo && resumenValidacion && (
+                            <div className="usuarios-archivo-listo">
+                                <div className="usuarios-archivo-listo-encabezado">
+                                    <span className="usuarios-archivo-listo-icono">
+                                        ✓
+                                    </span>
+
+                                    <div>
+                                        <h3>Archivo listo para importar</h3>
+                                        <p>
+                                            El archivo superó todas las validaciones.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="usuarios-archivo-listo-datos">
+                                    <div>
+                                        <span>Nombre del archivo</span>
+                                        <strong>{archivo.name}</strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Registros válidos</span>
+                                        <strong>
+                                            {resumenValidacion.registrosValidos}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Errores encontrados</span>
+                                        <strong>
+                                            {resumenValidacion.registrosConErrores}
+                                        </strong>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
