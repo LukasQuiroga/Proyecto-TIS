@@ -420,8 +420,29 @@
 }
 
 .usuarios-error-archivo {
-    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 7px;
+    padding: 10px 14px;
+    border: 1px solid #e3aaaa;
+    border-radius: 5px;
+    background: #fff6f6;
     color: #b33a3a;
     font-size: 11px;
-    font-weight: 500;
+}
+
+.usuarios-error-archivo strong {
+    font-size: 12px;
+}
+
+.usuarios-archivo-valido {
+    margin-top: 7px;
+    padding: 10px 14px;
+    border: 1px solid #a8d5b5;
+    border-radius: 5px;
+    background: #f3fff6;
+    color: #287a3d;
+    font-size: 11px;
+    font-weight: 600;
 }

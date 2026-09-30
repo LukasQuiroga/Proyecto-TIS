@@ -10,6 +10,7 @@ function ImportarUsuarios() {
     const [archivo, setArchivo] = useState(null);
     const [arrastrando, setArrastrando] = useState(false);
     const [errorArchivo, setErrorArchivo] = useState("");
+    const [archivoValido, setArchivoValido] = useState(false);
 
     const abrirSelectorArchivo = () => {
         inputArchivoRef.current?.click();
@@ -20,6 +21,7 @@ function ImportarUsuarios() {
 
         if (!nombreArchivo.endsWith(".csv")) {
             setArchivo(null);
+            setArchivoValido(false);
             setErrorArchivo(
                 "El archivo seleccionado debe tener formato CSV."
             );
@@ -64,6 +66,9 @@ function ImportarUsuarios() {
     };
 
     const procesarArchivo = (archivoSeleccionado) => {
+        setErrorArchivo("");
+        setArchivoValido(false);
+
         if (!validarArchivoCSV(archivoSeleccionado)) {
             return;
         }
@@ -76,16 +81,19 @@ function ImportarUsuarios() {
 
             if (errorEstructura) {
                 setArchivo(null);
+                setArchivoValido(false);
                 setErrorArchivo(errorEstructura);
                 return;
             }
 
             setArchivo(archivoSeleccionado);
             setErrorArchivo("");
+            setArchivoValido(true);
         };
 
         lector.onerror = () => {
             setArchivo(null);
+            setArchivoValido(false);
             setErrorArchivo(
                 "No se pudo leer el archivo seleccionado."
             );
@@ -190,10 +198,17 @@ function ImportarUsuarios() {
                             </span>
                         )}
 
+                        {archivoValido && archivo && (
+                            <div className="usuarios-archivo-valido">
+                                Archivo CSV válido. La estructura fue verificada.
+                            </div>
+                        )}
+
                         {errorArchivo && (
-                            <span className="usuarios-error-archivo">
-                                {errorArchivo}
-                            </span>
+                            <div className="usuarios-error-archivo">
+                                <strong>Archivo no válido</strong>
+                                <span>{errorArchivo}</span>
+                            </div>
                         )}
                     </div>
 
