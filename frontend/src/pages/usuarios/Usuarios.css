@@ -446,3 +446,45 @@
     font-size: 11px;
     font-weight: 600;
 }
+
+.usuarios-resumen-validacion {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 10px;
+    padding: 15px;
+    border: 1px solid #d6e1ef;
+    border-radius: 6px;
+    background: #ffffff;
+    text-align: left;
+}
+
+.usuarios-resumen-validacion h3 {
+    margin: 0 0 12px;
+    color: #17386b;
+    font-size: 14px;
+}
+
+.usuarios-resumen-datos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.usuarios-resumen-datos div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    border-radius: 5px;
+    background: #f5f8fc;
+}
+
+.usuarios-resumen-datos span {
+    color: #62799b;
+    font-size: 10px;
+}
+
+.usuarios-resumen-datos strong {
+    color: #17386b;
+    font-size: 18px;
+}

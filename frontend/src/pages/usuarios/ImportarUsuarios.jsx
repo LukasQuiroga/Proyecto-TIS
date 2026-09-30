@@ -12,6 +12,7 @@ function ImportarUsuarios() {
     const [errorArchivo, setErrorArchivo] = useState("");
     const [archivoValido, setArchivoValido] = useState(false);
     const [erroresRegistros, setErroresRegistros] = useState([]);
+    const [resumenValidacion, setResumenValidacion] = useState(null);
 
     const abrirSelectorArchivo = () => {
         inputArchivoRef.current?.click();
@@ -255,6 +256,7 @@ function ImportarUsuarios() {
         setErrorArchivo("");
         setArchivoValido(false);
         setErroresRegistros([]);
+        setResumenValidacion(null);
 
         if (!validarArchivoCSV(archivoSeleccionado)) {
             return;
@@ -281,6 +283,29 @@ function ImportarUsuarios() {
             const erroresEncontrados =
                 validarRegistrosCSV(lineas);
 
+            const totalRegistros = lineas.length - 1;
+
+            const filasConErrores = new Set();
+
+            erroresEncontrados.forEach((error) => {
+                const coincidencia = error.match(/^Fila (\d+):/);
+
+                if (coincidencia) {
+                    filasConErrores.add(Number(coincidencia[1]));
+                }
+            });
+
+            const registrosConErrores = filasConErrores.size;
+
+            const registrosValidos =
+                totalRegistros - registrosConErrores;
+
+            setResumenValidacion({
+                totalRegistros,
+                registrosValidos,
+                registrosConErrores,
+            });
+
             setArchivo(archivoSeleccionado);
 
             if (erroresEncontrados.length > 0) {
@@ -293,12 +318,13 @@ function ImportarUsuarios() {
             setErroresRegistros([]);
             setErrorArchivo("");
             setArchivoValido(true);
-        };
+            };
 
         lector.onerror = () => {
             setArchivo(null);
             setArchivoValido(false);
             setErroresRegistros([]);
+            setResumenValidacion(null);
             setErrorArchivo(
                 "No se pudo leer el archivo seleccionado."
             );
@@ -412,6 +438,35 @@ function ImportarUsuarios() {
                             <div className="usuarios-archivo-valido">
                                 Archivo CSV válido. Los registros fueron
                                 verificados.
+                            </div>
+                        )}
+
+                        {resumenValidacion && (
+                            <div className="usuarios-resumen-validacion">
+                                <h3>Resumen de validación</h3>
+
+                                <div className="usuarios-resumen-datos">
+                                    <div>
+                                        <span>Registros encontrados</span>
+                                        <strong>
+                                            {resumenValidacion.totalRegistros}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Registros válidos</span>
+                                        <strong>
+                                            {resumenValidacion.registrosValidos}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Registros con errores</span>
+                                        <strong>
+                                            {resumenValidacion.registrosConErrores}
+                                        </strong>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
