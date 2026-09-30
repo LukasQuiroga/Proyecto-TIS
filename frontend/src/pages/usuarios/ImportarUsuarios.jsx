@@ -11,6 +11,7 @@ function ImportarUsuarios() {
     const [arrastrando, setArrastrando] = useState(false);
     const [errorArchivo, setErrorArchivo] = useState("");
     const [archivoValido, setArchivoValido] = useState(false);
+    const [erroresRegistros, setErroresRegistros] = useState([]);
 
     const abrirSelectorArchivo = () => {
         inputArchivoRef.current?.click();
@@ -22,6 +23,7 @@ function ImportarUsuarios() {
         if (!nombreArchivo.endsWith(".csv")) {
             setArchivo(null);
             setArchivoValido(false);
+            setErroresRegistros([]);
             setErrorArchivo(
                 "El archivo seleccionado debe tener formato CSV."
             );
@@ -31,11 +33,14 @@ function ImportarUsuarios() {
         return true;
     };
 
-    const validarEstructuraCSV = (contenido) => {
-        const lineas = contenido
+    const obtenerLineasCSV = (contenido) => {
+        return contenido
+            .replace(/^\uFEFF/, "")
             .split(/\r?\n/)
             .filter((linea) => linea.trim() !== "");
+    };
 
+    const validarEstructuraCSV = (lineas) => {
         if (lineas.length === 0) {
             return "El archivo CSV está vacío.";
         }
@@ -65,9 +70,122 @@ function ImportarUsuarios() {
         return "";
     };
 
+    const validarRegistrosCSV = (lineas) => {
+        if (lineas.length <= 1) {
+            return ["El archivo CSV no contiene registros de usuarios."];
+        }
+
+        const encabezados = lineas[0]
+            .split(",")
+            .map((encabezado) => encabezado.trim());
+
+        const columnasRequeridas = [
+            "nombres",
+            "apellidos",
+            "documentoIdentidad",
+            "correo",
+            "telefono",
+        ];
+
+        const columnasFaltantes = columnasRequeridas.filter(
+            (columna) => !encabezados.includes(columna)
+        );
+
+        if (columnasFaltantes.length > 0) {
+            return [
+                `Faltan columnas necesarias para validar los registros: ${columnasFaltantes.join(
+                    ", "
+                )}.`,
+            ];
+        }
+
+        const indiceNombres = encabezados.indexOf("nombres");
+        const indiceApellidos = encabezados.indexOf("apellidos");
+        const indiceDocumento = encabezados.indexOf("documentoIdentidad");
+        const indiceCorreo = encabezados.indexOf("correo");
+        const indiceTelefono = encabezados.indexOf("telefono");
+
+        const regexNombre =
+            /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]+$/;
+
+        const regexDocumento =
+            /^[A-Za-z0-9.-]+$/;
+
+        const regexCorreo =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        const regexTelefono =
+            /^[0-9+\-\s()]+$/;
+
+        const errores = [];
+
+        for (let indice = 1; indice < lineas.length; indice++) {
+            const columnas = lineas[indice]
+                .split(",")
+                .map((valor) => valor.trim());
+
+            const numeroFila = indice + 1;
+
+            const nombres = columnas[indiceNombres];
+            const apellidos = columnas[indiceApellidos];
+            const documento = columnas[indiceDocumento];
+            const correo = columnas[indiceCorreo];
+            const telefono = columnas[indiceTelefono];
+
+            if (!nombres) {
+                errores.push(
+                    `Fila ${numeroFila}: el nombre es obligatorio.`
+                );
+            } else if (!regexNombre.test(nombres)) {
+                errores.push(
+                    `Fila ${numeroFila}: el nombre tiene un formato inválido.`
+                );
+            }
+
+            if (!apellidos) {
+                errores.push(
+                    `Fila ${numeroFila}: el apellido es obligatorio.`
+                );
+            } else if (!regexNombre.test(apellidos)) {
+                errores.push(
+                    `Fila ${numeroFila}: el apellido tiene un formato inválido.`
+                );
+            }
+
+            if (!documento) {
+                errores.push(
+                    `Fila ${numeroFila}: el documento de identidad es obligatorio.`
+                );
+            } else if (!regexDocumento.test(documento)) {
+                errores.push(
+                    `Fila ${numeroFila}: el documento de identidad tiene un formato inválido.`
+                );
+            }
+
+            if (!correo) {
+                errores.push(
+                    `Fila ${numeroFila}: el correo electrónico es obligatorio.`
+                );
+            } else if (!regexCorreo.test(correo)) {
+                errores.push(
+                    `Fila ${numeroFila}: el correo electrónico tiene un formato inválido.`
+                );
+            }
+
+            if (telefono && !regexTelefono.test(telefono)) {
+                errores.push(
+                    `Fila ${numeroFila}: el teléfono tiene un formato inválido.`
+                );
+            }
+        }
+
+        return errores;
+    };
+
     const procesarArchivo = (archivoSeleccionado) => {
         setErrorArchivo("");
         setArchivoValido(false);
+        setErroresRegistros([]);
 
         if (!validarArchivoCSV(archivoSeleccionado)) {
             return;
@@ -77,16 +195,32 @@ function ImportarUsuarios() {
 
         lector.onload = (event) => {
             const contenido = event.target.result;
-            const errorEstructura = validarEstructuraCSV(contenido);
+
+            const lineas = obtenerLineasCSV(contenido);
+
+            const errorEstructura = validarEstructuraCSV(lineas);
 
             if (errorEstructura) {
                 setArchivo(null);
                 setArchivoValido(false);
+                setErroresRegistros([]);
                 setErrorArchivo(errorEstructura);
                 return;
             }
 
+            const erroresEncontrados =
+                validarRegistrosCSV(lineas);
+
             setArchivo(archivoSeleccionado);
+
+            if (erroresEncontrados.length > 0) {
+                setArchivoValido(false);
+                setErroresRegistros(erroresEncontrados);
+                setErrorArchivo("");
+                return;
+            }
+
+            setErroresRegistros([]);
             setErrorArchivo("");
             setArchivoValido(true);
         };
@@ -94,6 +228,7 @@ function ImportarUsuarios() {
         lector.onerror = () => {
             setArchivo(null);
             setArchivoValido(false);
+            setErroresRegistros([]);
             setErrorArchivo(
                 "No se pudo leer el archivo seleccionado."
             );
@@ -128,7 +263,8 @@ function ImportarUsuarios() {
         event.preventDefault();
         setArrastrando(false);
 
-        const archivoArrastrado = event.dataTransfer.files[0];
+        const archivoArrastrado =
+            event.dataTransfer.files[0];
 
         if (!archivoArrastrado) {
             return;
@@ -189,8 +325,12 @@ function ImportarUsuarios() {
 
                         {archivo ? (
                             <div className="usuarios-archivo-seleccionado">
-                                <span>Archivo seleccionado:</span>
-                                <strong>{archivo.name}</strong>
+                                <span>
+                                    Archivo seleccionado:
+                                </span>
+                                <strong>
+                                    {archivo.name}
+                                </strong>
                             </div>
                         ) : (
                             <span className="usuarios-ayuda-archivo">
@@ -200,7 +340,8 @@ function ImportarUsuarios() {
 
                         {archivoValido && archivo && (
                             <div className="usuarios-archivo-valido">
-                                Archivo CSV válido. La estructura fue verificada.
+                                Archivo CSV válido. Los registros fueron
+                                verificados.
                             </div>
                         )}
 
@@ -210,13 +351,31 @@ function ImportarUsuarios() {
                                 <span>{errorArchivo}</span>
                             </div>
                         )}
+
+                        {erroresRegistros.length > 0 && (
+                            <div className="usuarios-error-archivo">
+                                <strong>
+                                    Se encontraron errores en los registros
+                                </strong>
+
+                                {erroresRegistros.map(
+                                    (error, indice) => (
+                                        <span key={indice}>
+                                            {error}
+                                        </span>
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div className="usuarios-formulario-acciones">
                         <button
                             type="button"
                             className="usuarios-boton-cancelar"
-                            onClick={() => navigate("/usuarios/registrar")}
+                            onClick={() =>
+                                navigate("/usuarios/registrar")
+                            }
                         >
                             Cancelar
                         </button>
