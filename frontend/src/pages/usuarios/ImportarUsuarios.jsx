@@ -26,8 +26,72 @@ function ImportarUsuarios() {
             return false;
         }
 
-        setErrorArchivo("");
         return true;
+    };
+
+    const validarEstructuraCSV = (contenido) => {
+        const lineas = contenido
+            .split(/\r?\n/)
+            .filter((linea) => linea.trim() !== "");
+
+        if (lineas.length === 0) {
+            return "El archivo CSV está vacío.";
+        }
+
+        const encabezados = lineas[0]
+            .split(",")
+            .map((encabezado) => encabezado.trim());
+
+        if (encabezados.length < 2) {
+            return "El archivo CSV no contiene una estructura válida.";
+        }
+
+        if (encabezados.some((encabezado) => encabezado === "")) {
+            return "El archivo CSV contiene encabezados vacíos.";
+        }
+
+        const cantidadColumnas = encabezados.length;
+
+        for (let indice = 1; indice < lineas.length; indice++) {
+            const columnas = lineas[indice].split(",");
+
+            if (columnas.length !== cantidadColumnas) {
+                return `La fila ${indice + 1} no tiene la misma cantidad de columnas que el encabezado.`;
+            }
+        }
+
+        return "";
+    };
+
+    const procesarArchivo = (archivoSeleccionado) => {
+        if (!validarArchivoCSV(archivoSeleccionado)) {
+            return;
+        }
+
+        const lector = new FileReader();
+
+        lector.onload = (event) => {
+            const contenido = event.target.result;
+            const errorEstructura = validarEstructuraCSV(contenido);
+
+            if (errorEstructura) {
+                setArchivo(null);
+                setErrorArchivo(errorEstructura);
+                return;
+            }
+
+            setArchivo(archivoSeleccionado);
+            setErrorArchivo("");
+        };
+
+        lector.onerror = () => {
+            setArchivo(null);
+            setErrorArchivo(
+                "No se pudo leer el archivo seleccionado."
+            );
+        };
+
+        lector.readAsText(archivoSeleccionado);
     };
 
     const manejarSeleccionArchivo = (event) => {
@@ -37,12 +101,9 @@ function ImportarUsuarios() {
             return;
         }
 
-        if (!validarArchivoCSV(archivoSeleccionado)) {
-            event.target.value = "";
-            return;
-        }
+        procesarArchivo(archivoSeleccionado);
 
-        setArchivo(archivoSeleccionado);
+        event.target.value = "";
     };
 
     const manejarDragOver = (event) => {
@@ -65,11 +126,7 @@ function ImportarUsuarios() {
             return;
         }
 
-        if (!validarArchivoCSV(archivoArrastrado)) {
-            return;
-        }
-
-        setArchivo(archivoArrastrado);
+        procesarArchivo(archivoArrastrado);
     };
 
     return (
