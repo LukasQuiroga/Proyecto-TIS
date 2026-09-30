@@ -85,6 +85,9 @@ function ImportarUsuarios() {
             "documentoIdentidad",
             "correo",
             "telefono",
+            "rol",
+            "codigoUniversitario",
+            "carrera",
         ];
 
         const columnasFaltantes = columnasRequeridas.filter(
@@ -101,9 +104,14 @@ function ImportarUsuarios() {
 
         const indiceNombres = encabezados.indexOf("nombres");
         const indiceApellidos = encabezados.indexOf("apellidos");
-        const indiceDocumento = encabezados.indexOf("documentoIdentidad");
+        const indiceDocumento =
+            encabezados.indexOf("documentoIdentidad");
         const indiceCorreo = encabezados.indexOf("correo");
         const indiceTelefono = encabezados.indexOf("telefono");
+        const indiceRol = encabezados.indexOf("rol");
+        const indiceCodigoUniversitario =
+            encabezados.indexOf("codigoUniversitario");
+        const indiceCarrera = encabezados.indexOf("carrera");
 
         const regexNombre =
             /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]+$/;
@@ -116,6 +124,13 @@ function ImportarUsuarios() {
 
         const regexTelefono =
             /^[0-9+\-\s()]+$/;
+
+        const rolesPermitidos = [
+            "Administrador",
+            "Docente",
+            "Personal de ingreso",
+            "Estudiante",
+        ];
 
         const errores = [];
 
@@ -131,6 +146,10 @@ function ImportarUsuarios() {
             const documento = columnas[indiceDocumento];
             const correo = columnas[indiceCorreo];
             const telefono = columnas[indiceTelefono];
+            const rol = columnas[indiceRol];
+            const codigoUniversitario =
+                columnas[indiceCodigoUniversitario];
+            const carrera = columnas[indiceCarrera];
 
             if (!nombres) {
                 errores.push(
@@ -177,6 +196,30 @@ function ImportarUsuarios() {
                     `Fila ${numeroFila}: el teléfono tiene un formato inválido.`
                 );
             }
+
+            if (!rol) {
+                errores.push(
+                    `Fila ${numeroFila}: el rol es obligatorio.`
+                );
+            } else if (!rolesPermitidos.includes(rol)) {
+                errores.push(
+                    `Fila ${numeroFila}: el rol "${rol}" no es válido.`
+                );
+            }
+
+            if (rol === "Estudiante") {
+                if (!codigoUniversitario) {
+                    errores.push(
+                        `Fila ${numeroFila}: el código universitario es obligatorio para estudiantes.`
+                    );
+                }
+
+                if (!carrera) {
+                    errores.push(
+                        `Fila ${numeroFila}: la carrera es obligatoria para estudiantes.`
+                    );
+                }
+            }
         }
 
         return errores;
@@ -198,7 +241,8 @@ function ImportarUsuarios() {
 
             const lineas = obtenerLineasCSV(contenido);
 
-            const errorEstructura = validarEstructuraCSV(lineas);
+            const errorEstructura =
+                validarEstructuraCSV(lineas);
 
             if (errorEstructura) {
                 setArchivo(null);
@@ -347,7 +391,9 @@ function ImportarUsuarios() {
 
                         {errorArchivo && (
                             <div className="usuarios-error-archivo">
-                                <strong>Archivo no válido</strong>
+                                <strong>
+                                    Archivo no válido
+                                </strong>
                                 <span>{errorArchivo}</span>
                             </div>
                         )}
