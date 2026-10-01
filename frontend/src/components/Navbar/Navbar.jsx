@@ -1,29 +1,73 @@
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "../../context/useAuth";
 import "./Navbar.css";
 
-function Navbar() {
-  return (
-    <header className="navbar">
-      <div className="navbar-menu">
-        ☰
-      </div>
+function Navbar({cambiarSidebar}){
 
-      <div className="navbar-usuario">
-        <span className="navbar-campana">♢</span>
+    const {usuario,cerrarSesion}=useAuth();
+    const [menuAbierto,setMenuAbierto]=useState(false);
+    const navigate=useNavigate();
 
-        <div className="navbar-avatar">
-          AM
-        </div>
+    return(
+        <header className="navbar">
 
-        <span className="navbar-nombre">
-          Administrador
-        </span>
+            <button className="navbar-menu" onClick={cambiarSidebar}>
+                ☰
+            </button>
 
-        <span className="navbar-flecha">
-          ▾
-        </span>
-      </div>
-    </header>
-  );
+            {
+            usuario ? (
+                <div className="navbar-usuario" onClick={()=>setMenuAbierto(!menuAbierto)}>
+
+                    <div className="navbar-avatar">
+                        {(usuario.nombre||usuario.nombreCompleto||"U").charAt(0)}
+                    </div>
+
+                    <span>
+                        {usuario.nombre||usuario.nombreCompleto||"Usuario"}
+                    </span>
+
+                    {
+                    menuAbierto && (
+                        <div className="navbar-dropdown">
+
+                            <button onClick={(e)=>{
+                                e.stopPropagation();
+                                navigate("/perfil");
+                            }}>
+                                👤 Ver perfil
+                            </button>
+
+                            <button onClick={(e)=>{
+                                e.stopPropagation();
+                                cerrarSesion();
+                            }}>
+                                ↪ Cerrar sesión
+                            </button>
+
+                        </div>
+                    )
+                    }
+
+                </div>
+            ):(
+                <button className="navbar-login" onClick={()=>navigate("/login")}>
+
+                    <div className="navbar-avatar">
+                        👤
+                    </div>
+
+                    <span>
+                        Inicio de sesión
+                    </span>
+
+                </button>
+            )
+            }
+
+        </header>
+    );
 }
 
 export default Navbar;

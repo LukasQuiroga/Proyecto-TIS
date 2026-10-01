@@ -24,6 +24,14 @@ public class Rol {
     @OneToMany(mappedBy = "rol")
     private List<Usuario> usuarios;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "rol_permiso",
+            joinColumns = @JoinColumn(name = "id_rol"),
+            inverseJoinColumns = @JoinColumn(name = "id_permiso")
+    )
+    private List<Permiso> permisos;
+
     public Rol() {
     }
 
@@ -65,5 +73,14 @@ public class Rol {
 
     public void setUsuarios(List<Usuario> usuarios) {
         this.usuarios = usuarios;
+    }
+
+    public List<Permiso> getPermisos() {
+        return permisos;
+    }
+
+
+    public void setPermisos(List<Permiso> permisos) {
+        this.permisos = permisos;
     }
 }

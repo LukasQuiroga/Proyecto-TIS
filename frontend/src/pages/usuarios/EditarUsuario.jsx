@@ -1,3 +1,5 @@
+import "./EditarUsuario.css";
+
 import {
     useEffect,
     useState
@@ -12,9 +14,13 @@ import {
 
 import {
     obtenerUsuario,
-    modificarUsuario,
-    obtenerRoles
+    modificarUsuario
 } from "../../services/usuarioService";
+
+
+import {
+    obtenerRoles
+} from "../../services/rolService";
 
 
 
@@ -27,23 +33,23 @@ function EditarUsuario(){
     const navigate = useNavigate();
 
 
-
     const [usuario,setUsuario] = useState(null);
 
 
     const [roles,setRoles] = useState([]);
 
 
+    const [error,setError] = useState("");
+
+
+    const [mensaje,setMensaje] = useState("");
 
 
     useEffect(()=>{
 
-
         const cargarDatos = async()=>{
 
-
             try{
-
 
                 const usuarioRespuesta =
                     await obtenerUsuario(id);
@@ -54,325 +60,379 @@ function EditarUsuario(){
                     await obtenerRoles();
 
 
-
-
                 setUsuario({
 
                     nombre:
-                        usuarioRespuesta.data.nombre,
+                        usuarioRespuesta.data.nombre || "",
 
 
                     apellido:
-                        usuarioRespuesta.data.apellido,
+                        usuarioRespuesta.data.apellido || "",
+
+
+                    carnetIdentidad:
+                        usuarioRespuesta.data.carnetIdentidad || "",
 
 
                     correo:
-                        usuarioRespuesta.data.correo,
-
-
-                    contrasena:"",
+                        usuarioRespuesta.data.correo || "",
 
 
                     idRol:
-                        usuarioRespuesta.data.idRol,
+                        usuarioRespuesta.data.idRol || "",
 
 
                     activo:
-                        usuarioRespuesta.data.activo
+                        usuarioRespuesta.data.activo ?? true
 
                 });
 
-
-
-
                 setRoles(
-
                     rolesRespuesta.data
-
                 );
-
-
 
             }catch(error){
 
-
                 console.error(
-
                     "Error cargando usuario:",
-
                     error
-
                 );
-
 
             }
 
-
         };
 
-
-
         cargarDatos();
-
-
 
     },[id]);
 
 
+    const validarFormulario = ()=>{
 
 
+        if(!usuario.nombre.trim()){
+
+            return "El nombre es obligatorio";
+
+        }
 
 
+        if(!usuario.apellido.trim()){
 
-    const guardar = async(e)=>{
+            return "El apellido es obligatorio";
 
-
-        e.preventDefault();
-
-
-
-        await modificarUsuario(
-
-            id,
-
-            usuario
-
-        );
+        }
 
 
+        if(!usuario.carnetIdentidad.trim()){
 
-        navigate("/usuarios");
+            return "El carnet de identidad es obligatorio";
 
+        }
+
+
+        if(!/^[0-9]+$/.test(usuario.carnetIdentidad)){
+
+            return "El carnet de identidad solo debe contener números";
+
+        }
+
+        if(!usuario.correo.trim()){
+
+            return "El correo es obligatorio";
+
+        }
+
+        const correoValido =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+        if(!correoValido.test(usuario.correo)){
+
+            return "El correo no tiene un formato válido";
+
+        }
+
+        return null;
 
     };
 
 
+    const guardar = async(e)=>{
+
+        e.preventDefault();
+
+        const mensajeValidacion =
+            validarFormulario();
 
 
+        if(mensajeValidacion){
+
+            setError(
+                mensajeValidacion
+            );
+
+            return;
+
+        }
+
+        try{
+
+            setError("");
+
+            await modificarUsuario(
+                id,
+                usuario
+            );
+
+
+            setMensaje(
+                "Usuario modificado correctamente"
+            );
+
+            setTimeout(()=>{
+
+                navigate("/usuarios");
+
+            },1500);
+
+
+        }catch(error){
+
+            console.error(
+                "Error modificando usuario:",
+                error
+            );
+
+
+            if(error.response){
+
+                setError(
+                    error.response.data.message ||
+                    "No se pudo modificar el usuario"
+
+                );
+
+
+            }else{
+
+                setError(
+                    "Error de conexión con el servidor"
+                );
+
+            }
+
+        }
+
+    };
 
 
     if(!usuario){
 
         return (
-
             <p>
                 Cargando...
-            </p>
 
+            </p>
         );
 
     }
 
-
-
-
-
-
-
     return (
 
-        <div>
+        <div className="editar-container">
+
+            <div className="editar-card">
+
+                <h1>
+                    Editar usuario
+                </h1>
 
 
-            <h1>
-                Editar usuario
-            </h1>
+                {
+                    error && (
+                        <p className="mensaje-error">
+                            {error}
+                        </p>
+
+                    )
+                }
 
 
+                {
+                    mensaje && (
 
-            <form onSubmit={guardar}>
+                        <p className="mensaje-exito">
+                            {mensaje}
+                        </p>
 
-
-
-                <input
-
-                    value={usuario.nombre}
-
-                    onChange={
-                        e=>
-
-                        setUsuario({
-
-                            ...usuario,
-
-                            nombre:e.target.value
-
-                        })
-
-                    }
-
-                    placeholder="Nombre"
-
-                />
+                    )
+                }
 
 
-
-
-                <input
-
-                    value={usuario.apellido}
-
-                    onChange={
-                        e=>
-
-                        setUsuario({
-
-                            ...usuario,
-
-                            apellido:e.target.value
-
-                        })
-
-                    }
-
-                    placeholder="Apellido"
-
-                />
-
-
-
-
-
-                <input
-
-                    value={usuario.correo}
-
-                    onChange={
-                        e=>
-
-                        setUsuario({
-
-                            ...usuario,
-
-                            correo:e.target.value
-
-                        })
-
-                    }
-
-                    placeholder="Correo"
-
-                />
-
-
-
-
-
-
-                <select
-
-                    value={usuario.idRol}
-
-                    onChange={
-                        e=>
-
-                        setUsuario({
-
-                            ...usuario,
-
-                            idRol:e.target.value
-
-                        })
-
-                    }
+                <form
+                    className="editar-form"
+                    onSubmit={guardar}
 
                 >
 
+                    <input
 
-                    {
-                        roles.map(
+                        value={
+                            usuario.nombre || ""
+                        }
 
-                            rol=>(
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                nombre:e.target.value
+                            })
+
+                        }
+
+                        placeholder="Nombre"
+
+                    />
 
 
-                                <option
+                    <input
 
-                                    key={rol.idRol}
+                        value={
+                            usuario.apellido || ""
+                        }
 
-                                    value={rol.idRol}
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                apellido:e.target.value
+                            })
+                        }
+                        placeholder="Apellido"
 
-                                >
-
-                                    {rol.nombreRol}
+                    />
 
 
-                                </option>
+                    <input
 
+                        value={
+                            usuario.carnetIdentidad || ""
+                        }
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                carnetIdentidad:e.target.value
+                            })
+                        }
+                        placeholder="Carnet de identidad"
+                    />
+
+
+                    <input
+
+                        value={
+                            usuario.correo || ""
+                        }
+
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                correo:e.target.value
+                            })
+
+                        }
+
+                        placeholder="Correo"
+
+                    />
+
+
+                    <select
+
+                        value={
+                            usuario.idRol || ""
+                        }
+
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                idRol:Number(e.target.value)
+                            })
+
+                        }
+                    >
+
+                        <option value="">
+                            Seleccione un rol
+                        </option>
+
+
+                        {
+                            roles.map(
+                                rol => (
+                                    <option
+                                        key={rol.idRol}
+                                        value={rol.idRol}
+
+                                    >
+
+                                        {rol.nombreRol}
+
+                                    </option>
+
+                                )
 
                             )
+                        }
 
-                        )
-                    }
-
-
-
-                </select>
+                    </select>
 
 
+                    <select
+                        value={
+                            String(usuario.activo)
+                        }
+
+                        onChange={
+                            e =>
+                            setUsuario({
+                                ...usuario,
+                                activo:
+                                    e.target.value === "true"
+
+                            })
+
+                        }
+
+                    >
 
 
-
-                <select
-
-                    value={usuario.activo}
-
-                    onChange={
-                        e=>
-
-                        setUsuario({
-
-                            ...usuario,
-
-                            activo:
-                                e.target.value === "true"
-
-                        })
-
-                    }
-
-                >
+                        <option value="true">
+                            Activo
+                        </option>
 
 
-                    <option value="true">
+                        <option value="false">
+                            Inactivo
+                        </option>
 
-                        Activo
-
-                    </option>
-
-
-
-                    <option value="false">
-
-                        Inactivo
-
-                    </option>
+                    </select>
 
 
-                </select>
+                    <button type="submit">
+                        Guardar cambios
+                    </button>
 
+                </form>
 
-
-
-
-                <button>
-
-                    Guardar
-
-                </button>
-
-
-
-
-            </form>
-
+            </div>
 
         </div>
-
     );
-
-
 }
-
-
 
 export default EditarUsuario;

@@ -1,13 +1,8 @@
 import "./Inicio.css";
 
 function IconoModulo({ tipo }) {
+
   const iconos = {
-    estudiantes: (
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
-      </svg>
-    ),
 
     examenes: (
       <svg viewBox="0 0 24 24">
@@ -52,156 +47,227 @@ function IconoModulo({ tipo }) {
         <path d="M15 15c3 0 5 2 5 5" />
       </svg>
     ),
+
   };
 
   return (
-    <div className="inicio-icono-modulo">
-      {iconos[tipo]}
-    </div>
-  );
-}
 
+    <div className="inicio-icono-modulo">
+
+      {iconos[tipo]}
+
+    </div>
+
+  );
+
+}
 const funcionalidades = [
-  {
-    tipo: "estudiantes",
-    titulo: "Estudiantes",
-    descripcion:
-      "Registro, consulta y administración de estudiantes del sistema.",
-  },
+
   {
     tipo: "examenes",
     titulo: "Exámenes",
     descripcion:
       "Registro y configuración de los exámenes programados.",
   },
+
   {
     tipo: "ambientes",
     titulo: "Ambientes",
     descripcion:
       "Gestión de aulas y ambientes destinados a los exámenes.",
   },
+
   {
     tipo: "habilitaciones",
     titulo: "Habilitaciones",
     descripcion:
-      "Control de estudiantes habilitados para cada examen.",
+      "Control de usuarios habilitados para cada examen.",
   },
+
   {
     tipo: "ingreso",
     titulo: "Control de ingreso",
     descripcion:
-      "Validación de estudiantes durante el ingreso a los exámenes.",
+      "Validación de usuarios durante el ingreso a los exámenes.",
   },
+
   {
     tipo: "reportes",
     titulo: "Reportes",
     descripcion:
       "Consulta de asistencia, ausentes y registros del sistema.",
   },
+
   {
     tipo: "usuarios",
     titulo: "Usuarios",
     descripcion:
       "Administración de usuarios, roles y permisos.",
   },
+
 ];
 
 function Inicio() {
   return (
+
     <>
+
       <div className="inicio-ruta">
+
         <span>Inicio</span>
+
       </div>
 
       <div className="inicio-titulo">
-        <h1>Inicio</h1>
+        <h1>
+          Inicio
+        </h1>
 
         <p>
           Bienvenido al Sistema de Control de Ingreso a Exámenes Masivos.
         </p>
+
       </div>
 
       <section className="inicio-bienvenida">
+
         <div className="inicio-bienvenida-texto">
+
           <span className="inicio-etiqueta">
+
             Panel principal
+
           </span>
 
           <h2>
+
             Sistema de Control de Ingreso a Exámenes
+
           </h2>
 
           <p>
+
             Consulte las principales funcionalidades disponibles para la
             administración y control de los exámenes.
+
           </p>
+
         </div>
 
+
         <div className="inicio-bienvenida-imagen">
+
           <div className="inicio-documento">
+
             <div className="inicio-documento-icono">
+
               ✓
+
             </div>
 
             <div className="inicio-linea linea-1"></div>
+
             <div className="inicio-linea linea-2"></div>
+
             <div className="inicio-linea linea-3"></div>
+
           </div>
+
         </div>
+
       </section>
 
       <section className="inicio-modulos">
+
         <div className="inicio-subtitulo">
-          <h2>Funcionalidades del sistema</h2>
+
+          <h2>
+
+            Funcionalidades del sistema
+
+          </h2>
 
           <p>
+
             Módulos disponibles para la gestión del sistema.
+
           </p>
+
         </div>
 
         <div className="inicio-grid">
+
           {funcionalidades.map((funcionalidad) => (
+
             <article
+
               className="inicio-tarjeta"
+
               key={funcionalidad.titulo}
+
             >
-              <IconoModulo tipo={funcionalidad.tipo} />
+
+              <IconoModulo
+
+                tipo={funcionalidad.tipo}
+
+              />
 
               <div className="inicio-tarjeta-informacion">
+
                 <h3>
+
                   {funcionalidad.titulo}
+
                 </h3>
 
                 <p>
+
                   {funcionalidad.descripcion}
+
                 </p>
 
                 <span className="inicio-ver-modulo">
                   Ver módulo
-                  <span>→</span>
+                  <span>
+                    →
+                  </span>
                 </span>
+
               </div>
+
             </article>
+
           ))}
+
         </div>
+
       </section>
 
       <section className="inicio-aviso">
         <div className="inicio-aviso-icono">
           i
         </div>
-
         <div>
-          <strong>Información</strong>
+          <strong>
+            Información
+          </strong>
 
           <p>
             Seleccione una opción del menú lateral para acceder a las
             funcionalidades correspondientes.
           </p>
+
         </div>
+
       </section>
+
     </>
+
   );
+
 }
+
+
 
 export default Inicio;

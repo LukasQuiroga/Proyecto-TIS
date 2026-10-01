@@ -23,7 +23,6 @@ public class Usuario {
     @Column(nullable = false)
     private String apellido;
 
-    private String carrera;
 
     @Column(unique = true)
     private String correo;
@@ -36,7 +35,6 @@ public class Usuario {
 
     private LocalDateTime fechaCreacion;
 
-    private String codigoSis;
 
     private String celular;
 
@@ -75,13 +73,6 @@ public class Usuario {
         this.apellido = apellido;
     }
 
-    public String getCarrera() {
-        return carrera;
-    }
-
-    public void setCarrera(String carrera) {
-        this.carrera = carrera;
-    }
 
     public String getCorreo() {
         return correo;
@@ -123,13 +114,6 @@ public class Usuario {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public String getCodigoSis() {
-        return codigoSis;
-    }
-
-    public void setCodigoSis(String codigoSis) {
-        this.codigoSis = codigoSis;
-    }
 
     public String getCelular() {
         return celular;

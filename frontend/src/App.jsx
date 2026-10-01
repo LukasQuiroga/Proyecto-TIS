@@ -1,89 +1,169 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes
-} from "react-router-dom";
-import RegistrarUsuario from "./pages/usuarios/RegistrarUsuario.jsx";
-import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
+import { AuthProvider } from "./context/AuthContext.jsx";
+
+import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+import ProtectedPermission from "./routes/ProtectedPermission.jsx";
+
 import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
-import Usuarios from "./pages/usuarios/Usuarios.jsx";
+
 import Inicio from "./pages/Inicio/Inicio.jsx";
-import RegistrarEstudiante from "./pages/estudiantes/RegistrarEstudiante.jsx";
-import Estudiantes from "./pages/estudiantes/Estudiantes.jsx";
-import DetalleEstudiante from "./pages/estudiantes/DetalleEstudiante.jsx";
+
+import Login from "./pages/auth/Login.jsx";
+import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
+import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
+import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
+
+import Usuarios from "./pages/usuarios/Usuarios.jsx";
+import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
+import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
+import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
+import DetalleUsuario from "./pages/usuarios/DetalleUsuario";
+
+import RegistrarUsuario from "./pages/usuarios/RegistrarUsuario.jsx";
 import RegistroIndividual from "./pages/usuarios/RegistroIndividual.jsx";
 import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 
+import Auditoria from "./pages/auditoria/Auditoria.jsx";
+
+import Perfil from "./pages/perfil/Perfil.jsx";
 
 function App() {
+    return (
+        <AuthProvider>
+            <BrowserRouter>
+                <Routes>
 
-  return (
+                    <Route
+                        path="/login"
+                        element={<Login />}
+                    />
 
-    <BrowserRouter>
+                    <Route
+                        path="/recuperar-contrasena"
+                        element={<RecuperarContrasena />}
+                    />
 
-      <Routes>
+                    <Route
+                        path="/verificar-codigo"
+                        element={<VerificarCodigo />}
+                    />
 
-        <Route element={<PlantillaPrincipal />}>
+                    <Route
+                        path="/nueva-contrasena"
+                        element={<NuevaContrasena />}
+                    />
 
-          <Route
-            path="/"
-            element={<Inicio />}
-          />
+                    <Route element={<PlantillaPrincipal />}>
+                        <Route
+                            path="/"
+                            element={<Inicio />}
+                        />
+                    </Route>
 
-          <Route
-          path="/usuarios"
-          element={<Usuarios />}
-          />
+                    <Route
+                        element={
+                            <ProtectedRoute>
+                                <PlantillaPrincipal />
+                            </ProtectedRoute>
+                        }
+                    >
 
-          <Route
-          path="/usuarios/registrar"
-          element={<RegistrarUsuario />}
-          />
+                        <Route
+                            path="/perfil"
+                            element={<Perfil />}
+                        />
 
-          <Route
-              path="/usuarios/registrar/individual"
-              element={<RegistroIndividual />}
-          />
+                        <Route
+                            path="/usuarios"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <Usuarios />
+                                </ProtectedPermission>
+                            }
+                        />
 
-          <Route
-              path="/usuarios/importar"
-              element={<ImportarUsuarios />}
-          />
+                        <Route
+                            path="/usuarios/:id"
+                            element={
+                                <DetalleUsuario />
+                            }
+                        />
 
-          <Route
-          path="/usuarios/:id/editar"
-          element={<EditarUsuario />}
-          />
+                        <Route
+                            path="/usuarios/:id"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <VerUsuario />
+                                </ProtectedPermission>
+                            }
+                        />
 
-          <Route
-            path="/estudiantes/registrar"
-            element={<RegistrarEstudiante />}
-          />
+                        <Route
+                            path="/usuarios/:id/editar"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <EditarUsuario />
+                                </ProtectedPermission>
+                            }
+                        />
 
-          <Route
-            path="/estudiantes/consultar"
-            element={<Estudiantes />}
-          />
+                        <Route
+                            path="/usuarios/registrar"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <RegistrarUsuario />
+                                </ProtectedPermission>
+                            }
+                        />
 
-          <Route
-            path="/estudiantes/:idUsuario"
-            element={<DetalleEstudiante />}
-          />
+                        <Route
+                            path="/usuarios/registrar/individual"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <RegistroIndividual />
+                                </ProtectedPermission>
+                            }
+                        />
 
-        </Route>
+                        <Route
+                            path="/usuarios/importar"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                    <ImportarUsuarios />
+                                </ProtectedPermission>
+                            }
+                        />
 
+                        <Route
+                            path="/usuarios/roles-permisos"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_ROLES">
+                                    <RolesPermisos />
+                                </ProtectedPermission>
+                            }
+                        />
 
-        <Route
-          path="*"
-          element={<Navigate to="/" replace />}
-        />
+                        <Route
+                            path="/auditoria"
+                            element={
+                                <ProtectedPermission permiso="VER_AUDITORIA">
+                                    <Auditoria />
+                                </ProtectedPermission>
+                            }
+                        />
 
-      </Routes>
+                    </Route>
 
-    </BrowserRouter>
+                    <Route
+                        path="*"
+                        element={<Navigate to="/" replace />}
+                    />
 
-  );
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
+    );
 }
 
 export default App;
