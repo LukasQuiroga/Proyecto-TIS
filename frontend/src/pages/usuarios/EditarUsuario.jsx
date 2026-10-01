@@ -9,157 +9,147 @@ function EditarUsuario(){
     const navigate=useNavigate();
     const [usuario,setUsuario]=useState(null);
     const [roles,setRoles]=useState([]);
+    const [materias,setMaterias]=useState([]);
     const [error,setError]=useState("");
     const [mensaje,setMensaje]=useState("");
+    const [guardando,setGuardando]=useState(false);
 
     useEffect(()=>{
         const cargarDatos=async()=>{
             try{
-                const usuarioRespuesta=await obtenerUsuario(id);
-                const rolesRespuesta=await obtenerRoles();
+                setError("");
+                const [usuarioRespuesta,rolesRespuesta]=await Promise.all([
+                    obtenerUsuario(id),
+                    obtenerRoles()
+                ]);
+
+                const datos=usuarioRespuesta.data;
 
                 setUsuario({
-                    nombre:usuarioRespuesta.data.nombre||"",
-                    apellido:usuarioRespuesta.data.apellido||"",
-                    carnetIdentidad:usuarioRespuesta.data.carnetIdentidad||"",
-                    correo:usuarioRespuesta.data.correo||"",
-                    celular:usuarioRespuesta.data.celular||"",
-                    carrera:usuarioRespuesta.data.carrera||"",
-                    codigoSis:usuarioRespuesta.data.codigoSis||"",
-                    idRol:usuarioRespuesta.data.idRol||"",
-                    activo:usuarioRespuesta.data.activo??true
+                    nombre:datos.nombre||"",
+                    apellido:datos.apellido||"",
+                    carnetIdentidad:datos.carnetIdentidad||"",
+                    correo:datos.correo||"",
+                    celular:datos.celular||"",
+                    carrera:datos.carrera||"",
+                    codigoSis:datos.codigoSis||"",
+                    idRol:datos.idRol||"",
+                    activo:datos.activo??true
                 });
 
-                setRoles(rolesRespuesta.data);
+                setMaterias(datos.materias||[]);
+                setRoles(rolesRespuesta.data||[]);
             }catch(error){
                 console.error("Error cargando usuario:",error);
-                setError("No se pudo cargar la información del usuario");
+                setError(error.response?.data?.message||"No se pudo cargar la información del usuario");
             }
         };
 
         cargarDatos();
     },[id]);
 
+    const actualizarCampo=(campo,valor)=>{
+        setUsuario(actual=>({...actual,[campo]:valor}));
+    };
+
     const validarFormulario=()=>{
-        if(!usuario.nombre.trim()){
-            return "El nombre es obligatorio";
-        }
-
-        if(!usuario.apellido.trim()){
-            return "El apellido es obligatorio";
-        }
-
-        if(!usuario.carnetIdentidad.trim()){
-            return "El carnet de identidad es obligatorio";
-        }
-
-        if(!/^[0-9]+$/.test(usuario.carnetIdentidad)){
-            return "El carnet de identidad solo debe contener números";
-        }
-
-        if(!usuario.correo.trim()){
-            return "El correo es obligatorio";
-        }
-
-        const correoValido=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if(!correoValido.test(usuario.correo)){
-            return "El correo no tiene un formato válido";
-        }
-
-        if(!usuario.idRol){
-            return "Debe seleccionar un rol";
-        }
-
+        if(!usuario.nombre.trim()) return "El nombre es obligatorio";
+        if(!usuario.apellido.trim()) return "El apellido es obligatorio";
+        if(!usuario.carnetIdentidad.trim()) return "El carnet de identidad es obligatorio";
+        if(!/^[0-9]+$/.test(usuario.carnetIdentidad.trim())) return "El carnet de identidad solo debe contener números";
+        if(!usuario.correo.trim()) return "El correo es obligatorio";
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usuario.correo.trim())) return "El correo no tiene un formato válido";
+        if(!usuario.idRol) return "Debe seleccionar un rol";
         return null;
     };
 
     const guardar=async(e)=>{
         e.preventDefault();
 
-        const mensajeValidacion=validarFormulario();
+        const validacion=validarFormulario();
 
-        if(mensajeValidacion){
-            setError(mensajeValidacion);
+        if(validacion){
+            setError(validacion);
             setMensaje("");
             return;
         }
 
         try{
+            setGuardando(true);
             setError("");
+            setMensaje("");
 
-            await modificarUsuario(id,usuario);
+            await modificarUsuario(id,{
+                ...usuario,
+                idRol:Number(usuario.idRol)
+            });
 
             setMensaje("Usuario modificado correctamente");
 
             setTimeout(()=>{
                 navigate("/usuarios");
-            },1500);
+            },1000);
         }catch(error){
             console.error("Error modificando usuario:",error);
-
-            if(error.response){
-                setError(
-                    error.response.data.message||
-                    "No se pudo modificar el usuario"
-                );
-            }else{
-                setError("Error de conexión con el servidor");
-            }
-
-            setMensaje("");
+            setError(error.response?.data?.message||"No se pudo modificar el usuario");
+        }finally{
+            setGuardando(false);
         }
     };
 
     if(!usuario){
         return(
             <div className="editar-cargando">
-                Cargando...
+                <div className="editar-spinner"></div>
+                <span>Cargando usuario...</span>
             </div>
         );
     }
+
+    const inicial=`${usuario.nombre?.charAt(0)||""}${usuario.apellido?.charAt(0)||""}`.toUpperCase();
 
     return(
         <div className="editar-container">
             <div className="editar-contenido">
 
                 <div className="editar-migas">
-                    Inicio <span>›</span> Usuarios <span>›</span> Modificar usuario
+                    <span onClick={()=>navigate("/")}>Inicio</span>
+                    <b>›</b>
+                    <span onClick={()=>navigate("/usuarios")}>Usuarios</span>
+                    <b>›</b>
+                    <strong>Modificar usuario</strong>
                 </div>
 
                 <div className="editar-titulo">
                     <h1>Modificar usuario</h1>
-                    <p>Corrija los errores en los campos indicados para poder guardar los cambios.</p>
+                    <p>Actualiza la información personal, académica y de acceso del usuario.</p>
                 </div>
 
                 <section className="editar-resumen">
-                    <div className="editar-avatar">
-                        {usuario.nombre.charAt(0).toUpperCase()}
-                    </div>
+                    <div className="editar-avatar">{inicial||"U"}</div>
 
                     <div className="editar-resumen-info">
-                        <h2>{usuario.nombre} {usuario.apellido}</h2>
-
-                        <span className={
-                            usuario.activo
-                            ?"editar-estado activo"
-                            :"editar-estado inactivo"
-                        }>
-                            {usuario.activo?"Activo":"Inactivo"}
-                        </span>
-
-                        <p>Información del usuario</p>
+                        <div className="editar-resumen-superior">
+                            <h2>{usuario.nombre} {usuario.apellido}</h2>
+                            <span className={`editar-estado ${usuario.activo?"activo":"inactivo"}`}>
+                                <i></i>
+                                {usuario.activo?"Activo":"Inactivo"}
+                            </span>
+                        </div>
+                        <p>Información general del usuario</p>
                     </div>
                 </section>
 
                 {error&&(
                     <div className="editar-mensaje mensaje-error">
+                        <span>!</span>
                         {error}
                     </div>
                 )}
 
                 {mensaje&&(
                     <div className="editar-mensaje mensaje-exito">
+                        <span>✓</span>
                         {mensaje}
                     </div>
                 )}
@@ -167,19 +157,20 @@ function EditarUsuario(){
                 <form className="editar-form" onSubmit={guardar}>
 
                     <section className="editar-panel">
-
-                        <h3>Información personal</h3>
+                        <div className="editar-panel-cabecera">
+                            <div>
+                                <h3>Información personal</h3>
+                                <p>Datos generales e identificación del usuario.</p>
+                            </div>
+                        </div>
 
                         <div className="editar-grid">
-
                             <div className="editar-campo">
                                 <label>Nombre <span>*</span></label>
                                 <input
                                     value={usuario.nombre}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        nombre:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("nombre",e.target.value)}
+                                    placeholder="Ingrese el nombre"
                                 />
                             </div>
 
@@ -187,10 +178,8 @@ function EditarUsuario(){
                                 <label>Apellidos <span>*</span></label>
                                 <input
                                     value={usuario.apellido}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        apellido:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("apellido",e.target.value)}
+                                    placeholder="Ingrese los apellidos"
                                 />
                             </div>
 
@@ -198,10 +187,7 @@ function EditarUsuario(){
                                 <label>Documento de identidad <span>*</span></label>
                                 <input
                                     value={usuario.carnetIdentidad}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        carnetIdentidad:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("carnetIdentidad",e.target.value)}
                                     placeholder="Ingrese el C.I."
                                 />
                             </div>
@@ -211,10 +197,8 @@ function EditarUsuario(){
                                 <input
                                     type="email"
                                     value={usuario.correo}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        correo:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("correo",e.target.value)}
+                                    placeholder="ejemplo@correo.com"
                                 />
                             </div>
 
@@ -222,10 +206,7 @@ function EditarUsuario(){
                                 <label>Teléfono</label>
                                 <input
                                     value={usuario.celular}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        celular:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("celular",e.target.value)}
                                     placeholder="Ingrese el teléfono"
                                 />
                             </div>
@@ -234,41 +215,31 @@ function EditarUsuario(){
                                 <label>Carrera</label>
                                 <input
                                     value={usuario.carrera}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        carrera:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("carrera",e.target.value)}
                                     placeholder="Ingrese la carrera"
                                 />
                             </div>
-
                         </div>
-
                     </section>
 
                     <section className="editar-panel">
+                        <div className="editar-panel-cabecera">
+                            <div>
+                                <h3>Información de acceso</h3>
+                                <p>Control de rol y estado de la cuenta.</p>
+                            </div>
+                        </div>
 
-                        <h3>Información de acceso</h3>
-
-                        <div className="editar-grid">
-
+                        <div className="editar-grid editar-grid-acceso">
                             <div className="editar-campo">
                                 <label>Rol <span>*</span></label>
-
                                 <select
                                     value={usuario.idRol}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        idRol:Number(e.target.value)
-                                    })}
+                                    onChange={e=>actualizarCampo("idRol",Number(e.target.value))}
                                 >
                                     <option value="">Seleccione un rol</option>
-
                                     {roles.map(rol=>(
-                                        <option
-                                            key={rol.idRol}
-                                            value={rol.idRol}
-                                        >
+                                        <option key={rol.idRol} value={rol.idRol}>
                                             {rol.nombreRol}
                                         </option>
                                     ))}
@@ -277,51 +248,99 @@ function EditarUsuario(){
 
                             <div className="editar-campo">
                                 <label>Estado <span>*</span></label>
-
                                 <select
                                     value={String(usuario.activo)}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        activo:e.target.value==="true"
-                                    })}
+                                    onChange={e=>actualizarCampo("activo",e.target.value==="true")}
                                 >
                                     <option value="true">Activo</option>
                                     <option value="false">Inactivo</option>
                                 </select>
                             </div>
-
                         </div>
 
+                        <div className={`editar-estado-cuenta ${usuario.activo?"cuenta-activa":"cuenta-inactiva"}`}>
+                            <div className="editar-estado-icono">{usuario.activo?"✓":"!"}</div>
+                            <div>
+                                <strong>{usuario.activo?"Cuenta habilitada":"Cuenta deshabilitada"}</strong>
+                                <p>
+                                    {usuario.activo
+                                        ?"El usuario puede acceder normalmente al sistema."
+                                        :"El usuario no podrá iniciar sesión mientras permanezca inactivo."}
+                                </p>
+                            </div>
+                        </div>
                     </section>
 
                     <section className="editar-panel editar-panel-academico">
+                        <div className="editar-panel-cabecera">
+                            <div>
+                                <h3>Información académica</h3>
+                                <p>Información universitaria y materias asociadas.</p>
+                            </div>
+                        </div>
 
-                        <h3>Información académica</h3>
-
-                        <div className="editar-grid">
-
+                        <div className="editar-academico-superior">
                             <div className="editar-campo">
                                 <label>Código universitario</label>
                                 <input
                                     value={usuario.codigoSis}
-                                    onChange={e=>setUsuario({
-                                        ...usuario,
-                                        codigoSis:e.target.value
-                                    })}
+                                    onChange={e=>actualizarCampo("codigoSis",e.target.value)}
                                     placeholder="Ingrese el código SIS"
                                 />
                             </div>
-
                         </div>
 
+                        <div className="editar-materias">
+                            <div className="editar-materias-cabecera">
+                                <div>
+                                    <h4>Materias y grupos</h4>
+                                    <p>Materias actualmente asociadas al usuario.</p>
+                                </div>
+                                <span className="editar-contador">
+                                    {materias.length} {materias.length===1?"materia":"materias"}
+                                </span>
+                            </div>
+
+                            {materias.length===0?(
+                                <div className="editar-sin-materias">
+                                    <div className="editar-sin-icono">▤</div>
+                                    <div>
+                                        <strong>Sin materias asociadas</strong>
+                                        <p>Este usuario no tiene materias registradas actualmente.</p>
+                                    </div>
+                                </div>
+                            ):(
+                                <div className="editar-tabla-materias">
+                                    <div className="editar-tabla-cabecera">
+                                        <span>Materia</span>
+                                        <span>Grupo</span>
+                                    </div>
+
+                                    {materias.map(materia=>(
+                                        <div className="editar-materia-fila" key={materia.idMateria}>
+                                            <span className="editar-nombre-materia">
+                                                {materia.nombreMateria}
+                                            </span>
+                                            <span className="editar-grupo-badge">
+                                                Grupo {materia.grupo}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <p className="editar-ayuda-materias">
+                                Las materias mostradas corresponden a las asignadas al usuario como docente en la base de datos actual.
+                            </p>
+                        </div>
                     </section>
 
                     <div className="editar-acciones">
-
                         <button
                             type="button"
                             className="editar-boton-cancelar"
                             onClick={()=>navigate("/usuarios")}
+                            disabled={guardando}
                         >
                             ← Cancelar
                         </button>
@@ -329,14 +348,13 @@ function EditarUsuario(){
                         <button
                             type="submit"
                             className="editar-boton-guardar"
+                            disabled={guardando}
                         >
-                            ✓ Guardar cambios
+                            {guardando?"Guardando...":"✓ Guardar cambios"}
                         </button>
-
                     </div>
 
                 </form>
-
             </div>
         </div>
     );
