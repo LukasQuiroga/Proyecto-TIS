@@ -11,6 +11,9 @@ spring:
     password: npg_8nRp1WiBScJQ
 
   jpa:
+    properties:
+      hibernate:
+        default_schema: seguridad
     hibernate:
       ddl-auto: validate
     open-in-view: false
