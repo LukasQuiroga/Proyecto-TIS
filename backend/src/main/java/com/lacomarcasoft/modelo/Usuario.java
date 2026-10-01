@@ -1,7 +1,6 @@
 package com.lacomarcasoft.modelo;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +22,6 @@ public class Usuario {
     @Column(nullable = false)
     private String apellido;
 
-
     @Column(unique = true)
     private String correo;
 
@@ -31,12 +29,16 @@ public class Usuario {
 
     private String carnetIdentidad;
 
+    private String celular;
+
+    private String carrera;
+
+    @Column(name = "codigo_sis")
+    private String codigoSis;
+
     private Boolean activo = true;
 
     private LocalDateTime fechaCreacion;
-
-
-    private String celular;
 
     public Usuario() {
     }
@@ -73,7 +75,6 @@ public class Usuario {
         this.apellido = apellido;
     }
 
-
     public String getCorreo() {
         return correo;
     }
@@ -98,6 +99,30 @@ public class Usuario {
         this.carnetIdentidad = carnetIdentidad;
     }
 
+    public String getCelular() {
+        return celular;
+    }
+
+    public void setCelular(String celular) {
+        this.celular = celular;
+    }
+
+    public String getCarrera() {
+        return carrera;
+    }
+
+    public void setCarrera(String carrera) {
+        this.carrera = carrera;
+    }
+
+    public String getCodigoSis() {
+        return codigoSis;
+    }
+
+    public void setCodigoSis(String codigoSis) {
+        this.codigoSis = codigoSis;
+    }
+
     public Boolean getActivo() {
         return activo;
     }
@@ -112,14 +137,5 @@ public class Usuario {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
-    }
-
-
-    public String getCelular() {
-        return celular;
-    }
-
-    public void setCelular(String celular) {
-        this.celular = celular;
     }
 }

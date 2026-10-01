@@ -6,9 +6,7 @@ import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
-
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -26,31 +24,23 @@ public class UsuarioServicio {
     }
 
     public List<UsuarioRespuesta> listar(){
-
         return usuarioRepositorio.findAll()
                 .stream()
                 .map(this::convertirRespuesta)
                 .toList();
-
     }
 
     public Usuario buscar(Long id){
-
         return usuarioRepositorio.findById(id)
                 .orElseThrow(
                         () -> new RuntimeException(
                                 "Usuario no encontrado"
                         )
                 );
-
     }
 
     public UsuarioRespuesta buscarRespuesta(Long id){
-
-        return convertirRespuesta(
-                buscar(id)
-        );
-
+        return convertirRespuesta(buscar(id));
     }
 
     public Usuario modificar(
@@ -58,74 +48,58 @@ public class UsuarioServicio {
             ActualizarUsuarioSolicitud datos
     ){
 
-
         if(datos.nombre() == null || datos.nombre().isBlank()){
-
             throw new RuntimeException(
                     "El nombre es obligatorio"
             );
-
         }
 
-
         if(datos.apellido() == null || datos.apellido().isBlank()){
-
             throw new RuntimeException(
                     "El apellido es obligatorio"
             );
-
         }
 
-
         if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
-
             throw new RuntimeException(
                     "El carnet de identidad es obligatorio"
             );
-
         }
 
-
         if(datos.correo() == null || datos.correo().isBlank()){
-
             throw new RuntimeException(
                     "El correo es obligatorio"
             );
-
         }
 
+        if(datos.idRol() == null){
+            throw new RuntimeException(
+                    "El rol es obligatorio"
+            );
+        }
 
         Usuario usuarioExistenteCorreo =
                 usuarioRepositorio.findByCorreo(
                         datos.correo()
-                )
-                .orElse(null);
-
+                ).orElse(null);
 
         if(usuarioExistenteCorreo != null &&
                 !usuarioExistenteCorreo.getIdUsuario().equals(id)){
-
             throw new RuntimeException(
                     "El correo ya está registrado"
             );
-
         }
-
 
         Usuario usuarioExistenteCarnet =
                 usuarioRepositorio.findByCarnetIdentidad(
                         datos.carnetIdentidad()
-                )
-                .orElse(null);
-
+                ).orElse(null);
 
         if(usuarioExistenteCarnet != null &&
                 !usuarioExistenteCarnet.getIdUsuario().equals(id)){
-
             throw new RuntimeException(
                     "El carnet de identidad ya está registrado"
             );
-
         }
 
         Usuario usuario = buscar(id);
@@ -138,38 +112,43 @@ public class UsuarioServicio {
                                 )
                         );
 
-
         usuario.setNombre(
                 datos.nombre()
         );
-
 
         usuario.setApellido(
                 datos.apellido()
         );
 
-
         usuario.setCarnetIdentidad(
                 datos.carnetIdentidad()
         );
-
 
         usuario.setCorreo(
                 datos.correo()
         );
 
+        usuario.setCelular(
+                datos.celular()
+        );
+
+        usuario.setCarrera(
+                datos.carrera()
+        );
+
+        usuario.setCodigoSis(
+                datos.codigoSis()
+        );
 
         usuario.setActivo(
                 datos.activo()
         );
-
 
         usuario.setRol(
                 rol
         );
 
         return usuarioRepositorio.save(usuario);
-
     }
 
     public Usuario cambiarRol(
@@ -187,13 +166,11 @@ public class UsuarioServicio {
                                 )
                         );
 
-
         usuario.setRol(
                 rol
         );
 
         return usuarioRepositorio.save(usuario);
-
     }
 
     private UsuarioRespuesta convertirRespuesta(
@@ -210,29 +187,20 @@ public class UsuarioServicio {
                         )
                         .toList();
 
-
         return new UsuarioRespuesta(
-
                 usuario.getIdUsuario(),
-
                 usuario.getNombre(),
-
                 usuario.getApellido(),
-
                 usuario.getCarnetIdentidad(),
-
                 usuario.getCorreo(),
-
+                usuario.getCelular(),
+                usuario.getCarrera(),
+                usuario.getCodigoSis(),
                 usuario.getRol().getIdRol(),
-
                 usuario.getRol().getNombreRol(),
-
                 usuario.getActivo(),
-
+                usuario.getFechaCreacion(),
                 permisos
-
         );
-
     }
-
 }
