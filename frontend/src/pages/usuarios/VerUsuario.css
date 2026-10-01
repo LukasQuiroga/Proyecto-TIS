@@ -2,58 +2,70 @@
     width:100%;
     box-sizing:border-box;
 }
+
 .ver-migas{
     display:flex;
     align-items:center;
     gap:7px;
-    margin-bottom:7px;
+    margin-bottom:6px;
     color:#6a7f99;
     font-size:11px;
 }
+
 .ver-migas span{
     cursor:pointer;
     transition:.2s;
 }
+
 .ver-migas span:hover{
     color:#0864e8;
 }
+
 .ver-migas b{
     color:#9badc0;
     font-weight:400;
 }
+
 .ver-migas strong{
     color:#45617e;
     font-weight:600;
 }
+
 .ver-usuario-titulo{
-    margin-bottom:16px;
+    margin-bottom:12px;
 }
+
 .ver-usuario-titulo h1{
     margin:0;
     color:#082867;
-    font-size:25px;
+    font-size:24px;
     font-weight:700;
 }
+
 .ver-usuario-titulo p{
-    margin:5px 0 0;
+    margin:4px 0 0;
     color:#57718f;
     font-size:12px;
 }
+
 .ver-usuario-cabecera{
     background:#fff;
     border:1px solid #d8e4ef;
-    border-radius:10px;
-    padding:16px 18px;
+    border-radius:8px;
+    padding:12px 16px;
     display:flex;
     align-items:center;
-    gap:16px;
-    margin-bottom:15px;
+    gap:14px;
+    margin-bottom:12px;
+    min-height:74px;
+    box-sizing:border-box;
     box-shadow:0 2px 8px rgba(31,72,113,.04);
 }
+
 .ver-usuario-avatar{
-    width:60px;
-    height:60px;
-    min-width:60px;
+    width:54px;
+    height:54px;
+    min-width:54px;
     border-radius:50%;
     background:linear-gradient(135deg,#e4edf7,#d5e3f1);
     border:1px solid #d1dfed;
@@ -64,24 +76,29 @@
     font-size:20px;
     font-weight:700;
 }
+
 .ver-cabecera-info{
     flex:1;
 }
+
 .ver-nombre-estado{
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:10px;
 }
+
 .ver-nombre-estado h2{
     margin:0;
     color:#082867;
-    font-size:19px;
+    font-size:18px;
 }
+
 .ver-cabecera-info p{
-    margin:5px 0 0;
+    margin:4px 0 0;
     color:#74879d;
-    font-size:10px;
+    font-size:11px;
 }
+
 .ver-estado{
     display:inline-flex;
     align-items:center;
@@ -91,98 +108,116 @@
     font-size:10px;
     font-weight:600;
 }
+
 .ver-estado i{
     width:6px;
     height:6px;
     border-radius:50%;
     display:block;
 }
+
 .ver-estado.activo{
     background:#e0f7e9;
     color:#18824d;
 }
+
 .ver-estado.activo i{
     background:#24a462;
 }
+
 .ver-estado.inactivo{
     background:#ffe8e8;
     color:#b43c3c;
 }
+
 .ver-estado.inactivo i{
     background:#d84a4a;
 }
+
 .ver-boton-editar{
-    height:35px;
-    padding:0 15px;
+    height:36px;
+    padding:0 17px;
     border:1px solid #bdd2e8;
     border-radius:6px;
     background:#f5f9fd;
     color:#135caa;
-    font-size:10px;
+    font-size:11px;
     font-weight:600;
     cursor:pointer;
     transition:.2s;
 }
+
 .ver-boton-editar:hover{
     background:#e9f3fc;
     border-color:#8fb6dc;
 }
+
 .ver-usuario-grid{
     display:grid;
     grid-template-columns:1.2fr 1fr;
-    gap:15px;
+    gap:14px;
     align-items:start;
 }
+
 .ver-columna-derecha{
     display:flex;
     flex-direction:column;
-    gap:15px;
+    gap:14px;
 }
+
 .ver-card{
     background:#fff;
     border:1px solid #d8e4ef;
-    border-radius:10px;
-    padding:18px;
+    border-radius:8px;
+    padding:16px;
     box-sizing:border-box;
     box-shadow:0 2px 8px rgba(31,72,113,.035);
 }
+
 .ver-card-cabecera{
     margin-bottom:5px;
-    padding-bottom:12px;
+    padding-bottom:8px;
     border-bottom:1px solid #e4ebf2;
 }
+
 .ver-card-cabecera h3{
     margin:0;
     color:#082867;
     font-size:16px;
     font-weight:700;
 }
+
 .ver-card-cabecera p{
-    margin:4px 0 0;
+    margin:3px 0 0;
     color:#8392a5;
     font-size:9px;
 }
+
 .ver-dato{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    min-height:39px;
+    min-height:38px;
     gap:20px;
     border-bottom:1px solid #edf2f7;
     font-size:11px;
 }
+
 .ver-dato:last-child{
     border-bottom:none;
 }
+
 .ver-dato span{
     color:#617994;
 }
+
 .ver-dato b{
     color:#17386b;
     font-weight:600;
     text-align:right;
     word-break:break-word;
 }
+
 .ver-rol{
     padding:4px 8px;
     border-radius:12px;
@@ -190,27 +225,33 @@
     color:#245c98!important;
     font-size:9px;
 }
+
 .ver-activo-texto{
     color:#18824d!important;
 }
+
 .ver-inactivo-texto{
     color:#b43c3c!important;
 }
+
 .ver-card-materias{
     grid-column:1/-1;
 }
+
 .ver-materias-cabecera{
     display:flex;
     align-items:flex-start;
     justify-content:space-between;
     gap:15px;
-    margin-bottom:10px;
+    margin-bottom:8px;
 }
+
 .ver-card-cabecera.sin-borde{
     border-bottom:none;
     padding-bottom:0;
     margin-bottom:0;
 }
+
 .ver-contador{
     padding:4px 9px;
     background:#edf4fc;
@@ -219,15 +260,17 @@
     font-size:9px;
     font-weight:600;
 }
+
 .ver-tabla-materias{
     border:1px solid #d8e4ef;
     border-radius:7px;
     overflow:hidden;
 }
+
 .ver-tabla-cabecera{
     display:grid;
     grid-template-columns:1fr 160px;
-    padding:8px 12px;
+    padding:7px 12px;
     background:#f6f9fc;
     border-bottom:1px solid #dfe8f0;
     color:#657d98;
@@ -235,26 +278,31 @@
     font-weight:700;
     text-transform:uppercase;
 }
+
 .ver-tabla-cabecera span:last-child{
     text-align:right;
 }
+
 .ver-materia-fila{
     display:grid;
     grid-template-columns:1fr 160px;
     align-items:center;
-    min-height:42px;
+    min-height:36px;
     padding:0 12px;
     border-bottom:1px solid #e7edf3;
     color:#294969;
     font-size:11px;
     transition:background .2s;
 }
+
 .ver-materia-fila:last-child{
     border-bottom:none;
 }
+
 .ver-materia-fila:hover{
     background:#fafcff;
 }
+
 .ver-grupo-badge{
     justify-self:end;
     padding:4px 9px;
@@ -264,42 +312,48 @@
     font-size:9px;
     font-weight:600;
 }
+
 .ver-sin-materias{
     display:flex;
     align-items:center;
     gap:12px;
-    padding:15px;
+    padding:11px 13px;
     border:1px dashed #cbd9e6;
     border-radius:7px;
     background:#fafcff;
 }
+
 .ver-sin-icono{
-    width:35px;
-    height:35px;
-    min-width:35px;
+    width:32px;
+    height:32px;
+    min-width:32px;
     display:flex;
     align-items:center;
     justify-content:center;
     border-radius:7px;
     background:#eaf1f8;
     color:#6482a3;
-    font-size:17px;
+    font-size:16px;
 }
+
 .ver-sin-materias strong{
     display:block;
     color:#47617e;
     font-size:10px;
 }
+
 .ver-sin-materias p{
     margin:3px 0 0;
     color:#8999aa;
     font-size:9px;
 }
+
 .ver-acciones{
     display:flex;
     justify-content:flex-start;
-    margin-top:15px;
+    margin-top:10px;
 }
+
 .ver-boton-volver{
     height:36px;
     padding:0 17px;
@@ -308,13 +362,15 @@
     background:#edf2f7;
     color:#38536f;
     cursor:pointer;
-    font-size:10px;
+    font-size:11px;
     font-weight:600;
     transition:.2s;
 }
+
 .ver-boton-volver:hover{
     background:#e3eaf1;
 }
+
 .ver-usuario-cargando{
     width:100%;
     min-height:400px;
@@ -326,6 +382,7 @@
     color:#57718f;
     font-size:11px;
 }
+
 .ver-spinner{
     width:25px;
     height:25px;
@@ -334,9 +391,13 @@
     border-radius:50%;
     animation:ver-spin .8s linear infinite;
 }
+
 @keyframes ver-spin{
-    to{transform:rotate(360deg);}
+    to{
+        transform:rotate(360deg);
+    }
 }
+
 .ver-error{
     min-height:350px;
     display:flex;
@@ -345,13 +406,16 @@
     justify-content:center;
     color:#8d3c3c;
 }
+
 .ver-error strong{
     font-size:15px;
 }
+
 .ver-error p{
     margin:5px 0 15px;
     font-size:11px;
 }
+
 .ver-error button{
     height:35px;
     padding:0 15px;
@@ -361,44 +425,54 @@
     color:#294969;
     cursor:pointer;
 }
+
 @media(max-width:900px){
     .ver-usuario-grid{
         grid-template-columns:1fr;
     }
+
     .ver-card-materias{
         grid-column:auto;
     }
 }
+
 @media(max-width:600px){
     .ver-usuario-cabecera{
         align-items:flex-start;
         flex-wrap:wrap;
     }
+
     .ver-boton-editar{
         width:100%;
     }
+
     .ver-nombre-estado{
         align-items:flex-start;
         flex-direction:column;
         gap:5px;
     }
+
     .ver-dato{
         align-items:flex-start;
         flex-direction:column;
         gap:4px;
-        padding:9px 0;
+        padding:8px 0;
     }
+
     .ver-dato b{
         text-align:left;
     }
+
     .ver-tabla-cabecera{
         display:none;
     }
+
     .ver-materia-fila{
         grid-template-columns:1fr;
         gap:6px;
-        padding:10px 12px;
+        padding:9px 12px;
     }
+
     .ver-grupo-badge{
         justify-self:start;
     }
