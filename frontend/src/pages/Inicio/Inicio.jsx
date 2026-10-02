@@ -1,273 +1,79 @@
+import { FaBookOpen, FaGraduationCap, FaLaptopCode } from "react-icons/fa";
 import "./Inicio.css";
 
-function IconoModulo({ tipo }) {
-
-  const iconos = {
-
-    examenes: (
-      <svg viewBox="0 0 24 24">
-        <rect x="5" y="3" width="14" height="18" rx="2" />
-        <path d="M8 8h8M8 12h8M8 16h5" />
-      </svg>
-    ),
-
-    ambientes: (
-      <svg viewBox="0 0 24 24">
-        <rect x="3" y="4" width="18" height="16" rx="2" />
-        <path d="M7 8h3v3H7zM14 8h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z" />
-      </svg>
-    ),
-
-    habilitaciones: (
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9" />
-        <path d="m8 12 2.5 2.5L16 9" />
-      </svg>
-    ),
-
-    ingreso: (
-      <svg viewBox="0 0 24 24">
-        <path d="M14 8l4 4-4 4" />
-        <path d="M18 12H8" />
-        <path d="M11 4H5v16h6" />
-      </svg>
-    ),
-
-    reportes: (
-      <svg viewBox="0 0 24 24">
-        <path d="M5 20V10M12 20V4M19 20v-7" />
-      </svg>
-    ),
-
-    usuarios: (
-      <svg viewBox="0 0 24 24">
-        <circle cx="9" cy="8" r="3" />
-        <circle cx="17" cy="10" r="2" />
-        <path d="M3 20c0-4 2.7-7 6-7s6 3 6 7" />
-        <path d="M15 15c3 0 5 2 5 5" />
-      </svg>
-    ),
-
-  };
-
-  return (
-
-    <div className="inicio-icono-modulo">
-
-      {iconos[tipo]}
-
-    </div>
-
-  );
-
-}
-const funcionalidades = [
-
-  {
-    tipo: "examenes",
-    titulo: "Exámenes",
-    descripcion:
-      "Registro y configuración de los exámenes programados.",
-  },
-
-  {
-    tipo: "ambientes",
-    titulo: "Ambientes",
-    descripcion:
-      "Gestión de aulas y ambientes destinados a los exámenes.",
-  },
-
-  {
-    tipo: "habilitaciones",
-    titulo: "Habilitaciones",
-    descripcion:
-      "Control de usuarios habilitados para cada examen.",
-  },
-
-  {
-    tipo: "ingreso",
-    titulo: "Control de ingreso",
-    descripcion:
-      "Validación de usuarios durante el ingreso a los exámenes.",
-  },
-
-  {
-    tipo: "reportes",
-    titulo: "Reportes",
-    descripcion:
-      "Consulta de asistencia, ausentes y registros del sistema.",
-  },
-
-  {
-    tipo: "usuarios",
-    titulo: "Usuarios",
-    descripcion:
-      "Administración de usuarios, roles y permisos.",
-  },
-
+const figuras = [
+  { tipo: "circulo", clase: "morado", top: "8%", left: "16%" },
+  { tipo: "triangulo", clase: "celeste", top: "11%", left: "34%" },
+  { tipo: "triangulo", clase: "celeste", top: "14%", right: "22%" },
+  { tipo: "cuadrado", clase: "celeste-suave", top: "16%", right: "10%" },
+  { tipo: "circulo", clase: "morado", top: "28%", left: "7%" },
+  { tipo: "triangulo", clase: "celeste", top: "34%", left: "24%" },
+  { tipo: "circulo", clase: "celeste-suave", top: "46%", left: "9%" },
+  { tipo: "circulo", clase: "morado", top: "36%", right: "13%" },
+  { tipo: "triangulo", clase: "celeste", top: "52%", right: "22%" },
+  { tipo: "triangulo", clase: "naranja", top: "67%", left: "20%" },
+  { tipo: "cuadrado", clase: "celeste-suave", top: "79%", left: "43%" },
+  { tipo: "circulo", clase: "morado", top: "76%", right: "27%" },
+  { tipo: "triangulo", clase: "celeste", top: "84%", left: "33%" },
+  { tipo: "triangulo", clase: "celeste", top: "72%", right: "18%" },
+  { tipo: "triangulo", clase: "azul", top: "74%", right: "9%" }
 ];
 
 function Inicio() {
   return (
+    <section className="inicio-home">
+      {figuras.map((figura, index) => (
+        <span
+          key={index}
+          className={`inicio-figura ${figura.tipo} ${figura.clase}`}
+          style={{
+            top: figura.top,
+            left: figura.left,
+            right: figura.right
+          }}
+        />
+      ))}
 
-    <>
-
-      <div className="inicio-ruta">
-
-        <span>Inicio</span>
-
-      </div>
-
-      <div className="inicio-titulo">
-        <h1>
-          Inicio
-        </h1>
-
-        <p>
-          Bienvenido al Sistema de Control de Ingreso a Exámenes Masivos.
-        </p>
-
-      </div>
-
-      <section className="inicio-bienvenida">
-
-        <div className="inicio-bienvenida-texto">
-
-          <span className="inicio-etiqueta">
-
-            Panel principal
-
-          </span>
-
-          <h2>
-
-            Sistema de Control de Ingreso a Exámenes
-
-          </h2>
-
-          <p>
-
-            Consulte las principales funcionalidades disponibles para la
-            administración y control de los exámenes.
-
-          </p>
-
+      <div className="inicio-hero">
+        <div className="inicio-personaje inicio-personaje-izq">
+          <div className="inicio-personaje-fondo" />
+          <div className="inicio-personaje-icono">
+            <FaLaptopCode />
+          </div>
         </div>
 
-
-        <div className="inicio-bienvenida-imagen">
-
-          <div className="inicio-documento">
-
-            <div className="inicio-documento-icono">
-
-              ✓
-
-            </div>
-
-            <div className="inicio-linea linea-1"></div>
-
-            <div className="inicio-linea linea-2"></div>
-
-            <div className="inicio-linea linea-3"></div>
-
+        <div className="inicio-centro">
+          <div className="inicio-logo-icono">
+            <FaGraduationCap />
           </div>
 
-        </div>
+          <h1 className="inicio-logo-texto">
+            <span className="inicio-logo-dark">Exam</span>
+            <span className="inicio-logo-blue">Pass</span>
+          </h1>
 
-      </section>
-
-      <section className="inicio-modulos">
-
-        <div className="inicio-subtitulo">
-
-          <h2>
-
-            Funcionalidades del sistema
-
+          <h2 className="inicio-subtitulo-principal">
+            Control de ingreso a
+            <br />
+            exámenes masivos
           </h2>
 
-          <p>
-
-            Módulos disponibles para la gestión del sistema.
-
+          <p className="inicio-descripcion-principal">
+            Una plataforma para gestionar estudiantes, materias
+            <br />
+            y exámenes de manera simple y segura.
           </p>
-
         </div>
 
-        <div className="inicio-grid">
-
-          {funcionalidades.map((funcionalidad) => (
-
-            <article
-
-              className="inicio-tarjeta"
-
-              key={funcionalidad.titulo}
-
-            >
-
-              <IconoModulo
-
-                tipo={funcionalidad.tipo}
-
-              />
-
-              <div className="inicio-tarjeta-informacion">
-
-                <h3>
-
-                  {funcionalidad.titulo}
-
-                </h3>
-
-                <p>
-
-                  {funcionalidad.descripcion}
-
-                </p>
-
-                <span className="inicio-ver-modulo">
-                  Ver módulo
-                  <span>
-                    →
-                  </span>
-                </span>
-
-              </div>
-
-            </article>
-
-          ))}
-
+        <div className="inicio-personaje inicio-personaje-der">
+          <div className="inicio-personaje-fondo" />
+          <div className="inicio-personaje-icono">
+            <FaBookOpen />
+          </div>
         </div>
-
-      </section>
-
-      <section className="inicio-aviso">
-        <div className="inicio-aviso-icono">
-          i
-        </div>
-        <div>
-          <strong>
-            Información
-          </strong>
-
-          <p>
-            Seleccione una opción del menú lateral para acceder a las
-            funcionalidades correspondientes.
-          </p>
-
-        </div>
-
-      </section>
-
-    </>
-
+      </div>
+    </section>
   );
-
 }
-
-
 
 export default Inicio;
