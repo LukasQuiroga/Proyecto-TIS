@@ -45,6 +45,24 @@ public class UsuarioServicio {
 
     }
 
+    public boolean codigoSisDisponible(
+            String codigoSis
+    ){
+
+        if(codigoSis == null || codigoSis.isBlank()){
+
+            throw new RuntimeException(
+                    "El código SIS es obligatorio"
+            );
+
+        }
+
+        return usuarioRepositorio
+                .findByCodigoSis(codigoSis)
+                .isEmpty();
+
+    }
+
     public UsuarioRespuesta buscarRespuesta(Long id){
 
         return convertirRespuesta(

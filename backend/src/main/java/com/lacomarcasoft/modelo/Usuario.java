@@ -31,6 +31,9 @@ public class Usuario {
 
     private String carnetIdentidad;
 
+    @Column(name = "codigo_sis", unique = true)
+    private String codigoSis;
+
     private Boolean activo = true;
 
     private LocalDateTime fechaCreacion;
@@ -96,6 +99,14 @@ public class Usuario {
 
     public void setCarnetIdentidad(String carnetIdentidad) {
         this.carnetIdentidad = carnetIdentidad;
+    }
+
+    public String getCodigoSis() {
+        return codigoSis;
+    }
+
+    public void setCodigoSis(String codigoSis) {
+        this.codigoSis = codigoSis;
     }
 
     public Boolean getActivo() {

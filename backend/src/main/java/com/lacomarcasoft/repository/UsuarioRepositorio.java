@@ -17,5 +17,8 @@ public interface UsuarioRepositorio
         String carnetIdentidad
    );
 
+Optional<Usuario> findByCodigoSis(
+        String codigoSis
+   );
 
 }

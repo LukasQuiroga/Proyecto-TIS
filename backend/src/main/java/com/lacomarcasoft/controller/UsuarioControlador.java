@@ -52,6 +52,17 @@ public class UsuarioControlador {
     }
 
 
+    @GetMapping("/verificar-codigo-sis")
+    public ResponseEntity<Boolean> verificarCodigoSisDisponible(
+            @RequestParam("codigo") String codigoSis
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.codigoSisDisponible(codigoSis)
+        );
+
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioRespuesta> obtenerUsuario(
             @PathVariable Long id
