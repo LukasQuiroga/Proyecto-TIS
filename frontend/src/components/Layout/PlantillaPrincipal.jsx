@@ -4,54 +4,36 @@ import Navbar from "../Navbar/Navbar.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import "./PlantillaPrincipal.css";
 
-function PlantillaPrincipal(){
+function PlantillaPrincipal() {
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
-    const [sidebarAbierto,setSidebarAbierto] = useState(false);
+  return (
+    <div className="plantilla-pagina">
+      <Sidebar
+        sidebarAbierto={sidebarAbierto}
+        cambiarSidebar={() => setSidebarAbierto(!sidebarAbierto)}
+      />
 
-    return(
-        <div className="plantilla-pagina">
+      <div
+        className={
+          sidebarAbierto
+            ? "plantilla-zona-principal abierto"
+            : "plantilla-zona-principal cerrado"
+        }
+      >
+        <Navbar />
 
-            <Sidebar 
-                sidebarAbierto={sidebarAbierto}
-            />
+        <main className="plantilla-contenido">
+          <Outlet />
+        </main>
 
-            <div 
-                className={
-                    sidebarAbierto
-                    ? "plantilla-zona-principal abierto"
-                    : "plantilla-zona-principal cerrado"
-                }
-            >
-
-                <Navbar
-                  cambiarSidebar={() =>
-                      setSidebarAbierto(!sidebarAbierto)
-                  }
-                />
-
-                <main className="plantilla-contenido">
-
-                    <Outlet />
-
-                </main>
-
-                <footer className="plantilla-footer">
-
-                    <span>
-                        Sistema de Control de Ingreso a Exámenes Masivos
-                    </span>
-
-                    <span>
-                        © 2026. Todos los derechos reservados.
-                    </span>
-
-                </footer>
-
-
-            </div>
-
-        </div>
-    );
+        <footer className="plantilla-footer">
+          <span>Sistema de Control de Ingreso a Exámenes Masivos</span>
+          <span>© 2026. Todos los derechos reservados.</span>
+        </footer>
+      </div>
+    </div>
+  );
 }
 
 export default PlantillaPrincipal;

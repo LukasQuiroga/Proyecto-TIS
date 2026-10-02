@@ -22,7 +22,6 @@ import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
-import DetalleUsuario from "./pages/usuarios/DetalleUsuario";
 
 
 function App(){
@@ -40,19 +39,17 @@ function App(){
                     <Route
                         path="/login"
                         element={<Login />}
-                    />  
+                    />
 
                     <Route
                         path="/recuperar-contrasena"
                         element={<RecuperarContrasena />}
                     />
 
-
                     <Route
                         path="/verificar-codigo"
                         element={<VerificarCodigo />}
                     />
-
 
                     <Route
                         path="/nueva-contrasena"
@@ -104,12 +101,6 @@ function App(){
                                 <ProtectedPermission permiso="GESTIONAR_USUARIOS">
                                     <Usuarios />
                                 </ProtectedPermission>
-                            }
-                        />
-                        <Route
-                             path="/usuarios/:id"
-                             element={
-                                   <DetalleUsuario/>
                             }
                         />
 
