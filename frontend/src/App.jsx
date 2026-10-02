@@ -18,10 +18,7 @@ import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
-import DetalleUsuario from "./pages/usuarios/DetalleUsuario";
-
-import RegistrarUsuario from "./pages/usuarios/RegistrarUsuario.jsx";
-import RegistroIndividual from "./pages/usuarios/RegistroIndividual.jsx";
+import RegistroUsuario from "./pages/usuarios/RegistroUsuario.jsx";
 import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
@@ -33,6 +30,7 @@ function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
+                    {/* RUTAS PUBLICAS */}
 
                     <Route
                         path="/login"
@@ -54,12 +52,16 @@ function App() {
                         element={<NuevaContrasena />}
                     />
 
+                    {/* PAGINA PRINCIPAL PUBLICA */}
+
                     <Route element={<PlantillaPrincipal />}>
                         <Route
                             path="/"
                             element={<Inicio />}
                         />
                     </Route>
+
+                    {/* RUTAS PROTEGIDAS */}
 
                     <Route
                         element={
@@ -68,11 +70,14 @@ function App() {
                             </ProtectedRoute>
                         }
                     >
+                        {/* PERFIL */}
 
                         <Route
                             path="/perfil"
                             element={<Perfil />}
                         />
+
+                        {/* USUARIOS */}
 
                         <Route
                             path="/usuarios"
@@ -80,13 +85,6 @@ function App() {
                                 <ProtectedPermission permiso="GESTIONAR_USUARIOS">
                                     <Usuarios />
                                 </ProtectedPermission>
-                            }
-                        />
-
-                        <Route
-                            path="/usuarios/:id"
-                            element={
-                                <DetalleUsuario />
                             }
                         />
 
@@ -109,19 +107,10 @@ function App() {
                         />
 
                         <Route
-                            path="/usuarios/registrar"
+                            path="/usuarios/registro"
                             element={
-                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                                    <RegistrarUsuario />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        <Route
-                            path="/usuarios/registrar/individual"
-                            element={
-                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                                    <RegistroIndividual />
+                                <ProtectedPermission permiso="REGISTRAR_USUARIOS">
+                                    <RegistroUsuario />
                                 </ProtectedPermission>
                             }
                         />
@@ -129,7 +118,7 @@ function App() {
                         <Route
                             path="/usuarios/importar"
                             element={
-                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                                <ProtectedPermission permiso="IMPORTAR_USUARIOS">
                                     <ImportarUsuarios />
                                 </ProtectedPermission>
                             }
@@ -144,6 +133,8 @@ function App() {
                             }
                         />
 
+                        {/* AUDITORIA */}
+
                         <Route
                             path="/auditoria"
                             element={
@@ -152,14 +143,14 @@ function App() {
                                 </ProtectedPermission>
                             }
                         />
-
                     </Route>
+
+                    {/* RUTA NO EXISTENTE */}
 
                     <Route
                         path="*"
                         element={<Navigate to="/" replace />}
                     />
-
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

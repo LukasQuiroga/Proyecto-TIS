@@ -1,664 +1,1419 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./Usuarios.css";
+import "./ImportarUsuarios.css";
 
-function ImportarUsuarios() {
-    const navigate = useNavigate();
+import {
+    useMemo,
+    useRef,
+    useState
+} from "react";
 
-    const inputArchivoRef = useRef(null);
+import {
+    useNavigate
+} from "react-router-dom";
 
-    const [archivo, setArchivo] = useState(null);
-    const [arrastrando, setArrastrando] = useState(false);
-    const [errorArchivo, setErrorArchivo] = useState("");
-    const [archivoValido, setArchivoValido] = useState(false);
-    const [erroresRegistros, setErroresRegistros] = useState([]);
-    const [resumenValidacion, setResumenValidacion] = useState(null);
-    const [registrosValidos, setRegistrosValidos] = useState([]);
+import {
+    FiFileText,
+    FiUpload,
+    FiDownload,
+    FiSearch,
+    FiDatabase,
+    FiLock,
+    FiUsers,
+    FiCheckCircle,
+    FiXCircle,
+    FiChevronRight
+} from "react-icons/fi";
 
-    const abrirSelectorArchivo = () => {
-        inputArchivoRef.current?.click();
-    };
+import {
+    analizarImportacion,
+    importarUsuarios
+} from "../../services/usuarioService";
 
-    const validarArchivoCSV = (archivoSeleccionado) => {
-        const nombreArchivo = archivoSeleccionado.name.toLowerCase();
+import {
+    useAuth
+} from "../../context/useAuth";
 
-        if (!nombreArchivo.endsWith(".csv")) {
-            setArchivo(null);
-            setArchivoValido(false);
-            setErroresRegistros([]);
-            setErrorArchivo(
-                "El archivo seleccionado debe tener formato CSV."
-            );
-            return false;
-        }
 
-        return true;
-    };
+const NOMBRES = [
+    "María", "Carla", "Jorge", "Luis", "Ana",
+    "Rodrigo", "Paola", "Diego", "Valeria", "Cristhian",
+    "Gabriela", "Marco", "Daniela", "Iván", "Natalia",
+    "Sergio", "Andrea", "Miguel", "Katherine", "Ramiro"
+];
 
-    const obtenerLineasCSV = (contenido) => {
-        return contenido
-            .replace(/^\uFEFF/, "")
-            .split(/\r?\n/)
-            .filter((linea) => linea.trim() !== "");
-    };
+const APELLIDOS = [
+    "Mamani", "Quispe", "Flores", "Rojas", "Gutiérrez",
+    "Chávez", "Vacaflor", "Salinas", "Ballesteros", "Heredia",
+    "Torrico", "Zambrana", "Mercado", "Roca", "Fernández",
+    "Aguirre", "Céspedes", "Montaño", "Peña", "Ríos"
+];
 
-    const validarEstructuraCSV = (lineas) => {
-        if (lineas.length === 0) {
-            return "El archivo CSV está vacío.";
-        }
+const CARRERAS = [
+    "Ingeniería de Sistemas",
+    "Ingeniería Informática",
+    "Ingeniería Industrial",
+    "Ingeniería Civil",
+    "Ingeniería Electromecánica",
+    "Ingeniería Mecánica",
+    "Lic. en Administración",
+    "Lic. en Contaduría Pública",
+    "Medicina",
+    "Derecho",
+    "Arquitectura",
+    "Enfermería"
+];
 
-        const encabezados = lineas[0]
-            .split(",")
-            .map((encabezado) => encabezado.trim());
+const FACULTADES = [
+    "FCyT", "FCAP", "FCEyF",
+    "FM", "FD", "FADU",
+    "FCS", "FCM", "FCH"
+];
 
-        if (encabezados.length < 2) {
-            return "El archivo CSV no contiene una estructura válida.";
-        }
+const OBSERVACIONES_INVALIDAS = [
+    "Código inválido",
+    "Documento inválido",
+    "Correo electrónico inválido",
+    "Teléfono inválido",
+    "Rol no válido"
+];
 
-        if (encabezados.some((encabezado) => encabezado === "")) {
-            return "El archivo CSV contiene encabezados vacíos.";
-        }
+const FILAS_INVALIDAS = [4, 17, 33, 52, 88];
 
-        const cantidadColumnas = encabezados.length;
+const ROL_POR_INDEX = (i) => {
+    if (i % 91 === 0) return "Administrador";
+    if (i % 37 === 0) return "Docente";
+    if (i % 53 === 0) return "Personal de ingreso";
+    return "Estudiante";
+};
 
-        for (let indice = 1; indice < lineas.length; indice++) {
-            const columnas = lineas[indice].split(",");
+const normalizar = (texto) =>
+    String(texto || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
-            if (columnas.length !== cantidadColumnas) {
-                return `La fila ${indice + 1} no tiene la misma cantidad de columnas que el encabezado.`;
-            }
-        }
 
-        return "";
-    };
+function generarUsuariosDemo(){
 
-    const validarRegistrosCSV = (lineas) => {
-        if (lineas.length <= 1) {
-            return ["El archivo CSV no contiene registros de usuarios."];
-        }
+    const filas = [];
 
-        const encabezados = lineas[0]
-            .split(",")
-            .map((encabezado) => encabezado.trim());
+    for (let i = 1; i <= 129; i++) {
 
-        const columnasRequeridas = [
-            "nombres",
-            "apellidos",
-            "documentoIdentidad",
-            "correo",
-            "telefono",
-            "rol",
-            "codigoUniversitario",
-            "carrera",
-        ];
+        const indice = i - 1;
 
-        const columnasFaltantes = columnasRequeridas.filter(
-            (columna) => !encabezados.includes(columna)
-        );
+        const nombre =
+            NOMBRES[indice % NOMBRES.length];
 
-        if (columnasFaltantes.length > 0) {
-            return [
-                `Faltan columnas necesarias para validar los registros: ${columnasFaltantes.join(
-                    ", "
-                )}.`,
-            ];
-        }
+        const apellido1 =
+            APELLIDOS[(indice * 3) % APELLIDOS.length];
 
-        const indiceNombres = encabezados.indexOf("nombres");
-        const indiceApellidos = encabezados.indexOf("apellidos");
-        const indiceDocumento =
-            encabezados.indexOf("documentoIdentidad");
-        const indiceCorreo = encabezados.indexOf("correo");
-        const indiceTelefono = encabezados.indexOf("telefono");
-        const indiceRol = encabezados.indexOf("rol");
-        const indiceCodigoUniversitario =
-            encabezados.indexOf("codigoUniversitario");
-        const indiceCarrera = encabezados.indexOf("carrera");
+        const apellido2 =
+            APELLIDOS[(indice * 7) % APELLIDOS.length];
 
-        const regexNombre =
-            /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]+$/;
+        const rol = ROL_POR_INDEX(indice);
 
-        const regexDocumento =
-            /^[A-Za-z0-9.-]+$/;
+        const invalido =
+            FILAS_INVALIDAS.includes(indice);
 
-        const regexCorreo =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const estado =
+            invalido ? "Inválido" : "Activo";
 
-        const regexTelefono =
-            /^[0-9+\-\s()]+$/;
+        const esEstudiante =
+            rol === "Estudiante";
 
-        const rolesPermitidos = [
-            "Administrador",
-            "Docente",
-            "Personal de ingreso",
-            "Estudiante",
-        ];
+        const codigo =
+            esEstudiante
+                ? "2020" +
+                  String(100 + (indice % 90))
+                : "";
 
-        const errores = [];
-        const documentosEncontrados = new Set();
-        const correosEncontrados = new Set();
-
-        for (let indice = 1; indice < lineas.length; indice++) {
-            const columnas = lineas[indice]
-                .split(",")
-                .map((valor) => valor.trim());
-
-            const numeroFila = indice + 1;
-
-            const nombres = columnas[indiceNombres];
-            const apellidos = columnas[indiceApellidos];
-            const documento = columnas[indiceDocumento];
-            const correo = columnas[indiceCorreo];
-            const telefono = columnas[indiceTelefono];
-            const rol = columnas[indiceRol];
-            const codigoUniversitario =
-                columnas[indiceCodigoUniversitario];
-            const carrera = columnas[indiceCarrera];
-
-            if (!nombres) {
-                errores.push(
-                    `Fila ${numeroFila}: el nombre es obligatorio.`
-                );
-            } else if (!regexNombre.test(nombres)) {
-                errores.push(
-                    `Fila ${numeroFila}: el nombre tiene un formato inválido.`
-                );
-            }
-
-            if (!apellidos) {
-                errores.push(
-                    `Fila ${numeroFila}: el apellido es obligatorio.`
-                );
-            } else if (!regexNombre.test(apellidos)) {
-                errores.push(
-                    `Fila ${numeroFila}: el apellido tiene un formato inválido.`
-                );
-            }
-
-            if (!documento) {
-                errores.push(
-                    `Fila ${numeroFila}: el documento de identidad es obligatorio.`
-                );
-            } else if (!regexDocumento.test(documento)) {
-                errores.push(
-                    `Fila ${numeroFila}: el documento de identidad tiene un formato inválido.`
-                );
-            }
-
-            if (!correo) {
-                errores.push(
-                    `Fila ${numeroFila}: el correo electrónico es obligatorio.`
-                );
-            } else if (!regexCorreo.test(correo)) {
-                errores.push(
-                    `Fila ${numeroFila}: el correo electrónico tiene un formato inválido.`
-                );
-            }
-
-            if (documento) {
-                const documentoNormalizado = documento.toLowerCase();
-
-                if (documentosEncontrados.has(documentoNormalizado)) {
-                    errores.push(
-                        `Fila ${numeroFila}: el documento de identidad "${documento}" está duplicado en el archivo.`
-                    );
-                } else {
-                    documentosEncontrados.add(documentoNormalizado);
-                }
-            }
-
-            if (correo) {
-                const correoNormalizado = correo.toLowerCase();
-
-                if (correosEncontrados.has(correoNormalizado)) {
-                    errores.push(
-                        `Fila ${numeroFila}: el correo electrónico "${correo}" está duplicado en el archivo.`
-                    );
-                } else {
-                    correosEncontrados.add(correoNormalizado);
-                }
-            }
-
-            if (telefono && !regexTelefono.test(telefono)) {
-                errores.push(
-                    `Fila ${numeroFila}: el teléfono tiene un formato inválido.`
-                );
-            }
-
-            if (!rol) {
-                errores.push(
-                    `Fila ${numeroFila}: el rol es obligatorio.`
-                );
-            } else if (!rolesPermitidos.includes(rol)) {
-                errores.push(
-                    `Fila ${numeroFila}: el rol "${rol}" no es válido.`
-                );
-            }
-
-            if (rol === "Estudiante") {
-                if (!codigoUniversitario) {
-                    errores.push(
-                        `Fila ${numeroFila}: el código universitario es obligatorio para estudiantes.`
-                    );
-                }
-
-                if (!carrera) {
-                    errores.push(
-                        `Fila ${numeroFila}: la carrera es obligatoria para estudiantes.`
-                    );
-                }
-            }
-        }
-
-        return errores;
-    };
-
-        const agruparErroresPorFila = (errores) => {
-        const erroresAgrupados = {};
-
-        errores.forEach((error) => {
-            const coincidencia = error.match(/^Fila (\d+):\s*(.*)$/);
-
-            if (!coincidencia) {
-                return;
-            }
-
-            const numeroFila = coincidencia[1];
-            const mensaje = coincidencia[2];
-
-            if (!erroresAgrupados[numeroFila]) {
-                erroresAgrupados[numeroFila] = [];
-            }
-
-            erroresAgrupados[numeroFila].push(mensaje);
+        filas.push({
+            fila: i,
+            documento:
+                String(5000000 + indice * 211),
+            nombres: nombre,
+            apellidos:
+                apellido1 + " " + apellido2,
+            correo:
+                normalizar(nombre) +
+                "." +
+                normalizar(apellido1) +
+                (indice + 1) +
+                "@est.umss.edu",
+            telefono:
+                "7" +
+                String(
+                    (6000000 + indice * 137) % 7000000
+                ).padStart(7, "0"),
+            rol,
+            estado,
+            codigoSis: codigo,
+            carrera:
+                esEstudiante
+                    ? CARRERAS[indice % CARRERAS.length]
+                    : "",
+            facultad:
+                esEstudiante
+                    ? FACULTADES[
+                          (indice * 5) % FACULTADES.length
+                      ]
+                    : "",
+            observaciones:
+                invalido
+                    ? OBSERVACIONES_INVALIDAS[
+                          FILAS_INVALIDAS.indexOf(indice)
+                      ]
+                    : ""
         });
 
-        return erroresAgrupados;
-        };
+    }
 
-        const obtenerRegistrosCSV = (lineas) => {
-        if (lineas.length <= 1) {
-            return [];
-        }
+    return filas;
 
-        const encabezados = lineas[0]
-            .split(",")
-            .map((encabezado) => encabezado.trim());
+}
 
-        return lineas.slice(1).map((linea, indice) => {
-            const valores = linea
-                .split(",")
-                .map((valor) => valor.trim());
 
-            const registro = {};
+const DATOS_EJEMPLO = [
+    {
+        documento: "10000123",
+        nombres: "María",
+        apellidos: "Quispe Mamani",
+        correo: "maria.quispe@est.umss.edu",
+        telefono: "71234567",
+        rol: "Estudiante",
+        estado: "Activo",
+        codigo: "20200001",
+        carrera: "Ingeniería de Sistemas",
+        facultad: "FCyT"
+    },
+    {
+        documento: "10000456",
+        nombres: "Jorge",
+        apellidos: "Flores Rojas",
+        correo: "jorge.flores@est.umss.edu",
+        telefono: "71234568",
+        rol: "Estudiante",
+        estado: "Activo",
+        codigo: "20200002",
+        carrera: "Ingeniería Electromecánica",
+        facultad: "FCyT"
+    }
+];
 
-            encabezados.forEach((encabezado, posicion) => {
-                registro[encabezado] = valores[posicion] || "";
+
+const COLUMNAS_ARCHIVO = [
+    "Documento de identidad",
+    "Nombres",
+    "Apellidos",
+    "Correo electrónico",
+    "Teléfono",
+    "Rol",
+    "Estado",
+    "Código universitario (solo Estudiante)",
+    "Carrera (solo Estudiante)",
+    "Facultad (solo Estudiante)"
+];
+
+
+const PASOS = [
+    {
+        numero: 1,
+        titulo: "Cargar archivo",
+        subtitulo: "Seleccione el CSV"
+    },
+    {
+        numero: 2,
+        titulo: "Revisar datos",
+        subtitulo: "Valide la información"
+    },
+    {
+        numero: 3,
+        titulo: "Configurar",
+        subtitulo: "Defina opciones"
+    },
+    {
+        numero: 4,
+        titulo: "Importar",
+        subtitulo: "Registre los usuarios"
+    }
+];
+
+
+function parsearCSV(texto){
+
+    const registros = [];
+
+    let celdas = [];
+
+    let campo = "";
+
+    let entreComillas = false;
+
+    let linea = 1;
+
+    const empujar = () => {
+
+        celdas.push(campo);
+
+        campo = "";
+
+        if(celdas.some(valor => valor.trim() !== "")){
+
+            registros.push({
+                linea,
+                celdas
             });
 
-            return {
-                numeroFila: indice + 2,
-                ...registro,
-            };
-        });
+        }
+
+        celdas = [];
+
     };
 
-    const procesarArchivo = (archivoSeleccionado) => {
-        setErrorArchivo("");
-        setArchivoValido(false);
-        setErroresRegistros([]);
-        setResumenValidacion(null);
-        setRegistrosValidos([]);
+    const textoLimpio =
+        (texto || "").replace(/^\uFEFF/, "");
 
-        if (!validarArchivoCSV(archivoSeleccionado)) {
-            return;
+    for(let i = 0; i < textoLimpio.length; i++){
+
+        const caracter = textoLimpio[i];
+
+        if(entreComillas){
+
+            if(caracter === "\""){
+
+                if(textoLimpio[i + 1] === "\""){
+
+                    campo += "\"";
+                    i++;
+
+                }
+                else{
+
+                    entreComillas = false;
+
+                }
+
+            }
+            else{
+
+                campo += caracter;
+
+            }
+
         }
+        else if(caracter === "\""){
+
+            entreComillas = true;
+
+        }
+        else if(caracter === ","){
+
+            celdas.push(campo);
+            campo = "";
+
+        }
+        else if(caracter === "\n"){
+
+            empujar();
+            linea++;
+
+        }
+        else if(caracter === "\r"){
+
+            if(textoLimpio[i + 1] === "\n"){
+
+                i++;
+
+            }
+
+            empujar();
+            linea++;
+
+        }
+        else{
+
+            campo += caracter;
+
+        }
+
+    }
+
+    if(campo !== ""
+            || celdas.some(valor => valor.trim() !== "")){
+
+        empujar();
+
+    }
+
+    return registros;
+
+}
+
+
+function convertirFilas(registros){
+
+    const hayEncabezado =
+        registros.length > 0
+        && !/^\d+$/.test(
+            (registros[0].celdas[0] || "").trim()
+        );
+
+    const inicio = hayEncabezado ? 1 : 0;
+
+    return registros
+        .slice(inicio)
+        .map(registro => ({
+
+            fila: registro.linea,
+
+            documento:
+                (registro.celdas[0] || "").trim(),
+
+            nombres:
+                (registro.celdas[1] || "").trim(),
+
+            apellidos:
+                (registro.celdas[2] || "").trim(),
+
+            correo:
+                (registro.celdas[3] || "").trim(),
+
+            telefono:
+                (registro.celdas[4] || "").trim(),
+
+            rol:
+                (registro.celdas[5] || "").trim(),
+
+            estado:
+                (registro.celdas[6] || "").trim(),
+
+            codigoSis:
+                (registro.celdas[7] || "").trim(),
+
+            carrera:
+                (registro.celdas[8] || "").trim(),
+
+            facultad:
+                (registro.celdas[9] || "").trim()
+
+        }));
+
+}
+
+
+const leerTexto = (archivo) =>
+
+    new Promise((resolver,rechazar) => {
 
         const lector = new FileReader();
 
-        lector.onload = (event) => {
-            const contenido = event.target.result;
+        lector.onload = () =>
+            resolver(String(lector.result));
 
-            const lineas = obtenerLineasCSV(contenido);
+        lector.onerror = rechazar;
 
-            const errorEstructura =
-                validarEstructuraCSV(lineas);
+        lector.readAsText(archivo,"UTF-8");
 
-            if (errorEstructura) {
-                setArchivo(null);
-                setArchivoValido(false);
-                setErroresRegistros([]);
-                setErrorArchivo(errorEstructura);
-                return;
+    });
+
+
+function ImportarUsuarios(){
+
+
+    const navigate = useNavigate();
+
+    const { usuario } = useAuth();
+
+    const inputArchivo = useRef(null);
+
+
+    const [archivo,setArchivo] = useState(null);
+
+    const [arrastrando,setArrastrando] = useState(false);
+
+    const [busqueda,setBusqueda] = useState("");
+
+    const [filas,setFilas] = useState(
+        () => generarUsuariosDemo()
+    );
+
+    const [filasCsv,setFilasCsv] = useState([]);
+
+    const [estadoPorDefecto,setEstadoPorDefecto] =
+        useState("Activo");
+
+    const [pasoActivo,setPasoActivo] = useState(1);
+
+    const [analizando,setAnalizando] = useState(false);
+
+    const [importando,setImportando] = useState(false);
+
+    const [importado,setImportado] = useState(false);
+
+    const [mostrarExito,setMostrarExito] = useState(false);
+
+    const [mensaje,setMensaje] = useState("");
+
+    const [error,setError] = useState("");
+
+
+    const validos =
+        filas.filter(
+            fila =>
+                fila.estado === "Activo"
+                || fila.estado === "Registrado"
+        ).length;
+
+    const conErrores =
+        filas.filter(
+            fila => fila.estado === "Inválido"
+        ).length;
+
+    const total = filas.length;
+
+
+    const filasFiltradas = useMemo(
+        () => {
+
+            const texto =
+                normalizar(busqueda);
+
+            if(!texto){
+
+                return filas;
+
             }
 
-            const erroresEncontrados =
-                validarRegistrosCSV(lineas);
+            return filas.filter(
+                fila =>
+                    [
+                        fila.documento,
+                        fila.nombres,
+                        fila.apellidos,
+                        fila.correo,
+                        fila.telefono,
+                        fila.rol,
+                        fila.codigoSis,
+                        fila.carrera,
+                        fila.facultad,
+                        textoObservacion(
+                            fila.observaciones
+                        )
+                    ].some(
+                        campo =>
+                            normalizar(campo).includes(texto)
+                    )
+            );
 
-            const totalRegistros = lineas.length - 1;
+        },
+        [filas,busqueda]
+    );
 
-            const filasConErrores = new Set();
 
-            erroresEncontrados.forEach((error) => {
-                const coincidencia = error.match(/^Fila (\d+):/);
+    const descargarPlantilla = () => {
 
-                if (coincidencia) {
-                    filasConErrores.add(Number(coincidencia[1]));
-                }
-            });
+        const cabecera =
+            "Documento,Nombres,Apellidos," +
+            "Correo,Teléfono,Rol,Estado," +
+            "Código universitario,Carrera,Facultad";
 
-            const registrosConErrores = filasConErrores.size;
+        const contenido = DATOS_EJEMPLO.map(
+            fila => [
 
-            const registrosValidos =
-                totalRegistros - registrosConErrores;
+                fila.documento,
+                fila.nombres,
+                fila.apellidos,
+                fila.correo,
+                fila.telefono,
+                fila.rol,
+                fila.estado,
+                fila.codigo,
+                fila.carrera,
+                fila.facultad
 
-            setResumenValidacion({
-                totalRegistros,
-                registrosValidos,
-                registrosConErrores,
-            });
+            ].map(
+                valor =>
+                    `"${valor}"`
+            ).join(",")
+        ).join("\n");
+
+        const blob = new Blob(
+            [ cabecera + "\n" + contenido ],
+            { type: "text/csv;charset=utf-8" }
+        );
+
+        const enlace =
+            document.createElement("a");
+
+        enlace.href =
+            URL.createObjectURL(blob);
+
+        enlace.download =
+            "plantilla_usuarios.csv";
+
+        enlace.click();
+
+        URL.revokeObjectURL(enlace.href);
+
+    };
+
+
+    const prepararArchivo = async (archivoSeleccionado) => {
+
+        if(!archivoSeleccionado){
+
+            return;
+
+        }
+
+        if(
+            !archivoSeleccionado.name
+                .toLowerCase()
+                .endsWith(".csv")
+        ){
+
+            setError(
+                "El archivo debe tener formato CSV"
+            );
+
+            return;
+
+        }
+
+        setError("");
+
+        setMensaje("");
+
+        setAnalizando(true);
+
+        try {
+
+            const texto =
+                await leerTexto(archivoSeleccionado);
+
+            const filasParseadas =
+                convertirFilas(
+                    parsearCSV(texto)
+                );
+
+            if(filasParseadas.length === 0){
+
+                setError(
+                    "El archivo no contiene filas con datos"
+                );
+
+                return;
+
+            }
+
+            const respuesta =
+                await analizarImportacion({
+                    usuarios: filasParseadas,
+                    estadoPorDefecto
+                });
 
             setArchivo(archivoSeleccionado);
 
-            if (erroresEncontrados.length > 0) {
-            setArchivoValido(false);
-            setErroresRegistros(erroresEncontrados);
-            setRegistrosValidos([]);
-            setErrorArchivo("");
-            return;
-        }
+            setFilasCsv(filasParseadas);
 
-        const registros = obtenerRegistrosCSV(lineas);
+            setFilas(respuesta.data.filas);
 
-        setRegistrosValidos(registros);
-        setErroresRegistros([]);
-        setErrorArchivo("");
-        setArchivoValido(true);
-            };
+            setPasoActivo(2);
 
-        lector.onerror = () => {
-            setArchivo(null);
-            setArchivoValido(false);
-            setErroresRegistros([]);
-            setResumenValidacion(null);
-            setRegistrosValidos([]);
-            setErrorArchivo(
-                "No se pudo leer el archivo seleccionado."
+            setMensaje(
+                `Archivo analizado: ${respuesta.data.validos} ` +
+                "usuarios válidos y " +
+                `${respuesta.data.conErrores} con errores.`
             );
-        };
 
-        lector.readAsText(archivoSeleccionado);
+        }
+        catch(err){
+
+            console.error(
+                "Error analizando archivo:",
+                err
+            );
+
+            setError(
+                err.response?.data?.mensaje ||
+                "No se pudo analizar el archivo. " +
+                "Verifique el formato CSV e intente nuevamente."
+            );
+
+        }
+        finally{
+
+            setAnalizando(false);
+
+        }
+
     };
 
-    const manejarSeleccionArchivo = (event) => {
-        const archivoSeleccionado = event.target.files[0];
 
-        if (!archivoSeleccionado) {
+    const importar = async () => {
+
+        if(!archivo || filasCsv.length === 0){
+
+            setError(
+                "Seleccione y analice un archivo CSV antes de importar"
+            );
+
             return;
+
         }
 
-        procesarArchivo(archivoSeleccionado);
+        setError("");
 
-        event.target.value = "";
-    };
+        setMensaje("");
 
-    const manejarDragOver = (event) => {
-        event.preventDefault();
-        setArrastrando(true);
-    };
+        setImportando(true);
 
-    const manejarDragLeave = (event) => {
-        event.preventDefault();
-        setArrastrando(false);
-    };
+        try {
 
-    const manejarDrop = (event) => {
-        event.preventDefault();
-        setArrastrando(false);
+            const respuesta =
+                await importarUsuarios(
+                    {
+                        usuarios: filasCsv,
+                        estadoPorDefecto
+                    },
+                    usuario?.idUsuario
+                );
 
-        const archivoSeleccionado =
-            event.dataTransfer.files[0];
+            setFilas(respuesta.data.filas);
 
-        if (archivoSeleccionado) {
-            procesarArchivo(archivoSeleccionado);
+            setImportado(true);
+
+            setPasoActivo(4);
+
+            setMostrarExito(true);
+
+            setMensaje(
+                `Importación completada: ${respuesta.data.registrados} ` +
+                "usuarios registrados correctamente y " +
+                `${respuesta.data.conErrores} con errores.`
+            );
+
         }
+        catch(err){
+
+            console.error(
+                "Error importando usuarios:",
+                err
+            );
+
+            setError(
+                err.response?.data?.mensaje ||
+                "No se pudo completar la importación. " +
+                "Verifique la conexión e intente nuevamente."
+            );
+
+        }
+        finally{
+
+            setImportando(false);
+
+        }
+
     };
 
-    const erroresAgrupados = agruparErroresPorFila(
-        erroresRegistros
-    );
 
     return (
-        <div className="usuarios-pagina">
-            <header className="usuarios-encabezado">
-                <div>
-                    <h1>Importar usuarios</h1>
-                    <p>
-                        Registra usuarios de forma masiva mediante un archivo CSV.
-                    </p>
-                </div>
-            </header>
 
-            <section className="usuarios-panel">
-                <div className="usuarios-importacion">
-                    <div
-                        className={`usuarios-zona-archivo ${
-                            arrastrando
-                                ? "usuarios-zona-archivo-activa"
-                                : ""
-                        }`}
-                        onDragOver={manejarDragOver}
-                        onDragLeave={manejarDragLeave}
-                        onDrop={manejarDrop}
-                    >
-                        <div className="usuarios-icono-archivo">
-                            CSV
-                        </div>
+        <div className="import-usuario">
 
-                        <h2>Importar archivo CSV</h2>
+            <nav className="import-migas">
 
-                        <p>
-                            Seleccione o arrastre un archivo CSV para comenzar
-                            la importación.
-                        </p>
+                <span
+                    className="import-migas-enlace"
+                    onClick={() => navigate("/")}
+                >
+                    Inicio
+                </span>
 
-                        <input
-                            ref={inputArchivoRef}
-                            type="file"
-                            accept=".csv,text/csv"
-                            onChange={manejarSeleccionArchivo}
-                            hidden
-                        />
+                <span className="import-migas-separador">
+                    &gt;
+                </span>
 
-                        <button
-                            type="button"
-                            className="usuarios-boton-seleccionar"
-                            onClick={abrirSelectorArchivo}
-                        >
-                            Seleccionar archivo
-                        </button>
+                <span
+                    className="import-migas-enlace"
+                    onClick={() => navigate("/usuarios")}
+                >
+                    Usuarios
+                </span>
 
-                        {archivo ? (
-                            <div className="usuarios-archivo-seleccionado">
-                                <span>
-                                    Archivo seleccionado:
-                                </span>
-                                <strong>
-                                    {archivo.name}
-                                </strong>
-                            </div>
-                        ) : (
-                            <span className="usuarios-ayuda-archivo">
-                                Formato permitido: .csv
-                            </span>
-                        )}
+                <span className="import-migas-separador">
+                    &gt;
+                </span>
 
-                        {archivoValido && archivo && resumenValidacion && (
-                            <div className="usuarios-archivo-listo">
-                                <div className="usuarios-archivo-listo-encabezado">
-                                    <span className="usuarios-archivo-listo-icono">
-                                        ✓
+                <span className="import-migas-actual">
+                    Importar usuarios
+                </span>
+
+            </nav>
+
+
+            <div className="import-cabecera">
+
+                <h1 className="import-titulo">
+                    Importar usuarios (Carga masiva)
+                </h1>
+
+                <p className="import-subtitulo">
+                    Carga un archivo CSV con la lista de usuarios
+                    para registrarlos de forma masiva en el sistema.
+                </p>
+
+            </div>
+
+
+            {
+            error && (
+                <p className="import-alerta import-alerta-error">
+                    {error}
+                </p>
+            )
+            }
+
+
+            {
+            mensaje && (
+                <p className="import-alerta import-alerta-exito">
+                    {mensaje}
+                </p>
+            )
+            }
+
+
+            <div className="import-pasos">
+
+                {
+                    PASOS.map(
+                        paso => (
+
+                            <div
+                                key={paso.numero}
+                                className={
+                                    paso.numero === pasoActivo
+                                        ? "import-paso import-paso-activo"
+                                        : "import-paso"
+                                }
+                            >
+
+                                <div className="import-paso-circulo">
+                                    {paso.numero}
+                                </div>
+
+
+                                <div className="import-paso-texto">
+
+                                    <strong>
+                                        {paso.titulo}
+                                    </strong>
+
+                                    <span>
+                                        {paso.subtitulo}
                                     </span>
 
-                                    <div>
-                                        <h3>Archivo listo para importar</h3>
-                                        <p>
-                                            El archivo superó todas las validaciones.
-                                        </p>
-                                    </div>
                                 </div>
 
-                                <div className="usuarios-archivo-listo-datos">
-                                    <div>
-                                        <span>Nombre del archivo</span>
-                                        <strong>{archivo.name}</strong>
-                                    </div>
-
-                                    <div>
-                                        <span>Registros válidos</span>
-                                        <strong>
-                                            {resumenValidacion.registrosValidos}
-                                        </strong>
-                                    </div>
-
-                                    <div>
-                                        <span>Errores encontrados</span>
-                                        <strong>
-                                            {resumenValidacion.registrosConErrores}
-                                        </strong>
-                                    </div>
-                                </div>
                             </div>
-                        )}
+                        )
+                    )
+                }
 
-                        {archivoValido && registrosValidos.length > 0 && (
-                            <div className="usuarios-vista-previa">
-                                <h3>Registros listos para importar</h3>
+            </div>
 
-                                <div className="usuarios-vista-previa-tabla">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Fila</th>
-                                                <th>Nombre</th>
-                                                <th>Documento</th>
-                                                <th>Correo</th>
-                                                <th>Rol</th>
-                                            </tr>
-                                        </thead>
 
-                                        <tbody>
-                                            {registrosValidos.map((registro) => (
-                                                <tr key={registro.numeroFila}>
-                                                    <td>{registro.numeroFila}</td>
+            <div className="import-tarjetas-superiores">
 
-                                                    <td>
-                                                        {registro.nombres}{" "}
-                                                        {registro.apellidos}
-                                                    </td>
+                <section className="import-tarjeta import-tarjeta-archivo">
 
-                                                    <td>
-                                                        {registro.documentoIdentidad}
-                                                    </td>
+                    <h2 className="import-tarjeta-titulo">
+                        Seleccionar archivo CSV
+                    </h2>
 
-                                                    <td>
-                                                        {registro.correo}
-                                                    </td>
 
-                                                    <td>
-                                                        {registro.rol}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
+                    <div
+                        className={
+                            arrastrando
+                                ? "import-zona import-zona-arrastrando"
+                                : "import-zona"
+                        }
+                        onDragOver={
+                            e => {
+                                e.preventDefault();
+                                setArrastrando(true);
+                            }
+                        }
+                        onDragLeave={
+                            () =>
+                            setArrastrando(false)
+                        }
+                        onDrop={
+                            e => {
+                                e.preventDefault();
+                                setArrastrando(false);
+                                prepararArchivo(
+                                    e.dataTransfer.files?.[0]
+                                );
+                            }
+                        }
+                    >
 
-                        {resumenValidacion && (
-                            <div className="usuarios-resumen-validacion">
-                                <h3>Resumen de validación</h3>
+                        <span className="import-zona-icono">
+                            <FiFileText />
+                        </span>
 
-                                <div className="usuarios-resumen-datos">
-                                    <div>
-                                        <span>Registros encontrados</span>
-                                        <strong>
-                                            {resumenValidacion.totalRegistros}
-                                        </strong>
-                                    </div>
+                        <strong className="import-zona-texto">
+                            Arrastra y suelta un archivo CSV aquí
+                        </strong>
 
-                                    <div>
-                                        <span>Registros válidos</span>
-                                        <strong>
-                                            {resumenValidacion.registrosValidos}
-                                        </strong>
-                                    </div>
 
-                                    <div>
-                                        <span>Registros con errores</span>
-                                        <strong>
-                                            {resumenValidacion.registrosConErrores}
-                                        </strong>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {
+                        archivo && (
+                            <span className="import-zona-archivo">
+                                {archivo.name}
+                            </span>
+                        )
+                        }
 
-                        {errorArchivo && (
-                            <div className="usuarios-error-archivo">
-                                <strong>
-                                    Archivo no válido
-                                </strong>
-                                <span>{errorArchivo}</span>
-                            </div>
-                        )}
 
-                        {erroresRegistros.length > 0 && (
-                            <div className="usuarios-detalle-errores">
-                                <h3>Detalle de errores</h3>
-
-                                {Object.entries(erroresAgrupados).map(
-                                    ([numeroFila, erroresFila]) => (
-                                        <div
-                                            className="usuarios-error-fila"
-                                            key={numeroFila}
-                                        >
-                                            <strong>
-                                                Fila {numeroFila}
-                                            </strong>
-
-                                            <ul>
-                                                {erroresFila.map(
-                                                    (error, indice) => (
-                                                        <li key={indice}>
-                                                            {error}
-                                                        </li>
-                                                    )
-                                                )}
-                                            </ul>
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="usuarios-formulario-acciones">
                         <button
                             type="button"
-                            className="usuarios-boton-cancelar"
-                            onClick={() =>
-                                navigate("/usuarios/registrar")
+                            className="import-boton import-boton-seleccionar"
+                            onClick={
+                                () =>
+                                inputArchivo.current?.click()
+                            }
+                            disabled={analizando}
+                        >
+                            <FiUpload />
+
+                            {
+                            analizando
+                                ? "Analizando..."
+                                : "Seleccionar archivo"
+                            }
+
+                        </button>
+
+
+                        <input
+                            ref={inputArchivo}
+                            type="file"
+                            accept=".csv,text/csv"
+                            hidden
+                            onChange={
+                                e =>
+                                prepararArchivo(
+                                    e.target.files?.[0]
+                                )
+                            }
+                        />
+
+
+                        <span className="import-zona-formato">
+                            Formato admitido: CSV (máx. 10 MB)
+                        </span>
+
+                    </div>
+
+
+                    <p className="import-nota">
+                        El archivo debe contener una tabla con
+                        los datos de los usuarios.
+                    </p>
+
+                </section>
+
+
+                <section className="import-tarjeta import-tarjeta-formato">
+
+                    <div className="import-tarjeta-cabecera">
+
+                        <h2 className="import-tarjeta-titulo">
+                            Formato del archivo
+                        </h2>
+
+                        <button
+                            type="button"
+                            className="import-boton import-boton-descarga"
+                            onClick={descargarPlantilla}
+                        >
+                            <FiDownload />
+
+                            Descargar plantilla (CSV)
+                        </button>
+
+                    </div>
+
+
+                    <div className="import-formato-aviso">
+
+                        El archivo CSV debe contener las siguientes
+                        columnas (en este orden):
+
+                    </div>
+
+
+                    <ol className="import-formato-lista">
+
+                        {
+                            COLUMNAS_ARCHIVO.map(
+                                columna => (
+                                    <li key={columna}>
+                                        {columna}
+                                    </li>
+                                )
+                            )
+                        }
+
+                    </ol>
+
+
+                    <table className="import-tabla-ejemplo">
+
+                        <thead>
+
+                            <tr>
+                                <th>Documento</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Correo electrónico</th>
+                                <th>Teléfono</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Cod.</th>
+                                <th>Carrera</th>
+                                <th>Facultad</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {
+                                DATOS_EJEMPLO.map(
+                                    (fila, i) => (
+                                        <tr key={i}>
+                                            <td>{fila.documento}</td>
+                                            <td>{fila.nombres}</td>
+                                            <td>{fila.apellidos}</td>
+                                            <td>{fila.correo}</td>
+                                            <td>{fila.telefono}</td>
+                                            <td>{fila.rol}</td>
+                                            <td>
+                                                <span className="import-chip import-chip-verde">
+                                                    {fila.estado}
+                                                </span>
+                                            </td>
+                                            <td>{fila.codigo}</td>
+                                            <td>{fila.carrera}</td>
+                                            <td>{fila.facultad}</td>
+                                        </tr>
+                                    )
+                                )
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </section>
+
+            </div>
+
+
+            <section className="import-tarjeta import-tarjeta-detectados">
+
+                <div className="import-tarjeta-cabecera">
+
+                    <div>
+
+                        <h2 className="import-tarjeta-titulo">
+                            Usuarios detectados
+                        </h2>
+
+                        <p className="import-tarjeta-subtitulo">
+                            Se mostrará una vista previa de los datos
+                            extraídos del archivo.
+                        </p>
+
+                    </div>
+
+
+                    <div className="import-herramientas">
+
+                        <div className="import-buscador">
+
+                            <FiSearch />
+
+                            <input
+
+                                value={busqueda}
+
+                                onChange={
+                                    e =>
+                                    setBusqueda(e.target.value)
+                                }
+
+                                placeholder="Buscar en la tabla..."
+
+                            />
+
+                        </div>
+
+
+                        <span className="import-chip import-chip-verde">
+                            {validos} válidos
+                        </span>
+
+                        <span className="import-chip import-chip-amarillo">
+                            {conErrores} con errores
+                        </span>
+
+                        <span className="import-chip import-chip-total">
+                            Total: {total}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div className="import-tabla-contenedor">
+
+                    <table className="import-tabla">
+
+                        <thead>
+
+                            <tr>
+                                <th>N°</th>
+                                <th>Documento</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Correo electrónico</th>
+                                <th>Teléfono</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Código</th>
+                                <th>Carrera</th>
+                                <th>Facultad</th>
+                                <th>Observaciones</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {
+                                filasFiltradas.map(
+                                    fila => (
+
+                                        <tr
+                                            key={fila.fila || fila.indice}
+                                            className={
+                                                fila.estado === "Inválido"
+                                                    ? "import-fila-error"
+                                                    : ""
+                                            }
+                                        >
+
+                                            <td>{fila.fila}</td>
+                                            <td>{fila.documento}</td>
+                                            <td>{fila.nombres}</td>
+                                            <td>{fila.apellidos}</td>
+                                            <td>{fila.correo}</td>
+                                            <td>{fila.telefono}</td>
+                                            <td>{fila.rol}</td>
+
+                                            <td>
+
+                                                <span
+                                                    className={
+                                                        fila.estado === "Inválido"
+                                                            ? "import-chip import-chip-rojo"
+                                                            : "import-chip import-chip-verde"
+                                                    }
+                                                >
+                                                    {fila.estado}
+                                                </span>
+
+                                            </td>
+
+                                            <td>{fila.codigoSis || "—"}</td>
+                                            <td>{fila.carrera || "—"}</td>
+                                            <td>{fila.facultad || "—"}</td>
+
+                                            <td className="import-observacion">
+                                                {
+                                                    textoObservacion(
+                                                        fila.observaciones
+                                                    )
+                                                }
+                                            </td>
+
+                                        </tr>
+
+                                    )
+                                )
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <section className="import-tarjeta import-tarjeta-opciones">
+
+                <h2 className="import-tarjeta-titulo">
+                    Opciones de importación
+                </h2>
+
+                <p className="import-tarjeta-subtitulo">
+                    Define los valores por defecto o reglas para los
+                    usuarios que se registrarán.
+                </p>
+
+
+                <div className="import-opciones-fila">
+
+                    <div className="import-opcion">
+
+                        <label className="import-etiqueta">
+                            Estado por defecto
+                            <span className="import-requerido">*</span>
+                        </label>
+
+                        <select
+                            className="import-select"
+                            value={estadoPorDefecto}
+                            onChange={
+                                e =>
+                                setEstadoPorDefecto(e.target.value)
                             }
                         >
-                            Cancelar
-                        </button>
+
+                            <option>Activo</option>
+                            <option>Inactivo</option>
+
+                        </select>
+
                     </div>
+
+
+                    <div className="import-opcion">
+
+                        <label className="import-etiqueta">
+                            Generar contraseña temporal
+                            <span className="import-requerido">*</span>
+                        </label>
+
+                        <select
+                            className="import-select"
+                            defaultValue="Sí (se generará automáticamente)"
+                        >
+
+                            <option>Sí (se generará automáticamente)</option>
+                            <option>No</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div className="import-aviso">
+
+                        <FiLock />
+
+                        <span>
+                            Se generará una contraseña temporal para cada
+                            usuario, la cual deberá ser cambiada en su
+                            primer inicio de sesión.
+                        </span>
+
+                    </div>
+
                 </div>
+
+
+                <div className="import-acciones">
+
+                    <button
+                        type="button"
+                        className="import-boton import-boton-cancelar"
+                        onClick={() => navigate("/usuarios")}
+                    >
+                        Cancelar
+                    </button>
+
+
+                    <button
+                        type="button"
+                        className="import-boton import-boton-importar"
+                        onClick={importar}
+                        disabled={
+                            importando || importado || !archivo
+                        }
+                    >
+                        {
+                        importando
+                            ? (
+                                <span className="import-mini-rueda" />
+                            )
+                            : <FiDatabase />
+                        }
+
+                        {
+                        importando
+                            ? "Importando..."
+                            : `Importar usuarios (${validos})`
+                        }
+
+                    </button>
+
+                </div>
+
             </section>
+
+
+            {
+            mostrarExito && (
+
+                <div className="import-modal-fondo">
+
+                    <div className="import-modal-exito">
+
+                        <div className="icono-exito">
+                            ✓
+                        </div>
+
+                        <h2>
+                            Importación exitosa
+                        </h2>
+
+                        <p className="import-modal-desc">
+                            La carga masiva de usuarios se completó correctamente.
+                        </p>
+
+                        <div className="import-modal-stats">
+
+                            <div className="import-modal-stat">
+                                <FiCheckCircle />
+                                <strong>{validos}</strong>
+                                <span>Registrados</span>
+                            </div>
+
+                            <div className="import-modal-stat">
+                                <FiXCircle />
+                                <strong>{conErrores}</strong>
+                                <span>Con errores</span>
+                            </div>
+
+                            <div className="import-modal-stat">
+                                <FiUsers />
+                                <strong>{total}</strong>
+                                <span>Total filas</span>
+                            </div>
+
+                        </div>
+
+                        {
+                        conErrores > 0 && (
+                            <p className="import-modal-nota">
+                                Revise las filas marcadas como inválidas
+                                en la tabla de resultados.
+                            </p>
+                        )
+                        }
+
+                        <div className="import-modal-acciones">
+
+                            <button
+                                type="button"
+                                className="import-boton import-boton-cancelar"
+                                onClick={
+                                    () => setMostrarExito(false)
+                                }
+                            >
+                                Aceptar
+                            </button>
+
+                            <button
+                                type="button"
+                                className="import-boton import-boton-importar"
+                                onClick={
+                                    () => navigate("/usuarios")
+                                }
+                            >
+                                Ver listado de usuarios
+                                <FiChevronRight />
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )
+            }
+
+
+            {
+            (analizando || importando) && (
+
+                <div className="import-overlay">
+
+                    <div className="import-overlay-caja">
+
+                        <span className="import-rueda" />
+
+                        <strong>
+                            {
+                            analizando
+                                ? "Analizando archivo..."
+                                : "Importando usuarios..."
+                            }
+                        </strong>
+
+                        <span>
+                            {
+                            analizando
+                                ? "Validando la información del archivo CSV."
+                                : "Registrando los usuarios en el sistema. " +
+                                  "Esto puede tomar unos segundos."
+                            }
+                        </span>
+
+                    </div>
+
+                </div>
+
+            )
+            }
+
         </div>
+
     );
+
 }
+
+
+function textoObservacion(observaciones){
+
+    if(Array.isArray(observaciones)){
+
+        return observaciones.join(" | ") || "—";
+
+    }
+
+    return observaciones || "—";
+
+}
+
 
 export default ImportarUsuarios;

@@ -36,7 +36,7 @@ public class LogActividadRepositorio {
     ) {
 
         String sql = """
-                INSERT INTO log_actividad (
+                INSERT INTO seguridad.log_actividad (
                     id_usuario,
                     tipo_accion,
                     descripcion,
@@ -114,8 +114,8 @@ public class LogActividadRepositorio {
                     l.ip_origen,
                     l.fecha,
                     l.exitosa
-                FROM log_actividad l
-                LEFT JOIN usuario u
+                FROM seguridad.log_actividad l
+                LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
                 """ + condiciones + """
                 ORDER BY
@@ -156,8 +156,8 @@ public class LogActividadRepositorio {
 
         String sql = """
                 SELECT COUNT(*)
-                FROM log_actividad l
-                LEFT JOIN usuario u
+                FROM seguridad.log_actividad l
+                LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
                 """ + condiciones;
 
@@ -187,8 +187,8 @@ public class LogActividadRepositorio {
                     l.ip_origen,
                     l.fecha,
                     l.exitosa
-                FROM log_actividad l
-                LEFT JOIN usuario u
+                FROM seguridad.log_actividad l
+                LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
                 WHERE l.id_log = :idLog
                 """;
@@ -212,7 +212,7 @@ public class LogActividadRepositorio {
 
         String sql = """
                 SELECT DISTINCT l.tipo_accion
-                FROM log_actividad l
+                FROM seguridad.log_actividad l
                 ORDER BY l.tipo_accion ASC
                 """;
 

@@ -3,6 +3,14 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
+import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
+import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
+import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
+import com.lacomarcasoft.dto.response.CampoError;
+import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
+import com.lacomarcasoft.dto.response.ErroresRegistroRespuesta;
+import com.lacomarcasoft.dto.response.ImportarAnalisisRespuesta;
+import com.lacomarcasoft.dto.response.ImportarMasivoRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.service.LogActividadServicio;
@@ -11,7 +19,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -51,6 +61,130 @@ public class UsuarioControlador {
 
     }
 
+    @PostMapping
+    public ResponseEntity<UsuarioRespuesta> registrarUsuario(
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @Valid
+            @RequestBody RegistrarUsuarioSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        UsuarioRespuesta respuesta =
+                usuarioServicio.registrar(solicitud);
+
+        registrarAuditoriaRegistro(
+                idUsuarioResponsable,
+                respuesta,
+                request
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(respuesta);
+
+    }
+
+
+    @GetMapping("/verificar-codigo-sis")
+    public ResponseEntity<Boolean> verificarCodigoSisDisponible(
+            @RequestParam("codigo") String codigoSis
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.codigoSisDisponible(codigoSis)
+        );
+
+    }
+
+    @PostMapping("/detectar-duplicados")
+    public ResponseEntity<DeteccionDuplicadosRespuesta> detectarDuplicados(
+            @Valid
+            @RequestBody DetectarDuplicadosSolicitud solicitud
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.detectarDuplicados(
+                        solicitud.codigosSis()
+                )
+        );
+
+    }
+
+    @PostMapping("/importar/analizar")
+    public ResponseEntity<ImportarAnalisisRespuesta> analizarImportacion(
+            @RequestBody ImportarUsuariosSolicitud solicitud
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.analizarImportacion(
+                        solicitud
+                )
+        );
+
+    }
+
+    @PostMapping("/importar")
+    public ResponseEntity<ImportarMasivoRespuesta> importarUsuarios(
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @RequestBody ImportarUsuariosSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        ImportarMasivoRespuesta respuesta =
+                usuarioServicio.importarMasivo(
+                        solicitud
+                );
+
+        try {
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "IMPORTAR_USUARIOS",
+
+                    "Importación masiva completada: "
+                    + respuesta.registrados()
+                    + " registrados, "
+                    + respuesta.conErrores()
+                    + " con errores (total "
+                    + respuesta.total()
+                    + ")",
+
+                    request.getRemoteAddr(),
+
+                    true
+
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
+
+        return ResponseEntity.ok(respuesta);
+
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioRespuesta> obtenerUsuario(
@@ -176,6 +310,77 @@ public class UsuarioControlador {
             );
 
         }
+    }
+
+    private void registrarAuditoriaRegistro(
+
+            Long idUsuarioResponsable,
+            UsuarioRespuesta respuesta,
+            HttpServletRequest request
+
+    ){
+
+        try {
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "REGISTRAR_USUARIO",
+
+                    "Se registró usuario con id "
+                    +
+                    respuesta.idUsuario()
+                    +
+                    ", correo: "
+                    +
+                    respuesta.correo()
+                    +
+                    ", rol asignado: "
+                    +
+                    respuesta.idRol(),
+
+                    request.getRemoteAddr(),
+
+                    true
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroresRegistroRespuesta> manejarValidacion(
+            MethodArgumentNotValidException e
+    ){
+
+        List<CampoError> errores =
+                e.getBindingResult()
+                        .getFieldErrors()
+                        .stream()
+                        .map(
+                                error ->
+                                        new CampoError(
+                                                error.getField(),
+                                                error.getDefaultMessage()
+                                        )
+                        )
+                        .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ErroresRegistroRespuesta(
+                                errores
+                        )
+                );
+
     }
 
 }

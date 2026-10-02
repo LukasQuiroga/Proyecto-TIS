@@ -1,0 +1,2 @@
+ALTER TABLE public.examen
+    ADD COLUMN aula VARCHAR(50) NOT NULL DEFAULT '';
