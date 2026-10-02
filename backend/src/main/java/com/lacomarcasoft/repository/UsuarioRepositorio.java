@@ -1,16 +1,30 @@
 package com.lacomarcasoft.repository;
 
 import com.lacomarcasoft.modelo.Usuario;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UsuarioRepositorio extends JpaRepository<Usuario,Long> {
+public interface UsuarioRepositorio 
+        extends JpaRepository<Usuario,Long> {
+
 
     Optional<Usuario> findByCorreo(String correo);
 
-    Optional<Usuario> findByCarnetIdentidad(String carnetIdentidad);
+    Optional<Usuario> findByCarnetIdentidad(
+        String carnetIdentidad
+   );
 
-    Optional<Usuario> findByCodigoSis(String codigoSis);
+Optional<Usuario> findByCodigoSis(
+        String codigoSis
+   );
+
+    List<Usuario> findByCodigoSisIn(
+        Collection<String> codigosSis
+   );
+
 }

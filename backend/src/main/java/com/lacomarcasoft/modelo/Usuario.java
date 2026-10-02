@@ -37,6 +37,9 @@ public class Usuario {
     @Column(name="carrera")
     private String carrera;
 
+    @Column(name="facultad")
+    private String facultad;
+
     @Column(name="codigo_sis",unique=true)
     private String codigoSis;
 
@@ -126,6 +129,14 @@ public class Usuario {
 
     public void setCodigoSis(String codigoSis){
         this.codigoSis=codigoSis;
+    }
+
+    public String getFacultad(){
+        return facultad;
+    }
+
+    public void setFacultad(String facultad){
+        this.facultad=facultad;
     }
 
     public Boolean getActivo(){

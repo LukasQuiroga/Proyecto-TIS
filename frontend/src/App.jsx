@@ -18,6 +18,8 @@ import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
+import RegistroUsuario from "./pages/usuarios/RegistroUsuario.jsx";
+import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -122,6 +124,24 @@ function App(){
                             }
                         />
 
+
+                        <Route
+                            path="/usuarios/registro"
+                            element={
+                                <ProtectedPermission permiso="REGISTRAR_USUARIOS">
+                                    <RegistroUsuario />
+                                </ProtectedPermission>
+                            }
+                        />
+
+                        <Route
+                            path="/usuarios/importar"
+                            element={
+                                <ProtectedPermission permiso="IMPORTAR_USUARIOS">
+                                    <ImportarUsuarios />
+                                </ProtectedPermission>
+                            }
+                        />
 
                         <Route
                             path="/usuarios/roles-permisos"

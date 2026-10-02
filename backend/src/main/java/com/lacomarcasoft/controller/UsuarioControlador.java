@@ -1,7 +1,16 @@
 package com.lacomarcasoft.controller;
 
+
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
+import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
+import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
+import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
+import com.lacomarcasoft.dto.response.CampoError;
+import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
+import com.lacomarcasoft.dto.response.ErroresRegistroRespuesta;
+import com.lacomarcasoft.dto.response.ImportarAnalisisRespuesta;
+import com.lacomarcasoft.dto.response.ImportarMasivoRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.service.LogActividadServicio;
@@ -10,119 +19,368 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins="*")
+@CrossOrigin(origins = "*")
 public class UsuarioControlador {
 
-    private static final Logger LOG=
-        LoggerFactory.getLogger(
-            UsuarioControlador.class
-        );
+    private static final Logger LOG =
+            LoggerFactory.getLogger(
+                    UsuarioControlador.class
+            );
+
 
     private final UsuarioServicio usuarioServicio;
+
     private final LogActividadServicio logActividadServicio;
 
+
     public UsuarioControlador(
-        UsuarioServicio usuarioServicio,
-        LogActividadServicio logActividadServicio
+            UsuarioServicio usuarioServicio,
+            LogActividadServicio logActividadServicio
     ){
-        this.usuarioServicio=usuarioServicio;
-        this.logActividadServicio=logActividadServicio;
+
+        this.usuarioServicio = usuarioServicio;
+        this.logActividadServicio = logActividadServicio;
+
     }
 
     @GetMapping
     public ResponseEntity<List<UsuarioRespuesta>> listarUsuarios(){
+
         return ResponseEntity.ok(
-            usuarioServicio.listar()
+                usuarioServicio.listar()
         );
+
+    }
+
+    @PostMapping
+    public ResponseEntity<UsuarioRespuesta> registrarUsuario(
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @Valid
+            @RequestBody RegistrarUsuarioSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        UsuarioRespuesta respuesta =
+                usuarioServicio.registrar(solicitud);
+
+        registrarAuditoriaRegistro(
+                idUsuarioResponsable,
+                respuesta,
+                request
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(respuesta);
+
+    }
+
+
+    @GetMapping("/verificar-codigo-sis")
+    public ResponseEntity<Boolean> verificarCodigoSisDisponible(
+            @RequestParam("codigo") String codigoSis
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.codigoSisDisponible(codigoSis)
+        );
+
+    }
+
+    @PostMapping("/detectar-duplicados")
+    public ResponseEntity<DeteccionDuplicadosRespuesta> detectarDuplicados(
+            @Valid
+            @RequestBody DetectarDuplicadosSolicitud solicitud
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.detectarDuplicados(
+                        solicitud.codigosSis()
+                )
+        );
+
+    }
+
+    @PostMapping("/importar/analizar")
+    public ResponseEntity<ImportarAnalisisRespuesta> analizarImportacion(
+            @RequestBody ImportarUsuariosSolicitud solicitud
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.analizarImportacion(
+                        solicitud
+                )
+        );
+
+    }
+
+    @PostMapping("/importar")
+    public ResponseEntity<ImportarMasivoRespuesta> importarUsuarios(
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @RequestBody ImportarUsuariosSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        ImportarMasivoRespuesta respuesta =
+                usuarioServicio.importarMasivo(
+                        solicitud
+                );
+
+        try {
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "IMPORTAR_USUARIOS",
+
+                    "Importación masiva completada: "
+                    + respuesta.registrados()
+                    + " registrados, "
+                    + respuesta.conErrores()
+                    + " con errores (total "
+                    + respuesta.total()
+                    + ")",
+
+                    request.getRemoteAddr(),
+
+                    true
+
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
+
+        return ResponseEntity.ok(respuesta);
+
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioRespuesta> obtenerUsuario(
-        @PathVariable Long id
+            @PathVariable Long id
     ){
+
         return ResponseEntity.ok(
-            usuarioServicio.buscarRespuesta(id)
+                usuarioServicio.buscarRespuesta(id)
         );
+
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioRespuesta> modificarUsuario(
-        @PathVariable Long id,
-        @RequestHeader(
-            value="X-Usuario-Id",
-            required=false
-        )
-        Long idUsuarioResponsable,
-        @Valid
-        @RequestBody ActualizarUsuarioSolicitud solicitud,
-        HttpServletRequest request
+
+            @PathVariable Long id,
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @Valid
+            @RequestBody ActualizarUsuarioSolicitud solicitud,
+
+            HttpServletRequest request
+
     ){
+
         usuarioServicio.modificar(
-            id,
-            solicitud
+                id,
+                solicitud
         );
 
+
         registrarAuditoria(
-            idUsuarioResponsable,
-            id,
-            solicitud,
-            request
+                idUsuarioResponsable,
+                id,
+                solicitud,
+                request
+
         );
 
         return ResponseEntity.ok(
-            usuarioServicio.buscarRespuesta(id)
+                usuarioServicio.buscarRespuesta(id)
+
         );
+
     }
+
 
     @PutMapping("/{id}/rol")
     public ResponseEntity<UsuarioRespuesta> cambiarRol(
-        @PathVariable Long id,
-        @Valid
-        @RequestBody CambiarRolSolicitud solicitud
+
+            @PathVariable Long id,
+
+            @Valid
+            @RequestBody CambiarRolSolicitud solicitud
+
+
     ){
-        Usuario usuario=
-            usuarioServicio.cambiarRol(
-                id,
-                solicitud.idRol()
-            );
+
+        Usuario usuario =
+
+                usuarioServicio.cambiarRol(
+                        id,
+                        solicitud.idRol()
+                );
+
 
         return ResponseEntity.ok(
-            usuarioServicio.buscarRespuesta(
-                usuario.getIdUsuario()
-            )
+                usuarioServicio.buscarRespuesta(
+                        usuario.getIdUsuario()
+                )
+
         );
+
+
     }
 
+
     private void registrarAuditoria(
-        Long idUsuarioResponsable,
-        Long idUsuarioModificado,
-        ActualizarUsuarioSolicitud solicitud,
-        HttpServletRequest request
+
+            Long idUsuarioResponsable,
+            Long idUsuarioModificado,
+            ActualizarUsuarioSolicitud solicitud,
+            HttpServletRequest request
+
     ){
-        try{
+
+        try {
+
             logActividadServicio.registrar(
-                idUsuarioResponsable,
-                "MODIFICAR_USUARIO",
-                "Se modificó usuario con id "+
-                idUsuarioModificado+
-                ", correo actualizado: "+
-                solicitud.correo()+
-                ", rol asignado: "+
-                solicitud.idRol(),
-                request.getRemoteAddr(),
-                true
+
+                    idUsuarioResponsable,
+
+                    "MODIFICAR_USUARIO",
+
+                    "Se modificó usuario con id "
+                    +
+                    idUsuarioModificado
+                    +
+                    ", correo actualizado: "
+                    +
+                    solicitud.correo()
+                    +
+                    ", rol asignado: "
+                    +
+                    solicitud.idRol(),
+
+                    request.getRemoteAddr(),
+
+                    true
             );
-        }catch(Exception e){
+
+        } catch (Exception e) {
+
             LOG.error(
-                "No se pudo registrar la auditoría",
-                e
+                    "No se pudo registrar la auditoría",
+                    e
             );
+
         }
     }
+
+    private void registrarAuditoriaRegistro(
+
+            Long idUsuarioResponsable,
+            UsuarioRespuesta respuesta,
+            HttpServletRequest request
+
+    ){
+
+        try {
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "REGISTRAR_USUARIO",
+
+                    "Se registró usuario con id "
+                    +
+                    respuesta.idUsuario()
+                    +
+                    ", correo: "
+                    +
+                    respuesta.correo()
+                    +
+                    ", rol asignado: "
+                    +
+                    respuesta.idRol(),
+
+                    request.getRemoteAddr(),
+
+                    true
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroresRegistroRespuesta> manejarValidacion(
+            MethodArgumentNotValidException e
+    ){
+
+        List<CampoError> errores =
+                e.getBindingResult()
+                        .getFieldErrors()
+                        .stream()
+                        .map(
+                                error ->
+                                        new CampoError(
+                                                error.getField(),
+                                                error.getDefaultMessage()
+                                        )
+                        )
+                        .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ErroresRegistroRespuesta(
+                                errores
+                        )
+                );
+
+    }
+
 }

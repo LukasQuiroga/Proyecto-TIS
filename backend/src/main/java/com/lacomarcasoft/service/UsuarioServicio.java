@@ -1,259 +1,1201 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
+import com.lacomarcasoft.dto.request.ImportarUsuarioFilaSolicitud;
+import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
+import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
+import com.lacomarcasoft.dto.response.CampoError;
+import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
+import com.lacomarcasoft.dto.response.FilaImportacionRespuesta;
+import com.lacomarcasoft.dto.response.ImportarAnalisisRespuesta;
+import com.lacomarcasoft.dto.response.ImportarMasivoRespuesta;
 import com.lacomarcasoft.dto.response.MateriaRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
+import com.lacomarcasoft.exception.ValidacionRegistroException;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class UsuarioServicio {
+
+    private static final int LIMITE_FILAS_IMPORTACION = 2000;
+
+    private static final java.util.regex.Pattern EMAIL_PATRON =
+            java.util.regex.Pattern.compile(
+                    "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+            );
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final RolRepositorio rolRepositorio;
     private final MateriaRepositorio materiaRepositorio;
 
     public UsuarioServicio(
-        UsuarioRepositorio usuarioRepositorio,
-        RolRepositorio rolRepositorio,
-        MateriaRepositorio materiaRepositorio
+            UsuarioRepositorio usuarioRepositorio,
+            RolRepositorio rolRepositorio,
+            MateriaRepositorio materiaRepositorio
     ){
-        this.usuarioRepositorio=usuarioRepositorio;
-        this.rolRepositorio=rolRepositorio;
-        this.materiaRepositorio=materiaRepositorio;
+        this.usuarioRepositorio = usuarioRepositorio;
+        this.rolRepositorio = rolRepositorio;
+        this.materiaRepositorio = materiaRepositorio;
     }
 
-    @Transactional(readOnly=true)
     public List<UsuarioRespuesta> listar(){
+
         return usuarioRepositorio.findAll()
-            .stream()
-            .map(this::convertirRespuesta)
-            .toList();
+                .stream()
+                .map(this::convertirRespuesta)
+                .toList();
+
     }
 
-    @Transactional(readOnly=true)
     public Usuario buscar(Long id){
+
         return usuarioRepositorio.findById(id)
-            .orElseThrow(
-                ()->new RuntimeException("Usuario no encontrado")
-            );
-    }
-
-    @Transactional(readOnly=true)
-    public UsuarioRespuesta buscarRespuesta(Long id){
-        return convertirRespuesta(buscar(id));
-    }
-
-    @Transactional
-    public Usuario modificar(
-        Long id,
-        ActualizarUsuarioSolicitud datos
-    ){
-        validarDatos(datos);
-
-        Usuario usuario=buscar(id);
-
-        Usuario usuarioCorreo=
-            usuarioRepositorio.findByCorreo(datos.correo().trim())
-                .orElse(null);
-
-        if(usuarioCorreo!=null &&
-            !usuarioCorreo.getIdUsuario().equals(id)){
-            throw new RuntimeException(
-                "El correo ya está registrado"
-            );
-        }
-
-        Usuario usuarioCarnet=
-            usuarioRepositorio
-                .findByCarnetIdentidad(datos.carnetIdentidad().trim())
-                .orElse(null);
-
-        if(usuarioCarnet!=null &&
-            !usuarioCarnet.getIdUsuario().equals(id)){
-            throw new RuntimeException(
-                "El carnet de identidad ya está registrado"
-            );
-        }
-
-        String codigoSis=normalizarOpcional(datos.codigoSis());
-
-        if(codigoSis!=null){
-            Usuario usuarioCodigo=
-                usuarioRepositorio.findByCodigoSis(codigoSis)
-                    .orElse(null);
-
-            if(usuarioCodigo!=null &&
-                !usuarioCodigo.getIdUsuario().equals(id)){
-                throw new RuntimeException(
-                    "El código SIS ya está registrado"
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Usuario no encontrado"
+                        )
                 );
+
+    }
+
+    public boolean codigoSisDisponible(
+            String codigoSis
+    ){
+
+        if(codigoSis == null || codigoSis.isBlank()){
+
+            throw new RuntimeException(
+                    "El código SIS es obligatorio"
+            );
+
+        }
+
+        return usuarioRepositorio
+                .findByCodigoSis(codigoSis)
+                .isEmpty();
+
+    }
+
+    public DeteccionDuplicadosRespuesta detectarDuplicados(
+            List<String> codigosSis
+    ){
+
+        if(codigosSis == null || codigosSis.isEmpty()){
+
+            throw new RuntimeException(
+                    "Debe enviar al menos un código SIS"
+            );
+
+        }
+
+        List<String> codigosNormalizados =
+                codigosSis.stream()
+                        .map(codigo -> codigo == null ? "" : codigo.trim())
+                        .filter(codigo -> !codigo.isBlank())
+                        .toList();
+
+        if(codigosNormalizados.isEmpty()){
+
+            throw new RuntimeException(
+                    "Debe enviar al menos un código SIS válido"
+            );
+
+        }
+
+        List<String> repetidosEnEnvio =
+                codigosNormalizados.stream()
+                        .filter(
+                                codigo ->
+                                        Collections.frequency(
+                                                codigosNormalizados,
+                                                codigo
+                                        ) > 1
+                        )
+                        .distinct()
+                        .toList();
+
+        List<String> codigosUnicos =
+                codigosNormalizados.stream()
+                        .distinct()
+                        .toList();
+
+        List<String> yaRegistrados =
+                usuarioRepositorio
+                        .findByCodigoSisIn(codigosUnicos)
+                        .stream()
+                        .map(Usuario::getCodigoSis)
+                        .toList();
+
+        return new DeteccionDuplicadosRespuesta(
+                yaRegistrados,
+                repetidosEnEnvio
+        );
+
+    }
+
+    public ImportarAnalisisRespuesta analizarImportacion(
+            ImportarUsuariosSolicitud solicitud
+    ){
+
+        List<FilaImportacionRespuesta> filas =
+                procesarFilasImportacion(
+                        solicitud,
+                        false
+                );
+
+        int conErrores = 0;
+
+        for(FilaImportacionRespuesta fila : filas){
+
+            if(!fila.estado().equals("Activo")){
+
+                conErrores++;
+
             }
+
         }
 
-        Rol rol=rolRepositorio.findById(datos.idRol())
-            .orElseThrow(
-                ()->new RuntimeException("Rol no encontrado")
-            );
+        return new ImportarAnalisisRespuesta(
+                filas.size(),
+                filas.size() - conErrores,
+                conErrores,
+                filas
+        );
 
-        usuario.setNombre(datos.nombre().trim());
-        usuario.setApellido(datos.apellido().trim());
-        usuario.setCarnetIdentidad(
-            datos.carnetIdentidad().trim()
-        );
-        usuario.setCorreo(
-            datos.correo().trim().toLowerCase()
-        );
-        usuario.setCelular(
-            normalizarOpcional(datos.celular())
-        );
-        usuario.setCarrera(
-            normalizarOpcional(datos.carrera())
-        );
-        usuario.setCodigoSis(codigoSis);
-        usuario.setActivo(
-            datos.activo()!=null ? datos.activo() : true
-        );
-        usuario.setRol(rol);
-
-        return usuarioRepositorio.save(usuario);
     }
 
-    @Transactional
-    public Usuario cambiarRol(
-        Long idUsuario,
-        Long idRol
+    public ImportarMasivoRespuesta importarMasivo(
+            ImportarUsuariosSolicitud solicitud
     ){
-        if(idRol==null){
-            throw new RuntimeException(
-                "El rol es obligatorio"
-            );
+
+        List<FilaImportacionRespuesta> filas =
+                procesarFilasImportacion(
+                        solicitud,
+                        true
+                );
+
+        int conErrores = 0;
+
+        for(FilaImportacionRespuesta fila : filas){
+
+            if(!fila.estado().equals("Registrado")){
+
+                conErrores++;
+
+            }
+
         }
 
-        Usuario usuario=buscar(idUsuario);
+        return new ImportarMasivoRespuesta(
+                filas.size(),
+                filas.size() - conErrores,
+                conErrores,
+                filas
+        );
 
-        Rol rol=rolRepositorio.findById(idRol)
-            .orElseThrow(
-                ()->new RuntimeException("Rol no encontrado")
-            );
-
-        usuario.setRol(rol);
-
-        return usuarioRepositorio.save(usuario);
     }
 
-    private void validarDatos(
-        ActualizarUsuarioSolicitud datos
+    private List<FilaImportacionRespuesta> procesarFilasImportacion(
+            ImportarUsuariosSolicitud solicitud,
+            boolean persistir
     ){
-        if(datos.nombre()==null ||
-            datos.nombre().isBlank()){
+
+        if(solicitud == null
+                || solicitud.usuarios() == null
+                || solicitud.usuarios().isEmpty()){
+
             throw new RuntimeException(
-                "El nombre es obligatorio"
+                    "Debe enviar al menos un usuario para importar"
             );
+
         }
 
-        if(datos.apellido()==null ||
-            datos.apellido().isBlank()){
+        if(solicitud.usuarios().size() > LIMITE_FILAS_IMPORTACION){
+
             throw new RuntimeException(
-                "El apellido es obligatorio"
+                    "La importación excede el límite de "
+                    + LIMITE_FILAS_IMPORTACION
+                    + " usuarios por archivo"
             );
+
         }
 
-        if(datos.carnetIdentidad()==null ||
-            datos.carnetIdentidad().isBlank()){
-            throw new RuntimeException(
-                "El carnet de identidad es obligatorio"
-            );
+        Boolean estadoPorDefecto =
+                resolverEstado(
+                        solicitud.estadoPorDefecto()
+                );
+
+        if(estadoPorDefecto == null){
+
+            estadoPorDefecto = true;
+
         }
 
-        if(!datos.carnetIdentidad()
-            .trim()
-            .matches("[0-9]+")){
-            throw new RuntimeException(
-                "El carnet de identidad solo debe contener números"
-            );
+        List<FilaImportacionRespuesta> filas =
+                new ArrayList<>();
+
+        Map<String,Integer> correosVistos =
+                new HashMap<>();
+
+        Map<String,Integer> documentosVistos =
+                new HashMap<>();
+
+        Map<String,Integer> codigosVistos =
+                new HashMap<>();
+
+        for(ImportarUsuarioFilaSolicitud fila
+                : solicitud.usuarios()){
+
+            List<String> observaciones =
+                    new ArrayList<>();
+
+            String documento =
+                    limpiar(
+                            fila.documento()
+                    );
+
+            String nombres =
+                    limpiar(
+                            fila.nombres()
+                    );
+
+            String apellidos =
+                    limpiar(
+                            fila.apellidos()
+                    );
+
+            String correo =
+                    limpiar(
+                            fila.correo()
+                    );
+
+            String telefono =
+                    limpiar(
+                            fila.telefono()
+                    );
+
+            String rolTexto =
+                    limpiar(
+                            fila.rol()
+                    );
+
+            String estadoTexto =
+                    limpiar(
+                            fila.estado()
+                    );
+
+            String codigoSis =
+                    limpiar(
+                            fila.codigoSis()
+                    );
+
+            String carrera =
+                    limpiar(
+                            fila.carrera()
+                    );
+
+            String facultad =
+                    limpiar(
+                            fila.facultad()
+                    );
+
+            if(documento.isBlank()){
+
+                observaciones.add(
+                        "El documento de identidad es obligatorio"
+                );
+
+            } else if(!soloDigitos(documento)){
+
+                observaciones.add(
+                        "Documento inválido"
+                );
+
+            }
+
+            if(nombres.isBlank()){
+
+                observaciones.add(
+                        "El nombre es obligatorio"
+                );
+
+            }
+
+            if(apellidos.isBlank()){
+
+                observaciones.add(
+                        "El apellido es obligatorio"
+                );
+
+            }
+
+            if(correo.isBlank()){
+
+                observaciones.add(
+                        "El correo es obligatorio"
+                );
+
+            } else if(!EMAIL_PATRON.matcher(correo).matches()){
+
+                observaciones.add(
+                        "Correo electrónico inválido"
+                );
+
+            }
+
+            if(!telefono.isBlank() && !soloDigitos(telefono)){
+
+                observaciones.add(
+                        "Teléfono inválido"
+                );
+
+            }
+
+            Boolean estado =
+                    resolverEstado(estadoTexto);
+
+            if(estado == null){
+
+                estado = estadoPorDefecto;
+
+            }
+
+            Rol rol =
+                    buscarRolPorNombre(rolTexto);
+
+            if(rolTexto.isBlank()){
+
+                observaciones.add(
+                        "Debe seleccionar un rol"
+                );
+
+            } else if(rol == null){
+
+                observaciones.add(
+                        "Rol no válido"
+                );
+
+            }
+
+            boolean esEstudiante =
+                    rol != null
+                    && rolTextoSinTilde(rol.getNombreRol())
+                            .equals("estudiante");
+
+            if(esEstudiante){
+
+                if(codigoSis.isBlank()){
+
+                    observaciones.add(
+                            "El código universitario es obligatorio"
+                    );
+
+                } else if(!soloDigitos(codigoSis)){
+
+                    observaciones.add(
+                            "Código inválido"
+                    );
+
+                }
+
+                if(carrera.isBlank()){
+
+                    observaciones.add(
+                            "La carrera es obligatoria"
+                    );
+
+                }
+
+            }
+
+            if(!documento.isBlank()
+                    && usuarioRepositorio
+                            .findByCarnetIdentidad(documento)
+                            .isPresent()){
+
+                observaciones.add(
+                        "El documento de identidad ya está registrado"
+                );
+
+            }
+
+            if(!correo.isBlank()
+                    && usuarioRepositorio
+                            .findByCorreo(correo)
+                            .isPresent()){
+
+                observaciones.add(
+                        "El correo ya está registrado"
+                );
+
+            }
+
+            if(!codigoSis.isBlank()
+                    && usuarioRepositorio
+                            .findByCodigoSis(codigoSis)
+                            .isPresent()){
+
+                observaciones.add(
+                        "El código SIS ya está registrado"
+                );
+
+            }
+
+            if(marcarVisto(documentosVistos, documento)){
+
+                observaciones.add(
+                        "El documento se repite en el archivo"
+                );
+
+            }
+
+            if(marcarVisto(correosVistos, correo)){
+
+                observaciones.add(
+                        "El correo se repite en el archivo"
+                );
+
+            }
+
+            if(marcarVisto(codigosVistos, codigoSis)){
+
+                observaciones.add(
+                        "El código SIS se repite en el archivo"
+                );
+
+            }
+
+            if(persistir && observaciones.isEmpty()){
+
+                try {
+
+                    Usuario usuario = new Usuario();
+
+                    usuario.setNombre(nombres);
+
+                    usuario.setApellido(apellidos);
+
+                    usuario.setCarnetIdentidad(documento);
+
+                    usuario.setCorreo(correo);
+
+                    usuario.setContrasena(documento);
+
+                    usuario.setCelular(
+                            telefono.isBlank()
+                                    ? null
+                                    : telefono
+                    );
+
+                    if(esEstudiante){
+
+                        usuario.setCodigoSis(codigoSis);
+
+                        usuario.setCarrera(carrera);
+
+                        usuario.setFacultad(
+                                facultad.isBlank()
+                                        ? null
+                                        : facultad
+                        );
+
+                    }
+
+                    usuario.setActivo(estado);
+
+                    usuario.setRol(rol);
+
+                    usuario.setFechaCreacion(
+                            LocalDateTime.now()
+                    );
+
+                    usuarioRepositorio.save(usuario);
+
+                    filas.add(
+                            new FilaImportacionRespuesta(
+                                    fila.fila(),
+                                    documento,
+                                    nombres,
+                                    apellidos,
+                                    correo,
+                                    telefono,
+                                    rolTexto,
+                                    "Registrado",
+                                    codigoSis,
+                                    carrera,
+                                    facultad,
+                                    observaciones
+                            )
+                    );
+
+                } catch (Exception e) {
+
+                    observaciones.add(
+                            "No se pudo registrar el usuario"
+                    );
+
+                    filas.add(
+                            nuevaFila(
+                                    fila.fila(),
+                                    documento,
+                                    nombres,
+                                    apellidos,
+                                    correo,
+                                    telefono,
+                                    rolTexto,
+                                    codigoSis,
+                                    carrera,
+                                    facultad,
+                                    observaciones
+                            )
+                    );
+
+                }
+
+            } else {
+
+                filas.add(
+                        nuevaFila(
+                                fila.fila(),
+                                documento,
+                                nombres,
+                                apellidos,
+                                correo,
+                                telefono,
+                                rolTexto,
+                                codigoSis,
+                                carrera,
+                                facultad,
+                                observaciones
+                        )
+                );
+
+            }
+
         }
 
-        if(datos.correo()==null ||
-            datos.correo().isBlank()){
-            throw new RuntimeException(
-                "El correo es obligatorio"
-            );
-        }
+        return filas;
 
-        if(!datos.correo()
-            .trim()
-            .matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")){
-            throw new RuntimeException(
-                "El correo no tiene un formato válido"
-            );
-        }
-
-        if(datos.idRol()==null){
-            throw new RuntimeException(
-                "El rol es obligatorio"
-            );
-        }
     }
 
-    private String normalizarOpcional(String valor){
-        if(valor==null){
+    private FilaImportacionRespuesta nuevaFila(
+            int fila,
+            String documento,
+            String nombres,
+            String apellidos,
+            String correo,
+            String telefono,
+            String rol,
+            String codigoSis,
+            String carrera,
+            String facultad,
+            List<String> observaciones
+    ){
+
+        return new FilaImportacionRespuesta(
+                fila,
+                documento,
+                nombres,
+                apellidos,
+                correo,
+                telefono,
+                rol,
+                observaciones.isEmpty()
+                        ? "Activo"
+                        : "Inválido",
+                codigoSis,
+                carrera,
+                facultad,
+                observaciones
+        );
+
+    }
+
+    private Rol buscarRolPorNombre(String nombreRol){
+
+        if(nombreRol == null || nombreRol.isBlank()){
+
             return null;
+
         }
 
-        String limpio=valor.trim();
+        String buscado =
+                rolNombreNormalizado(nombreRol);
 
-        return limpio.isEmpty() ? null : limpio;
+        return rolRepositorio.findAll()
+                .stream()
+                .filter(
+                        rol ->
+                                rolNombreNormalizado(
+                                        rol.getNombreRol()
+                                ).equals(buscado)
+                )
+                .findFirst()
+                .orElse(null);
+
+    }
+
+    private String rolNombreNormalizado(String nombre){
+
+        String resultado =
+                normalizar(
+                        nombre == null
+                                ? ""
+                                : nombre
+                ).replace(" ", "");
+
+        if(resultado.equals("personaldeingreso")){
+
+            return "auxiliar";
+
+        }
+
+        return resultado;
+
+    }
+
+    private Boolean resolverEstado(String estado){
+
+        if(estado == null || estado.isBlank()){
+
+            return null;
+
+        }
+
+        String normalizado =
+                normalizar(estado);
+
+        if(normalizado.equals("activo")){
+
+            return true;
+
+        }
+
+        if(normalizado.equals("inactivo")){
+
+            return false;
+
+        }
+
+        return null;
+
+    }
+
+    private boolean marcarVisto(
+            Map<String,Integer> vistos,
+            String valor
+    ){
+
+        if(valor == null || valor.isBlank()){
+
+            return false;
+
+        }
+
+        String clave = normalizar(valor);
+
+        int veces =
+                vistos.getOrDefault(clave, 0) + 1;
+
+        vistos.put(clave, veces);
+
+        return veces > 1;
+
+    }
+
+    private String rolTextoSinTilde(String texto){
+
+        return texto == null
+                ? ""
+                : normalizar(texto).toLowerCase(Locale.ROOT);
+    }
+
+    private String limpiar(String valor){
+
+        return valor == null
+                ? ""
+                : valor.trim();
+    }
+
+    private boolean soloDigitos(String valor){
+
+        return valor.matches("\\d+");
+    }
+
+    private String normalizar(String texto){
+
+        if(texto == null){
+
+            return "";
+
+        }
+
+        return Normalizer
+                .normalize(texto, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+    }
+
+    public UsuarioRespuesta registrar(
+            RegistrarUsuarioSolicitud datos
+    ){
+
+        List<CampoError> errores =
+                new ArrayList<>();
+
+        if(datos.nombre() == null || datos.nombre().isBlank()){
+
+            errores.add(
+                    new CampoError(
+                            "nombre",
+                            "El nombre es obligatorio"
+                    )
+            );
+
+        }
+
+        if(datos.apellido() == null || datos.apellido().isBlank()){
+
+            errores.add(
+                    new CampoError(
+                            "apellido",
+                            "El apellido es obligatorio"
+                    )
+            );
+
+        }
+
+        if(datos.carnetIdentidad() == null
+                || datos.carnetIdentidad().isBlank()){
+
+            errores.add(
+                    new CampoError(
+                            "carnetIdentidad",
+                            "El carnet de identidad es obligatorio"
+                    )
+            );
+
+        }
+
+        String codigoSis =
+                datos.codigoSis() == null
+                        ? null
+                        : datos.codigoSis().trim();
+
+        boolean codigoSisValido =
+                codigoSis != null
+                        && !codigoSis.isBlank();
+
+        if(datos.correo() == null || datos.correo().isBlank()){
+
+            errores.add(
+                    new CampoError(
+                            "correo",
+                            "El correo es obligatorio"
+                    )
+            );
+
+        } else if(usuarioRepositorio
+                .findByCorreo(datos.correo())
+                .isPresent()){
+
+            errores.add(
+                    new CampoError(
+                            "correo",
+                            "El correo ya está registrado"
+                    )
+            );
+
+        }
+
+        if(datos.carnetIdentidad() != null
+                && !datos.carnetIdentidad().isBlank()
+                && usuarioRepositorio
+                        .findByCarnetIdentidad(datos.carnetIdentidad())
+                        .isPresent()){
+
+            errores.add(
+                    new CampoError(
+                            "carnetIdentidad",
+                            "El carnet de identidad ya está registrado"
+                    )
+            );
+
+        }
+
+        if(datos.carnetIdentidad() != null
+                && !datos.carnetIdentidad().isBlank()
+                && !soloDigitos(datos.carnetIdentidad())){
+
+            errores.add(
+                    new CampoError(
+                            "carnetIdentidad",
+                            "El documento de identidad debe contener solo números"
+                    )
+            );
+
+        }
+
+        if(datos.celular() != null
+                && !datos.celular().isBlank()
+                && !soloDigitos(datos.celular())){
+
+            errores.add(
+                    new CampoError(
+                            "celular",
+                            "El teléfono debe contener solo números"
+                    )
+            );
+
+        }
+
+        if(codigoSisValido
+                && usuarioRepositorio.findByCodigoSis(codigoSis).isPresent()){
+
+            errores.add(
+                    new CampoError(
+                            "codigoSis",
+                            "El código SIS ya está registrado"
+                    )
+            );
+
+        }
+
+        if(codigoSisValido && !soloDigitos(codigoSis)){
+
+            errores.add(
+                    new CampoError(
+                            "codigoSis",
+                            "Código inválido"
+                    )
+            );
+
+        }
+
+        Rol rol =
+                rolRepositorio.findById(datos.idRol())
+                        .orElse(null);
+
+        if(rol == null){
+
+            errores.add(
+                    new CampoError(
+                            "idRol",
+                            "Rol no encontrado"
+                    )
+            );
+
+        }
+
+        if(!errores.isEmpty()){
+
+            throw new ValidacionRegistroException(
+                    errores
+            );
+
+        }
+
+        Usuario usuario = new Usuario();
+
+        usuario.setNombre(
+                datos.nombre()
+        );
+
+        usuario.setApellido(
+                datos.apellido()
+        );
+
+        usuario.setCarnetIdentidad(
+                datos.carnetIdentidad()
+        );
+
+        usuario.setCorreo(
+                datos.correo()
+        );
+
+        String contrasena =
+                datos.contrasena() == null
+                        || datos.contrasena().isBlank()
+                        ? datos.carnetIdentidad()
+                        : datos.contrasena();
+
+        usuario.setContrasena(
+                contrasena
+        );
+
+        usuario.setCelular(
+                datos.celular()
+        );
+
+        if(codigoSis == null || codigoSis.isBlank()){
+
+            usuario.setCodigoSis(
+                    null
+            );
+
+        } else {
+
+            usuario.setCodigoSis(
+                    codigoSis
+            );
+
+        }
+
+        usuario.setCarrera(
+                datos.carrera()
+        );
+
+        usuario.setActivo(
+                datos.activo() == null
+                        ? true
+                        : datos.activo()
+        );
+
+        usuario.setRol(
+                rol
+        );
+
+        usuario.setFechaCreacion(
+                LocalDateTime.now()
+        );
+
+        return convertirRespuesta(
+                usuarioRepositorio.save(usuario)
+        );
+
+    }
+
+    public UsuarioRespuesta buscarRespuesta(Long id){
+
+        return convertirRespuesta(
+                buscar(id)
+        );
+
+    }
+
+    public Usuario modificar(
+            Long id,
+            ActualizarUsuarioSolicitud datos
+    ){
+
+
+        if(datos.nombre() == null || datos.nombre().isBlank()){
+
+            throw new RuntimeException(
+                    "El nombre es obligatorio"
+            );
+
+        }
+
+
+        if(datos.apellido() == null || datos.apellido().isBlank()){
+
+            throw new RuntimeException(
+                    "El apellido es obligatorio"
+            );
+
+        }
+
+
+        if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
+
+            throw new RuntimeException(
+                    "El carnet de identidad es obligatorio"
+            );
+
+        }
+
+
+        if(datos.correo() == null || datos.correo().isBlank()){
+
+            throw new RuntimeException(
+                    "El correo es obligatorio"
+            );
+
+        }
+
+
+        Usuario usuarioExistenteCorreo =
+                usuarioRepositorio.findByCorreo(
+                        datos.correo()
+                )
+                .orElse(null);
+
+
+        if(usuarioExistenteCorreo != null &&
+                !usuarioExistenteCorreo.getIdUsuario().equals(id)){
+
+            throw new RuntimeException(
+                    "El correo ya está registrado"
+            );
+
+        }
+
+
+        Usuario usuarioExistenteCarnet =
+                usuarioRepositorio.findByCarnetIdentidad(
+                        datos.carnetIdentidad()
+                )
+                .orElse(null);
+
+
+        if(usuarioExistenteCarnet != null &&
+                !usuarioExistenteCarnet.getIdUsuario().equals(id)){
+
+            throw new RuntimeException(
+                    "El carnet de identidad ya está registrado"
+            );
+
+        }
+
+        Usuario usuario = buscar(id);
+
+        Rol rol =
+                rolRepositorio.findById(datos.idRol())
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Rol no encontrado"
+                                )
+                        );
+
+
+        usuario.setNombre(
+                datos.nombre()
+        );
+
+
+        usuario.setApellido(
+                datos.apellido()
+        );
+
+
+        usuario.setCarnetIdentidad(
+                datos.carnetIdentidad()
+        );
+
+
+        usuario.setCorreo(
+                datos.correo()
+        );
+
+
+        usuario.setActivo(
+                datos.activo()
+        );
+
+
+        usuario.setRol(
+                rol
+        );
+
+        return usuarioRepositorio.save(usuario);
+
+    }
+
+    public Usuario cambiarRol(
+            Long idUsuario,
+            Long idRol
+    ){
+
+        Usuario usuario = buscar(idUsuario);
+
+        Rol rol =
+                rolRepositorio.findById(idRol)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Rol no encontrado"
+                                )
+                        );
+
+
+        usuario.setRol(
+                rol
+        );
+
+        return usuarioRepositorio.save(usuario);
+
     }
 
     private UsuarioRespuesta convertirRespuesta(
-        Usuario usuario
+            Usuario usuario
     ){
-        List<String> permisos=
-            usuario.getRol()
-                .getPermisos()
-                .stream()
-                .map(
-                    permiso->permiso.getNombrePermiso()
-                )
-                .toList();
 
-        List<MateriaRespuesta> materias=
-            materiaRepositorio
-                .findByDocente_IdUsuarioOrderByNombreMateriaAscGrupoAsc(
-                    usuario.getIdUsuario()
-                )
-                .stream()
-                .map(
-                    materia->new MateriaRespuesta(
-                        materia.getIdMateria(),
-                        materia.getNombreMateria(),
-                        materia.getGrupo()
-                    )
-                )
-                .toList();
+        List<String> permisos =
+                usuario.getRol()
+                        .getPermisos()
+                        .stream()
+                        .map(
+                                permiso ->
+                                        permiso.getNombrePermiso()
+                        )
+                        .toList();
+
+        List<MateriaRespuesta> materias =
+                materiaRepositorio
+                        .findByDocente_IdUsuarioOrderByNombreMateriaAscGrupoAsc(
+                                usuario.getIdUsuario()
+                        )
+                        .stream()
+                        .map(
+                                materia ->
+                                        new MateriaRespuesta(
+                                                materia.getIdMateria(),
+                                                materia.getNombreMateria(),
+                                                materia.getGrupo()
+                                        )
+                        )
+                        .toList();
+
 
         return new UsuarioRespuesta(
-            usuario.getIdUsuario(),
-            usuario.getNombre(),
-            usuario.getApellido(),
-            usuario.getCarnetIdentidad(),
-            usuario.getCorreo(),
-            usuario.getCelular(),
-            usuario.getCarrera(),
-            usuario.getCodigoSis(),
-            usuario.getRol().getIdRol(),
-            usuario.getRol().getNombreRol(),
-            usuario.getActivo(),
-            usuario.getFechaCreacion(),
-            permisos,
-            materias
+
+                usuario.getIdUsuario(),
+
+                usuario.getNombre(),
+
+                usuario.getApellido(),
+
+                usuario.getCarnetIdentidad(),
+
+                usuario.getCorreo(),
+
+                usuario.getCelular(),
+
+                usuario.getCarrera(),
+
+                usuario.getCodigoSis(),
+
+                usuario.getRol().getIdRol(),
+
+                usuario.getRol().getNombreRol(),
+
+                usuario.getActivo(),
+
+                usuario.getFechaCreacion(),
+
+                permisos,
+
+                materias
+
         );
+
     }
+
 }
