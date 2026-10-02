@@ -1251,7 +1251,13 @@ function ImportarUsuarios(){
                             importando || importado || !archivo
                         }
                     >
-                        <FiDatabase />
+                        {
+                        importando
+                            ? (
+                                <span className="import-mini-rueda" />
+                            )
+                            : <FiDatabase />
+                        }
 
                         {
                         importando
@@ -1264,6 +1270,40 @@ function ImportarUsuarios(){
                 </div>
 
             </section>
+
+
+            {
+            (analizando || importando) && (
+
+                <div className="import-overlay">
+
+                    <div className="import-overlay-caja">
+
+                        <span className="import-rueda" />
+
+                        <strong>
+                            {
+                            analizando
+                                ? "Analizando archivo..."
+                                : "Importando usuarios..."
+                            }
+                        </strong>
+
+                        <span>
+                            {
+                            analizando
+                                ? "Validando la información del archivo CSV."
+                                : "Registrando los usuarios en el sistema. " +
+                                  "Esto puede tomar unos segundos."
+                            }
+                        </span>
+
+                    </div>
+
+                </div>
+
+            )
+            }
 
         </div>
 
