@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import AccesoDenegado from "./AccesoDenegado";
 
 function ProtectedPermission({
     children,
@@ -21,12 +22,7 @@ function ProtectedPermission({
 
     if(!tienePermiso){
 
-        return (
-            <Navigate
-                to="/"
-                replace
-            />
-        );
+        return <AccesoDenegado />;
 
     }
     return children;
