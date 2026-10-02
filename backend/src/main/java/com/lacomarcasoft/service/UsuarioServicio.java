@@ -838,6 +838,17 @@ public class UsuarioServicio {
 
         }
 
+        if(codigoSisValido && !soloDigitos(codigoSis)){
+
+            errores.add(
+                    new CampoError(
+                            "codigoSis",
+                            "Código inválido"
+                    )
+            );
+
+        }
+
         Rol rol =
                 rolRepositorio.findById(datos.idRol())
                         .orElse(null);
@@ -1108,6 +1119,8 @@ public class UsuarioServicio {
                 usuario.getCarnetIdentidad(),
 
                 usuario.getCorreo(),
+
+                usuario.getCelular(),
 
                 usuario.getRol().getIdRol(),
 

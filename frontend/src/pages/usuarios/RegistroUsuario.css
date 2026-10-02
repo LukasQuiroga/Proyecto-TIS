@@ -266,3 +266,233 @@
     }
 
 }
+
+
+.registro-modal-fondo{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(12,32,56,0.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:1300;
+    padding:20px;
+}
+
+.registro-modal-exito{
+    width:500px;
+    max-width:100%;
+    background:linear-gradient(
+        180deg,
+        #e6f7ec 0%,
+        #f6fbf6 42%,
+        #ffffff 100%
+    );
+    border-radius:18px;
+    padding:38px 34px 30px;
+    box-shadow:0 18px 54px rgba(10,42,74,0.25);
+    animation:registro-modal-entrar .22s ease-out;
+}
+
+.registro-modal-icono{
+    width:72px;
+    height:72px;
+    margin:0 auto;
+    border-radius:50%;
+    background:#1f9d4f;
+    color:#ffffff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:38px;
+    box-shadow:0 10px 26px rgba(31,157,79,0.35);
+}
+
+.registro-modal-titulo{
+    margin:20px 0 8px;
+    text-align:center;
+    color:#0a2a4a;
+    font-size:21px;
+    letter-spacing:.2px;
+}
+
+.registro-modal-descripcion{
+    margin:0 0 22px;
+    text-align:center;
+    color:#5b7289;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.registro-modal-tarjeta{
+    width:100%;
+    background:#ffffff;
+    border:1px solid #dbe8f2;
+    border-radius:14px;
+    box-shadow:0 2px 10px rgba(10,42,74,0.05);
+    overflow:hidden;
+}
+
+.registro-modal-tarjeta-titulo{
+    padding:13px 18px;
+    font-size:13px;
+    font-weight:700;
+    color:#0a2a4a;
+    background:#f0f6fb;
+    border-bottom:1px solid #dbe8f2;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.registro-modal-tarjeta-titulo > svg{
+    width:16px;
+    height:16px;
+    color:#0a63c9;
+}
+
+.registro-modal-dato{
+    display:grid;
+    grid-template-columns:30px 120px 1fr;
+    align-items:center;
+    gap:10px;
+    padding:12px 18px;
+    border-bottom:1px solid #eef3f7;
+    min-height:48px;
+}
+
+.registro-modal-dato:last-child{
+    border-bottom:none;
+}
+
+.registro-modal-dato > svg{
+    width:17px;
+    height:17px;
+    color:#0a63c9;
+}
+
+.registro-modal-dato-etiqueta{
+    font-size:13px;
+    font-weight:600;
+    color:#4a5a68;
+}
+
+.registro-modal-dato-valor{
+    font-size:14px;
+    font-weight:600;
+    color:#0a2a4a;
+    text-align:right;
+    word-break:break-word;
+}
+
+.registro-modal-chip{
+    justify-self:end;
+    padding:4px 16px;
+    border-radius:999px;
+    background:#e3f7ea;
+    color:#1f9d4f;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.registro-modal-acciones{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    margin-top:26px;
+}
+
+.registro-modal-boton{
+    padding:11px 26px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:background .15s ease,transform .1s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    justify-content:center;
+}
+
+.registro-modal-boton > svg{
+    width:16px;
+    height:16px;
+}
+
+.registro-modal-boton:active{
+    transform:translateY(1px);
+}
+
+.registro-modal-boton-ver{
+    background:#f1f4f7;
+    color:#0a2a4a;
+    border-color:#d6dee6;
+}
+
+.registro-modal-boton-ver:hover{
+    background:#e7ecf1;
+}
+
+.registro-modal-boton-otro{
+    background:#0a63c9;
+    color:#ffffff;
+}
+
+.registro-modal-boton-otro:hover{
+    background:#0a56ae;
+}
+
+@keyframes registro-modal-entrar{
+    from{
+        opacity:0;
+        transform:translateY(12px) scale(.97);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@media(max-width:560px){
+
+    .registro-modal-exito{
+        padding:28px 18px 24px;
+    }
+
+    .registro-modal-dato{
+        grid-template-columns:22px 1fr;
+        row-gap:2px;
+    }
+
+    .registro-modal-dato-etiqueta{
+        grid-column:2;
+    }
+
+    .registro-modal-dato-valor{
+        grid-column:2;
+        grid-row:3;
+        text-align:left;
+    }
+
+    .registro-modal-chip{
+        grid-column:2;
+        grid-row:3;
+        justify-self:start;
+    }
+
+    .registro-modal-acciones{
+        flex-direction:column;
+    }
+
+    .registro-modal-boton{
+        width:100%;
+    }
+
+}

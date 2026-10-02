@@ -14,7 +14,13 @@ import {
     FiLock,
     FiPhone,
     FiX,
-    FiSave
+    FiSave,
+    FiCreditCard,
+    FiMail,
+    FiUsers,
+    FiCheckCircle,
+    FiList,
+    FiUserPlus
 } from "react-icons/fi";
 
 import {
@@ -122,9 +128,12 @@ function RegistroUsuario(){
 
     const [errorGeneral,setErrorGeneral] = useState("");
 
-    const [mensaje,setMensaje] = useState("");
-
     const [guardando,setGuardando] = useState(false);
+
+    const [usuarioRegistrado,setUsuarioRegistrado] =
+        useState(null);
+
+    const [mostrarExito,setMostrarExito] = useState(false);
 
 
 
@@ -262,6 +271,12 @@ function RegistroUsuario(){
                     "El código universitario es obligatorio";
 
             }
+            else if(!/^\d+$/.test(formulario.codigoSis.trim())){
+
+                erroresValidos.codigoSis =
+                    "El código universitario debe contener solo números";
+
+            }
 
             if(!formulario.carrera){
 
@@ -329,23 +344,17 @@ function RegistroUsuario(){
 
             setGuardando(true);
 
-            await registrarUsuario(
-                datos,
-                usuario?.idUsuario
+            const respuesta =
+                await registrarUsuario(
+                    datos,
+                    usuario?.idUsuario
+                );
+
+            setUsuarioRegistrado(
+                respuesta.data
             );
 
-
-            setMensaje(
-                "Usuario registrado correctamente"
-            );
-
-
-            setTimeout(()=>{
-
-                navigate("/usuarios");
-
-            },1500);
-
+            setMostrarExito(true);
 
         }
         catch(error){
@@ -402,6 +411,19 @@ function RegistroUsuario(){
             setGuardando(false);
 
         }
+
+    };
+
+
+    const registrarOtroUsuario = () => {
+
+        setMostrarExito(false);
+
+        setUsuarioRegistrado(null);
+
+        setFormulario(ESTADO_INICIAL);
+
+        setErrores({});
 
     };
 
@@ -466,15 +488,6 @@ function RegistroUsuario(){
             errorGeneral && (
                 <p className="registro-alerta registro-alerta-error">
                     {errorGeneral}
-                </p>
-            )
-            }
-
-
-            {
-            mensaje && (
-                <p className="registro-alerta registro-alerta-exito">
-                    {mensaje}
                 </p>
             )
             }
@@ -846,6 +859,135 @@ function RegistroUsuario(){
                 </div>
 
             </form>
+
+
+            {
+            mostrarExito && usuarioRegistrado && (
+
+                <div className="registro-modal-fondo">
+
+                    <div className="registro-modal-exito">
+
+                        <div className="registro-modal-icono">
+                            ✓
+                        </div>
+
+                        <h2 className="registro-modal-titulo">
+                            Usuario registrado correctamente
+                        </h2>
+
+                        <p className="registro-modal-descripcion">
+                            El usuario ha sido registrado en el sistema
+                            de forma exitosa.
+                        </p>
+
+
+                        <div className="registro-modal-tarjeta">
+
+                            <div className="registro-modal-tarjeta-titulo">
+                                <FiUser />
+                                Datos del usuario registrado
+                            </div>
+
+                            <div className="registro-modal-dato">
+                                <FiUser />
+                                <span className="registro-modal-dato-etiqueta">
+                                    Nombres y apellidos
+                                </span>
+                                <span className="registro-modal-dato-valor">
+                                    {
+                                    usuarioRegistrado.nombre +
+                                    " " +
+                                    usuarioRegistrado.apellido
+                                    }
+                                </span>
+                            </div>
+
+                            <div className="registro-modal-dato">
+                                <FiCreditCard />
+                                <span className="registro-modal-dato-etiqueta">
+                                    Documento de identidad
+                                </span>
+                                <span className="registro-modal-dato-valor">
+                                    {usuarioRegistrado.carnetIdentidad}
+                                </span>
+                            </div>
+
+                            <div className="registro-modal-dato">
+                                <FiMail />
+                                <span className="registro-modal-dato-etiqueta">
+                                    Correo electrónico
+                                </span>
+                                <span className="registro-modal-dato-valor">
+                                    {usuarioRegistrado.correo}
+                                </span>
+                            </div>
+
+                            <div className="registro-modal-dato">
+                                <FiPhone />
+                                <span className="registro-modal-dato-etiqueta">
+                                    Teléfono
+                                </span>
+                                <span className="registro-modal-dato-valor">
+                                    {usuarioRegistrado.celular || "—"}
+                                </span>
+                            </div>
+
+                            <div className="registro-modal-dato">
+                                <FiUsers />
+                                <span className="registro-modal-dato-etiqueta">
+                                    Rol asignado
+                                </span>
+                                <span className="registro-modal-chip">
+                                    {usuarioRegistrado.nombreRol}
+                                </span>
+                            </div>
+
+                            <div className="registro-modal-dato">
+                                <FiCheckCircle />
+                                <span className="registro-modal-dato-etiqueta">
+                                    Estado
+                                </span>
+                                <span className="registro-modal-chip">
+                                    {
+                                    usuarioRegistrado.activo
+                                        ? "Activo"
+                                        : "Inactivo"
+                                    }
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div className="registro-modal-acciones">
+
+                            <button
+                                type="button"
+                                className="registro-modal-boton registro-modal-boton-ver"
+                                onClick={() => navigate("/usuarios")}
+                            >
+                                <FiList />
+                                Ver usuarios
+                            </button>
+
+                            <button
+                                type="button"
+                                className="registro-modal-boton registro-modal-boton-otro"
+                                onClick={registrarOtroUsuario}
+                            >
+                                <FiUserPlus />
+                                Registrar otro usuario
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )
+            }
 
         </div>
 

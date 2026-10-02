@@ -9,6 +9,7 @@ public record UsuarioRespuesta(
         String apellido,
         String carnetIdentidad,
         String correo,
+        String celular,
         Long idRol,
         String nombreRol,
         Boolean activo,

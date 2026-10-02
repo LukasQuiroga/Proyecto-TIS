@@ -69,6 +69,7 @@ public class AuthService {
                         usuario.getApellido(),
                         usuario.getCarnetIdentidad(),
                         usuario.getCorreo(),
+                        usuario.getCelular(),
                         usuario.getRol().getIdRol(),
                         usuario.getRol().getNombreRol(),
                         usuario.getActivo(),
