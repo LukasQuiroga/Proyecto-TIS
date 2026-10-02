@@ -36,6 +36,9 @@ public class Usuario {
 
     private String carrera;
 
+    @Column(name = "facultad")
+    private String facultad;
+
     private Boolean activo = true;
 
     private LocalDateTime fechaCreacion;
@@ -117,6 +120,14 @@ public class Usuario {
 
     public void setCarrera(String carrera) {
         this.carrera = carrera;
+    }
+
+    public String getFacultad() {
+        return facultad;
+    }
+
+    public void setFacultad(String facultad) {
+        this.facultad = facultad;
     }
 
     public Boolean getActivo() {

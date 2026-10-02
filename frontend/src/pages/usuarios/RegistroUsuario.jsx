@@ -1,0 +1,857 @@
+import "./RegistroUsuario.css";
+
+import {
+    useEffect,
+    useState
+} from "react";
+
+import {
+    useNavigate
+} from "react-router-dom";
+
+import {
+    FiUser,
+    FiLock,
+    FiPhone,
+    FiX,
+    FiSave
+} from "react-icons/fi";
+
+import {
+    registrarUsuario
+} from "../../services/usuarioService";
+
+import {
+    obtenerRoles
+} from "../../services/rolService";
+
+import {
+    useAuth
+} from "../../context/useAuth";
+
+
+const CARRERAS = [
+    "Ingeniería de Sistemas",
+    "Ingeniería Informática",
+    "Ingeniería Industrial",
+    "Ingeniería Civil",
+    "Ingeniería Eléctrica",
+    "Ingeniería Mecánica",
+    "Lic. en Administración",
+    "Lic. en Contaduría Pública",
+    "Medicina",
+    "Derecho",
+    "Arquitectura",
+    "Lic. en Sociología"
+];
+
+
+function Campo(
+    {
+        etiqueta,
+        requerido,
+        error,
+        children
+    }
+){
+
+    return (
+
+        <div className="campo-formulario">
+
+            <label className="campo-etiqueta">
+
+                {etiqueta}
+
+                {
+                requerido && (
+                    <span className="campo-requerido">
+                        *
+                    </span>
+                )
+                }
+
+            </label>
+
+            {children}
+
+            {
+            error && (
+                <span className="campo-error">
+                    {error}
+                </span>
+            )
+            }
+
+        </div>
+
+    );
+
+}
+
+
+
+const ESTADO_INICIAL = {
+    nombre: "",
+    apellido: "",
+    carnetIdentidad: "",
+    correo: "",
+    telefono: "",
+    idRol: "",
+    activo: true,
+    codigoSis: "",
+    carrera: ""
+};
+
+
+
+function RegistroUsuario(){
+
+
+    const navigate = useNavigate();
+
+    const { usuario } = useAuth();
+
+
+    const [roles,setRoles] = useState([]);
+
+    const [formulario,setFormulario] =
+        useState(ESTADO_INICIAL);
+
+    const [errores,setErrores] = useState({});
+
+    const [errorGeneral,setErrorGeneral] = useState("");
+
+    const [mensaje,setMensaje] = useState("");
+
+    const [guardando,setGuardando] = useState(false);
+
+
+
+    const rolSeleccionado =
+        roles.find(
+            rol =>
+                rol.idRol === formulario.idRol
+        );
+
+    const esEstudiante =
+        Boolean(
+            rolSeleccionado &&
+            rolSeleccionado.nombreRol &&
+            String(
+                rolSeleccionado.nombreRol
+            ).toLowerCase().includes("estudiante")
+        );
+
+
+
+    useEffect(()=>{
+
+        obtenerRoles()
+            .then(
+                respuesta =>
+                    setRoles(respuesta.data)
+            )
+            .catch(
+                error => {
+                    console.error(
+                        "Error cargando roles:",
+                        error
+                    );
+                    setErrorGeneral(
+                        "No se pudieron cargar los roles del sistema"
+                    );
+                }
+            );
+
+    },[]);
+
+
+
+    const cambiar = (campo,valor) => {
+
+        setFormulario(
+            prev => ({
+                ...prev,
+                [campo]: valor
+            })
+        );
+
+        setErrores(
+            prev => {
+                const nuevo = { ...prev };
+                delete nuevo[campo];
+                return nuevo;
+            }
+        );
+
+    };
+
+
+
+    const validarFormulario = () => {
+
+        const erroresValidos = {};
+
+
+        if(!formulario.nombre.trim()){
+
+            erroresValidos.nombre =
+                "El nombre es obligatorio";
+
+        }
+
+
+        if(!formulario.apellido.trim()){
+
+            erroresValidos.apellido =
+                "El apellido es obligatorio";
+
+        }
+
+
+        if(!formulario.carnetIdentidad.trim()){
+
+            erroresValidos.carnetIdentidad =
+                "El documento de identidad es obligatorio";
+
+        }
+        else if(
+            !/^[0-9]+$/.test(
+                formulario.carnetIdentidad
+            )
+        ){
+
+            erroresValidos.carnetIdentidad =
+                "Solo debe contener números";
+
+        }
+
+
+        if(!formulario.correo.trim()){
+
+            erroresValidos.correo =
+                "El correo electrónico es obligatorio";
+
+        }
+        else if(
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                formulario.correo
+            )
+        ){
+
+            erroresValidos.correo =
+                "El correo no tiene un formato válido";
+
+        }
+
+
+        if(!formulario.idRol){
+
+            erroresValidos.idRol =
+                "Debe seleccionar un rol";
+
+        }
+
+
+        if(esEstudiante){
+
+            if(!formulario.codigoSis.trim()){
+
+                erroresValidos.codigoSis =
+                    "El código universitario es obligatorio";
+
+            }
+
+            if(!formulario.carrera){
+
+                erroresValidos.carrera =
+                    "Debe seleccionar una carrera";
+
+            }
+
+        }
+
+
+        return erroresValidos;
+
+    };
+
+
+
+    const guardar = async(e) => {
+
+        e.preventDefault();
+
+        setErrorGeneral("");
+
+
+        const erroresValidacion =
+            validarFormulario();
+
+
+        if(
+            Object.keys(erroresValidacion).length > 0
+        ){
+
+            setErrores(erroresValidacion);
+
+            return;
+
+        }
+
+
+        const datos = {
+            nombre: formulario.nombre.trim(),
+            apellido: formulario.apellido.trim(),
+            carnetIdentidad:
+                formulario.carnetIdentidad.trim(),
+            correo: formulario.correo.trim(),
+            celular:
+                formulario.telefono.trim() || null,
+            idRol: formulario.idRol,
+            activo: formulario.activo
+        };
+
+
+        if(esEstudiante){
+
+            datos.codigoSis =
+                formulario.codigoSis.trim();
+
+            datos.carrera =
+                formulario.carrera;
+
+        }
+
+
+        try{
+
+            setGuardando(true);
+
+            await registrarUsuario(
+                datos,
+                usuario?.idUsuario
+            );
+
+
+            setMensaje(
+                "Usuario registrado correctamente"
+            );
+
+
+            setTimeout(()=>{
+
+                navigate("/usuarios");
+
+            },1500);
+
+
+        }
+        catch(error){
+
+
+            const erroresServidor = {};
+
+
+            const respuesta =
+                error.response?.data;
+
+
+            if(
+                respuesta?.errores &&
+                Array.isArray(respuesta.errores)
+            ){
+
+
+                respuesta.errores.forEach(
+                    errorCampo => {
+
+                        erroresServidor[
+                            errorCampo.campo ||
+                            "errorGeneral"
+                        ] = errorCampo.mensaje;
+
+                    }
+                );
+
+
+                setErrores(erroresServidor);
+
+            }
+            else if(respuesta?.mensaje){
+
+                setErrorGeneral(
+                    respuesta.mensaje
+                );
+
+            }
+            else{
+
+                setErrorGeneral(
+                    "No se pudo registrar el usuario. " +
+                    "Verifique la conexión e intente nuevamente."
+                );
+
+            }
+
+
+        }
+        finally{
+
+            setGuardando(false);
+
+        }
+
+    };
+
+
+
+    return (
+
+        <div className="registro-usuario">
+
+            <nav className="registro-migas">
+
+                <span
+                    className="registro-migas-enlace"
+                    onClick={
+                        () =>
+                        navigate("/")
+                    }
+                >
+                    Inicio
+                </span>
+
+                <span className="registro-migas-separador">
+                    &gt;
+                </span>
+
+                <span
+                    className="registro-migas-enlace"
+                    onClick={
+                        () =>
+                        navigate("/usuarios")
+                    }
+                >
+                    Usuarios
+                </span>
+
+                <span className="registro-migas-separador">
+                    &gt;
+                </span>
+
+                <span className="registro-migas-actual">
+                    Registrar usuario
+                </span>
+
+            </nav>
+
+
+            <div className="registro-cabecera">
+
+                <h1 className="registro-titulo">
+                    Registrar usuario
+                </h1>
+
+                <p className="registro-subtitulo">
+                    Complete la información del usuario para
+                    registrarlo en el sistema.
+                </p>
+
+            </div>
+
+
+            {
+            errorGeneral && (
+                <p className="registro-alerta registro-alerta-error">
+                    {errorGeneral}
+                </p>
+            )
+            }
+
+
+            {
+            mensaje && (
+                <p className="registro-alerta registro-alerta-exito">
+                    {mensaje}
+                </p>
+            )
+            }
+
+
+            <form
+                className="registro-tarjeta"
+                onSubmit={guardar}
+                noValidate
+            >
+
+                <section className="registro-seccion">
+
+                    <div className="registro-cabecera-seccion">
+
+                        <span className="registro-cabecera-seccion-icono">
+                            <FiUser />
+                        </span>
+
+                        <h2 className="registro-seccion-titulo">
+                            Información personal
+                        </h2>
+
+                    </div>
+
+
+                    <div className="registro-grid">
+
+                        <Campo
+                            etiqueta="Nombres"
+                            requerido
+                            error={errores.nombre}
+                        >
+
+                            <input
+                                className="registro-input"
+                                value={formulario.nombre}
+                                onChange={
+                                    e =>
+                                    cambiar(
+                                        "nombre",
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="Ingrese nombres"
+                            />
+
+                        </Campo>
+
+
+                        <Campo
+                            etiqueta="Apellidos"
+                            requerido
+                            error={errores.apellido}
+                        >
+
+                            <input
+                                className="registro-input"
+                                value={formulario.apellido}
+                                onChange={
+                                    e =>
+                                    cambiar(
+                                        "apellido",
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="Ingrese apellidos"
+                            />
+
+                        </Campo>
+
+
+                        <Campo
+                            etiqueta="Documento de identidad"
+                            requerido
+                            error={
+                                errores.carnetIdentidad
+                            }
+                        >
+
+                            <input
+                                className="registro-input"
+                                value={
+                                    formulario.carnetIdentidad
+                                }
+                                onChange={
+                                    e =>
+                                    cambiar(
+                                        "carnetIdentidad",
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="Ingrese documento"
+                            />
+
+                        </Campo>
+
+
+                        <Campo
+                            etiqueta="Correo electrónico"
+                            requerido
+                            error={errores.correo}
+                        >
+
+                            <input
+                                className="registro-input"
+                                type="email"
+                                value={formulario.correo}
+                                onChange={
+                                    e =>
+                                    cambiar(
+                                        "correo",
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="Ingrese correo electrónico"
+                            />
+
+                        </Campo>
+
+
+                        <Campo
+                            etiqueta="Teléfono"
+                            requerido
+                            error={errores.celular}
+                        >
+
+                            <div className="registro-campo-con-icono">
+
+                                <span className="registro-icono-input">
+                                    <FiPhone />
+                                </span>
+
+                                <input
+                                    className="registro-input"
+                                    value={formulario.telefono}
+                                    onChange={
+                                        e =>
+                                        cambiar(
+                                            "telefono",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Ingrese número de teléfono"
+                                />
+
+                            </div>
+
+                        </Campo>
+
+                    </div>
+
+                </section>
+
+
+                <div className="registro-separador" />
+
+
+                <section className="registro-seccion">
+
+                    <div className="registro-cabecera-seccion">
+
+                        <span className="registro-cabecera-seccion-icono">
+                            <FiLock />
+                        </span>
+
+                        <h2 className="registro-seccion-titulo">
+                            Información de acceso
+                        </h2>
+
+                    </div>
+
+
+                    <div className="registro-grid">
+
+                        <Campo
+                            etiqueta="Rol"
+                            requerido
+                            error={errores.idRol}
+                        >
+
+                            <select
+                                className="registro-input"
+                                value={
+                                    formulario.idRol || ""
+                                }
+                                onChange={
+                                    e =>
+                                    cambiar(
+                                        "idRol",
+                                        Number(e.target.value)
+                                    )
+                                }
+                            >
+
+                                <option value="">
+                                    Seleccione un rol
+                                </option>
+
+
+                                {
+                                    roles.map(
+                                        rol => (
+                                            <option
+                                                key={rol.idRol}
+                                                value={rol.idRol}
+                                            >
+                                                {rol.nombreRol}
+                                            </option>
+                                        )
+                                    )
+                                }
+
+                            </select>
+
+                        </Campo>
+
+
+                        <Campo
+                            etiqueta="Estado"
+                            requerido
+                        >
+
+                            <select
+                                className="registro-input"
+                                value={
+                                    String(formulario.activo)
+                                }
+                                onChange={
+                                    e =>
+                                    cambiar(
+                                        "activo",
+                                        e.target.value === "true"
+                                    )
+                                }
+                            >
+
+                                <option value="true">
+                                    Activo
+                                </option>
+
+                                <option value="false">
+                                    Inactivo
+                                </option>
+
+                            </select>
+
+                        </Campo>
+
+                    </div>
+
+
+                    {
+                    esEstudiante && (
+
+                        <div className="registro-tarjeta-estudiante">
+
+                            <h3 className="registro-tarjeta-estudiante-titulo">
+                                Información adicional
+                                (solo para estudiantes)
+                            </h3>
+
+
+                            <div className="registro-grid">
+
+                                <Campo
+                                    etiqueta="Código universitario"
+                                    requerido
+                                    error={errores.codigoSis}
+                                >
+
+                                    <input
+                                        className="registro-input"
+                                        value={formulario.codigoSis}
+                                        onChange={
+                                            e =>
+                                            cambiar(
+                                                "codigoSis",
+                                                e.target.value
+                                            )
+                                        }
+                                        placeholder="Ingrese código universitario"
+                                    />
+
+                                </Campo>
+
+
+                                <Campo
+                                    etiqueta="Carrera"
+                                    requerido
+                                    error={errores.carrera}
+                                >
+
+                                    <select
+                                        className="registro-input"
+                                        value={formulario.carrera}
+                                        onChange={
+                                            e =>
+                                            cambiar(
+                                                "carrera",
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+
+                                        <option value="">
+                                            Seleccione una carrera
+                                        </option>
+
+
+                                        {
+                                            CARRERAS.map(
+                                                carrera => (
+                                                    <option
+                                                        key={carrera}
+                                                        value={carrera}
+                                                    >
+                                                        {carrera}
+                                                    </option>
+                                                )
+                                            )
+                                        }
+
+                                    </select>
+
+                                </Campo>
+
+                            </div>
+
+                        </div>
+
+                    )
+                    }
+
+
+                </section>
+
+
+                <div className="registro-acciones">
+
+                    <button
+                        type="button"
+                        className="registro-boton registro-boton-cancelar"
+                        onClick={
+                            () =>
+                            navigate("/usuarios")
+                        }
+                    >
+                        <FiX />
+
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        className="registro-boton registro-boton-guardar"
+                        disabled={guardando}
+                    >
+                        <FiSave />
+
+                        {
+                        guardando
+                            ? "Guardando..."
+                            : "Guardar usuario"
+                        }
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    );
+
+}
+
+
+export default RegistroUsuario;

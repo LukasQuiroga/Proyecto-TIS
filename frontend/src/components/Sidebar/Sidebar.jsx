@@ -209,7 +209,13 @@ function Sidebar({sidebarAbierto}) {
 
                   to="/usuarios/importar"
 
-                  className="sidebar-subopcion"
+                  className={({isActive}) =>
+                      `sidebar-subopcion ${
+                          isActive
+                          ? "sidebar-subopcion-activa"
+                          : ""
+                      }`
+                  }
 
               >
 

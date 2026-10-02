@@ -1,0 +1,268 @@
+.registro-usuario{
+    width:100%;
+    max-width:1080px;
+    margin:0 auto;
+    padding:22px 28px 40px;
+}
+
+.registro-migas{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:18px;
+    font-size:13px;
+}
+
+.registro-migas-enlace{
+    color:#0a63c9;
+    cursor:pointer;
+}
+
+.registro-migas-enlace:hover{
+    text-decoration:underline;
+}
+
+.registro-migas-separador{
+    color:#9db0c2;
+}
+
+.registro-migas-actual{
+    font-weight:600;
+    color:#0a2a4a;
+}
+
+.registro-cabecera{
+    margin-bottom:22px;
+}
+
+.registro-titulo{
+    margin:0 0 6px;
+    font-size:27px;
+    font-weight:700;
+    color:#0a2a4a;
+}
+
+.registro-subtitulo{
+    margin:0;
+    font-size:14px;
+    color:#5b7289;
+}
+
+.registro-alerta{
+    margin:0 0 16px;
+    padding:12px 16px;
+    border-radius:10px;
+    font-size:14px;
+}
+
+.registro-alerta-error{
+    background:#fdecec;
+    border:1px solid #f6c6c6;
+    color:#a33131;
+}
+
+.registro-alerta-exito{
+    background:#e9f9ef;
+    border:1px solid #bfe8cf;
+    color:#1f7a46;
+}
+
+.registro-tarjeta{
+    background:#ffffff;
+    border:1px solid #e3ebf3;
+    border-radius:16px;
+    box-shadow:0 2px 10px rgba(10,42,74,0.06);
+    padding:28px 32px 24px;
+}
+
+.registro-cabecera-seccion{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+    padding:12px 16px;
+    background:#e9f3fd;
+    border-radius:10px;
+}
+
+.registro-cabecera-seccion-icono{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#1565c0;
+    font-size:18px;
+}
+
+.registro-seccion-titulo{
+    margin:0;
+    font-size:15px;
+    font-weight:700;
+    color:#0a2a4a;
+}
+
+.registro-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
+
+.campo-formulario{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.campo-formulario:has(.registro-campo-con-icono){
+    grid-column:1 / -1;
+}
+
+.campo-etiqueta{
+    font-size:13px;
+    font-weight:600;
+    color:#2c4a67;
+}
+
+.campo-requerido{
+    color:#d14343;
+    margin-left:2px;
+}
+
+.campo-error{
+    font-size:12px;
+    color:#c0392b;
+}
+
+.registro-input{
+    width:100%;
+    height:42px;
+    padding:0 12px;
+    border:1px solid #d9e2ec;
+    border-radius:9px;
+    background:#ffffff;
+    color:#172b44;
+    font-family:inherit;
+    font-size:14px;
+    outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+    box-sizing:border-box;
+}
+
+.registro-input:focus{
+    border-color:#0a63c9;
+    box-shadow:0 0 0 3px rgba(10,99,201,0.14);
+}
+
+.registro-campo-con-icono{
+    position:relative;
+}
+
+.registro-icono-input{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    align-items:center;
+    color:#8aa0b5;
+    font-size:15px;
+    pointer-events:none;
+}
+
+.registro-campo-con-icono .registro-input{
+    padding-left:38px;
+}
+
+.registro-separador{
+    border-top:1px solid #e6edf4;
+    margin:26px 0;
+}
+
+.registro-tarjeta-estudiante{
+    margin-top:20px;
+    padding:18px 20px;
+    background:#eef6ff;
+    border:1px solid #cfe4fb;
+    border-radius:12px;
+}
+
+.registro-tarjeta-estudiante-titulo{
+    margin:0 0 16px;
+    font-size:14px;
+    font-weight:700;
+    color:#0f5da8;
+}
+
+.registro-acciones{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:26px;
+    padding-top:20px;
+    border-top:1px solid #e6edf4;
+}
+
+.registro-boton{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:11px 22px;
+    border:none;
+    border-radius:9px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:filter .2s ease, background .2s ease;
+}
+
+.registro-boton-cancelar{
+    background:#e9edf2;
+    color:#45596e;
+}
+
+.registro-boton-cancelar:hover{
+    background:#dbe2ea;
+}
+
+.registro-boton-guardar{
+    background:#0a63c9;
+    color:#ffffff;
+}
+
+.registro-boton-guardar:hover{
+    filter:brightness(1.08);
+}
+
+.registro-boton-guardar:disabled{
+    opacity:.7;
+    cursor:not-allowed;
+}
+
+@media(max-width:680px){
+
+    .registro-usuario{
+        padding:18px 14px 32px;
+    }
+
+    .registro-tarjeta{
+        padding:20px 16px 18px;
+    }
+
+    .registro-grid{
+        grid-template-columns:1fr;
+    }
+
+    .campo-formulario:has(.registro-campo-con-icono){
+        grid-column:auto;
+    }
+
+    .registro-acciones{
+        flex-direction:column-reverse;
+    }
+
+    .registro-boton{
+        width:100%;
+    }
+
+}

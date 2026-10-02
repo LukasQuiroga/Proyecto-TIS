@@ -4,10 +4,13 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
+import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
 import com.lacomarcasoft.dto.response.CampoError;
 import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.ErroresRegistroRespuesta;
+import com.lacomarcasoft.dto.response.ImportarAnalisisRespuesta;
+import com.lacomarcasoft.dto.response.ImportarMasivoRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.service.LogActividadServicio;
@@ -112,6 +115,74 @@ public class UsuarioControlador {
                         solicitud.codigosSis()
                 )
         );
+
+    }
+
+    @PostMapping("/importar/analizar")
+    public ResponseEntity<ImportarAnalisisRespuesta> analizarImportacion(
+            @RequestBody ImportarUsuariosSolicitud solicitud
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.analizarImportacion(
+                        solicitud
+                )
+        );
+
+    }
+
+    @PostMapping("/importar")
+    public ResponseEntity<ImportarMasivoRespuesta> importarUsuarios(
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @RequestBody ImportarUsuariosSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        ImportarMasivoRespuesta respuesta =
+                usuarioServicio.importarMasivo(
+                        solicitud
+                );
+
+        try {
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "IMPORTAR_USUARIOS",
+
+                    "Importación masiva completada: "
+                    + respuesta.registrados()
+                    + " registrados, "
+                    + respuesta.conErrores()
+                    + " con errores (total "
+                    + respuesta.total()
+                    + ")",
+
+                    request.getRemoteAddr(),
+
+                    true
+
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
+
+        return ResponseEntity.ok(respuesta);
 
     }
 
