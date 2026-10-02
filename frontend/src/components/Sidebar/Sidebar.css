@@ -3,7 +3,11 @@
     top:0;
     left:0;
     height:100vh;
-    background:linear-gradient(180deg,#07548b 0%,#063e6c 100%);
+    background:linear-gradient(
+        180deg,
+        #07548b 0%,
+        #063e6c 100%
+    );
     color:#ffffff;
     z-index:40;
     box-shadow:4px 0 18px rgba(9,54,97,.12);
@@ -39,16 +43,29 @@
     align-items:center;
     gap:12px;
     border-bottom:1px solid rgba(255,255,255,.10);
+    text-decoration:none;
+    cursor:pointer;
+    box-sizing:border-box;
+    transition:background .2s;
+}
+
+.sidebar-logo:hover{
+    background:rgba(255,255,255,.05);
 }
 
 .sidebar-logo-icono{
     width:48px;
     height:48px;
+    min-width:48px;
     border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
-    background:linear-gradient(180deg,#0c74ff 0%,#095ddd 100%);
+    background:linear-gradient(
+        180deg,
+        #0c74ff 0%,
+        #095ddd 100%
+    );
     color:#ffffff;
     font-size:26px;
     flex-shrink:0;
@@ -101,7 +118,11 @@
 }
 
 .sidebar-activa{
-    background:linear-gradient(90deg,#0f6fff 0%,#1f7aff 100%);
+    background:linear-gradient(
+        90deg,
+        #0f6fff 0%,
+        #1f7aff 100%
+    );
     color:#ffffff;
     border-left:4px solid #8ec0ff;
     padding-left:14px;
@@ -173,5 +194,10 @@
 
     .sidebar-boton-menu{
         width:52px;
+    }
+
+    .sidebar-logo{
+        padding-left:14px;
+        padding-right:14px;
     }
 }

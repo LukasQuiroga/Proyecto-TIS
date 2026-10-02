@@ -23,11 +23,18 @@ function Opcion({to,icono,children,exacta=false}){
             to={to}
             end={exacta}
             className={({isActive})=>
-                `sidebar-opcion sidebar-opcion-enlace ${isActive?"sidebar-activa":""}`
+                `sidebar-opcion sidebar-opcion-enlace ${
+                    isActive?"sidebar-activa":""
+                }`
             }
         >
-            <span className="sidebar-icono">{icono}</span>
-            <span className="sidebar-texto">{children}</span>
+            <span className="sidebar-icono">
+                {icono}
+            </span>
+
+            <span className="sidebar-texto">
+                {children}
+            </span>
         </NavLink>
     );
 }
@@ -37,7 +44,10 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
     const {usuario}=useAuth();
 
     const tienePermiso=(permiso)=>{
-        if(!usuario) return true;
+        if(!usuario){
+            return true;
+        }
+
         return usuario?.permisos?.includes(permiso);
     };
 
@@ -53,19 +63,31 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
 
             {sidebarAbierto&&(
                 <>
-                    <div className="sidebar-logo">
+                    <NavLink
+                        to="/"
+                        className="sidebar-logo"
+                    >
                         <div className="sidebar-logo-icono">
                             <FaGraduationCap/>
                         </div>
 
                         <div className="sidebar-logo-texto">
-                            <strong>Sistema de Control</strong>
-                            <span>de Ingreso a Exámenes</span>
+                            <strong>
+                                Sistema de Control
+                            </strong>
+
+                            <span>
+                                de Ingreso a Exámenes
+                            </span>
                         </div>
-                    </div>
+                    </NavLink>
 
                     <nav className="sidebar-menu">
-                        <Opcion to="/" exacta icono={<FiHome/>}>
+                        <Opcion
+                            to="/"
+                            exacta
+                            icono={<FiHome/>}
+                        >
                             Inicio
                         </Opcion>
 
@@ -77,7 +99,9 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 <button
                                     type="button"
                                     className="sidebar-opcion sidebar-desplegable"
-                                    onClick={()=>setUsuariosAbierto(!usuariosAbierto)}
+                                    onClick={()=>
+                                        setUsuariosAbierto(!usuariosAbierto)
+                                    }
                                 >
                                     <span className="sidebar-icono">
                                         <FiUsers/>
@@ -154,6 +178,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 <span className="sidebar-icono">
                                     <FiClipboard/>
                                 </span>
+
                                 <span className="sidebar-texto">
                                     Exámenes
                                 </span>
@@ -165,6 +190,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 <span className="sidebar-icono">
                                     <FiMap/>
                                 </span>
+
                                 <span className="sidebar-texto">
                                     Ambientes
                                 </span>
@@ -176,6 +202,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 <span className="sidebar-icono">
                                     <FiGrid/>
                                 </span>
+
                                 <span className="sidebar-texto">
                                     Habilitaciones
                                 </span>
@@ -187,6 +214,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 <span className="sidebar-icono">
                                     <FiTarget/>
                                 </span>
+
                                 <span className="sidebar-texto">
                                     Control de ingreso
                                 </span>
@@ -198,6 +226,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 <span className="sidebar-icono">
                                     <FiBarChart2/>
                                 </span>
+
                                 <span className="sidebar-texto">
                                     Reportes
                                 </span>
