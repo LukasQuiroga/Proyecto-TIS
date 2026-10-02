@@ -1,6 +1,7 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
+import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
@@ -9,6 +10,7 @@ import com.lacomarcasoft.repository.UsuarioRepositorio;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -55,11 +57,68 @@ public class UsuarioServicio {
                     "El código SIS es obligatorio"
             );
 
-        }
+}
 
         return usuarioRepositorio
                 .findByCodigoSis(codigoSis)
                 .isEmpty();
+
+    }
+
+    public DeteccionDuplicadosRespuesta detectarDuplicados(
+            List<String> codigosSis
+    ){
+
+        if(codigosSis == null || codigosSis.isEmpty()){
+
+            throw new RuntimeException(
+                    "Debe enviar al menos un código SIS"
+            );
+
+        }
+
+        List<String> codigosNormalizados =
+                codigosSis.stream()
+                        .map(codigo -> codigo == null ? "" : codigo.trim())
+                        .filter(codigo -> !codigo.isBlank())
+                        .toList();
+
+        if(codigosNormalizados.isEmpty()){
+
+            throw new RuntimeException(
+                    "Debe enviar al menos un código SIS válido"
+            );
+
+        }
+
+        List<String> repetidosEnEnvio =
+                codigosNormalizados.stream()
+                        .filter(
+                                codigo ->
+                                        Collections.frequency(
+                                                codigosNormalizados,
+                                                codigo
+                                        ) > 1
+                        )
+                        .distinct()
+                        .toList();
+
+        List<String> codigosUnicos =
+                codigosNormalizados.stream()
+                        .distinct()
+                        .toList();
+
+        List<String> yaRegistrados =
+                usuarioRepositorio
+                        .findByCodigoSisIn(codigosUnicos)
+                        .stream()
+                        .map(Usuario::getCodigoSis)
+                        .toList();
+
+        return new DeteccionDuplicadosRespuesta(
+                yaRegistrados,
+                repetidosEnEnvio
+        );
 
     }
 

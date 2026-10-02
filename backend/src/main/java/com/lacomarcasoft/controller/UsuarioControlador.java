@@ -3,6 +3,8 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
+import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
+import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.service.LogActividadServicio;
@@ -59,6 +61,20 @@ public class UsuarioControlador {
 
         return ResponseEntity.ok(
                 usuarioServicio.codigoSisDisponible(codigoSis)
+        );
+
+    }
+
+    @PostMapping("/detectar-duplicados")
+    public ResponseEntity<DeteccionDuplicadosRespuesta> detectarDuplicados(
+            @Valid
+            @RequestBody DetectarDuplicadosSolicitud solicitud
+    ){
+
+        return ResponseEntity.ok(
+                usuarioServicio.detectarDuplicados(
+                        solicitud.codigosSis()
+                )
         );
 
     }
