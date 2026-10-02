@@ -9,10 +9,12 @@ import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.FilaImportacionRespuesta;
 import com.lacomarcasoft.dto.response.ImportarAnalisisRespuesta;
 import com.lacomarcasoft.dto.response.ImportarMasivoRespuesta;
+import com.lacomarcasoft.dto.response.MateriaRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.exception.ValidacionRegistroException;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 
@@ -39,13 +41,16 @@ public class UsuarioServicio {
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final RolRepositorio rolRepositorio;
+    private final MateriaRepositorio materiaRepositorio;
 
     public UsuarioServicio(
             UsuarioRepositorio usuarioRepositorio,
-            RolRepositorio rolRepositorio
+            RolRepositorio rolRepositorio,
+            MateriaRepositorio materiaRepositorio
     ){
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRepositorio = rolRepositorio;
+        this.materiaRepositorio = materiaRepositorio;
     }
 
     public List<UsuarioRespuesta> listar(){
@@ -78,7 +83,7 @@ public class UsuarioServicio {
                     "El código SIS es obligatorio"
             );
 
-}
+        }
 
         return usuarioRepositorio
                 .findByCodigoSis(codigoSis)
@@ -1142,6 +1147,22 @@ public class UsuarioServicio {
                         )
                         .toList();
 
+        List<MateriaRespuesta> materias =
+                materiaRepositorio
+                        .findByDocente_IdUsuarioOrderByNombreMateriaAscGrupoAsc(
+                                usuario.getIdUsuario()
+                        )
+                        .stream()
+                        .map(
+                                materia ->
+                                        new MateriaRespuesta(
+                                                materia.getIdMateria(),
+                                                materia.getNombreMateria(),
+                                                materia.getGrupo()
+                                        )
+                        )
+                        .toList();
+
 
         return new UsuarioRespuesta(
 
@@ -1157,13 +1178,21 @@ public class UsuarioServicio {
 
                 usuario.getCelular(),
 
+                usuario.getCarrera(),
+
+                usuario.getCodigoSis(),
+
                 usuario.getRol().getIdRol(),
 
                 usuario.getRol().getNombreRol(),
 
                 usuario.getActivo(),
 
-                permisos
+                usuario.getFechaCreacion(),
+
+                permisos,
+
+                materias
 
         );
 
