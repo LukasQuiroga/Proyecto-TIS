@@ -290,6 +290,19 @@ function RegistroUsuario(){
         }
 
 
+        if(
+            formulario.telefono.trim()
+            && !/^[0-9]+$/.test(
+                formulario.telefono.trim()
+            )
+        ){
+
+            erroresValidos.telefono =
+                "Solo debe contener números";
+
+        }
+
+
         if(esEstudiante){
 
             if(!formulario.codigoSis.trim()){

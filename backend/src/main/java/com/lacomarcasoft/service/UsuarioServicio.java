@@ -835,6 +835,32 @@ public class UsuarioServicio {
 
         }
 
+        if(datos.carnetIdentidad() != null
+                && !datos.carnetIdentidad().isBlank()
+                && !soloDigitos(datos.carnetIdentidad())){
+
+            errores.add(
+                    new CampoError(
+                            "carnetIdentidad",
+                            "El documento de identidad debe contener solo números"
+                    )
+            );
+
+        }
+
+        if(datos.celular() != null
+                && !datos.celular().isBlank()
+                && !soloDigitos(datos.celular())){
+
+            errores.add(
+                    new CampoError(
+                            "celular",
+                            "El teléfono debe contener solo números"
+                    )
+            );
+
+        }
+
         if(codigoSisValido
                 && usuarioRepositorio.findByCodigoSis(codigoSis).isPresent()){
 
