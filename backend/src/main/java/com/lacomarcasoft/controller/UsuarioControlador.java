@@ -4,6 +4,7 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
+import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
 import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -50,6 +52,37 @@ public class UsuarioControlador {
         return ResponseEntity.ok(
                 usuarioServicio.listar()
         );
+
+    }
+
+    @PostMapping
+    public ResponseEntity<UsuarioRespuesta> registrarUsuario(
+
+            @RequestHeader(
+                    value = "X-Usuario-Id",
+                    required = false
+            )
+            Long idUsuarioResponsable,
+
+            @Valid
+            @RequestBody RegistrarUsuarioSolicitud solicitud,
+
+            HttpServletRequest request
+
+    ){
+
+        UsuarioRespuesta respuesta =
+                usuarioServicio.registrar(solicitud);
+
+        registrarAuditoriaRegistro(
+                idUsuarioResponsable,
+                respuesta,
+                request
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(respuesta);
 
     }
 
@@ -189,6 +222,49 @@ public class UsuarioControlador {
                     ", rol asignado: "
                     +
                     solicitud.idRol(),
+
+                    request.getRemoteAddr(),
+
+                    true
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
+    }
+
+    private void registrarAuditoriaRegistro(
+
+            Long idUsuarioResponsable,
+            UsuarioRespuesta respuesta,
+            HttpServletRequest request
+
+    ){
+
+        try {
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "REGISTRAR_USUARIO",
+
+                    "Se registró usuario con id "
+                    +
+                    respuesta.idUsuario()
+                    +
+                    ", correo: "
+                    +
+                    respuesta.correo()
+                    +
+                    ", rol asignado: "
+                    +
+                    respuesta.idRol(),
 
                     request.getRemoteAddr(),
 

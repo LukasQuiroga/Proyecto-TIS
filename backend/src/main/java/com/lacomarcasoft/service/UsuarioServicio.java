@@ -1,6 +1,7 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
+import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
 import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Rol;
@@ -10,6 +11,7 @@ import com.lacomarcasoft.repository.UsuarioRepositorio;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,6 +120,152 @@ public class UsuarioServicio {
         return new DeteccionDuplicadosRespuesta(
                 yaRegistrados,
                 repetidosEnEnvio
+        );
+
+    }
+
+    public UsuarioRespuesta registrar(
+            RegistrarUsuarioSolicitud datos
+    ){
+
+        if(datos.nombre() == null || datos.nombre().isBlank()){
+
+            throw new RuntimeException(
+                    "El nombre es obligatorio"
+            );
+
+        }
+
+        if(datos.apellido() == null || datos.apellido().isBlank()){
+
+            throw new RuntimeException(
+                    "El apellido es obligatorio"
+            );
+
+        }
+
+        if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
+
+            throw new RuntimeException(
+                    "El carnet de identidad es obligatorio"
+            );
+
+        }
+
+        if(datos.correo() == null || datos.correo().isBlank()){
+
+            throw new RuntimeException(
+                    "El correo es obligatorio"
+            );
+
+        }
+
+        if(usuarioRepositorio.findByCorreo(datos.correo()).isPresent()){
+
+            throw new RuntimeException(
+                    "El correo ya está registrado"
+            );
+
+        }
+
+        if(usuarioRepositorio
+                .findByCarnetIdentidad(datos.carnetIdentidad())
+                .isPresent()){
+
+            throw new RuntimeException(
+                    "El carnet de identidad ya está registrado"
+            );
+
+        }
+
+        String codigoSis =
+                datos.codigoSis() == null
+                        ? null
+                        : datos.codigoSis().trim();
+
+        if(codigoSis != null && !codigoSis.isBlank()
+                && usuarioRepositorio.findByCodigoSis(codigoSis).isPresent()){
+
+            throw new RuntimeException(
+                    "El código SIS ya está registrado"
+            );
+
+        }
+
+        Rol rol =
+                rolRepositorio.findById(datos.idRol())
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Rol no encontrado"
+                                )
+                        );
+
+        Usuario usuario = new Usuario();
+
+        usuario.setNombre(
+                datos.nombre()
+        );
+
+        usuario.setApellido(
+                datos.apellido()
+        );
+
+        usuario.setCarnetIdentidad(
+                datos.carnetIdentidad()
+        );
+
+        usuario.setCorreo(
+                datos.correo()
+        );
+
+        String contrasena =
+                datos.contrasena() == null
+                        || datos.contrasena().isBlank()
+                        ? datos.carnetIdentidad()
+                        : datos.contrasena();
+
+        usuario.setContrasena(
+                contrasena
+        );
+
+        usuario.setCelular(
+                datos.celular()
+        );
+
+        if(codigoSis == null || codigoSis.isBlank()){
+
+            usuario.setCodigoSis(
+                    null
+            );
+
+        } else {
+
+            usuario.setCodigoSis(
+                    codigoSis
+            );
+
+        }
+
+        usuario.setCarrera(
+                datos.carrera()
+        );
+
+        usuario.setActivo(
+                datos.activo() == null
+                        ? true
+                        : datos.activo()
+        );
+
+        usuario.setRol(
+                rol
+        );
+
+        usuario.setFechaCreacion(
+                LocalDateTime.now()
+        );
+
+        return convertirRespuesta(
+                usuarioRepositorio.save(usuario)
         );
 
     }

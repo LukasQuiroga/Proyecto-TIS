@@ -34,6 +34,8 @@ public class Usuario {
     @Column(name = "codigo_sis", unique = true)
     private String codigoSis;
 
+    private String carrera;
+
     private Boolean activo = true;
 
     private LocalDateTime fechaCreacion;
@@ -107,6 +109,14 @@ public class Usuario {
 
     public void setCodigoSis(String codigoSis) {
         this.codigoSis = codigoSis;
+    }
+
+    public String getCarrera() {
+        return carrera;
+    }
+
+    public void setCarrera(String carrera) {
+        this.carrera = carrera;
     }
 
     public Boolean getActivo() {
