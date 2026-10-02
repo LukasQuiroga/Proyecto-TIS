@@ -36,6 +36,14 @@ import {
 } from "../../context/useAuth";
 
 
+const ROLES_REGISTRO = [
+    { idRol: 1, nombre: "Administrador" },
+    { idRol: 2, nombre: "Docente" },
+    { idRol: 3, nombre: "Estudiante" },
+    { idRol: 5, nombre: "Personal de ingreso" }
+];
+
+
 const CARRERAS = [
     "Ingeniería de Sistemas",
     "Ingeniería Informática",
@@ -120,6 +128,25 @@ function RegistroUsuario(){
 
 
     const [roles,setRoles] = useState([]);
+
+    const rolesRegistro =
+        ROLES_REGISTRO
+            .map(
+                opcion => {
+
+                    const rol =
+                        roles.find(
+                            rolExistente =>
+                                rolExistente.idRol === opcion.idRol
+                        );
+
+                    return rol
+                        ? { ...rol, nombreRol: opcion.nombre }
+                        : null;
+
+                }
+            )
+            .filter(Boolean);
 
     const [formulario,setFormulario] =
         useState(ESTADO_INICIAL);
@@ -689,7 +716,7 @@ function RegistroUsuario(){
 
 
                                 {
-                                    roles.map(
+                                    rolesRegistro.map(
                                         rol => (
                                             <option
                                                 key={rol.idRol}

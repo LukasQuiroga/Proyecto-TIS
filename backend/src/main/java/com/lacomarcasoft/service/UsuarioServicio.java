@@ -647,11 +647,20 @@ public class UsuarioServicio {
 
     private String rolNombreNormalizado(String nombre){
 
-        return normalizar(
-                nombre == null
-                        ? ""
-                        : nombre
-        ).replace(" ", "");
+        String resultado =
+                normalizar(
+                        nombre == null
+                                ? ""
+                                : nombre
+                ).replace(" ", "");
+
+        if(resultado.equals("personaldeingreso")){
+
+            return "auxiliar";
+
+        }
+
+        return resultado;
 
     }
 
