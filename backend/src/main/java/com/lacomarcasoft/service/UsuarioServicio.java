@@ -2,8 +2,10 @@ package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
+import com.lacomarcasoft.dto.response.CampoError;
 import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
+import com.lacomarcasoft.exception.ValidacionRegistroException;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.RolRepositorio;
@@ -12,6 +14,7 @@ import com.lacomarcasoft.repository.UsuarioRepositorio;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -128,52 +131,39 @@ public class UsuarioServicio {
             RegistrarUsuarioSolicitud datos
     ){
 
+        List<CampoError> errores =
+                new ArrayList<>();
+
         if(datos.nombre() == null || datos.nombre().isBlank()){
 
-            throw new RuntimeException(
-                    "El nombre es obligatorio"
+            errores.add(
+                    new CampoError(
+                            "nombre",
+                            "El nombre es obligatorio"
+                    )
             );
 
         }
 
         if(datos.apellido() == null || datos.apellido().isBlank()){
 
-            throw new RuntimeException(
-                    "El apellido es obligatorio"
+            errores.add(
+                    new CampoError(
+                            "apellido",
+                            "El apellido es obligatorio"
+                    )
             );
 
         }
 
-        if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
+        if(datos.carnetIdentidad() == null
+                || datos.carnetIdentidad().isBlank()){
 
-            throw new RuntimeException(
-                    "El carnet de identidad es obligatorio"
-            );
-
-        }
-
-        if(datos.correo() == null || datos.correo().isBlank()){
-
-            throw new RuntimeException(
-                    "El correo es obligatorio"
-            );
-
-        }
-
-        if(usuarioRepositorio.findByCorreo(datos.correo()).isPresent()){
-
-            throw new RuntimeException(
-                    "El correo ya está registrado"
-            );
-
-        }
-
-        if(usuarioRepositorio
-                .findByCarnetIdentidad(datos.carnetIdentidad())
-                .isPresent()){
-
-            throw new RuntimeException(
-                    "El carnet de identidad ya está registrado"
+            errores.add(
+                    new CampoError(
+                            "carnetIdentidad",
+                            "El carnet de identidad es obligatorio"
+                    )
             );
 
         }
@@ -183,22 +173,81 @@ public class UsuarioServicio {
                         ? null
                         : datos.codigoSis().trim();
 
-        if(codigoSis != null && !codigoSis.isBlank()
+        boolean codigoSisValido =
+                codigoSis != null
+                        && !codigoSis.isBlank();
+
+        if(datos.correo() == null || datos.correo().isBlank()){
+
+            errores.add(
+                    new CampoError(
+                            "correo",
+                            "El correo es obligatorio"
+                    )
+            );
+
+        } else if(usuarioRepositorio
+                .findByCorreo(datos.correo())
+                .isPresent()){
+
+            errores.add(
+                    new CampoError(
+                            "correo",
+                            "El correo ya está registrado"
+                    )
+            );
+
+        }
+
+        if(datos.carnetIdentidad() != null
+                && !datos.carnetIdentidad().isBlank()
+                && usuarioRepositorio
+                        .findByCarnetIdentidad(datos.carnetIdentidad())
+                        .isPresent()){
+
+            errores.add(
+                    new CampoError(
+                            "carnetIdentidad",
+                            "El carnet de identidad ya está registrado"
+                    )
+            );
+
+        }
+
+        if(codigoSisValido
                 && usuarioRepositorio.findByCodigoSis(codigoSis).isPresent()){
 
-            throw new RuntimeException(
-                    "El código SIS ya está registrado"
+            errores.add(
+                    new CampoError(
+                            "codigoSis",
+                            "El código SIS ya está registrado"
+                    )
             );
 
         }
 
         Rol rol =
                 rolRepositorio.findById(datos.idRol())
-                        .orElseThrow(
-                                () -> new RuntimeException(
-                                        "Rol no encontrado"
-                                )
-                        );
+                        .orElse(null);
+
+        if(rol == null){
+
+            errores.add(
+                    new CampoError(
+                            "idRol",
+                            "Rol no encontrado"
+                    )
+            );
+
+        }
+
+        if(!errores.isEmpty()){
+
+            throw new ValidacionRegistroException(
+                    errores
+            );
+
+        }
 
         Usuario usuario = new Usuario();
 

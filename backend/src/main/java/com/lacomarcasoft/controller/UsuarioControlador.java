@@ -5,7 +5,9 @@ import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
+import com.lacomarcasoft.dto.response.CampoError;
 import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
+import com.lacomarcasoft.dto.response.ErroresRegistroRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.service.LogActividadServicio;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -279,6 +282,34 @@ public class UsuarioControlador {
             );
 
         }
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroresRegistroRespuesta> manejarValidacion(
+            MethodArgumentNotValidException e
+    ){
+
+        List<CampoError> errores =
+                e.getBindingResult()
+                        .getFieldErrors()
+                        .stream()
+                        .map(
+                                error ->
+                                        new CampoError(
+                                                error.getField(),
+                                                error.getDefaultMessage()
+                                        )
+                        )
+                        .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ErroresRegistroRespuesta(
+                                errores
+                        )
+                );
+
     }
 
 }
