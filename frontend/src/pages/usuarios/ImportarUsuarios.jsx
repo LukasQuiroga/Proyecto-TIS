@@ -16,7 +16,11 @@ import {
     FiDownload,
     FiSearch,
     FiDatabase,
-    FiLock
+    FiLock,
+    FiUsers,
+    FiCheckCircle,
+    FiXCircle,
+    FiChevronRight
 } from "react-icons/fi";
 
 import {
@@ -445,6 +449,8 @@ function ImportarUsuarios(){
 
     const [importado,setImportado] = useState(false);
 
+    const [mostrarExito,setMostrarExito] = useState(false);
+
     const [mensaje,setMensaje] = useState("");
 
     const [error,setError] = useState("");
@@ -677,6 +683,8 @@ function ImportarUsuarios(){
             setImportado(true);
 
             setPasoActivo(4);
+
+            setMostrarExito(true);
 
             setMensaje(
                 `Importación completada: ${respuesta.data.registrados} ` +
@@ -1270,6 +1278,89 @@ function ImportarUsuarios(){
                 </div>
 
             </section>
+
+
+            {
+            mostrarExito && (
+
+                <div className="import-modal-fondo">
+
+                    <div className="import-modal-exito">
+
+                        <div className="icono-exito">
+                            ✓
+                        </div>
+
+                        <h2>
+                            Importación exitosa
+                        </h2>
+
+                        <p className="import-modal-desc">
+                            La carga masiva de usuarios se completó correctamente.
+                        </p>
+
+                        <div className="import-modal-stats">
+
+                            <div className="import-modal-stat">
+                                <FiCheckCircle />
+                                <strong>{validos}</strong>
+                                <span>Registrados</span>
+                            </div>
+
+                            <div className="import-modal-stat">
+                                <FiXCircle />
+                                <strong>{conErrores}</strong>
+                                <span>Con errores</span>
+                            </div>
+
+                            <div className="import-modal-stat">
+                                <FiUsers />
+                                <strong>{total}</strong>
+                                <span>Total filas</span>
+                            </div>
+
+                        </div>
+
+                        {
+                        conErrores > 0 && (
+                            <p className="import-modal-nota">
+                                Revise las filas marcadas como inválidas
+                                en la tabla de resultados.
+                            </p>
+                        )
+                        }
+
+                        <div className="import-modal-acciones">
+
+                            <button
+                                type="button"
+                                className="import-boton import-boton-cancelar"
+                                onClick={
+                                    () => setMostrarExito(false)
+                                }
+                            >
+                                Aceptar
+                            </button>
+
+                            <button
+                                type="button"
+                                className="import-boton import-boton-importar"
+                                onClick={
+                                    () => navigate("/usuarios")
+                                }
+                            >
+                                Ver listado de usuarios
+                                <FiChevronRight />
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )
+            }
 
 
             {

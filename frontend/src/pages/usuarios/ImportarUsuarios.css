@@ -542,6 +542,150 @@ tbody .import-fila-error:hover{
     backdrop-filter:blur(3px);
 }
 
+.import-modal-fondo{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(12,32,56,0.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:1300;
+}
+
+.import-modal-exito{
+    width:440px;
+    max-width:calc(100% - 48px);
+    background:#ffffff;
+    border-radius:16px;
+    padding:34px 32px 28px;
+    text-align:center;
+    box-shadow:0 16px 48px rgba(10,42,74,0.28);
+    animation:import-entrar .22s ease-out;
+}
+
+.import-modal-exito .icono-exito{
+    width:60px;
+    height:60px;
+    margin:auto;
+    border-radius:50%;
+    background:#1f9d4f;
+    color:#ffffff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:32px;
+    box-shadow:0 8px 20px rgba(31,157,79,0.35);
+}
+
+.import-modal-exito h2{
+    margin:16px 0 8px;
+    color:#0a2a4a;
+    font-size:21px;
+}
+
+.import-modal-desc{
+    margin:0;
+    font-size:14px;
+    color:#5b7289;
+}
+
+.import-modal-stats{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin:22px 0 8px;
+}
+
+.import-modal-stat{
+    flex:1;
+    max-width:120px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:14px 8px;
+    background:#f2f8ff;
+    border:1px solid #dbe8f3;
+    border-radius:12px;
+}
+
+.import-modal-stat svg{
+    width:20px;
+    height:20px;
+    color:#0875dc;
+}
+
+.import-modal-stat strong{
+    font-size:20px;
+    color:#0a2a4a;
+}
+
+.import-modal-stat span{
+    font-size:11px;
+    color:#5b7289;
+}
+
+.import-modal-nota{
+    margin:12px 0 4px;
+    padding:10px 14px;
+    background:#fff7e6;
+    border:1px solid #f2d9a0;
+    border-radius:10px;
+    font-size:13px;
+    color:#8a6d1d;
+    text-align:left;
+}
+
+.import-modal-acciones{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:22px;
+}
+
+.import-modal-acciones .import-boton{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    justify-content:center;
+}
+
+.import-modal-acciones .import-boton-importar svg{
+    width:16px;
+    height:16px;
+}
+
+@keyframes import-entrar{
+    from{
+        opacity:0;
+        transform:translateY(10px) scale(.97);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@media(max-width:680px){
+
+    .import-modal-stats{
+        flex-wrap:wrap;
+    }
+
+    .import-modal-stat{
+        max-width:none;
+        flex:1 1 40%;
+    }
+
+    .import-modal-acciones{
+        flex-direction:column;
+    }
+
+}
+
 .import-overlay-caja{
     display:flex;
     flex-direction:column;
