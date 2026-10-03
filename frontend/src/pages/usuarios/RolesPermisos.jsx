@@ -241,70 +241,71 @@ function RolesPermisos() {
                     </div>
 
 
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre del rol</th>
-                                <th>Descripción</th>
-                            </tr>
-                        </thead>
+                    <div className="tabla-roles-scroll">
 
-                        <tbody>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre del rol</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
 
-                            {
-                                roles.length > 0 ? (
-                                    roles.map((rol) => (
-                                        <tr
-                                            key={rol.id}
-                                            onClick={() => {
+                            <tbody>
+                                {
+                                    roles.length > 0 ? (
+                                        roles.map((rol) => (
+                                            <tr
+                                                key={rol.id}
+                                                onClick={() => {
+                                                    setRolSeleccionado(rol);
 
-                                                setRolSeleccionado(rol);
+                                                    setPermisosSeleccionados(
+                                                        rol.permisos.map(
+                                                            permiso => permiso.idPermiso
+                                                        )
+                                                    );
 
-                                                setPermisosSeleccionados(
-                                                    rol.permisos.map(
-                                                        permiso => permiso.idPermiso
-                                                    )
-                                                );
+                                                }}
+                                            >
+                                                <td>
+                                                    {rol.id}
+                                                </td>
+                                                <td>
+                                                    {rol.nombre}
+                                                </td>
+                                                <td>
+                                                    {rol.descripcion}
+                                                </td>
+                                            </tr>
+                                        ))
 
-                                            }}
-                                        >
+                                    ) : (
 
-                                            <td>
-                                                {rol.id}
+                                        <tr>
+                                            <td
+                                                colSpan="3"
+                                                className="sin-datos"
+                                            >
+
+                                                <div>
+
+                                                    <p>
+                                                        No existen roles registrados
+                                                    </p>
+                                                    <span>
+                                                        Los roles disponibles aparecerán cuando sean registrados en el sistema.
+                                                    </span>
+                                                </div>
                                             </td>
-
-                                            <td>
-                                                {rol.nombre}
-                                            </td>
-
-                                            <td>
-                                                {rol.descripcion}
-                                            </td>
-
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan="3"
-                                            className="sin-datos"
-                                        >
+                                    )
+                                }
+                            </tbody>
+                        </table>
 
-                                            <div>
-                                                <p>
-                                                    No existen roles registrados
-                                                </p>
-                                                <span>
-                                                    Los roles disponibles aparecerán cuando sean registrados en el sistema.
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )
-                            }
-                        </tbody>
-                    </table>
+                    </div>
                 </section>
 
                 <section className="panel-permisos">
