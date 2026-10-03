@@ -59,7 +59,9 @@ function useInactividad() {
       window.addEventListener(evento, registrarActividad),
     );
 
-    registrarActividad();
+    comprobarInactividad();
+
+    temporizador = setTimeout(finalizarSesion, TIEMPO_INACTIVIDAD);
 
     intervalo = setInterval(comprobarInactividad, 1000);
 
