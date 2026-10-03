@@ -150,8 +150,8 @@ function RolesPermisos() {
         } catch(error) {
 
             const mensaje =
-                error.response?.data ||
-                "No se pudo crear el rol si";
+                error.response?.data?.errores?.[0]?.mensaje ||
+                "No se pudo crear el rol.";
 
             setMensajeError(mensaje);
             setMostrarError(true);
