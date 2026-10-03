@@ -51,3 +51,9 @@ export async function restablecerContrasena({
 
   return respuesta.data;
 }
+
+export async function obtenerPermisosActuales(idUsuario) {
+  const respuesta = await api.get(`/auth/${idUsuario}/permisos`);
+
+  return respuesta.data;
+}

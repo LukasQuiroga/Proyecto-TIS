@@ -93,33 +93,43 @@ public class RolServicio {
         List<Long> idsPermisos
     ){
 
+        if(
+                idsPermisos == null ||
+                idsPermisos.isEmpty()
+        ){
+                throw new IllegalArgumentException(
+                        "Debe asignar al menos un permiso al rol."
+                );
+        }
         Rol rol = buscar(idRol);
 
 
         List<Permiso> permisos =
                 permisoRepositorio.findAllById(idsPermisos);
 
-
         rol.setPermisos(
                 permisos
         );
 
-
         return rolRepositorio.save(rol);
-
         }
 
         public RolRespuesta crear(
                 CrearRolSolicitud solicitud
         ){
+                if(
+                        solicitud.permisos() == null ||
+                        solicitud.permisos().isEmpty()
+                ){
+                        throw new IllegalArgumentException(
+                                "Debe asignar al menos un permiso al rol."
+                        );
+                }
 
                 Rol rol = new Rol();
-
-
                 rol.setNombreRol(
                         solicitud.nombreRol()
                 );
-
 
                 rol.setDescripcionRol(
                         solicitud.descripcionRol()
@@ -129,21 +139,17 @@ public class RolServicio {
                         LocalDateTime.now()
                 );
 
-
                 List<Permiso> permisos =
                         permisoRepositorio.findAllById(
                                 solicitud.permisos()
                         );
 
-
                 rol.setPermisos(
                         permisos
                 );
 
-
                 Rol guardado =
                         rolRepositorio.save(rol);
-
 
                 return convertirRespuesta(
                         guardado

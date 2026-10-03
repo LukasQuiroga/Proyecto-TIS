@@ -1,5 +1,8 @@
 .roles-permisos {
   width: 100%;
+  min-height: 100%;
+  padding-bottom: 30px;
+  box-sizing: border-box;
 }
 
 .roles-permisos-header {
@@ -43,6 +46,7 @@
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 20px;
+  align-items: start;
 }
 
 .lista-roles,
@@ -76,9 +80,14 @@
   cursor: pointer;
 }
 
+.tabla-roles-scroll {
+  max-height: 500px;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+
 .lista-roles table {
   width: 100%;
-  margin-top: 20px;
   border-collapse: collapse;
 }
 
@@ -326,8 +335,49 @@
   font-size: 30px;
 }
 
+.modal-error {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.modal-error h2 {
+  margin: 15px 0 15px;
+  color: #183b5d;
+  font-size: 20px;
+}
+
+.modal-error p {
+  margin: 0 0 25px;
+  color: #526b82;
+  font-size: 14px;
+}
+
+.icono-error {
+  width: 55px;
+  height: 55px;
+  margin: auto;
+  border-radius: 50%;
+  background: #dc3545;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  font-weight: bold;
+}
+
 @media (max-width: 1000px) {
   .roles-permisos-contenido {
     grid-template-columns: 1fr;
+  }
+
+  .lista-roles,
+  .panel-permisos {
+    width: 100%;
+    box-sizing: border-box;
   }
 }

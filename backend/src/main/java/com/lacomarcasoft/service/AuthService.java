@@ -116,4 +116,19 @@ public class AuthService {
 
         tokenSesionService.cerrar(tokenId);
     }
+
+    public List<String> obtenerPermisosActuales(Long idUsuario){
+        Usuario usuario = usuarioRepositorio
+                .findById(idUsuario)
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Usuario no encontrado"
+                        )
+                );
+        return usuario.getRol()
+                .getPermisos()
+                .stream()
+                .map(permiso -> permiso.getNombrePermiso())
+                .toList();
+    }
 }

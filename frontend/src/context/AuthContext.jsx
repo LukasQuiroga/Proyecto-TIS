@@ -1,5 +1,6 @@
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {AuthContext} from "./authContext";
+import {obtenerPermisosActuales} from "../services/authService";
 
 export function AuthProvider({children}){
 
@@ -22,6 +23,67 @@ export function AuthProvider({children}){
         );
     });
 
+    const [permisosActualizados,setPermisosActualizados]=
+        useState(false);
+
+    useEffect(()=>{
+
+        if(!usuario?.idUsuario || !token){
+            return;
+        }
+
+        const verificarPermisos=async()=>{
+
+            try{
+
+                const permisosActuales=
+                    await obtenerPermisosActuales(
+                        usuario.idUsuario
+                    );
+
+                const permisosSesion=
+                    usuario.permisos||[];
+
+                const permisosActualesOrdenados=
+                    [...permisosActuales].sort();
+
+                const permisosSesionOrdenados=
+                    [...permisosSesion].sort();
+
+                const cambiaron=
+                    JSON.stringify(
+                        permisosActualesOrdenados
+                    )!==
+                    JSON.stringify(
+                        permisosSesionOrdenados
+                    );
+
+                if(cambiaron){
+                    setPermisosActualizados(true);
+                }
+
+            }catch(error){
+
+                console.error(
+                    "Error verificando permisos:",
+                    error
+                );
+            }
+        };
+
+        verificarPermisos();
+
+        const intervalo=setInterval(
+            verificarPermisos,
+            30000
+        );
+
+        return()=>{
+            clearInterval(intervalo);
+        };
+
+    },[usuario,token]);
+
     const cargando=false;
 
     const iniciarSesion=(
@@ -32,6 +94,7 @@ export function AuthProvider({children}){
 
         setUsuario(datosUsuario);
         setToken(tokenJwt);
+        setPermisosActualizados(false);
 
         localStorage.removeItem("usuario");
         localStorage.removeItem("token");
@@ -74,6 +137,7 @@ export function AuthProvider({children}){
 
         setUsuario(null);
         setToken(null);
+        setPermisosActualizados(false);
 
         localStorage.removeItem("usuario");
         localStorage.removeItem("token");
@@ -90,7 +154,9 @@ export function AuthProvider({children}){
                 token,
                 cargando,
                 iniciarSesion,
-                cerrarSesion
+                cerrarSesion,
+                permisosActualizados,
+                setPermisosActualizados
             }}
         >
             {children}

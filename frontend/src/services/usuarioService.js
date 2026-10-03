@@ -30,6 +30,15 @@ export const obtenerUsuario = (id) => {
   return api.get(`${API}/${id}`);
 };
 
+export const obtenerUsuariosPaginado = (pagina = 0, tamanio = 7) => {
+  return api.get(`${API}/paginado`, {
+    params: {
+      page: pagina,
+      size: tamanio,
+    },
+  });
+};
+
 export const modificarUsuario = (id, usuario) => {
   return api.put(`${API}/${id}`, usuario);
 };

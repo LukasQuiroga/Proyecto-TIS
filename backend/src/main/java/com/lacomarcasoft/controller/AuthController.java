@@ -3,9 +3,10 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.LoginRequest;
 import com.lacomarcasoft.dto.response.LoginRespuesta;
 import com.lacomarcasoft.service.AuthService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -14,9 +15,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    public AuthController(
-        AuthService authService
-    ){
+    public AuthController(AuthService authService){
         this.authService=authService;
     }
 
@@ -30,16 +29,13 @@ public class AuthController {
             LoginRespuesta respuesta=
                 authService.login(request);
 
-            return ResponseEntity.ok(
-                respuesta
-            );
+            return ResponseEntity.ok(respuesta);
 
         }catch(Exception e){
 
             return ResponseEntity
                 .badRequest()
                 .body(e.getMessage());
-
         }
     }
 
@@ -63,7 +59,6 @@ public class AuthController {
                     authorization.substring(7);
 
                 authService.logout(token);
-
             }
 
             return ResponseEntity.ok().build();
@@ -71,7 +66,16 @@ public class AuthController {
         }catch(Exception e){
 
             return ResponseEntity.ok().build();
-
         }
+    }
+
+    @GetMapping("/{idUsuario}/permisos")
+    public ResponseEntity<List<String>> obtenerPermisosActuales(
+        @PathVariable Long idUsuario
+    ){
+
+        return ResponseEntity.ok(
+            authService.obtenerPermisosActuales(idUsuario)
+        );
     }
 }

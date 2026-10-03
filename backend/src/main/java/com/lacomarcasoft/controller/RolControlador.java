@@ -5,7 +5,10 @@ import com.lacomarcasoft.dto.response.RolRespuesta;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.service.RolServicio;
 import com.lacomarcasoft.dto.request.CrearRolSolicitud;
-
+import com.lacomarcasoft.dto.response.CampoError;
+import com.lacomarcasoft.dto.response.ErroresRegistroRespuesta;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,6 +52,7 @@ public class RolControlador {
 
     @PostMapping
         public ResponseEntity<RolRespuesta> crearRol(
+                @Valid 
                 @RequestBody CrearRolSolicitud solicitud
         ){
 
@@ -81,4 +85,37 @@ public class RolControlador {
 
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<String> manejarError(
+                IllegalArgumentException e
+        ){
+        return ResponseEntity
+                .badRequest()
+                .body(e.getMessage());
+        }
+
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ErroresRegistroRespuesta> manejarValidacion(
+                MethodArgumentNotValidException e
+        ){
+        List<CampoError> errores =
+                e.getBindingResult()
+                        .getFieldErrors()
+                        .stream()
+                        .map(
+                                error ->
+                                        new CampoError(
+                                                error.getField(),
+                                                error.getDefaultMessage()
+                                        )
+                        )
+                        .toList();
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ErroresRegistroRespuesta(
+                                errores
+                        )
+                );
+        }
 }
