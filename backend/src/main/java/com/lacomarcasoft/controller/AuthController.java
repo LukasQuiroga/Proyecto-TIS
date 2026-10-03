@@ -7,6 +7,8 @@ import com.lacomarcasoft.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -50,6 +52,15 @@ public class AuthController {
 
         }
 
+    }
+
+    @GetMapping("/{idUsuario}/permisos")
+        public ResponseEntity<List<String>> obtenerPermisosActuales(
+                @PathVariable Long idUsuario
+        ){
+        return ResponseEntity.ok(
+                authService.obtenerPermisosActuales(idUsuario)
+        );
     }
 
 }
