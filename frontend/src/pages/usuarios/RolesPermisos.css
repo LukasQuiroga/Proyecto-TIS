@@ -331,6 +331,41 @@
   font-size: 30px;
 }
 
+.modal-error {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.modal-error h2 {
+  margin: 15px 0 15px;
+  color: #183b5d;
+  font-size: 20px;
+}
+
+.modal-error p {
+  margin: 0 0 25px;
+  color: #526b82;
+  font-size: 14px;
+}
+
+.icono-error {
+  width: 55px;
+  height: 55px;
+  margin: auto;
+  border-radius: 50%;
+  background: #dc3545;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  font-weight: bold;
+}
+
 @media (max-width: 1000px) {
   .roles-permisos-contenido {
     grid-template-columns: 1fr;

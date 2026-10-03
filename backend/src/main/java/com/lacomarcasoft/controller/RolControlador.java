@@ -81,4 +81,12 @@ public class RolControlador {
 
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<String> manejarError(
+                IllegalArgumentException e
+        ){
+        return ResponseEntity
+                .badRequest()
+                .body(e.getMessage());
+        }
 }

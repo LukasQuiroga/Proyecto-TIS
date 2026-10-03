@@ -63,7 +63,9 @@ function RolesPermisos() {
     const [mostrarExito, setMostrarExito] = useState(false);
     const [guardandoPermisos, setGuardandoPermisos] = useState(false);
     const [mostrarExitoPermisos, setMostrarExitoPermisos] = useState(false);
-
+    const [mostrarError, setMostrarError] = useState(false);
+    const [mensajeError, setMensajeError] = useState("");
+  
     const abrirModalNuevoRol = () => {
 
     setNuevoRol({
@@ -110,6 +112,13 @@ function RolesPermisos() {
 
 
     const crearRol = async () => {
+        if (nuevoRol.permisos.length === 0) {
+            setMensajeError(
+                "Debe asignar al menos un permiso al nuevo rol."
+            );
+            setMostrarError(true);
+            return;
+        }
         try {
             setProcesandoCrearRol(true);
 
@@ -140,10 +149,12 @@ function RolesPermisos() {
 
         } catch(error) {
 
-            console.error(
-                "Error creando rol:",
-                error
-            );
+            const mensaje =
+                error.response?.data ||
+                "No se pudo crear el rol si";
+
+            setMensajeError(mensaje);
+            setMostrarError(true);
 
         } finally {
             setProcesandoCrearRol(false);
@@ -152,7 +163,13 @@ function RolesPermisos() {
     };
 
     const guardarPermisos = async () => {
-
+        if (permisosSeleccionados.length === 0) {
+            setMensajeError(
+                "Debe asignar al menos un permiso al rol."
+            );
+            setMostrarError(true);
+            return;
+        }
         try {
             setGuardandoPermisos(true);
             await actualizarPermisosRol(
@@ -184,10 +201,11 @@ function RolesPermisos() {
 
         } catch(error) {
 
-            console.error(
-                "Error actualizando permisos:",
-                error
-            );
+           const mensaje =
+                error.response?.data ||
+                "No se pudieron actualizar los permisos del rol";
+            setMensajeError(mensaje);
+            setMostrarError(true);
 
         } finally {
             setGuardandoPermisos(false);
@@ -483,7 +501,7 @@ function RolesPermisos() {
                         }
                       />
 
-                      {permiso.nombrePermiso}
+                      {permiso.descripcion}
 
                     </label>
 
@@ -594,6 +612,29 @@ function RolesPermisos() {
             )
         }
 
+        {
+            mostrarError && (
+                <div className="modal-fondo">
+                    <div className="modal-error">
+                        <div className="icono-error">
+                            !
+                        </div>
+                        <h2>
+                            Validación
+                        </h2>
+                        <p>
+                            {mensajeError}
+                        </p>
+                        <button
+                            className="guardar"
+                            onClick={() => setMostrarError(false)}
+                        >
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+            )
+        }
     </div>
   );
 }
