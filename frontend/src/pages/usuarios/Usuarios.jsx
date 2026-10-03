@@ -120,24 +120,35 @@ function Usuarios(){
                     <input
                         placeholder="Nombre"
                         value={nombre}
+                        maxLength={80}
                         onChange={e=>setNombre(e.target.value)}
                     />
 
                     <input
                         placeholder="Apellido"
                         value={apellido}
+                        maxLength={80}
                         onChange={e=>setApellido(e.target.value)}
                     />
 
                     <input
                         placeholder="C.I."
                         value={ci}
-                        onChange={e=>setCi(e.target.value)}
+                        maxLength={30}
+                        inputMode="numeric"
+                        onChange={e=>
+                            setCi(
+                                e.target.value
+                                    .replace(/\D/g,"")
+                                    .slice(0,30)
+                            )
+                        }
                     />
 
                     <input
                         placeholder="Correo"
                         value={correo}
+                        maxLength={150}
                         onChange={e=>setCorreo(e.target.value)}
                     />
 
