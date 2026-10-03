@@ -1,5 +1,6 @@
 package com.lacomarcasoft.service;
 
+import com.lacomarcasoft.modelo.Materia;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuarioFilaSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
@@ -69,6 +70,22 @@ public class UsuarioServicio {
                 .findAll(pageable)
                 .map(this::convertirRespuesta);
     }
+
+    public List<MateriaRespuesta> listarMaterias(){
+
+        return materiaRepositorio
+                .findAllByOrderByNombreMateriaAscGrupoAsc()
+                .stream()
+                .map(
+                        materia ->
+                                new MateriaRespuesta(
+                                        materia.getIdMateria(),
+                                        materia.getNombreMateria(),
+                                        materia.getGrupo()
+                                )
+                )
+                .toList();
+        }
 
     public Usuario buscar(Long id){
 
@@ -999,123 +1016,169 @@ public class UsuarioServicio {
     }
 
     public Usuario modificar(
-            Long id,
-            ActualizarUsuarioSolicitud datos
-    ){
-
+                Long id,
+                ActualizarUsuarioSolicitud datos
+        ){
 
         if(datos.nombre() == null || datos.nombre().isBlank()){
-
-            throw new RuntimeException(
-                    "El nombre es obligatorio"
-            );
-
+                throw new RuntimeException(
+                        "El nombre es obligatorio"
+                );
         }
-
 
         if(datos.apellido() == null || datos.apellido().isBlank()){
-
-            throw new RuntimeException(
-                    "El apellido es obligatorio"
-            );
-
+                throw new RuntimeException(
+                        "El apellido es obligatorio"
+                );
         }
 
+        if(datos.carnetIdentidad() == null
+                || datos.carnetIdentidad().isBlank()){
 
-        if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
-
-            throw new RuntimeException(
-                    "El carnet de identidad es obligatorio"
-            );
-
+                throw new RuntimeException(
+                        "El carnet de identidad es obligatorio"
+                );
         }
-
 
         if(datos.correo() == null || datos.correo().isBlank()){
-
-            throw new RuntimeException(
-                    "El correo es obligatorio"
-            );
-
+                throw new RuntimeException(
+                        "El correo es obligatorio"
+                );
         }
-
 
         Usuario usuarioExistenteCorreo =
-                usuarioRepositorio.findByCorreo(
-                        datos.correo()
-                )
-                .orElse(null);
+                usuarioRepositorio
+                        .findByCorreo(datos.correo())
+                        .orElse(null);
 
+        if(usuarioExistenteCorreo != null
+                && !usuarioExistenteCorreo
+                        .getIdUsuario()
+                        .equals(id)){
 
-        if(usuarioExistenteCorreo != null &&
-                !usuarioExistenteCorreo.getIdUsuario().equals(id)){
-
-            throw new RuntimeException(
-                    "El correo ya está registrado"
-            );
-
+                throw new RuntimeException(
+                        "El correo ya está registrado"
+                );
         }
 
-
         Usuario usuarioExistenteCarnet =
-                usuarioRepositorio.findByCarnetIdentidad(
-                        datos.carnetIdentidad()
-                )
-                .orElse(null);
+                usuarioRepositorio
+                        .findByCarnetIdentidad(
+                                datos.carnetIdentidad()
+                        )
+                        .orElse(null);
 
+        if(usuarioExistenteCarnet != null
+                && !usuarioExistenteCarnet
+                        .getIdUsuario()
+                        .equals(id)){
 
-        if(usuarioExistenteCarnet != null &&
-                !usuarioExistenteCarnet.getIdUsuario().equals(id)){
-
-            throw new RuntimeException(
-                    "El carnet de identidad ya está registrado"
-            );
-
+                throw new RuntimeException(
+                        "El carnet de identidad ya está registrado"
+                );
         }
 
         Usuario usuario = buscar(id);
 
+        if(datos.idRol() == null){
+                throw new RuntimeException(
+                        "El rol es obligatorio"
+                );
+        }
+
         Rol rol =
-                rolRepositorio.findById(datos.idRol())
+                rolRepositorio
+                        .findById(datos.idRol())
                         .orElseThrow(
                                 () -> new RuntimeException(
                                         "Rol no encontrado"
                                 )
                         );
 
-
         usuario.setNombre(
                 datos.nombre()
         );
-
 
         usuario.setApellido(
                 datos.apellido()
         );
 
-
         usuario.setCarnetIdentidad(
                 datos.carnetIdentidad()
         );
-
 
         usuario.setCorreo(
                 datos.correo()
         );
 
-
-        usuario.setActivo(
-                datos.activo()
+        usuario.setCelular(
+                datos.celular() == null
+                        || datos.celular().isBlank()
+                        ? null
+                        : datos.celular()
         );
 
+        usuario.setCarrera(
+                datos.carrera() == null
+                        || datos.carrera().isBlank()
+                        ? null
+                        : datos.carrera()
+        );
+
+        usuario.setCodigoSis(
+                datos.codigoSis() == null
+                        || datos.codigoSis().isBlank()
+                        ? null
+                        : datos.codigoSis()
+        );
+
+        usuario.setActivo(
+                datos.activo() == null
+                        ? true
+                        : datos.activo()
+        );
 
         usuario.setRol(
                 rol
         );
 
-        return usuarioRepositorio.save(usuario);
+        Usuario usuarioGuardado =
+                usuarioRepositorio.save(usuario);
 
-    }
+        if(datos.idsMaterias() != null
+                && !datos.idsMaterias().isEmpty()){
+
+                List<Long> idsMaterias =
+                        datos.idsMaterias()
+                                .stream()
+                                .distinct()
+                                .toList();
+
+                List<Materia> materias =
+                        materiaRepositorio.findAllById(
+                                idsMaterias
+                        );
+
+                if(materias.size() != idsMaterias.size()){
+                throw new RuntimeException(
+                        "Una o más materias seleccionadas no existen"
+                );
+                }
+
+                for(Materia materia : materias){
+
+                materia.setDocente(
+                        usuarioGuardado
+                );
+                }
+
+                materiaRepositorio.saveAll(
+                        materias
+                );
+        }
+
+        return usuarioGuardado;
+        }
 
     public Usuario cambiarRol(
             Long idUsuario,

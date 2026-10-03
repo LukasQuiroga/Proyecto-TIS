@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { cerrarSesionBackend } from "../services/authService";
 
-const TIEMPO_INACTIVIDAD = 20000;
+const TIEMPO_INACTIVIDAD = 60000;
 
 function useInactividad() {
   const { usuario, cerrarSesion } = useAuth();
