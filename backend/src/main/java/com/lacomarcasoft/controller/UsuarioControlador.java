@@ -1,6 +1,6 @@
 package com.lacomarcasoft.controller;
 
-
+import com.lacomarcasoft.dto.response.MateriaRespuesta;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
@@ -210,6 +210,15 @@ public class UsuarioControlador {
         );
 
     }
+
+
+    @GetMapping("/materias")
+        public ResponseEntity<List<MateriaRespuesta>> listarMaterias(){
+
+        return ResponseEntity.ok(
+                usuarioServicio.listarMaterias()
+        );
+      }
 
 
     @PutMapping("/{id}")

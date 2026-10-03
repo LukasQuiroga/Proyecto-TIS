@@ -30,6 +30,10 @@ export const obtenerUsuario = (id) => {
   return api.get(`${API}/${id}`);
 };
 
+export const obtenerMaterias = () => {
+  return api.get(`${API}/materias`);
+};
+
 export const obtenerUsuariosPaginado = (pagina = 0, tamanio = 7) => {
   return api.get(`${API}/paginado`, {
     params: {
