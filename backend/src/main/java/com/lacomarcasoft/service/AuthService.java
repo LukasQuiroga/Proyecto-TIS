@@ -5,6 +5,8 @@ import com.lacomarcasoft.dto.response.LoginRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+import com.lacomarcasoft.security.JwtService;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +15,22 @@ import java.util.List;
 public class AuthService {
 
     private final UsuarioRepositorio usuarioRepositorio;
+    private final JwtService jwtService;
+    private final TokenSesionService tokenSesionService;
 
-    public AuthService(UsuarioRepositorio usuarioRepositorio){
-        this.usuarioRepositorio=usuarioRepositorio;
+    public AuthService(
+        UsuarioRepositorio usuarioRepositorio,
+        JwtService jwtService,
+        TokenSesionService tokenSesionService
+    ){
+        this.usuarioRepositorio=
+            usuarioRepositorio;
+
+        this.jwtService=
+            jwtService;
+
+        this.tokenSesionService=
+            tokenSesionService;
     }
 
     public LoginRespuesta login(LoginRequest request){
@@ -23,38 +38,82 @@ public class AuthService {
         Usuario usuario=usuarioRepositorio
             .findByCorreo(request.correo())
             .orElseThrow(
-                ()->new RuntimeException("Credenciales incorrectas")
+                ()->new RuntimeException(
+                    "Credenciales incorrectas"
+                )
             );
 
         if(!usuario.getActivo()){
-            throw new RuntimeException("Usuario inactivo");
+            throw new RuntimeException(
+                "Usuario inactivo"
+            );
         }
 
-        if(!usuario.getContrasena().equals(request.password())){
-            throw new RuntimeException("Credenciales incorrectas");
+        /*
+         * Por ahora se mantiene la comparación
+         * actual del proyecto.
+         * BCrypt lo podemos implementar después.
+         */
+        if(
+            !usuario
+                .getContrasena()
+                .equals(request.password())
+        ){
+            throw new RuntimeException(
+                "Credenciales incorrectas"
+            );
         }
 
-        UsuarioRespuesta respuesta=new UsuarioRespuesta(
-            usuario.getIdUsuario(),
-            usuario.getNombre(),
-            usuario.getApellido(),
-            usuario.getCarnetIdentidad(),
-            usuario.getCorreo(),
-            usuario.getCelular(),
-            usuario.getCarrera(),
-            usuario.getCodigoSis(),
-            usuario.getRol().getIdRol(),
-            usuario.getRol().getNombreRol(),
-            usuario.getActivo(),
-            usuario.getFechaCreacion(),
-            usuario.getRol()
-                .getPermisos()
-                .stream()
-                .map(permiso->permiso.getNombrePermiso())
-                .toList(),
-            List.of()
+        String tokenId=
+            jwtService.generarTokenId();
+
+        String token=
+            jwtService.generarToken(
+                usuario,
+                tokenId
+            );
+
+        tokenSesionService.crear(
+            usuario,
+            tokenId
         );
 
-        return new LoginRespuesta(respuesta);
+        UsuarioRespuesta respuesta=
+            new UsuarioRespuesta(
+                usuario.getIdUsuario(),
+                usuario.getNombre(),
+                usuario.getApellido(),
+                usuario.getCarnetIdentidad(),
+                usuario.getCorreo(),
+                usuario.getCelular(),
+                usuario.getCarrera(),
+                usuario.getCodigoSis(),
+                usuario.getRol().getIdRol(),
+                usuario.getRol().getNombreRol(),
+                usuario.getActivo(),
+                usuario.getFechaCreacion(),
+                usuario.getRol()
+                    .getPermisos()
+                    .stream()
+                    .map(
+                        permiso->
+                            permiso.getNombrePermiso()
+                    )
+                    .toList(),
+                List.of()
+            );
+
+        return new LoginRespuesta(
+            token,
+            respuesta
+        );
+    }
+
+    public void logout(String token){
+
+        String tokenId=
+            jwtService.obtenerTokenId(token);
+
+        tokenSesionService.cerrar(tokenId);
     }
 }
