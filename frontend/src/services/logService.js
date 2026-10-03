@@ -1,31 +1,6 @@
-const API_LOGS = "/api/logs";
+import api from "./api";
 
-function construirHeaders() {
-  const credenciales = `Basic ${btoa("admin:exampass")}`;
-
-  return {
-    Authorization: credenciales,
-    "X-Usuario-Id": "1",
-  };
-}
-
-async function procesarRespuesta(respuesta) {
-  if (respuesta.ok) {
-    return respuesta.json();
-  }
-
-  let mensaje = "No fue posible completar la consulta.";
-
-  try {
-    const error = await respuesta.json();
-
-    mensaje = error.detail || error.message || error.error || mensaje;
-  } catch {
-    // La API no devolvió JSON.
-  }
-
-  throw new Error(mensaje);
-}
+const API_LOGS = "/logs";
 
 export async function consultarLogs({
   busqueda = "",
@@ -36,47 +11,44 @@ export async function consultarLogs({
   pagina = 0,
   tamanio = 10,
 } = {}) {
-  const parametros = new URLSearchParams();
+  const parametros = {};
 
   if (busqueda.trim()) {
-    parametros.set("busqueda", busqueda.trim());
+    parametros.busqueda = busqueda.trim();
   }
 
   if (tipoAccion) {
-    parametros.set("tipoAccion", tipoAccion);
+    parametros.tipoAccion = tipoAccion;
   }
 
   if (fechaDesde) {
-    parametros.set("fechaDesde", fechaDesde);
+    parametros.fechaDesde = fechaDesde;
   }
 
   if (fechaHasta) {
-    parametros.set("fechaHasta", fechaHasta);
+    parametros.fechaHasta = fechaHasta;
   }
 
   if (estado === "EXITOSA") {
-    parametros.set("exitosa", "true");
+    parametros.exitosa = true;
   }
 
   if (estado === "NO_EXITOSA") {
-    parametros.set("exitosa", "false");
+    parametros.exitosa = false;
   }
 
-  parametros.set("pagina", pagina);
+  parametros.pagina = pagina;
+  parametros.tamanio = tamanio;
 
-  parametros.set("tamanio", tamanio);
-
-  const respuesta = await fetch(`${API_LOGS}?${parametros.toString()}`, {
-    headers: construirHeaders(),
+  const respuesta = await api.get(API_LOGS, {
+    params: parametros,
   });
 
-  return procesarRespuesta(respuesta);
+  return respuesta.data;
 }
 
 export async function obtenerTiposLog() {
-  const respuesta = await fetch(`${API_LOGS}/tipos`, {
-    headers: construirHeaders(),
-  });
+  const respuesta = await api.get(`${API_LOGS}/tipos`);
 
-  return procesarRespuesta(respuesta);
+  return respuesta.data;
 }

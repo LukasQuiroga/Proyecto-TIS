@@ -1,61 +1,39 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:8080/api/usuarios";
+const API = "/usuarios";
 
 export const obtenerUsuarios = () => {
-  return axios.get(API);
+  return api.get(API);
 };
 
-export const registrarUsuario = (
-    usuario,
-    idUsuarioResponsable
-    ) => {
-    return axios.post(
-        API,
-        usuario,
-        {
-            headers: {
-                "X-Usuario-Id":
-                    idUsuarioResponsable || ""
-            }
-        }
-    );
-
+export const registrarUsuario = (usuario, idUsuarioResponsable) => {
+  return api.post(API, usuario, {
+    headers: {
+      "X-Usuario-Id": idUsuarioResponsable || "",
+    },
+  });
 };
 
 export const analizarImportacion = (datos) => {
-    return axios.post(
-        `${API}/importar/analizar`,
-        datos
-    );
-
+  return api.post(`${API}/importar/analizar`, datos);
 };
 
-export const importarUsuarios = (
-    datos,
-    idUsuarioResponsable
-    ) => {
-    return axios.post(
-        `${API}/importar`,
-        datos,
-        {
-            headers: {
-                "X-Usuario-Id":
-                    idUsuarioResponsable || ""
-            }
-        }
-    );
-
+export const importarUsuarios = (datos, idUsuarioResponsable) => {
+  return api.post(`${API}/importar`, datos, {
+    headers: {
+      "X-Usuario-Id": idUsuarioResponsable || "",
+    },
+  });
 };
 
 export const obtenerUsuario = (id) => {
-  return axios.get(`${API}/${id}`);
+  return api.get(`${API}/${id}`);
 };
 
 export const modificarUsuario = (id, usuario) => {
-  return axios.put(`${API}/${id}`, usuario);
+  return api.put(`${API}/${id}`, usuario);
 };
 
 export const cambiarRolUsuario = (id, idRol) => {
-  return axios.put(`${API}/${id}/rol`, { idRol });
+  return api.put(`${API}/${id}/rol`, { idRol });
 };

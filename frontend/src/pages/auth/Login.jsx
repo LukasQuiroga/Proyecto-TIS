@@ -35,6 +35,7 @@ function Login(){
 
             iniciarSesion(
                 respuesta.usuario,
+                respuesta.token,
                 recordar
             );
 
