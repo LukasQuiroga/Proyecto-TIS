@@ -70,14 +70,15 @@ function Navbar() {
               </button>
 
               <button
-                type="button"
-                onClick={() => {
-                  setMenuAbierto(false);
-                  cerrarSesion();
-                }}
+                  type="button"
+                  onClick={()=>{
+                      setMenuAbierto(false);
+                      cerrarSesion();
+                      navigate("/login",{replace:true});
+                  }}
               >
-                <FiLogOut />
-                Cerrar sesión
+                  <FiLogOut/>
+                  Cerrar sesión
               </button>
             </div>
           )}
