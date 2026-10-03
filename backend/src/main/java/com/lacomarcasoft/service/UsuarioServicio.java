@@ -17,6 +17,8 @@ import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
 
@@ -60,6 +62,12 @@ public class UsuarioServicio {
                 .map(this::convertirRespuesta)
                 .toList();
 
+    }
+
+    public Page<UsuarioRespuesta> listarPaginado(Pageable pageable){
+        return usuarioRepositorio
+                .findAll(pageable)
+                .map(this::convertirRespuesta);
     }
 
     public Usuario buscar(Long id){

@@ -23,6 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 
 
@@ -57,6 +60,17 @@ public class UsuarioControlador {
 
         return ResponseEntity.ok(
                 usuarioServicio.listar()
+        );
+
+    }
+
+    @GetMapping("/paginado")
+        public ResponseEntity<Page<UsuarioRespuesta>> listarUsuariosPaginado(
+                @PageableDefault(size = 7)
+                Pageable pageable
+        ){
+                return ResponseEntity.ok(
+                        usuarioServicio.listarPaginado(pageable)
         );
 
     }

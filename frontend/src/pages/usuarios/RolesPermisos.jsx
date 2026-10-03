@@ -63,7 +63,9 @@ function RolesPermisos() {
     const [mostrarExito, setMostrarExito] = useState(false);
     const [guardandoPermisos, setGuardandoPermisos] = useState(false);
     const [mostrarExitoPermisos, setMostrarExitoPermisos] = useState(false);
-
+    const [mostrarError, setMostrarError] = useState(false);
+    const [mensajeError, setMensajeError] = useState("");
+  
     const abrirModalNuevoRol = () => {
 
     setNuevoRol({
@@ -110,6 +112,13 @@ function RolesPermisos() {
 
 
     const crearRol = async () => {
+        if (nuevoRol.permisos.length === 0) {
+            setMensajeError(
+                "Debe asignar al menos un permiso al nuevo rol."
+            );
+            setMostrarError(true);
+            return;
+        }
         try {
             setProcesandoCrearRol(true);
 
@@ -140,10 +149,12 @@ function RolesPermisos() {
 
         } catch(error) {
 
-            console.error(
-                "Error creando rol:",
-                error
-            );
+            const mensaje =
+                error.response?.data?.errores?.[0]?.mensaje ||
+                "No se pudo crear el rol.";
+
+            setMensajeError(mensaje);
+            setMostrarError(true);
 
         } finally {
             setProcesandoCrearRol(false);
@@ -152,7 +163,13 @@ function RolesPermisos() {
     };
 
     const guardarPermisos = async () => {
-
+        if (permisosSeleccionados.length === 0) {
+            setMensajeError(
+                "Debe asignar al menos un permiso al rol."
+            );
+            setMostrarError(true);
+            return;
+        }
         try {
             setGuardandoPermisos(true);
             await actualizarPermisosRol(
@@ -184,10 +201,11 @@ function RolesPermisos() {
 
         } catch(error) {
 
-            console.error(
-                "Error actualizando permisos:",
-                error
-            );
+           const mensaje =
+                error.response?.data ||
+                "No se pudieron actualizar los permisos del rol";
+            setMensajeError(mensaje);
+            setMostrarError(true);
 
         } finally {
             setGuardandoPermisos(false);
@@ -241,70 +259,71 @@ function RolesPermisos() {
                     </div>
 
 
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre del rol</th>
-                                <th>Descripción</th>
-                            </tr>
-                        </thead>
+                    <div className="tabla-roles-scroll">
 
-                        <tbody>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre del rol</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
 
-                            {
-                                roles.length > 0 ? (
-                                    roles.map((rol) => (
-                                        <tr
-                                            key={rol.id}
-                                            onClick={() => {
+                            <tbody>
+                                {
+                                    roles.length > 0 ? (
+                                        roles.map((rol) => (
+                                            <tr
+                                                key={rol.id}
+                                                onClick={() => {
+                                                    setRolSeleccionado(rol);
 
-                                                setRolSeleccionado(rol);
+                                                    setPermisosSeleccionados(
+                                                        rol.permisos.map(
+                                                            permiso => permiso.idPermiso
+                                                        )
+                                                    );
 
-                                                setPermisosSeleccionados(
-                                                    rol.permisos.map(
-                                                        permiso => permiso.idPermiso
-                                                    )
-                                                );
+                                                }}
+                                            >
+                                                <td>
+                                                    {rol.id}
+                                                </td>
+                                                <td>
+                                                    {rol.nombre}
+                                                </td>
+                                                <td>
+                                                    {rol.descripcion}
+                                                </td>
+                                            </tr>
+                                        ))
 
-                                            }}
-                                        >
+                                    ) : (
 
-                                            <td>
-                                                {rol.id}
+                                        <tr>
+                                            <td
+                                                colSpan="3"
+                                                className="sin-datos"
+                                            >
+
+                                                <div>
+
+                                                    <p>
+                                                        No existen roles registrados
+                                                    </p>
+                                                    <span>
+                                                        Los roles disponibles aparecerán cuando sean registrados en el sistema.
+                                                    </span>
+                                                </div>
                                             </td>
-
-                                            <td>
-                                                {rol.nombre}
-                                            </td>
-
-                                            <td>
-                                                {rol.descripcion}
-                                            </td>
-
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan="3"
-                                            className="sin-datos"
-                                        >
+                                    )
+                                }
+                            </tbody>
+                        </table>
 
-                                            <div>
-                                                <p>
-                                                    No existen roles registrados
-                                                </p>
-                                                <span>
-                                                    Los roles disponibles aparecerán cuando sean registrados en el sistema.
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )
-                            }
-                        </tbody>
-                    </table>
+                    </div>
                 </section>
 
                 <section className="panel-permisos">
@@ -424,14 +443,19 @@ function RolesPermisos() {
                 </label>
 
                 <input
-                  type="text"
-                  value={nuevoRol.nombre}
-                  onChange={(e) =>
-                    setNuevoRol({
-                      ...nuevoRol,
-                      nombre: e.target.value
-                    })
-                  }
+                    type="text"
+                    value={nuevoRol.nombre}
+                    maxLength={50}
+                    onChange={(e) => {
+                        const valor = e.target.value.replace(
+                            /[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g,
+                            ""
+                        );
+                        setNuevoRol({
+                            ...nuevoRol,
+                            nombre: valor
+                        });
+                    }}
                 />
 
               </div>
@@ -482,7 +506,7 @@ function RolesPermisos() {
                         }
                       />
 
-                      {permiso.nombrePermiso}
+                      {permiso.descripcion}
 
                     </label>
 
@@ -593,6 +617,29 @@ function RolesPermisos() {
             )
         }
 
+        {
+            mostrarError && (
+                <div className="modal-fondo">
+                    <div className="modal-error">
+                        <div className="icono-error">
+                            !
+                        </div>
+                        <h2>
+                            Validación
+                        </h2>
+                        <p>
+                            {mensajeError}
+                        </p>
+                        <button
+                            className="guardar"
+                            onClick={() => setMostrarError(false)}
+                        >
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+            )
+        }
     </div>
   );
 }

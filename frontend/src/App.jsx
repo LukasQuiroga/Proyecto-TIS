@@ -20,6 +20,7 @@ import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
 import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
 import RegistroUsuario from "./pages/usuarios/RegistroUsuario.jsx";
 import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
+import PermisosActualizadosModal from "./components/Modal/PermisosActualizadosModal";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -32,7 +33,7 @@ function App(){
         <AuthProvider>
 
             <BrowserRouter>
-
+                <PermisosActualizadosModal />
                 <Routes>
 
 

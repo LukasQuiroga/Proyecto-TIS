@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthContext } from "./authContext";
+import { obtenerPermisosActuales } from "../services/authService";
 
 
 
@@ -21,6 +22,47 @@ export function AuthProvider({ children }) {
 
     });
 
+    const [permisosActualizados, setPermisosActualizados] = useState(false);
+    
+    useEffect(() => {
+        if (!usuario?.idUsuario) {
+            return;
+        }
+        const verificarPermisos = async () => {
+            try {
+                const permisosActuales =
+                    await obtenerPermisosActuales(
+                        usuario.idUsuario
+                    );
+                const permisosSesion =
+                    usuario.permisos || [];
+
+                const permisosActualesOrdenados =
+                    [...permisosActuales].sort();
+
+                const permisosSesionOrdenados =
+                    [...permisosSesion].sort();
+
+                const cambiaron =
+                    JSON.stringify(permisosActualesOrdenados) !==
+                    JSON.stringify(permisosSesionOrdenados);
+                if (cambiaron) {
+                    setPermisosActualizados(true);
+                }
+            } catch(error) {
+                console.error(
+                    "Error verificando permisos:",
+                    error
+                );
+            }
+        };
+        verificarPermisos();
+        const intervalo = setInterval(
+            verificarPermisos,
+            30000
+        );
+        return () => clearInterval(intervalo);
+    }, [usuario]);
 
 
     const cargando = false;
@@ -90,7 +132,9 @@ export function AuthProvider({ children }) {
                 usuario,
                 cargando,
                 iniciarSesion,
-                cerrarSesion
+                cerrarSesion,
+                permisosActualizados,
+                setPermisosActualizados
             }}
 
         >
