@@ -443,14 +443,19 @@ function RolesPermisos() {
                 </label>
 
                 <input
-                  type="text"
-                  value={nuevoRol.nombre}
-                  onChange={(e) =>
-                    setNuevoRol({
-                      ...nuevoRol,
-                      nombre: e.target.value
-                    })
-                  }
+                    type="text"
+                    value={nuevoRol.nombre}
+                    maxLength={50}
+                    onChange={(e) => {
+                        const valor = e.target.value.replace(
+                            /[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g,
+                            ""
+                        );
+                        setNuevoRol({
+                            ...nuevoRol,
+                            nombre: valor
+                        });
+                    }}
                 />
 
               </div>
