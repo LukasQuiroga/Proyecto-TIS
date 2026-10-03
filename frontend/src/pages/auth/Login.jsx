@@ -17,14 +17,13 @@ function Login(){
     const [correo,setCorreo]=useState("");
     const [password,setPassword]=useState("");
     const [mostrar,setMostrar]=useState(false);
-    const [recordar,setRecordar]=useState(false);
     const [cargando,setCargando]=useState(false);
     const [modal,setModal]=useState({
         mostrar:false,
         tipo:""
     });
 
-    if(usuario && token){
+    if(usuario && token && !modal.mostrar){
         return <Navigate to="/" replace/>;
     }
 
@@ -52,7 +51,7 @@ function Login(){
             iniciarSesion(
                 respuesta.usuario,
                 respuesta.token,
-                recordar
+                false
             );
 
             setModal({
@@ -138,20 +137,6 @@ function Login(){
                     </div>
 
                     <div className="login-options">
-
-                        <label className="remember">
-
-                            <input
-                                type="checkbox"
-                                checked={recordar}
-                                onChange={(e)=>
-                                    setRecordar(e.target.checked)
-                                }
-                            />
-
-                            Recordarme
-
-                        </label>
 
                         <button
                             type="button"
