@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {Navigate,useNavigate} from "react-router-dom";
 import {FaEye,FaEyeSlash} from "react-icons/fa";
 import "./Login.css";
 import {login} from "../../services/authService";
@@ -8,22 +8,35 @@ import {useAuth} from "../../context/useAuth";
 function Login(){
 
     const navigate=useNavigate();
-    const {iniciarSesion}=useAuth();
+    const {
+        usuario,
+        token,
+        iniciarSesion
+    }=useAuth();
 
     const [correo,setCorreo]=useState("");
     const [password,setPassword]=useState("");
     const [mostrar,setMostrar]=useState(false);
     const [recordar,setRecordar]=useState(false);
     const [cargando,setCargando]=useState(false);
-    const [modal,setModal]=useState({mostrar:false,tipo:""});
+    const [modal,setModal]=useState({
+        mostrar:false,
+        tipo:""
+    });
 
+    if(usuario && token){
+        return <Navigate to="/" replace/>;
+    }
 
     async function manejarLogin(e){
 
         e.preventDefault();
 
         if(!correo || !password){
-            setModal({mostrar:true,tipo:"error"});
+            setModal({
+                mostrar:true,
+                tipo:"error"
+            });
             return;
         }
 
@@ -31,10 +44,14 @@ function Login(){
 
             setCargando(true);
 
-            const respuesta=await login(correo,password);
+            const respuesta=await login(
+                correo,
+                password
+            );
 
             iniciarSesion(
                 respuesta.usuario,
+                respuesta.token,
                 recordar
             );
 
@@ -44,7 +61,9 @@ function Login(){
             });
 
             setTimeout(()=>{
-                navigate("/");
+                navigate("/",{
+                    replace:true
+                });
             },2000);
 
         }catch(error){
@@ -67,7 +86,6 @@ function Login(){
 
     }
 
-
     return(
 
         <div className="login-page">
@@ -79,7 +97,6 @@ function Login(){
                 <p className="login-description">
                     Ingresa tus credenciales para continuar.
                 </p>
-
 
                 <form onSubmit={manejarLogin}>
 
@@ -95,7 +112,6 @@ function Login(){
                         />
 
                     </div>
-
 
                     <label>Contraseña</label>
 
@@ -113,12 +129,13 @@ function Login(){
                             onClick={()=>setMostrar(!mostrar)}
                         >
                             {
-                                mostrar?<FaEyeSlash/>:<FaEye/>
+                                mostrar
+                                    ?<FaEyeSlash/>
+                                    :<FaEye/>
                             }
                         </span>
 
                     </div>
-
 
                     <div className="login-options">
 
@@ -127,24 +144,28 @@ function Login(){
                             <input
                                 type="checkbox"
                                 checked={recordar}
-                                onChange={(e)=>setRecordar(e.target.checked)}
+                                onChange={(e)=>
+                                    setRecordar(e.target.checked)
+                                }
                             />
 
                             Recordarme
 
                         </label>
 
-
                         <button
                             type="button"
                             className="forgot-password"
-                            onClick={()=>navigate("/recuperar-contrasena")}
+                            onClick={()=>
+                                navigate(
+                                    "/recuperar-contrasena"
+                                )
+                            }
                         >
                             ¿Olvidaste tu contraseña?
                         </button>
 
                     </div>
-
 
                     <button
                         className="btn-login"
@@ -152,16 +173,17 @@ function Login(){
                     >
                         {
                             cargando
-                            ?"Procesando..."
-                            :"Iniciar sesión →"
+                                ?"Procesando..."
+                                :"Iniciar sesión →"
                         }
                     </button>
-
 
                     <button
                         type="button"
                         className="btn-volver"
-                        onClick={()=>navigate("/")}
+                        onClick={()=>
+                            navigate("/")
+                        }
                     >
                         ← Volver al inicio
                     </button>
@@ -169,7 +191,6 @@ function Login(){
                 </form>
 
             </div>
-
 
             {
                 modal.mostrar &&
@@ -181,54 +202,51 @@ function Login(){
                         <div
                             className={
                                 modal.tipo==="error"
-                                ?"modal-icon modal-error"
-                                :"modal-icon modal-success"
+                                    ?"modal-icon modal-error"
+                                    :"modal-icon modal-success"
                             }
                         >
                             {
                                 modal.tipo==="error"
-                                ?"!"
-                                :"✓"
+                                    ?"!"
+                                    :"✓"
                             }
                         </div>
-
 
                         <h2>
                             {
                                 modal.tipo==="error"
-                                ?"Credenciales incorrectas"
-                                :"Acceso exitoso"
+                                    ?"Credenciales incorrectas"
+                                    :"Acceso exitoso"
                             }
                         </h2>
-
 
                         <p>
                             {
                                 modal.tipo==="error"
-                                ?"Verifica tu correo electrónico y contraseña e intenta nuevamente."
-                                :"Bienvenido al sistema. Redirigiendo..."
+                                    ?"Verifica tu correo electrónico y contraseña e intenta nuevamente."
+                                    :"Bienvenido al sistema. Redirigiendo..."
                             }
                         </p>
 
-
                         {
                             modal.tipo==="error"
-                            ?
+                                ?
 
-                            <button
-                                onClick={()=>
-                                    setModal({
-                                        mostrar:false,
-                                        tipo:""
-                                    })
-                                }
-                            >
-                                Aceptar
-                            </button>
+                                <button
+                                    onClick={()=>
+                                        setModal({
+                                            mostrar:false,
+                                            tipo:""
+                                        })
+                                    }
+                                >
+                                    Aceptar
+                                </button>
 
-                            :
+                                :
 
-                            <div className="progreso"></div>
+                                <div className="progreso"></div>
                         }
 
                     </div>

@@ -34,3 +34,7 @@ brevo:
   remitente:
     email: abadon200324@gmail.com
     nombre: ExamPass
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: 21600000
