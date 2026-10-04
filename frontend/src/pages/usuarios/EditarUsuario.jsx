@@ -235,9 +235,9 @@ function EditarUsuario() {
       console.error("Error modificando usuario:", error);
 
       setError(
-        error.response?.data?.message ||
-          error.response?.data ||
-          "No se pudo modificar el usuario",
+            error.response?.data?.mensaje ||
+            error.response?.data?.message ||
+           "No se pudo modificar el usuario"
       );
     } finally {
       setGuardando(false);

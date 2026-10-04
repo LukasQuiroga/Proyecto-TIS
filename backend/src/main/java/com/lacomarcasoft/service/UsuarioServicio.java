@@ -1032,12 +1032,10 @@ public class UsuarioServicio {
                 );
         }
 
-        if(datos.carnetIdentidad() == null
-                || datos.carnetIdentidad().isBlank()){
-
-                throw new RuntimeException(
-                        "El carnet de identidad es obligatorio"
-                );
+        if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
+               throw new RuntimeException(
+                         "El documento de identidad es obligatorio"
+         );
         }
 
         if(datos.correo() == null || datos.correo().isBlank()){
@@ -1070,11 +1068,11 @@ public class UsuarioServicio {
 
         if(usuarioExistenteCarnet != null
                 && !usuarioExistenteCarnet
-                        .getIdUsuario()
-                        .equals(id)){
+                           .getIdUsuario()
+                           .equals(id)){
 
-                throw new RuntimeException(
-                        "El carnet de identidad ya está registrado"
+                     throw new RuntimeException(
+                          "El documento de identidad ingresado ya está asociado a otro usuario."
                 );
         }
 
