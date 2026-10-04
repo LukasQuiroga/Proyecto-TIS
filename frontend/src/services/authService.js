@@ -4,10 +4,16 @@ import api from "./api";
 const API_AUTH = "http://localhost:8080/api/auth";
 
 export async function login(correo, password) {
-  const respuesta = await axios.post(`${API_AUTH}/login`, {
-    correo,
-    password,
-  });
+  const respuesta = await axios.post(
+    `${API_AUTH}/login`,
+    {
+      correo,
+      password,
+    },
+    {
+      timeout: 10000,
+    },
+  );
 
   return respuesta.data;
 }

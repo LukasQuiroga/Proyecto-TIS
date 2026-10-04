@@ -8,6 +8,7 @@ import {useAuth} from "../../context/useAuth";
 function Login(){
 
     const navigate=useNavigate();
+
     const {
         usuario,
         token,
@@ -18,6 +19,7 @@ function Login(){
     const [password,setPassword]=useState("");
     const [mostrar,setMostrar]=useState(false);
     const [cargando,setCargando]=useState(false);
+
     const [modal,setModal]=useState({
         mostrar:false,
         tipo:""
@@ -32,10 +34,22 @@ function Login(){
         e.preventDefault();
 
         if(!correo || !password){
+
             setModal({
                 mostrar:true,
                 tipo:"error"
             });
+
+            return;
+        }
+
+        if(!navigator.onLine){
+
+            setModal({
+                mostrar:true,
+                tipo:"conexion"
+            });
+
             return;
         }
 
@@ -60,30 +74,47 @@ function Login(){
             });
 
             setTimeout(()=>{
+
                 navigate("/",{
                     replace:true
                 });
+
             },2000);
 
         }catch(error){
 
-            console.log(
+            console.error(
                 "ERROR LOGIN:",
                 error
             );
 
+            const errorConexion=
+                !navigator.onLine ||
+                error.code==="ERR_NETWORK" ||
+                error.code==="ECONNABORTED" ||
+                !error.response;
+
             setModal({
                 mostrar:true,
-                tipo:"error"
+                tipo:errorConexion
+                    ?"conexion"
+                    :"error"
             });
 
         }finally{
 
             setCargando(false);
-
         }
-
     }
+
+    const esError=
+        modal.tipo==="error";
+
+    const esConexion=
+        modal.tipo==="conexion";
+
+    const esExito=
+        modal.tipo==="success";
 
     return(
 
@@ -91,7 +122,9 @@ function Login(){
 
             <div className="login-card">
 
-                <h1>Acceso al sistema</h1>
+                <h1>
+                    Acceso al sistema
+                </h1>
 
                 <p className="login-description">
                     Ingresa tus credenciales para continuar.
@@ -99,33 +132,49 @@ function Login(){
 
                 <form onSubmit={manejarLogin}>
 
-                    <label>Correo electrónico</label>
+                    <label>
+                        Correo electrónico
+                    </label>
 
                     <div className="input-container">
 
                         <input
                             type="email"
                             value={correo}
+                            maxLength={50}
                             placeholder="202001068@edu.est.umss"
-                            onChange={(e)=>setCorreo(e.target.value)}
+                            onChange={(e)=>
+                                setCorreo(
+                                    e.target.value.slice(0,50)
+                                )
+                            }
                         />
 
                     </div>
 
-                    <label>Contraseña</label>
+                    <label>
+                        Contraseña
+                    </label>
 
                     <div className="input-container">
 
                         <input
                             type={mostrar?"text":"password"}
                             value={password}
+                            maxLength={20}
                             placeholder="Ingresa tu contraseña"
-                            onChange={(e)=>setPassword(e.target.value)}
+                            onChange={(e)=>
+                                setPassword(
+                                    e.target.value.slice(0,20)
+                                )
+                            }
                         />
 
                         <span
                             className="eye"
-                            onClick={()=>setMostrar(!mostrar)}
+                            onClick={()=>
+                                setMostrar(!mostrar)
+                            }
                         >
                             {
                                 mostrar
@@ -153,6 +202,7 @@ function Login(){
                     </div>
 
                     <button
+                        type="submit"
                         className="btn-login"
                         disabled={cargando}
                     >
@@ -180,45 +230,50 @@ function Login(){
             {
                 modal.mostrar &&
 
-                <div className="modal-fondo">
+                <div className="login-modal-fondo">
 
-                    <div className="modal-login">
+                    <div className="login-modal">
 
                         <div
                             className={
-                                modal.tipo==="error"
-                                    ?"modal-icon modal-error"
-                                    :"modal-icon modal-success"
+                                esExito
+                                    ?"login-modal-icon login-modal-success"
+                                    :"login-modal-icon login-modal-error"
                             }
                         >
                             {
-                                modal.tipo==="error"
-                                    ?"!"
-                                    :"✓"
+                                esExito
+                                    ?"✓"
+                                    :"!"
                             }
                         </div>
 
                         <h2>
                             {
-                                modal.tipo==="error"
-                                    ?"Credenciales incorrectas"
-                                    :"Acceso exitoso"
+                                esConexion
+                                    ?"Sin conexión"
+                                    :esError
+                                        ?"Credenciales incorrectas"
+                                        :"Acceso exitoso"
                             }
                         </h2>
 
                         <p>
                             {
-                                modal.tipo==="error"
-                                    ?"Verifica tu correo electrónico y contraseña e intenta nuevamente."
-                                    :"Bienvenido al sistema. Redirigiendo..."
+                                esConexion
+                                    ?"No se pudo conectar con el sistema. Verifica tu conexión a Internet e intenta nuevamente."
+                                    :esError
+                                        ?"Verifica tu correo electrónico y contraseña e intenta nuevamente."
+                                        :"Bienvenido al sistema. Redirigiendo..."
                             }
                         </p>
 
                         {
-                            modal.tipo==="error"
+                            !esExito
                                 ?
 
                                 <button
+                                    type="button"
                                     onClick={()=>
                                         setModal({
                                             mostrar:false,
@@ -231,7 +286,7 @@ function Login(){
 
                                 :
 
-                                <div className="progreso"></div>
+                                <div className="login-progreso"></div>
                         }
 
                     </div>
@@ -240,9 +295,7 @@ function Login(){
             }
 
         </div>
-
     );
-
 }
 
 export default Login;
