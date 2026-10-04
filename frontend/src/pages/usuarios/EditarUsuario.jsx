@@ -168,6 +168,16 @@ function EditarUsuario() {
     if (!usuario.apellido.trim()) {
       return "El apellido es obligatorio";
     }
+    
+    const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
+
+    if (!nombreValido.test(usuario.nombre.trim())) {
+       return "El nombre solo debe contener letras";
+    }
+
+    if (!nombreValido.test(usuario.apellido.trim())) {
+       return "Los apellidos solo deben contener letras";
+    }
 
     if (!usuario.carnetIdentidad.trim()) {
       return "El carnet de identidad es obligatorio";

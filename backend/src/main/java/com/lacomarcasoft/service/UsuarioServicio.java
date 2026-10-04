@@ -1032,6 +1032,22 @@ public class UsuarioServicio {
                 );
         }
 
+        String patronNombre = "^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\\s]+$";
+
+        if(!datos.nombre().trim().matches(patronNombre)){
+
+                throw new RuntimeException(
+                         "El nombre solo debe contener letras"
+                );
+        }
+
+        if(!datos.apellido().trim().matches(patronNombre)){
+
+                throw new RuntimeException(
+                        "Los apellidos solo deben contener letras"
+                );
+        }
+
         if(datos.carnetIdentidad() == null || datos.carnetIdentidad().isBlank()){
                throw new RuntimeException(
                          "El documento de identidad es obligatorio"
