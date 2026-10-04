@@ -588,16 +588,16 @@ function RegistroUsuario(){
 
                             <input
                                 className="registro-input"
-                                value={formulario.correo}
+                                value={formulario.nombre}
                                 onChange={
                                     e =>
                                     cambiar(
-                                        "correo",
+                                        "nombre",
                                         e.target.value
                                     )
                                 }
-                                placeholder="Ingrese correo electrónico"
-                                maxLength={50}
+                                placeholder="Ingrese nombres"
+                                maxLength={30}
                             />
 
                         </Campo>
@@ -676,6 +676,7 @@ function RegistroUsuario(){
                                     )
                                 }
                                 placeholder="Ingrese correo electrónico"
+                                maxLength={50}
                             />
 
                         </Campo>
