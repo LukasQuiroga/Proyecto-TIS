@@ -1,4 +1,5 @@
 import {
+    useEffect,
     useState
 } from "react";
 
@@ -17,33 +18,69 @@ import "./RecuperacionContrasena.css";
 function NuevaContrasena(){
 
     const navigate = useNavigate();
+
     const [password,setPassword] = useState("");
     const [confirmar,setConfirmar] = useState("");
     const [mensaje,setMensaje] = useState("");
     const [error,setError] = useState("");
-   
-    const cancelar = () => {
 
-    localStorage.removeItem(
-        "correoRecuperacion"
-    );
+    useEffect(()=>{
 
-    localStorage.removeItem(
-        "tokenRecuperacion"
-    );
+        const correo =
+            localStorage.getItem(
+                "correoRecuperacion"
+            );
 
-    localStorage.removeItem(
-        "codigoRecuperacion"
-    );
+        const token =
+            localStorage.getItem(
+                "tokenRecuperacion"
+            );
 
-    navigate("/login");
+
+        if(!correo || !token){
+
+            navigate(
+                "/login",
+                {
+                    replace:true
+                }
+            );
+
+        }
+
+    },[navigate]);
+
+
+    const cancelar = ()=>{
+
+        localStorage.removeItem(
+            "correoRecuperacion"
+        );
+
+        localStorage.removeItem(
+            "tokenRecuperacion"
+        );
+
+        localStorage.removeItem(
+            "codigoRecuperacion"
+        );
+
+        navigate(
+            "/login",
+            {
+                replace:true
+            }
+        );
+
     };
+
 
     const cambiarPassword = async(e)=>{
 
         e.preventDefault();
 
         setError("");
+        setMensaje("");
 
 
         if(password !== confirmar){
@@ -53,11 +90,16 @@ function NuevaContrasena(){
             );
 
             return;
+
         }
+
 
         try{
 
-            console.log("DATOS ENVIADOS AL BACKEND:");
+            console.log(
+                "DATOS ENVIADOS AL BACKEND:"
+            );
+
 
             console.log({
 
@@ -94,13 +136,17 @@ function NuevaContrasena(){
                 nuevaContrasena:
                 password,
 
-
                 confirmarContrasena:
                 confirmar
+
             });
 
             setMensaje(
                 "Contraseña actualizada correctamente"
+            );
+
+            localStorage.removeItem(
+                "correoRecuperacion"
             );
 
             localStorage.removeItem(
@@ -111,11 +157,18 @@ function NuevaContrasena(){
                 "codigoRecuperacion"
             );
 
+
             setTimeout(()=>{
 
-                navigate("/login");
+                navigate(
+                    "/login",
+                    {
+                        replace:true
+                    }
+                );
 
             },1500);
+
 
         }catch(error){
 
@@ -127,12 +180,11 @@ function NuevaContrasena(){
             setError(
                 "No se pudo actualizar la contraseña"
             );
-
         }
-
     };
 
     return (
+
         <div className="recuperacion-page">
 
             <div className="recuperacion-card">
@@ -141,38 +193,34 @@ function NuevaContrasena(){
                     Nueva contraseña
                 </h2>
 
-                <form onSubmit={cambiarPassword}>
+
+                <form
+                    onSubmit={
+                        cambiarPassword
+                    }
+                >
 
                     <input
-
                         type="password"
-
                         placeholder="Nueva contraseña"
-
                         value={password}
-
                         onChange={
                             e=>setPassword(
                                 e.target.value
                             )
                         }
-
                     />
 
+
                     <input
-
                         type="password"
-
                         placeholder="Confirmar contraseña"
-
                         value={confirmar}
-
                         onChange={
                             e=>setConfirmar(
                                 e.target.value
                             )
                         }
-
                     />
 
 
@@ -183,23 +231,30 @@ function NuevaContrasena(){
                         </p>
                     }
 
+
                     {
                         mensaje &&
                         <p className="success">
+
                             {mensaje}
+
                         </p>
                     }
 
-                   <button type="submit">
-                             Guardar contraseña
-                   </button>
-
-                   <button
-                         type="button"
-                         className="volver"
-                         onClick={cancelar}
+                    <button
+                        type="submit"
                     >
-                       Cancelar
+
+                        Guardar contraseña
+
+                    </button>
+
+                    <button
+                        type="button"
+                        className="volver"
+                        onClick={cancelar}
+                    >
+                        Cancelar
                     </button>
 
                 </form>
@@ -208,8 +263,6 @@ function NuevaContrasena(){
 
         </div>
     );
-
 }
-
 
 export default NuevaContrasena;
