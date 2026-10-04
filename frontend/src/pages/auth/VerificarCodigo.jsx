@@ -1,162 +1,143 @@
-import {
-    useState
-} from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
-    useNavigate
-} from "react-router-dom";
-
-
-import {
-    verificarCodigoRecuperacion
-}
-from "../../services/authService";
-
+  verificarCodigoRecuperacion
+} from "../../services/authService";
 
 import "./RecuperacionContrasena.css";
 
+function VerificarCodigo() {
 
+  const navigate = useNavigate();
 
-function VerificarCodigo(){
+  const [codigo, setCodigo] =
+    useState("");
 
+  const [error, setError] =
+    useState("");
 
-const navigate = useNavigate();
+  const verificar = async (e) => {
 
+    e.preventDefault();
 
-const [codigo,setCodigo]=useState("");
+    setError("");
 
-const [error,setError]=useState("");
+    const correo =
+      localStorage.getItem(
+        "correoRecuperacion"
+      );
 
+    if (!correo) {
 
+      setError(
+        "Debes solicitar un código de recuperación primero"
+      );
 
-const verificar = async(e)=>{
+      return;
+    }
 
-e.preventDefault();
+    if (!/^\d{6}$/.test(codigo)) {
 
+      setError(
+        "El código debe contener exactamente 6 números"
+      );
 
-const correo =
-localStorage.getItem(
-"correoRecuperacion"
-);
+      return;
+    }
 
+    try {
 
-console.log("ENVIANDO VERIFICACION:");
-console.log({
-    correo,
-    codigo
-});
+      const respuesta =
+        await verificarCodigoRecuperacion(
+          correo,
+          codigo
+        );
 
+      localStorage.setItem(
+        "tokenRecuperacion",
+        respuesta.token
+      );
 
-try{
+      navigate(
+        "/nueva-contrasena"
+      );
 
+    } catch {
 
-const respuesta = await verificarCodigoRecuperacion(
-    correo,
-    codigo
-);
+      setError(
+        "Código incorrecto o expirado"
+      );
+    }
+  };
 
+  const cambiarCodigo = (e) => {
 
-console.log("RESPUESTA BACKEND:");
-console.log(respuesta);
+    const soloNumeros =
+      e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 6);
 
-localStorage.setItem(
-    "tokenRecuperacion",
-    respuesta.token
-);
+    setCodigo(soloNumeros);
 
+    setError("");
+  };
 
-navigate("/nueva-contrasena");
+  return (
 
+    <div className="recuperacion-page">
 
-}catch{
+      <div className="recuperacion-card">
 
-setError(
-"Código incorrecto o expirado"
-);
+        <h2>
+          Verificar código
+        </h2>
 
+        <p>
+          Ingresa el código enviado a tu correo.
+        </p>
+
+        <form onSubmit={verificar}>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            placeholder="000000"
+            value={codigo}
+            onChange={cambiarCodigo}
+            autoComplete="one-time-code"
+          />
+
+          {error && (
+            <p className="error">
+              {error}
+            </p>
+          )}
+
+          <button type="submit">
+            Verificar
+          </button>
+
+        </form>
+
+        <button
+          type="button"
+          className="volver"
+          onClick={() =>
+            navigate(
+              "/recuperar-contrasena"
+            )
+          }
+        >
+          Volver
+        </button>
+
+      </div>
+
+    </div>
+  );
 }
-
-};
-
-return (
-
-<div className="recuperacion-page">
-
-
-<div className="recuperacion-card">
-
-
-<h2>
-Verificar código
-</h2>
-
-
-<p>
-Ingresa el código enviado a tu correo.
-</p>
-
-
-
-<form onSubmit={verificar}>
-
-
-<input
-type="text"
-
-maxLength="6"
-
-placeholder="000000"
-
-value={codigo}
-
-onChange={
-e=>setCodigo(e.target.value)
-}
-
-/>
-
-
-
-{
-error &&
-<p className="error">
-{error}
-</p>
-}
-
-
-
-<button>
-Verificar
-</button>
-
-
-</form>
-
-
-<button
-
-className="volver"
-
-onClick={()=>
-navigate("/recuperar-contrasena")
-}
-
->
-Volver
-</button>
-
-
-</div>
-
-
-</div>
-
-
-);
-
-
-}
-
 
 export default VerificarCodigo;
