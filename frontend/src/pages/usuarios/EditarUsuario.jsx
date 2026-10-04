@@ -186,6 +186,11 @@ function EditarUsuario() {
     if (!correoValido.test(usuario.correo.trim())) {
       return "El correo no tiene un formato válido";
     }
+    if (usuario.celular?.trim() &&
+        !/^[0-9]+$/.test(usuario.celular.trim())
+      ) {
+          return "El teléfono solo debe contener números";
+    }
 
     if (!usuario.idRol) {
       return "Debe seleccionar un rol";
@@ -357,14 +362,20 @@ function EditarUsuario() {
                 <label>Teléfono</label>
 
                 <input
-                  value={usuario.celular}
-                  onChange={(e) => actualizarCampo("celular", e.target.value)}
-                  placeholder="Ingrese el teléfono"
-                />
-              </div>
+                         value={usuario.celular}
+                         onChange={(e) =>
+                         actualizarCampo(
+                            "celular",
+                         e.target.value.replace(/\D/g, "")
+                        )
+                        }
+                           inputMode="numeric"
+                           placeholder="Ingrese el teléfono"
+                 />
+                </div>
 
-              <div className="editar-campo">
-                <label>Carrera</label>
+                <div className="editar-campo">
+                   <label>Carrera</label>
 
                 <input
                   value={usuario.carrera}

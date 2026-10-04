@@ -1044,6 +1044,12 @@ public class UsuarioServicio {
                 );
         }
 
+        if(datos.celular() != null && !datos.celular().isBlank() && !soloDigitos(datos.celular())){
+                 throw new RuntimeException(
+                         "El teléfono solo debe contener números"
+                );
+        }
+
         Usuario usuarioExistenteCorreo =
                  usuarioRepositorio
                    .findByCorreo(datos.correo())
