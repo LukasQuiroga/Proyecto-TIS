@@ -118,6 +118,11 @@ const ESTADO_INICIAL = {
 };
 
 
+const CLAVE_ERROR = {
+    telefono: "celular"
+};
+
+
 
 function RegistroUsuario(){
 
@@ -216,7 +221,7 @@ function RegistroUsuario(){
         setErrores(
             prev => {
                 const nuevo = { ...prev };
-                delete nuevo[campo];
+                delete nuevo[CLAVE_ERROR[campo] || campo];
                 return nuevo;
             }
         );
@@ -321,8 +326,14 @@ function RegistroUsuario(){
             )
         ){
 
-            erroresValidos.telefono =
+            erroresValidos.celular =
                 "Solo debe contener números";
+
+        }
+        else if(formulario.telefono.trim().length > 12){
+
+            erroresValidos.celular =
+                "El teléfono no puede superar los 12 caracteres";
 
         }
 
@@ -684,7 +695,6 @@ function RegistroUsuario(){
 
                         <Campo
                             etiqueta="Teléfono"
-                            requerido
                             error={errores.celular}
                         >
 
@@ -698,13 +708,19 @@ function RegistroUsuario(){
                                     className="registro-input"
                                     value={formulario.telefono}
                                     onChange={
-                                        e =>
-                                        cambiar(
-                                            "telefono",
-                                            e.target.value
-                                        )
+                                        e => {
+                                            const valor =
+                                                e.target.value.replace(/\D/g, "");
+
+                                            cambiar(
+                                                "telefono",
+                                                valor.slice(0, 12)
+                                            );
+                                        }
                                     }
                                     placeholder="Ingrese número de teléfono"
+                                    inputMode="numeric"
+                                    maxLength={12}
                                 />
 
                             </div>
