@@ -274,6 +274,12 @@ function RegistroUsuario(){
                 "Solo debe contener números";
 
         }
+        else if(formulario.carnetIdentidad.trim().length > 11){
+
+            erroresValidos.carnetIdentidad =
+                "El documento no puede superar los 11 caracteres";
+
+        }
 
 
         if(!formulario.correo.trim()){
@@ -628,13 +634,19 @@ function RegistroUsuario(){
                                     formulario.carnetIdentidad
                                 }
                                 onChange={
-                                    e =>
-                                    cambiar(
-                                        "carnetIdentidad",
-                                        e.target.value
-                                    )
+                                    e => {
+                                        const valor =
+                                            e.target.value.replace(/\D/g, "");
+
+                                        cambiar(
+                                            "carnetIdentidad",
+                                            valor.slice(0, 11)
+                                        );
+                                    }
                                 }
                                 placeholder="Ingrese documento"
+                                inputMode="numeric"
+                                maxLength={11}
                             />
 
                         </Campo>
