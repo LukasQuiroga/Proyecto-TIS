@@ -24,6 +24,7 @@ public class RecuperacionContrasenaServicio {
 
     private static final int MINUTOS_VIGENCIA = 10;
     private static final int MAX_INTENTOS = 5;
+    private static final int SEGUNDOS_REENVIO = 60;
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final RecuperacionContrasenaRepositorio recuperacionRepositorio;
@@ -76,6 +77,32 @@ public class RecuperacionContrasenaServicio {
                 usuarioOptional.get();
 
 
+        Optional<RecuperacionContrasena> ultimaSolicitud =
+                recuperacionRepositorio
+                        .findTopByUsuarioOrderByFechaCreacionDesc(
+                                usuario
+                        );
+
+
+        if(
+                ultimaSolicitud.isPresent()
+                &&
+                LocalDateTime.now().isBefore(
+                        ultimaSolicitud
+                                .get()
+                                .getFechaCreacion()
+                                .plusSeconds(
+                                        SEGUNDOS_REENVIO
+                                )
+                )
+        ){
+
+            throw new IllegalArgumentException(
+                    "Debes esperar 60 segundos antes de solicitar otro código"
+            );
+        }
+
+
         invalidarSolicitudesPendientes(
                 usuario
         );
@@ -108,15 +135,18 @@ public class RecuperacionContrasenaServicio {
                 usuario
         );
 
+
         recuperacion.setCodigoHash(
                 passwordEncoder.encode(
                         codigo
                 )
         );
 
+
         recuperacion.setFechaCreacion(
                 ahora
         );
+
 
         recuperacion.setFechaExpiracion(
                 ahora.plusMinutes(
@@ -124,21 +154,26 @@ public class RecuperacionContrasenaServicio {
                 )
         );
 
+
         recuperacion.setIntentosFallidos(
                 0
         );
+
 
         recuperacion.setCodigoVerificado(
                 false
         );
 
+
         recuperacion.setUsado(
                 false
         );
 
+
         recuperacionRepositorio.save(
                 recuperacion
         );
+
 
         correoServicio.enviarCodigoRecuperacion(
                 usuario.getCorreo(),
@@ -148,11 +183,11 @@ public class RecuperacionContrasenaServicio {
 
 
     @Transactional(
-               noRollbackFor = IllegalArgumentException.class
-        )
-        public VerificarCodigoRespuesta verificarCodigo(
-               VerificarCodigoSolicitud solicitud
-       ){
+            noRollbackFor = IllegalArgumentException.class
+    )
+    public VerificarCodigoRespuesta verificarCodigo(
+            VerificarCodigoSolicitud solicitud
+    ){
 
         Usuario usuario =
                 usuarioRepositorio
@@ -186,18 +221,23 @@ public class RecuperacionContrasenaServicio {
         );
 
 
-        if(  recuperacion.getIntentosFallidos() >= MAX_INTENTOS){
+        if(
+                recuperacion.getIntentosFallidos()
+                        >= MAX_INTENTOS
+        ){
 
             recuperacion.setUsado(
                     true
             );
 
+
             recuperacionRepositorio.save(
                     recuperacion
             );
 
+
             throw new IllegalArgumentException(
-                "Se alcanzó el límite de intentos. Solicita un nuevo código"
+                    "Se alcanzó el límite de intentos. Solicita un nuevo código"
             );
         }
 
@@ -210,16 +250,20 @@ public class RecuperacionContrasenaServicio {
         ){
 
             int intentos =
-                    recuperacion.getIntentosFallidos() + 1;
+                    recuperacion.getIntentosFallidos()
+                            + 1;
+
 
             recuperacion.setIntentosFallidos(
                     intentos
             );
 
+
             if(intentos >= MAX_INTENTOS){
-                 recuperacion.setUsado(
-                  true
-                 );
+
+                recuperacion.setUsado(
+                        true
+                );
             }
 
 
@@ -227,12 +271,14 @@ public class RecuperacionContrasenaServicio {
                     recuperacion
             );
 
+
             if(intentos >= MAX_INTENTOS){
 
-                     throw new IllegalArgumentException(
-                      "Se alcanzó el límite de intentos. Solicita un nuevo código"
-               );
-             }
+                throw new IllegalArgumentException(
+                        "Se alcanzó el límite de intentos. Solicita un nuevo código"
+                );
+            }
+
 
             throw new IllegalArgumentException(
                     "Codigo incorrecto"
@@ -343,6 +389,7 @@ public class RecuperacionContrasenaServicio {
                     "Token incorrecto"
             );
         }
+
 
         if(
                 usuario

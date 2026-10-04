@@ -15,6 +15,9 @@ public interface RecuperacionContrasenaRepositorio
     Optional<RecuperacionContrasena>
     findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(Usuario usuario);
 
+    Optional<RecuperacionContrasena>
+    findTopByUsuarioOrderByFechaCreacionDesc(Usuario usuario);
+
     List<RecuperacionContrasena>
     findByUsuarioAndUsadoFalse(Usuario usuario);
 }
