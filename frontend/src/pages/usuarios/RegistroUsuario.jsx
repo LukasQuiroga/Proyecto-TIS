@@ -350,6 +350,12 @@ function RegistroUsuario(){
                     "El código universitario debe contener solo números";
 
             }
+            else if(formulario.codigoSis.trim().length > 15){
+
+                erroresValidos.codigoSis =
+                    "El código universitario no puede superar los 15 caracteres";
+
+            }
 
             if(!formulario.carrera){
 
@@ -850,14 +856,19 @@ function RegistroUsuario(){
                                         className="registro-input"
                                         value={formulario.codigoSis}
                                         onChange={
-                                            e =>
-                                            cambiar(
-                                                "codigoSis",
-                                                e.target.value.replace(/\D/g, "")
-                                            )
+                                            e => {
+                                                const valor =
+                                                    e.target.value.replace(/\D/g, "");
+
+                                                cambiar(
+                                                    "codigoSis",
+                                                    valor.slice(0, 15)
+                                                );
+                                            }
                                         }
                                         placeholder="Ingrese código universitario"
                                         inputMode="numeric"
+                                        maxLength={15}
                                     />
 
                                 </Campo>
