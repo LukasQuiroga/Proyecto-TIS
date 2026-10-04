@@ -1069,12 +1069,12 @@ public class UsuarioServicio {
 
     }
 
-    public Usuario modificar(
-                Long id,
-                ActualizarUsuarioSolicitud datos
-        ){
+        public Usuario modificar(
+            Long id,
+            ActualizarUsuarioSolicitud datos
+    ){
 
-String nombre =
+        String nombre =
                 datos.nombre() == null
                         ? ""
                         : datos.nombre().trim();
@@ -1110,6 +1110,15 @@ String nombre =
 
         }
 
+        String patronNombre = "^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\\s]+$";
+
+        if(!nombre.matches(patronNombre)){
+
+            throw new RuntimeException(
+                    "El nombre solo debe contener letras"
+            );
+
+        }
 
         if(apellido.isBlank()){
 
@@ -1127,25 +1136,42 @@ String nombre =
 
         }
 
-
-        if(carnetIdentidad.isBlank()){
+        if(!apellido.matches(patronNombre)){
 
             throw new RuntimeException(
-                    "El carnet de identidad es obligatorio"
+                    "Los apellidos solo deben contener letras"
             );
 
         }
 
+        if(carnetIdentidad.isBlank()){
+
+            throw new RuntimeException(
+                    "El documento de identidad es obligatorio"
+            );
+
+        }
 
         if(correo.isBlank()){
 
             throw new RuntimeException(
                     "El correo es obligatorio"
             );
+
+        }
+
+        if(datos.celular() != null
+                && !datos.celular().isBlank()
+                && !soloDigitos(datos.celular())){
+
+            throw new RuntimeException(
+                    "El teléfono solo debe contener números"
+            );
+
         }
 
         Usuario usuarioExistenteCorreo =
-usuarioRepositorio.findByCorreo(
+                usuarioRepositorio.findByCorreo(
                         correo
                 )
                 .orElse(null);
@@ -1155,13 +1181,14 @@ usuarioRepositorio.findByCorreo(
                         .getIdUsuario()
                         .equals(id)){
 
-                throw new RuntimeException(
-                        "El correo ya está registrado"
-                );
+            throw new RuntimeException(
+                    "El correo electrónico ingresado ya está registrado."
+            );
+
         }
 
         Usuario usuarioExistenteCarnet =
-usuarioRepositorio.findByCarnetIdentidad(
+                usuarioRepositorio.findByCarnetIdentidad(
                         carnetIdentidad
                 )
                 .orElse(null);
@@ -1171,17 +1198,20 @@ usuarioRepositorio.findByCarnetIdentidad(
                         .getIdUsuario()
                         .equals(id)){
 
-                throw new RuntimeException(
-                        "El carnet de identidad ya está registrado"
-                );
+            throw new RuntimeException(
+                    "El documento de identidad ingresado ya está asociado a otro usuario."
+            );
+
         }
 
         Usuario usuario = buscar(id);
 
         if(datos.idRol() == null){
-                throw new RuntimeException(
-                        "El rol es obligatorio"
-                );
+
+            throw new RuntimeException(
+                    "El rol es obligatorio"
+            );
+
         }
 
         Rol rol =
@@ -1246,37 +1276,42 @@ usuarioRepositorio.findByCarnetIdentidad(
         if(datos.idsMaterias() != null
                 && !datos.idsMaterias().isEmpty()){
 
-                List<Long> idsMaterias =
-                        datos.idsMaterias()
-                                .stream()
-                                .distinct()
-                                .toList();
+            List<Long> idsMaterias =
+                    datos.idsMaterias()
+                            .stream()
+                            .distinct()
+                            .toList();
 
-                List<Materia> materias =
-                        materiaRepositorio.findAllById(
-                                idsMaterias
-                        );
+            List<Materia> materias =
+                    materiaRepositorio.findAllById(
+                            idsMaterias
+                    );
 
-                if(materias.size() != idsMaterias.size()){
+            if(materias.size() != idsMaterias.size()){
+
                 throw new RuntimeException(
                         "Una o más materias seleccionadas no existen"
                 );
-                }
 
-                for(Materia materia : materias){
+            }
+
+            for(Materia materia : materias){
 
                 materia.setDocente(
                         usuarioGuardado
                 );
-                }
 
-                materiaRepositorio.saveAll(
-                        materias
-                );
+            }
+
+            materiaRepositorio.saveAll(
+                    materias
+            );
+
         }
 
         return usuarioGuardado;
-        }
+
+    }
 
     public Usuario cambiarRol(
             Long idUsuario,

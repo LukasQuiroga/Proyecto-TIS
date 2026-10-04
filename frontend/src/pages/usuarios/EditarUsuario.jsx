@@ -13,9 +13,13 @@ function EditarUsuario() {
   const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState(null);
+  const [usuarioOriginal, setUsuarioOriginal] = useState(null);
+
   const [roles, setRoles] = useState([]);
   const [materiasDisponibles, setMateriasDisponibles] = useState([]);
+
   const [materiasSeleccionadas, setMateriasSeleccionadas] = useState([]);
+  const [materiasOriginales, setMateriasOriginales] = useState([]);
 
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -35,25 +39,40 @@ function EditarUsuario() {
 
         const datos = usuarioRespuesta.data;
 
-        setUsuario({
-          nombre: datos.nombre || "",
-          apellido: datos.apellido || "",
-          carnetIdentidad: datos.carnetIdentidad || "",
-          correo: datos.correo || "",
-          celular: datos.celular || "",
-          carrera: datos.carrera || "",
-          codigoSis: datos.codigoSis || "",
-          idRol: datos.idRol || "",
-          activo: datos.activo ?? true,
+        const usuarioCargado = {
+               nombre: datos.nombre || "",
+               apellido: datos.apellido || "",
+               carnetIdentidad: datos.carnetIdentidad || "",
+               correo: datos.correo || "",
+               celular: datos.celular || "",
+               carrera: datos.carrera || "",
+               codigoSis: datos.codigoSis || "",
+               idRol: datos.idRol || "",
+               activo: datos.activo ?? true,
+        };
+
+             setUsuario(usuarioCargado);
+
+             setUsuarioOriginal({
+               ...usuarioCargado
         });
 
         setRoles(rolesRespuesta.data || []);
 
         setMateriasDisponibles(materiasRespuesta.data || []);
 
-        setMateriasSeleccionadas(
-          (datos.materias || []).map((materia) => materia.idMateria),
-        );
+       const materiasUsuario = (datos.materias || []).map( 
+        (materia) => materia.idMateria
+    );
+   
+             setMateriasSeleccionadas(
+               materiasUsuario
+     );
+
+             setMateriasOriginales(
+             [...materiasUsuario]
+      );
+
       } catch (error) {
         console.error("Error cargando usuario:", error);
 
@@ -84,6 +103,63 @@ function EditarUsuario() {
     });
   };
 
+  const hayCambios = () => {
+
+    if(!usuarioOriginal || !usuario){
+        return false;
+    }
+
+    const actual = {
+        nombre: usuario.nombre.trim(),
+        apellido: usuario.apellido.trim(),
+        carnetIdentidad: usuario.carnetIdentidad.trim(),
+        correo: usuario.correo.trim(),
+        celular: usuario.celular?.trim() || "",
+        carrera: usuario.carrera?.trim() || "",
+        activo: usuario.activo,
+    };
+
+    const original = {
+        nombre: usuarioOriginal.nombre.trim(),
+        apellido: usuarioOriginal.apellido.trim(),
+        carnetIdentidad:
+            usuarioOriginal.carnetIdentidad.trim(),
+        correo: usuarioOriginal.correo.trim(),
+        celular:
+            usuarioOriginal.celular?.trim() || "",
+        carrera:
+            usuarioOriginal.carrera?.trim() || "",
+        activo: usuarioOriginal.activo,
+    };
+
+    const datosModificados =
+        JSON.stringify(actual) !==
+        JSON.stringify(original);
+
+
+    const materiasActuales =
+        [...materiasSeleccionadas]
+            .map(Number)
+            .sort((a,b)=>a-b);
+
+    const materiasIniciales =
+        [...materiasOriginales]
+            .map(Number)
+            .sort((a,b)=>a-b);
+
+
+    const materiasModificadas =
+        JSON.stringify(materiasActuales) !==
+        JSON.stringify(materiasIniciales);
+
+
+    return (
+        datosModificados ||
+        materiasModificadas
+    );
+
+};
+
   const validarFormulario = () => {
     if (!usuario.nombre.trim()) {
       return "El nombre es obligatorio";
@@ -91,6 +167,16 @@ function EditarUsuario() {
 
     if (!usuario.apellido.trim()) {
       return "El apellido es obligatorio";
+    }
+    
+    const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
+
+    if (!nombreValido.test(usuario.nombre.trim())) {
+       return "El nombre solo debe contener letras";
+    }
+
+    if (!nombreValido.test(usuario.apellido.trim())) {
+       return "Los apellidos solo deben contener letras";
     }
 
     if (!usuario.carnetIdentidad.trim()) {
@@ -109,6 +195,11 @@ function EditarUsuario() {
 
     if (!correoValido.test(usuario.correo.trim())) {
       return "El correo no tiene un formato válido";
+    }
+    if (usuario.celular?.trim() &&
+        !/^[0-9]+$/.test(usuario.celular.trim())
+      ) {
+          return "El teléfono solo debe contener números";
     }
 
     if (!usuario.idRol) {
@@ -159,9 +250,9 @@ function EditarUsuario() {
       console.error("Error modificando usuario:", error);
 
       setError(
-        error.response?.data?.message ||
-          error.response?.data ||
-          "No se pudo modificar el usuario",
+            error.response?.data?.mensaje ||
+            error.response?.data?.message ||
+           "No se pudo modificar el usuario"
       );
     } finally {
       setGuardando(false);
@@ -281,14 +372,20 @@ function EditarUsuario() {
                 <label>Teléfono</label>
 
                 <input
-                  value={usuario.celular}
-                  onChange={(e) => actualizarCampo("celular", e.target.value)}
-                  placeholder="Ingrese el teléfono"
-                />
-              </div>
+                         value={usuario.celular}
+                         onChange={(e) =>
+                         actualizarCampo(
+                            "celular",
+                         e.target.value.replace(/\D/g, "")
+                        )
+                        }
+                           inputMode="numeric"
+                           placeholder="Ingrese el teléfono"
+                 />
+                </div>
 
-              <div className="editar-campo">
-                <label>Carrera</label>
+                <div className="editar-campo">
+                   <label>Carrera</label>
 
                 <input
                   value={usuario.carrera}
@@ -398,12 +495,18 @@ function EditarUsuario() {
             </button>
 
             <button
-              type="submit"
-              className="editar-boton-guardar"
-              disabled={guardando}
-            >
-              {guardando ? "Guardando..." : "✓ Guardar cambios"}
-            </button>
+               type="submit"
+               className="editar-boton-guardar"
+               disabled={
+               guardando ||
+               !hayCambios()
+             }
+              >
+                {guardando
+                   ? "Guardando..."
+                  : "✓ Guardar cambios"
+                }
+             </button>
           </div>
         </form>
       </div>
