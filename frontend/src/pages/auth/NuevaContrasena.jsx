@@ -24,6 +24,7 @@ function NuevaContrasena(){
     const [mensaje,setMensaje] = useState("");
     const [error,setError] = useState("");
 
+
     useEffect(()=>{
 
         const correo =
@@ -82,14 +83,16 @@ function NuevaContrasena(){
         setError("");
         setMensaje("");
 
-         if (password.length < 8){
 
-           setError(
-                 "La contraseña debe tener al menos 8 caracteres"
-             );
+        if(password.length < 8){
 
-                 return;
+            setError(
+                "La contraseña debe tener al menos 8 caracteres"
+            );
+
+            return;
         }
+
 
         if(password !== confirmar){
 
@@ -98,36 +101,10 @@ function NuevaContrasena(){
             );
 
             return;
-
         }
 
 
         try{
-
-            console.log(
-                "DATOS ENVIADOS AL BACKEND:"
-            );
-
-
-            console.log({
-
-                correo:
-                localStorage.getItem(
-                    "correoRecuperacion"
-                ),
-
-                token:
-                localStorage.getItem(
-                    "tokenRecuperacion"
-                ),
-
-                nuevaContrasena:
-                password,
-
-                confirmarContrasena:
-                confirmar
-
-            });
 
             await restablecerContrasena({
 
@@ -149,9 +126,11 @@ function NuevaContrasena(){
 
             });
 
+
             setMensaje(
                 "Contraseña actualizada correctamente"
             );
+
 
             localStorage.removeItem(
                 "correoRecuperacion"
@@ -185,11 +164,17 @@ function NuevaContrasena(){
                 error
             );
 
+
             setError(
+                error.response?.data?.mensaje ||
+                error.response?.data?.message ||
                 "No se pudo actualizar la contraseña"
             );
+
         }
+
     };
+
 
     return (
 
@@ -245,19 +230,17 @@ function NuevaContrasena(){
                     {
                         mensaje &&
                         <p className="success">
-
                             {mensaje}
-
                         </p>
                     }
+
 
                     <button
                         type="submit"
                     >
-
                         Guardar contraseña
-
                     </button>
+
 
                     <button
                         type="button"
@@ -272,7 +255,9 @@ function NuevaContrasena(){
             </div>
 
         </div>
+
     );
+
 }
 
 export default NuevaContrasena;
