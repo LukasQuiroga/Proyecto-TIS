@@ -853,10 +853,11 @@ function RegistroUsuario(){
                                             e =>
                                             cambiar(
                                                 "codigoSis",
-                                                e.target.value
+                                                e.target.value.replace(/\D/g, "")
                                             )
                                         }
                                         placeholder="Ingrese código universitario"
+                                        inputMode="numeric"
                                     />
 
                                 </Campo>
