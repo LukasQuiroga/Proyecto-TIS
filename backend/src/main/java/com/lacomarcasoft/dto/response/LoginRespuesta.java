@@ -1,6 +1,6 @@
 package com.lacomarcasoft.dto.response;
 
 public record LoginRespuesta(
-        UsuarioRespuesta usuario
-) {
-}
+    String token,
+    UsuarioRespuesta usuario
+){}

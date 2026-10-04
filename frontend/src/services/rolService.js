@@ -1,25 +1,25 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:8080/api/roles";
+const API = "/roles";
 
 export const obtenerRoles = () => {
-  return axios.get(API);
+  return api.get(API);
 };
 
 export const obtenerRol = (id) => {
-  return axios.get(`${API}/${id}`);
+  return api.get(`${API}/${id}`);
 };
 
 export const obtenerPermisos = () => {
-  return axios.get("http://localhost:8080/api/permisos");
+  return api.get("/permisos");
 };
 
 export const actualizarPermisosRol = (id, permisos) => {
-  return axios.put(`${API}/${id}/permisos`, {
+  return api.put(`${API}/${id}/permisos`, {
     permisos,
   });
 };
 
 export const crearRol = (rol) => {
-  return axios.post(API, rol);
+  return api.post(API, rol);
 };

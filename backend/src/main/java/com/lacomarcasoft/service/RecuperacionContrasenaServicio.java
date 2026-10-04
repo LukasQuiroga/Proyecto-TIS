@@ -18,18 +18,21 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+
 @Service
 public class RecuperacionContrasenaServicio {
 
     private static final int MINUTOS_VIGENCIA = 10;
     private static final int MAX_INTENTOS = 5;
+    private static final int SEGUNDOS_REENVIO = 60;
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final RecuperacionContrasenaRepositorio recuperacionRepositorio;
     private final PasswordEncoder passwordEncoder;
     private final CorreoServicio correoServicio;
 
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final SecureRandom secureRandom =
+            new SecureRandom();
 
 
     public RecuperacionContrasenaServicio(
@@ -39,22 +42,24 @@ public class RecuperacionContrasenaServicio {
             CorreoServicio correoServicio
     ){
 
-        this.usuarioRepositorio = usuarioRepositorio;
-        this.recuperacionRepositorio = recuperacionRepositorio;
-        this.passwordEncoder = passwordEncoder;
-        this.correoServicio = correoServicio;
+        this.usuarioRepositorio =
+                usuarioRepositorio;
 
+        this.recuperacionRepositorio =
+                recuperacionRepositorio;
+
+        this.passwordEncoder =
+                passwordEncoder;
+
+        this.correoServicio =
+                correoServicio;
     }
 
 
-
     @Transactional
-    public void solicitarRecuperacion(String correo){
-
-
-        System.out.println("==============================");
-        System.out.println("Correo recibido: [" + correo + "]");
-
+    public void solicitarRecuperacion(
+            String correo
+    ){
 
         Optional<Usuario> usuarioOptional =
                 usuarioRepositorio.findByCorreo(
@@ -62,152 +67,191 @@ public class RecuperacionContrasenaServicio {
                 );
 
 
-        System.out.println(
-                "Usuario encontrado: "
-                + usuarioOptional.isPresent()
-        );
-
-
         if(usuarioOptional.isEmpty()){
-
-            System.out.println(
-                    "Correo no encontrado"
-            );
 
             return;
         }
 
 
-        Usuario usuario = usuarioOptional.get();
+        Usuario usuario =
+                usuarioOptional.get();
 
 
-        invalidarSolicitudesPendientes(usuario);
+        Optional<RecuperacionContrasena> ultimaSolicitud =
+                recuperacionRepositorio
+                        .findTopByUsuarioOrderByFechaCreacionDesc(
+                                usuario
+                        );
 
+
+        if(
+                ultimaSolicitud.isPresent()
+                &&
+                LocalDateTime.now().isBefore(
+                        ultimaSolicitud
+                                .get()
+                                .getFechaCreacion()
+                                .plusSeconds(
+                                        SEGUNDOS_REENVIO
+                                )
+                )
+        ){
+
+            throw new IllegalArgumentException(
+                    "Debes esperar 60 segundos antes de solicitar otro código"
+            );
+        }
+
+
+        invalidarSolicitudesPendientes(
+                usuario
+        );
 
 
         String codigo =
                 String.format(
                         "%06d",
-                        secureRandom.nextInt(1000000)
+                        secureRandom.nextInt(
+                                1000000
+                        )
                 );
 
 
-
-        System.out.println("==============================");
-        System.out.println("CODIGO DE RECUPERACION");
         System.out.println(
-                "Usuario: "
-                + usuario.getCorreo()
-        );
-        System.out.println(
-                "Codigo: "
+                "CODIGO DE RECUPERACION: "
                 + codigo
         );
-        System.out.println("==============================");
-
 
 
         LocalDateTime ahora =
                 LocalDateTime.now();
 
 
-
         RecuperacionContrasena recuperacion =
                 new RecuperacionContrasena();
 
 
-        recuperacion.setUsuario(usuario);
+        recuperacion.setUsuario(
+                usuario
+        );
+
 
         recuperacion.setCodigoHash(
-                passwordEncoder.encode(codigo)
+                passwordEncoder.encode(
+                        codigo
+                )
         );
+
 
         recuperacion.setFechaCreacion(
                 ahora
         );
 
+
         recuperacion.setFechaExpiracion(
-                ahora.plusMinutes(MINUTOS_VIGENCIA)
+                ahora.plusMinutes(
+                        MINUTOS_VIGENCIA
+                )
         );
 
-        recuperacion.setIntentosFallidos(0);
 
-        recuperacion.setCodigoVerificado(false);
+        recuperacion.setIntentosFallidos(
+                0
+        );
 
-        recuperacion.setUsado(false);
+
+        recuperacion.setCodigoVerificado(
+                false
+        );
+
+
+        recuperacion.setUsado(
+                false
+        );
 
 
         recuperacionRepositorio.save(
                 recuperacion
         );
-        
-        correoServicio.enviarCodigoRecuperacion(
-        usuario.getCorreo(),
-        codigo
-);
 
+
+        correoServicio.enviarCodigoRecuperacion(
+                usuario.getCorreo(),
+                codigo
+        );
     }
 
 
-
-
-    @Transactional
+    @Transactional(
+            noRollbackFor = IllegalArgumentException.class
+    )
     public VerificarCodigoRespuesta verificarCodigo(
             VerificarCodigoSolicitud solicitud
     ){
 
-
         Usuario usuario =
-                usuarioRepositorio.findByCorreo(
-                        solicitud.correo().trim()
-                )
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Usuario no encontrado"
+                usuarioRepositorio
+                        .findByCorreo(
+                                solicitud.correo()
+                                        .trim()
                         )
-                );
-
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Usuario no encontrado"
+                                        )
+                        );
 
 
         RecuperacionContrasena recuperacion =
                 recuperacionRepositorio
-                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No existe codigo activo"
+                        .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(
+                                usuario
                         )
-                );
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "No existe codigo activo"
+                                        )
+                        );
 
 
+        validarVigencia(
+                recuperacion
+        );
 
-        validarVigencia(recuperacion);
 
+        if(
+                recuperacion.getIntentosFallidos()
+                        >= MAX_INTENTOS
+        ){
 
+            recuperacion.setUsado(
+                    true
+            );
 
-        if(recuperacion.getIntentosFallidos() >= MAX_INTENTOS){
-
-            recuperacion.setUsado(true);
 
             recuperacionRepositorio.save(
                     recuperacion
             );
 
+
             throw new IllegalArgumentException(
-                    "Maximo de intentos alcanzado"
+                    "Se alcanzó el límite de intentos. Solicita un nuevo código"
             );
         }
 
 
-
-
-        if(!passwordEncoder.matches(
-                solicitud.codigo(),
-                recuperacion.getCodigoHash()
-        )){
-
+        if(
+                !passwordEncoder.matches(
+                        solicitud.codigo(),
+                        recuperacion.getCodigoHash()
+                )
+        ){
 
             int intentos =
-                    recuperacion.getIntentosFallidos()+1;
+                    recuperacion.getIntentosFallidos()
+                            + 1;
 
 
             recuperacion.setIntentosFallidos(
@@ -215,22 +259,35 @@ public class RecuperacionContrasenaServicio {
             );
 
 
+            if(intentos >= MAX_INTENTOS){
+
+                recuperacion.setUsado(
+                        true
+                );
+            }
+
+
             recuperacionRepositorio.save(
                     recuperacion
             );
 
 
+            if(intentos >= MAX_INTENTOS){
+
+                throw new IllegalArgumentException(
+                        "Se alcanzó el límite de intentos. Solicita un nuevo código"
+                );
+            }
+
+
             throw new IllegalArgumentException(
                     "Codigo incorrecto"
             );
-
         }
-
 
 
         String token =
                 generarToken();
-
 
 
         recuperacion.setCodigoVerificado(
@@ -239,7 +296,9 @@ public class RecuperacionContrasenaServicio {
 
 
         recuperacion.setTokenHash(
-                passwordEncoder.encode(token)
+                passwordEncoder.encode(
+                        token
+                )
         );
 
 
@@ -248,16 +307,11 @@ public class RecuperacionContrasenaServicio {
         );
 
 
-
         return new VerificarCodigoRespuesta(
                 "Codigo correcto",
                 token
         );
-
     }
-
-
-
 
 
     @Transactional
@@ -265,133 +319,96 @@ public class RecuperacionContrasenaServicio {
             RestablecerContrasenaSolicitud solicitud
     ){
 
-
-        System.out.println("==============================");
-        System.out.println("RESTABLECER CONTRASEÑA");
-        System.out.println(
-                "Correo: "
-                + solicitud.correo()
-        );
-        System.out.println(
-                "Token recibido: "
-                + solicitud.token()
-        );
-        System.out.println(
-                "Nueva contraseña: "
-                + solicitud.nuevaContrasena()
-        );
-        System.out.println("==============================");
-
-
-
-        if(!solicitud.nuevaContrasena()
-                .equals(
-                        solicitud.confirmarContrasena()
-                )){
-
-
-            System.out.println(
-                    "ERROR: Contraseñas no coinciden"
-            );
-
+        if(
+                !solicitud
+                        .nuevaContrasena()
+                        .equals(
+                                solicitud
+                                        .confirmarContrasena()
+                        )
+        ){
 
             throw new IllegalArgumentException(
                     "Las contraseñas no coinciden"
             );
-
         }
 
 
-
-
         Usuario usuario =
-                usuarioRepositorio.findByCorreo(
-                        solicitud.correo().trim()
-                )
-                .orElseThrow(() -> {
-
-                    System.out.println(
-                            "ERROR: Usuario no encontrado"
-                    );
-
-                    return new IllegalArgumentException(
-                            "Usuario no encontrado"
-                    );
-
-                });
-
-
+                usuarioRepositorio
+                        .findByCorreo(
+                                solicitud
+                                        .correo()
+                                        .trim()
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Usuario no encontrado"
+                                        )
+                        );
 
 
         RecuperacionContrasena recuperacion =
                 recuperacionRepositorio
-                .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(usuario)
-                .orElseThrow(() -> {
+                        .findTopByUsuarioAndUsadoFalseOrderByFechaCreacionDesc(
+                                usuario
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Solicitud no encontrada"
+                                        )
+                        );
 
 
-                    System.out.println(
-                            "ERROR: Solicitud no encontrada"
-                    );
-
-
-                    return new IllegalArgumentException(
-                            "Solicitud no encontrada"
-                    );
-
-                });
-
-
-
-
-        System.out.println(
-                "Codigo verificado: "
-                + recuperacion.getCodigoVerificado()
-        );
-
-
-
-        if(!Boolean.TRUE.equals(
-                recuperacion.getCodigoVerificado()
-        )){
-
+        if(
+                !Boolean.TRUE.equals(
+                        recuperacion
+                                .getCodigoVerificado()
+                )
+        ){
 
             throw new IllegalArgumentException(
                     "Codigo no verificado"
             );
-
         }
-
-
-
 
 
         boolean tokenCorrecto =
                 passwordEncoder.matches(
                         solicitud.token(),
-                        recuperacion.getTokenHash()
+                        recuperacion
+                                .getTokenHash()
                 );
-
-
-
-        System.out.println(
-                "Token correcto: "
-                + tokenCorrecto
-        );
-
 
 
         if(!tokenCorrecto){
 
-
             throw new IllegalArgumentException(
                     "Token incorrecto"
             );
+        }
 
+
+        if(
+                usuario
+                        .getContrasena()
+                        .equals(
+                                solicitud
+                                        .nuevaContrasena()
+                        )
+        ){
+
+            throw new IllegalArgumentException(
+                    "La nueva contraseña debe ser diferente a la contraseña anterior"
+            );
         }
 
 
         usuario.setContrasena(
-        solicitud.nuevaContrasena()
+                solicitud
+                        .nuevaContrasena()
         );
 
 
@@ -400,8 +417,9 @@ public class RecuperacionContrasenaServicio {
         );
 
 
-
-        recuperacion.setUsado(true);
+        recuperacion.setUsado(
+                true
+        );
 
 
         recuperacionRepositorio.save(
@@ -409,30 +427,27 @@ public class RecuperacionContrasenaServicio {
         );
 
 
-
         System.out.println(
                 "CONTRASEÑA ACTUALIZADA CORRECTAMENTE"
         );
-
-
     }
-
-
-
 
 
     private void validarVigencia(
             RecuperacionContrasena recuperacion
     ){
 
+        if(
+                LocalDateTime.now()
+                        .isAfter(
+                                recuperacion
+                                        .getFechaExpiracion()
+                        )
+        ){
 
-        if(LocalDateTime.now()
-                .isAfter(
-                        recuperacion.getFechaExpiracion()
-                )){
-
-
-            recuperacion.setUsado(true);
+            recuperacion.setUsado(
+                    true
+            );
 
 
             recuperacionRepositorio.save(
@@ -443,42 +458,36 @@ public class RecuperacionContrasenaServicio {
             throw new IllegalArgumentException(
                     "Codigo expirado"
             );
-
         }
-
     }
-
-
 
 
     private void invalidarSolicitudesPendientes(
             Usuario usuario
     ){
 
-
         List<RecuperacionContrasena> lista =
                 recuperacionRepositorio
-                .findByUsuarioAndUsadoFalse(usuario);
-
+                        .findByUsuarioAndUsadoFalse(
+                                usuario
+                        );
 
 
         lista.forEach(
-                r -> r.setUsado(true)
+                recuperacion ->
+                        recuperacion.setUsado(
+                                true
+                        )
         );
 
 
         recuperacionRepositorio.saveAll(
                 lista
         );
-
     }
 
 
-
-
-
     private String generarToken(){
-
 
         byte[] bytes =
                 new byte[32];
@@ -489,10 +498,11 @@ public class RecuperacionContrasenaServicio {
         );
 
 
-        return Base64.getUrlEncoder()
+        return Base64
+                .getUrlEncoder()
                 .withoutPadding()
-                .encodeToString(bytes);
-
+                .encodeToString(
+                        bytes
+                );
     }
-
 }

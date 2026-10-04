@@ -1,5 +1,7 @@
 package com.lacomarcasoft.dto.request;
 
+import java.util.List;
+
 public record ActualizarUsuarioSolicitud(
     String nombre,
     String apellido,
@@ -9,5 +11,6 @@ public record ActualizarUsuarioSolicitud(
     String carrera,
     String codigoSis,
     Boolean activo,
-    Long idRol
+    Long idRol,
+    List<Long> idsMaterias
 ){}

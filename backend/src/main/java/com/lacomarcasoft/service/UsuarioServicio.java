@@ -1,5 +1,6 @@
 package com.lacomarcasoft.service;
 
+import com.lacomarcasoft.modelo.Materia;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuarioFilaSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
@@ -17,6 +18,8 @@ import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
 
@@ -61,6 +64,28 @@ public class UsuarioServicio {
                 .toList();
 
     }
+
+    public Page<UsuarioRespuesta> listarPaginado(Pageable pageable){
+        return usuarioRepositorio
+                .findAll(pageable)
+                .map(this::convertirRespuesta);
+    }
+
+    public List<MateriaRespuesta> listarMaterias(){
+
+        return materiaRepositorio
+                .findAllByOrderByNombreMateriaAscGrupoAsc()
+                .stream()
+                .map(
+                        materia ->
+                                new MateriaRespuesta(
+                                        materia.getIdMateria(),
+                                        materia.getNombreMateria(),
+                                        materia.getGrupo()
+                                )
+                )
+                .toList();
+        }
 
     public Usuario buscar(Long id){
 
@@ -1045,12 +1070,11 @@ public class UsuarioServicio {
     }
 
     public Usuario modificar(
-            Long id,
-            ActualizarUsuarioSolicitud datos
-    ){
+                Long id,
+                ActualizarUsuarioSolicitud datos
+        ){
 
-
-        String nombre =
+String nombre =
                 datos.nombre() == null
                         ? ""
                         : datos.nombre().trim();
@@ -1118,86 +1142,141 @@ public class UsuarioServicio {
             throw new RuntimeException(
                     "El correo es obligatorio"
             );
-
         }
 
-
         Usuario usuarioExistenteCorreo =
-                usuarioRepositorio.findByCorreo(
+usuarioRepositorio.findByCorreo(
                         correo
                 )
                 .orElse(null);
 
+        if(usuarioExistenteCorreo != null
+                && !usuarioExistenteCorreo
+                        .getIdUsuario()
+                        .equals(id)){
 
-        if(usuarioExistenteCorreo != null &&
-                !usuarioExistenteCorreo.getIdUsuario().equals(id)){
-
-            throw new RuntimeException(
-                    "El correo ya está registrado"
-            );
-
+                throw new RuntimeException(
+                        "El correo ya está registrado"
+                );
         }
 
-
         Usuario usuarioExistenteCarnet =
-                usuarioRepositorio.findByCarnetIdentidad(
+usuarioRepositorio.findByCarnetIdentidad(
                         carnetIdentidad
                 )
                 .orElse(null);
 
+        if(usuarioExistenteCarnet != null
+                && !usuarioExistenteCarnet
+                        .getIdUsuario()
+                        .equals(id)){
 
-        if(usuarioExistenteCarnet != null &&
-                !usuarioExistenteCarnet.getIdUsuario().equals(id)){
-
-            throw new RuntimeException(
-                    "El carnet de identidad ya está registrado"
-            );
-
+                throw new RuntimeException(
+                        "El carnet de identidad ya está registrado"
+                );
         }
 
         Usuario usuario = buscar(id);
 
+        if(datos.idRol() == null){
+                throw new RuntimeException(
+                        "El rol es obligatorio"
+                );
+        }
+
         Rol rol =
-                rolRepositorio.findById(datos.idRol())
+                rolRepositorio
+                        .findById(datos.idRol())
                         .orElseThrow(
                                 () -> new RuntimeException(
                                         "Rol no encontrado"
                                 )
                         );
 
-
         usuario.setNombre(
                 nombre
         );
-
 
         usuario.setApellido(
                 apellido
         );
 
-
         usuario.setCarnetIdentidad(
                 carnetIdentidad
         );
-
 
         usuario.setCorreo(
                 correo
         );
 
-
-        usuario.setActivo(
-                datos.activo()
+        usuario.setCelular(
+                datos.celular() == null
+                        || datos.celular().isBlank()
+                        ? null
+                        : datos.celular()
         );
 
+        usuario.setCarrera(
+                datos.carrera() == null
+                        || datos.carrera().isBlank()
+                        ? null
+                        : datos.carrera()
+        );
+
+        usuario.setCodigoSis(
+                datos.codigoSis() == null
+                        || datos.codigoSis().isBlank()
+                        ? null
+                        : datos.codigoSis()
+        );
+
+        usuario.setActivo(
+                datos.activo() == null
+                        ? true
+                        : datos.activo()
+        );
 
         usuario.setRol(
                 rol
         );
 
-        return usuarioRepositorio.save(usuario);
+        Usuario usuarioGuardado =
+                usuarioRepositorio.save(usuario);
 
-    }
+        if(datos.idsMaterias() != null
+                && !datos.idsMaterias().isEmpty()){
+
+                List<Long> idsMaterias =
+                        datos.idsMaterias()
+                                .stream()
+                                .distinct()
+                                .toList();
+
+                List<Materia> materias =
+                        materiaRepositorio.findAllById(
+                                idsMaterias
+                        );
+
+                if(materias.size() != idsMaterias.size()){
+                throw new RuntimeException(
+                        "Una o más materias seleccionadas no existen"
+                );
+                }
+
+                for(Materia materia : materias){
+
+                materia.setDocente(
+                        usuarioGuardado
+                );
+                }
+
+                materiaRepositorio.saveAll(
+                        materias
+                );
+        }
+
+        return usuarioGuardado;
+        }
 
     public Usuario cambiarRol(
             Long idUsuario,

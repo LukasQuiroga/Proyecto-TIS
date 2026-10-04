@@ -70,22 +70,9 @@
 .login-options{
     margin-top:10px;
     display:flex;
-    justify-content:space-between;
+    justify-content:flex-end;
     align-items:center;
     font-size:13px;
-}
-
-.remember{
-    display:flex !important;
-    align-items:center;
-    gap:6px;
-    margin:0 !important;
-    font-weight:normal !important;
-}
-
-.remember input{
-    width:15px;
-    height:15px;
 }
 
 .forgot-password{
@@ -117,6 +104,11 @@
     background:#0558b7;
 }
 
+.btn-login:disabled{
+    opacity:.7;
+    cursor:not-allowed;
+}
+
 .btn-volver{
     width:100%;
     height:50px;
@@ -134,8 +126,7 @@
     background:#eaf3ff;
 }
 
-
-.modal-fondo{
+.login-modal-fondo{
     position:fixed;
     inset:0;
     background:rgba(0,0,0,.35);
@@ -145,7 +136,7 @@
     z-index:2000;
 }
 
-.modal-login{
+.login-modal{
     width:330px;
     background:white;
     border-radius:12px;
@@ -154,7 +145,7 @@
     box-shadow:0 10px 30px rgba(0,0,0,.2);
 }
 
-.modal-icon{
+.login-modal-icon{
     width:50px;
     height:50px;
     margin:auto;
@@ -167,25 +158,25 @@
     font-weight:bold;
 }
 
-.modal-error{
+.login-modal-error{
     background:#ef4444;
 }
 
-.modal-success{
+.login-modal-success{
     background:#22c55e;
 }
 
-.modal-login h2{
+.login-modal h2{
     color:#163b63;
     margin-top:15px;
 }
 
-.modal-login p{
+.login-modal p{
     color:#718096;
     font-size:14px;
 }
 
-.modal-login button{
+.login-modal button{
     width:100%;
     height:38px;
     background:#0869d8;
@@ -195,18 +186,23 @@
     cursor:pointer;
 }
 
-.progreso{
+.login-modal button:hover{
+    background:#0558b7;
+}
+
+.login-progreso{
     height:5px;
     background:#0869d8;
     border-radius:5px;
     margin-top:15px;
-    animation:cargar 2s linear;
+    animation:login-cargar 2s linear;
 }
 
-@keyframes cargar{
+@keyframes login-cargar{
     from{
         width:0;
     }
+
     to{
         width:100%;
     }

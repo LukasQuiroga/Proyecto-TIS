@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiChevronDown, FiLogIn, FiLogOut, FiUser } from "react-icons/fi";
 import { useAuth } from "../../context/useAuth";
+import {
+    cerrarSesionBackend
+} from "../../services/authService";
 import "./Navbar.css";
 
 function obtenerNombre(usuario) {
@@ -70,14 +73,27 @@ function Navbar() {
               </button>
 
               <button
-                type="button"
-                onClick={() => {
-                  setMenuAbierto(false);
-                  cerrarSesion();
-                }}
+                  type="button"
+                  onClick={async()=>{
+
+                      setMenuAbierto(false);
+
+                      try{
+                          await cerrarSesionBackend();
+                      }catch{
+                          // Se cierra localmente aunque falle backend.
+                      }
+
+                      cerrarSesion();
+
+                      navigate(
+                          "/login",
+                          {replace:true}
+                      );
+                  }}
               >
-                <FiLogOut />
-                Cerrar sesión
+                  <FiLogOut/>
+                  Cerrar sesión
               </button>
             </div>
           )}

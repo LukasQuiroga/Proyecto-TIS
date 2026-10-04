@@ -1,4 +1,5 @@
 import {
+    useEffect,
     useState
 } from "react";
 
@@ -17,15 +18,80 @@ import "./RecuperacionContrasena.css";
 function NuevaContrasena(){
 
     const navigate = useNavigate();
+
     const [password,setPassword] = useState("");
     const [confirmar,setConfirmar] = useState("");
     const [mensaje,setMensaje] = useState("");
     const [error,setError] = useState("");
+
+
+    useEffect(()=>{
+
+        const correo =
+            localStorage.getItem(
+                "correoRecuperacion"
+            );
+
+        const token =
+            localStorage.getItem(
+                "tokenRecuperacion"
+            );
+
+
+        if(!correo || !token){
+
+            navigate(
+                "/login",
+                {
+                    replace:true
+                }
+            );
+
+        }
+
+    },[navigate]);
+
+
+    const cancelar = ()=>{
+
+        localStorage.removeItem(
+            "correoRecuperacion"
+        );
+
+        localStorage.removeItem(
+            "tokenRecuperacion"
+        );
+
+        localStorage.removeItem(
+            "codigoRecuperacion"
+        );
+
+        navigate(
+            "/login",
+            {
+                replace:true
+            }
+        );
+
+    };
+
+
     const cambiarPassword = async(e)=>{
 
         e.preventDefault();
 
         setError("");
+        setMensaje("");
+
+
+        if(password.length < 8){
+
+            setError(
+                "La contraseña debe tener al menos 8 caracteres"
+            );
+
+            return;
+        }
 
 
         if(password !== confirmar){
@@ -37,29 +103,8 @@ function NuevaContrasena(){
             return;
         }
 
+
         try{
-
-            console.log("DATOS ENVIADOS AL BACKEND:");
-
-            console.log({
-
-                correo:
-                localStorage.getItem(
-                    "correoRecuperacion"
-                ),
-
-                token:
-                localStorage.getItem(
-                    "tokenRecuperacion"
-                ),
-
-                nuevaContrasena:
-                password,
-
-                confirmarContrasena:
-                confirmar
-
-            });
 
             await restablecerContrasena({
 
@@ -76,13 +121,19 @@ function NuevaContrasena(){
                 nuevaContrasena:
                 password,
 
-
                 confirmarContrasena:
                 confirmar
+
             });
+
 
             setMensaje(
                 "Contraseña actualizada correctamente"
+            );
+
+
+            localStorage.removeItem(
+                "correoRecuperacion"
             );
 
             localStorage.removeItem(
@@ -93,11 +144,18 @@ function NuevaContrasena(){
                 "codigoRecuperacion"
             );
 
+
             setTimeout(()=>{
 
-                navigate("/login");
+                navigate(
+                    "/login",
+                    {
+                        replace:true
+                    }
+                );
 
             },1500);
+
 
         }catch(error){
 
@@ -106,7 +164,10 @@ function NuevaContrasena(){
                 error
             );
 
+
             setError(
+                error.response?.data?.mensaje ||
+                error.response?.data?.message ||
                 "No se pudo actualizar la contraseña"
             );
 
@@ -114,7 +175,9 @@ function NuevaContrasena(){
 
     };
 
+
     return (
+
         <div className="recuperacion-page">
 
             <div className="recuperacion-card">
@@ -123,38 +186,36 @@ function NuevaContrasena(){
                     Nueva contraseña
                 </h2>
 
-                <form onSubmit={cambiarPassword}>
+
+                <form
+                    onSubmit={
+                        cambiarPassword
+                    }
+                >
 
                     <input
-
                         type="password"
-
+                        minLength={8}
                         placeholder="Nueva contraseña"
-
                         value={password}
-
                         onChange={
                             e=>setPassword(
                                 e.target.value
                             )
                         }
-
                     />
 
+
                     <input
-
                         type="password"
-
+                        minLength={8}
                         placeholder="Confirmar contraseña"
-
                         value={confirmar}
-
                         onChange={
                             e=>setConfirmar(
                                 e.target.value
                             )
                         }
-
                     />
 
 
@@ -165,6 +226,7 @@ function NuevaContrasena(){
                         </p>
                     }
 
+
                     {
                         mensaje &&
                         <p className="success">
@@ -172,8 +234,20 @@ function NuevaContrasena(){
                         </p>
                     }
 
-                    <button>
+
+                    <button
+                        type="submit"
+                    >
                         Guardar contraseña
+                    </button>
+
+
+                    <button
+                        type="button"
+                        className="volver"
+                        onClick={cancelar}
+                    >
+                        Cancelar
                     </button>
 
                 </form>
@@ -181,9 +255,9 @@ function NuevaContrasena(){
             </div>
 
         </div>
+
     );
 
 }
-
 
 export default NuevaContrasena;

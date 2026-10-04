@@ -124,11 +124,10 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                         {tienePermiso("GESTIONAR_USUARIOS")&&(
                                             <NavLink
                                                 to="/usuarios"
+                                                end
                                                 className={({isActive})=>
                                                     `sidebar-subopcion ${
-                                                        isActive
-                                                            ?"sidebar-subopcion-activa"
-                                                            :""
+                                                        isActive?"sidebar-subactiva":""
                                                     }`
                                                 }
                                             >
