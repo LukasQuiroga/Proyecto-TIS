@@ -115,6 +115,11 @@ const CLAVE_ERROR = {
 };
 
 
+const SOLO_LETRAS = /^[\p{L}\p{M} ]+$/u;
+
+const QUITAR_NO_LETRAS = /[^\p{L}\p{M} ]/gu;
+
+
 
 function RegistroUsuario(){
 
@@ -214,6 +219,16 @@ function RegistroUsuario(){
                 "El nombre es obligatorio";
 
         }
+        else if(
+            !SOLO_LETRAS.test(
+                formulario.nombre.trim()
+            )
+        ){
+
+            erroresValidos.nombre =
+                "El nombre solo puede contener letras";
+
+        }
         else if(formulario.nombre.trim().length > 30){
 
             erroresValidos.nombre =
@@ -226,6 +241,16 @@ function RegistroUsuario(){
 
             erroresValidos.apellido =
                 "El apellido es obligatorio";
+
+        }
+        else if(
+            !SOLO_LETRAS.test(
+                formulario.apellido.trim()
+            )
+        ){
+
+            erroresValidos.apellido =
+                "El apellido solo puede contener letras";
 
         }
         else if(formulario.apellido.trim().length > 35){
@@ -577,7 +602,7 @@ function RegistroUsuario(){
                                     e =>
                                     cambiar(
                                         "nombre",
-                                        e.target.value
+                                        e.target.value.replace(QUITAR_NO_LETRAS, "")
                                     )
                                 }
                                 placeholder="Ingrese nombres"
@@ -600,7 +625,7 @@ function RegistroUsuario(){
                                     e =>
                                     cambiar(
                                         "apellido",
-                                        e.target.value
+                                        e.target.value.replace(QUITAR_NO_LETRAS, "")
                                     )
                                 }
                                 placeholder="Ingrese apellidos"
