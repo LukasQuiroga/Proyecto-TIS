@@ -82,6 +82,14 @@ function NuevaContrasena(){
         setError("");
         setMensaje("");
 
+         if (password.length < 8){
+
+           setError(
+                 "La contraseña debe tener al menos 8 caracteres"
+             );
+
+                 return;
+        }
 
         if(password !== confirmar){
 
@@ -202,6 +210,7 @@ function NuevaContrasena(){
 
                     <input
                         type="password"
+                        minLength={8}
                         placeholder="Nueva contraseña"
                         value={password}
                         onChange={
@@ -214,6 +223,7 @@ function NuevaContrasena(){
 
                     <input
                         type="password"
+                        minLength={8}
                         placeholder="Confirmar contraseña"
                         value={confirmar}
                         onChange={
