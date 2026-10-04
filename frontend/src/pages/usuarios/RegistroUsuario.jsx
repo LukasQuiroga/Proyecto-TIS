@@ -236,6 +236,12 @@ function RegistroUsuario(){
                 "El nombre es obligatorio";
 
         }
+        else if(formulario.nombre.trim().length > 30){
+
+            erroresValidos.nombre =
+                "El nombre no puede superar los 30 caracteres";
+
+        }
 
 
         if(!formulario.apellido.trim()){
@@ -573,6 +579,7 @@ function RegistroUsuario(){
                                     )
                                 }
                                 placeholder="Ingrese nombres"
+                                maxLength={30}
                             />
 
                         </Campo>
