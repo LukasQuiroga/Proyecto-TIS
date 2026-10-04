@@ -238,9 +238,475 @@ const PASOS = [
 ];
 
 
+const COLUMNAS_CSV = [
+    {
+        campo: "documento",
+        etiquetas: [
+            "documento",
+            "documento de identidad",
+            "documento identidad",
+            "documento de identidad del usuario",
+            "carnet",
+            "carnet de identidad",
+            "ci",
+            "nro de documento",
+            "numero de documento"
+        ]
+    },
+    {
+        campo: "nombres",
+        etiquetas: [
+            "nombres",
+            "nombre",
+            "nombres y apellidos",
+            "nombre completo"
+        ]
+    },
+    {
+        campo: "apellidos",
+        etiquetas: [
+            "apellidos",
+            "apellido",
+            "apellidos del usuario"
+        ]
+    },
+    {
+        campo: "correo",
+        etiquetas: [
+            "correo",
+            "correo electronico",
+            "correo institucional",
+            "email",
+            "e mail"
+        ]
+    },
+    {
+        campo: "telefono",
+        etiquetas: [
+            "telefono",
+            "telefono celular",
+            "celular",
+            "tel",
+            "telefono movil"
+        ]
+    },
+    {
+        campo: "rol",
+        etiquetas: [
+            "rol",
+            "perfil",
+            "rol del usuario",
+            "tipo de usuario"
+        ]
+    },
+    {
+        campo: "estado",
+        etiquetas: [
+            "estado",
+            "estado del usuario"
+        ]
+    },
+    {
+        campo: "codigoSis",
+        etiquetas: [
+            "codigo universitario",
+            "codigo sis",
+            "codigo de estudiante",
+            "codigo",
+            "carnet de estudiante"
+        ]
+    },
+    {
+        campo: "carrera",
+        etiquetas: [
+            "carrera",
+            "carrera del estudiante"
+        ]
+    },
+    {
+        campo: "facultad",
+        etiquetas: [
+            "facultad",
+            "facultad del estudiante"
+        ]
+    }
+];
+
+
+const COLUMNAS_REQUERIDAS = [
+    "documento",
+    "nombres",
+    "apellidos",
+    "correo",
+    "rol"
+];
+
+
+const DELIMITADORES_CSV = [
+    ",",
+    ";",
+    "\t"
+];
+
+
+const CORREO_ESPERADO =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+const errorArchivo = (mensaje) => {
+
+    const error = new Error(mensaje);
+
+    error.esFormatoCsv = true;
+
+    return error;
+
+};
+
+
+const columnaDeEncabezado = (celda) => {
+
+    const texto =
+        normalizar(celda)
+            .replace(/\s+/g, " ")
+            .trim();
+
+    if(!texto){
+
+        return null;
+
+    }
+
+    const exacta =
+        COLUMNAS_CSV.find(
+            columna =>
+                columna.etiquetas.includes(texto)
+        );
+
+    if(exacta){
+
+        return exacta.campo;
+
+    }
+
+    const porPrefijo =
+        COLUMNAS_CSV.find(
+            columna =>
+                columna.etiquetas.some(
+                    etiqueta =>
+                        texto.startsWith(etiqueta)
+                )
+        );
+
+    return porPrefijo
+        ? porPrefijo.campo
+        : null;
+
+};
+
+
+const esFilaEncabezado = (celdas) => {
+
+    const coincidencias =
+        (celdas || []).filter(
+            celda =>
+                columnaDeEncabezado(celda) !== null
+        ).length;
+
+    return coincidencias >= 3;
+
+};
+
+
+const contarDelimitadores = (
+    texto,
+    delimitador
+) => {
+
+    let entreComillas = false;
+
+    let total = 0;
+
+    for(let i = 0; i < texto.length; i++){
+
+        const caracter = texto[i];
+
+        if(caracter === "\""){
+
+            entreComillas = !entreComillas;
+
+        }
+        else if(
+            !entreComillas
+            && caracter === delimitador
+        ){
+
+            total++;
+
+        }
+
+    }
+
+    return total;
+
+};
+
+
+const detectarDelimitador = (texto) => {
+
+    const muestra =
+        String(texto || "")
+            .split(/\r?\n/)
+            .slice(0, 20)
+            .join("\n");
+
+    const candidatos =
+        DELIMITADORES_CSV
+            .map(
+                delimitador => ({
+                    delimitador,
+                    total:
+                        contarDelimitadores(
+                            muestra,
+                            delimitador
+                        )
+                })
+            )
+            .sort(
+                (primero, segundo) =>
+                    segundo.total - primero.total
+            );
+
+    return candidatos[0].total > 0
+        ? candidatos[0].delimitador
+        : ",";
+
+};
+
+
+const indicesDesdeEncabezado = (celdas) => {
+
+    const mapa = {};
+
+    (celdas || []).forEach(
+        (celda, indice) => {
+
+            const campo =
+                columnaDeEncabezado(celda);
+
+            if(campo && mapa[campo] === undefined){
+
+                mapa[campo] = indice;
+
+            }
+
+        }
+    );
+
+    const faltantes =
+        COLUMNAS_REQUERIDAS.filter(
+            campo =>
+                mapa[campo] === undefined
+        );
+
+    if(faltantes.length > 0){
+
+        const nombresFaltantes =
+            faltantes
+                .map(
+                    campo =>
+                        COLUMNAS_CSV.find(
+                            columna =>
+                                columna.campo === campo
+                        ).etiquetas[0]
+                )
+                .join(", ");
+
+        throw errorArchivo(
+            "El archivo no tiene las columnas requeridas. " +
+            "Se esperaban: "
+            + COLUMNAS_ARCHIVO.join(", ")
+            + ". "
+            + "Faltan: "
+            + nombresFaltantes
+            + "."
+        );
+
+    }
+
+    return mapa;
+
+};
+
+
+const indicesPosicionales = () => {
+
+    const mapa = {};
+
+    COLUMNAS_CSV.forEach(
+        (columna, indice) => {
+
+            mapa[columna.campo] = indice;
+
+        }
+    );
+
+    return mapa;
+
+};
+
+
+const validarFilaLocal = (fila) => {
+
+    const errores = [
+        ...(fila.erroresLocales || [])
+    ];
+
+    const documento =
+        (fila.documento || "").trim();
+
+    if(!documento){
+
+        errores.push(
+            "El documento de identidad es obligatorio"
+        );
+
+    }
+    else if(!/^\d+$/.test(documento)){
+
+        errores.push(
+            "Documento inválido"
+        );
+
+    }
+
+    if(!(fila.nombres || "").trim()){
+
+        errores.push(
+            "El nombre es obligatorio"
+        );
+
+    }
+
+    if(!(fila.apellidos || "").trim()){
+
+        errores.push(
+            "El apellido es obligatorio"
+        );
+
+    }
+
+    const correo =
+        (fila.correo || "").trim();
+
+    if(!correo){
+
+        errores.push(
+            "El correo es obligatorio"
+        );
+
+    }
+    else if(!CORREO_ESPERADO.test(correo)){
+
+        errores.push(
+            "Correo electrónico inválido"
+        );
+
+    }
+
+    const telefono =
+        (fila.telefono || "").trim();
+
+    if(telefono && !/^\d+$/.test(telefono)){
+
+        errores.push(
+            "Teléfono inválido"
+        );
+
+    }
+
+    if(!(fila.rol || "").trim()){
+
+        errores.push(
+            "Debe seleccionar un rol"
+        );
+
+    }
+
+    return [
+        ...new Set(errores)
+    ];
+
+};
+
+
+const combinarValidaciones = (
+    filasRespuesta,
+    filasEnviadas
+) => {
+
+    const erroresPorFila =
+        new Map(
+            filasEnviadas.map(
+                fila => [
+                    fila.fila,
+                    validarFilaLocal(fila)
+                ]
+            )
+        );
+
+    return filasRespuesta.map(
+        fila => {
+
+            const erroresLocales =
+                erroresPorFila.get(fila.fila) || [];
+
+            if(erroresLocales.length === 0){
+
+                return fila;
+
+            }
+
+            return {
+                ...fila,
+                estado: "Inválido",
+                observaciones: [
+                    ...new Set([
+                        ...erroresLocales,
+                        ...(fila.observaciones || [])
+                    ])
+                ]
+            };
+
+        }
+    );
+
+};
+
+
+const contarValidos = (filas) =>
+
+    filas.filter(
+        fila =>
+            fila.estado === "Activo"
+            || fila.estado === "Registrado"
+    ).length;
+
+
+const contarInvalidos = (filas) =>
+
+    filas.filter(
+        fila =>
+            fila.estado === "Inválido"
+    ).length;
+
+
 function parsearCSV(texto){
 
     const registros = [];
+
+    const delimitador =
+        detectarDelimitador(texto);
 
     let celdas = [];
 
@@ -305,7 +771,7 @@ function parsearCSV(texto){
             entreComillas = true;
 
         }
-        else if(caracter === ","){
+        else if(caracter === delimitador){
 
             celdas.push(campo);
             campo = "";
@@ -353,49 +819,70 @@ function convertirFilas(registros){
 
     const hayEncabezado =
         registros.length > 0
-        && !/^\d+$/.test(
-            (registros[0].celdas[0] || "").trim()
+        && esFilaEncabezado(
+            registros[0].celdas
         );
 
-    const inicio = hayEncabezado ? 1 : 0;
+    const indices =
+        hayEncabezado
+            ? indicesDesdeEncabezado(
+                registros[0].celdas
+            )
+            : indicesPosicionales();
 
     return registros
-        .slice(inicio)
-        .map(registro => ({
+        .slice(
+            hayEncabezado ? 1 : 0
+        )
+        .map(registro => {
 
-            fila: registro.linea,
+            const celdas = registro.celdas;
 
-            documento:
-                (registro.celdas[0] || "").trim(),
+            const erroresLocales = [];
 
-            nombres:
-                (registro.celdas[1] || "").trim(),
+            if(celdas.length > COLUMNAS_CSV.length){
 
-            apellidos:
-                (registro.celdas[2] || "").trim(),
+                erroresLocales.push(
+                    "La fila tiene "
+                    + celdas.length
+                    + " columnas y se esperaban "
+                    + COLUMNAS_CSV.length
+                );
 
-            correo:
-                (registro.celdas[3] || "").trim(),
+            }
 
-            telefono:
-                (registro.celdas[4] || "").trim(),
+            const valor = campo =>
+                (celdas[indices[campo]] || "").trim();
 
-            rol:
-                (registro.celdas[5] || "").trim(),
+            return {
 
-            estado:
-                (registro.celdas[6] || "").trim(),
+                fila: registro.linea,
 
-            codigoSis:
-                (registro.celdas[7] || "").trim(),
+                documento: valor("documento"),
 
-            carrera:
-                (registro.celdas[8] || "").trim(),
+                nombres: valor("nombres"),
 
-            facultad:
-                (registro.celdas[9] || "").trim()
+                apellidos: valor("apellidos"),
 
-        }));
+                correo: valor("correo"),
+
+                telefono: valor("telefono"),
+
+                rol: valor("rol"),
+
+                estado: valor("estado"),
+
+                codigoSis: valor("codigoSis"),
+
+                carrera: valor("carrera"),
+
+                facultad: valor("facultad"),
+
+                erroresLocales
+
+            };
+
+        });
 
 }
 
@@ -611,18 +1098,28 @@ function ImportarUsuarios(){
                     estadoPorDefecto
                 });
 
+            const filasCombinadas =
+                combinarValidaciones(
+                    respuesta.data.filas,
+                    filasParseadas
+                );
+
             setArchivo(archivoSeleccionado);
 
             setFilasCsv(filasParseadas);
 
-            setFilas(respuesta.data.filas);
+            setFilas(filasCombinadas);
 
             setPasoActivo(2);
 
             setMensaje(
-                `Archivo analizado: ${respuesta.data.validos} ` +
+                `Archivo analizado: ${
+                    contarValidos(filasCombinadas)
+                } ` +
                 "usuarios válidos y " +
-                `${respuesta.data.conErrores} con errores.`
+                `${
+                    contarInvalidos(filasCombinadas)
+                } con errores.`
             );
 
         }
@@ -634,8 +1131,13 @@ function ImportarUsuarios(){
             );
 
             setError(
-                err.response?.data?.mensaje ||
-                "No se pudo analizar el archivo. " +
+                err.response?.data?.mensaje
+                || (
+                    err.esFormatoCsv
+                        ? err.message
+                        : null
+                )
+                || "No se pudo analizar el archivo. " +
                 "Verifique el formato CSV e intente nuevamente."
             );
 
@@ -661,6 +1163,25 @@ function ImportarUsuarios(){
 
         }
 
+        const filasImportables =
+                filasCsv.filter(
+                    fila =>
+                        validarFilaLocal(fila).length === 0
+                );
+
+
+        if(filasImportables.length === 0){
+
+            setError(
+                "No hay filas válidas para importar. " +
+                "Corrija los errores del archivo y vuelva a analizarlo."
+            );
+
+            return;
+
+        }
+
+
         setError("");
 
         setMensaje("");
@@ -672,13 +1193,27 @@ function ImportarUsuarios(){
             const respuesta =
                 await importarUsuarios(
                     {
-                        usuarios: filasCsv,
+                        usuarios: filasImportables,
                         estadoPorDefecto
                     },
                     usuario?.idUsuario
                 );
 
-            setFilas(respuesta.data.filas);
+            const resultadoPorFila =
+                new Map(
+                    respuesta.data.filas.map(
+                        fila => [fila.fila, fila]
+                    )
+                );
+
+            const filasFinales =
+                filas.map(
+                    fila =>
+                        resultadoPorFila.get(fila.fila)
+                        || fila
+                );
+
+            setFilas(filasFinales);
 
             setImportado(true);
 
@@ -687,9 +1222,13 @@ function ImportarUsuarios(){
             setMostrarExito(true);
 
             setMensaje(
-                `Importación completada: ${respuesta.data.registrados} ` +
+                `Importación completada: ${
+                    contarValidos(filasFinales)
+                } ` +
                 "usuarios registrados correctamente y " +
-                `${respuesta.data.conErrores} con errores.`
+                `${
+                    contarInvalidos(filasFinales)
+                } con errores.`
             );
 
         }
