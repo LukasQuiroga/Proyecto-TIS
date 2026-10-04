@@ -21,6 +21,24 @@ function NuevaContrasena(){
     const [confirmar,setConfirmar] = useState("");
     const [mensaje,setMensaje] = useState("");
     const [error,setError] = useState("");
+   
+    const cancelar = () => {
+
+    localStorage.removeItem(
+        "correoRecuperacion"
+    );
+
+    localStorage.removeItem(
+        "tokenRecuperacion"
+    );
+
+    localStorage.removeItem(
+        "codigoRecuperacion"
+    );
+
+    navigate("/login");
+    };
+
     const cambiarPassword = async(e)=>{
 
         e.preventDefault();
@@ -172,8 +190,16 @@ function NuevaContrasena(){
                         </p>
                     }
 
-                    <button>
-                        Guardar contraseña
+                   <button type="submit">
+                             Guardar contraseña
+                   </button>
+
+                   <button
+                         type="button"
+                         className="volver"
+                         onClick={cancelar}
+                    >
+                       Cancelar
                     </button>
 
                 </form>
