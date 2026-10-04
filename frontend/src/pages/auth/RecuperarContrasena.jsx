@@ -1,5 +1,6 @@
 import {
     useEffect,
+    useRef,
     useState
 } from "react";
 
@@ -18,14 +19,26 @@ function RecuperarContrasena(){
 
     const navigate = useNavigate();
 
-    const [correo,setCorreo] = useState("");
-    const [mensaje,setMensaje] = useState("");
-    const [error,setError] = useState("");
+    const bloqueoEnvioRef =
+        useRef(false);
+
+    const [correo,setCorreo] =
+        useState("");
+
+    const [mensaje,setMensaje] =
+        useState("");
+
+    const [error,setError] =
+        useState("");
+
     const [solicitudProcesada,setSolicitudProcesada] =
         useState(false);
 
     const [segundosRestantes,setSegundosRestantes] =
         useState(0);
+
+    const [enviando,setEnviando] =
+        useState(false);
 
 
     useEffect(()=>{
@@ -70,7 +83,11 @@ function RecuperarContrasena(){
         setSolicitudProcesada(false);
 
 
-        if(segundosRestantes > 0){
+        if(
+            bloqueoEnvioRef.current ||
+            enviando ||
+            segundosRestantes > 0
+        ){
 
             return;
         }
@@ -84,6 +101,14 @@ function RecuperarContrasena(){
 
             return;
         }
+
+
+        bloqueoEnvioRef.current =
+            true;
+
+        setEnviando(
+            true
+        );
 
 
         try{
@@ -122,6 +147,15 @@ function RecuperarContrasena(){
                 error.response?.data?.mensaje ||
                 error.response?.data?.message ||
                 "No se pudo procesar la solicitud"
+            );
+
+        }finally{
+
+            bloqueoEnvioRef.current =
+                false;
+
+            setEnviando(
+                false
             );
 
         }
@@ -187,14 +221,17 @@ function RecuperarContrasena(){
                     <button
                         type="submit"
                         disabled={
+                            enviando ||
                             segundosRestantes > 0
                         }
                     >
 
                         {
-                            segundosRestantes > 0
-                                ? `Reenviar en ${segundosRestantes}s`
-                                : "Enviar código"
+                            enviando
+                                ? "Enviando..."
+                                : segundosRestantes > 0
+                                    ? `Reenviar en ${segundosRestantes}s`
+                                    : "Enviar código"
                         }
 
                     </button>
