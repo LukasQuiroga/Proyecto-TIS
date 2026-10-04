@@ -13,9 +13,13 @@ function EditarUsuario() {
   const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState(null);
+  const [usuarioOriginal, setUsuarioOriginal] = useState(null);
+
   const [roles, setRoles] = useState([]);
   const [materiasDisponibles, setMateriasDisponibles] = useState([]);
+
   const [materiasSeleccionadas, setMateriasSeleccionadas] = useState([]);
+  const [materiasOriginales, setMateriasOriginales] = useState([]);
 
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -35,25 +39,40 @@ function EditarUsuario() {
 
         const datos = usuarioRespuesta.data;
 
-        setUsuario({
-          nombre: datos.nombre || "",
-          apellido: datos.apellido || "",
-          carnetIdentidad: datos.carnetIdentidad || "",
-          correo: datos.correo || "",
-          celular: datos.celular || "",
-          carrera: datos.carrera || "",
-          codigoSis: datos.codigoSis || "",
-          idRol: datos.idRol || "",
-          activo: datos.activo ?? true,
+        const usuarioCargado = {
+               nombre: datos.nombre || "",
+               apellido: datos.apellido || "",
+               carnetIdentidad: datos.carnetIdentidad || "",
+               correo: datos.correo || "",
+               celular: datos.celular || "",
+               carrera: datos.carrera || "",
+               codigoSis: datos.codigoSis || "",
+               idRol: datos.idRol || "",
+               activo: datos.activo ?? true,
+        };
+
+             setUsuario(usuarioCargado);
+
+             setUsuarioOriginal({
+               ...usuarioCargado
         });
 
         setRoles(rolesRespuesta.data || []);
 
         setMateriasDisponibles(materiasRespuesta.data || []);
 
-        setMateriasSeleccionadas(
-          (datos.materias || []).map((materia) => materia.idMateria),
-        );
+       const materiasUsuario = (datos.materias || []).map( 
+        (materia) => materia.idMateria
+    );
+   
+             setMateriasSeleccionadas(
+               materiasUsuario
+     );
+
+             setMateriasOriginales(
+             [...materiasUsuario]
+      );
+
       } catch (error) {
         console.error("Error cargando usuario:", error);
 
@@ -83,6 +102,63 @@ function EditarUsuario() {
       return [...actual, idMateria];
     });
   };
+
+  const hayCambios = () => {
+
+    if(!usuarioOriginal || !usuario){
+        return false;
+    }
+
+    const actual = {
+        nombre: usuario.nombre.trim(),
+        apellido: usuario.apellido.trim(),
+        carnetIdentidad: usuario.carnetIdentidad.trim(),
+        correo: usuario.correo.trim(),
+        celular: usuario.celular?.trim() || "",
+        carrera: usuario.carrera?.trim() || "",
+        activo: usuario.activo,
+    };
+
+    const original = {
+        nombre: usuarioOriginal.nombre.trim(),
+        apellido: usuarioOriginal.apellido.trim(),
+        carnetIdentidad:
+            usuarioOriginal.carnetIdentidad.trim(),
+        correo: usuarioOriginal.correo.trim(),
+        celular:
+            usuarioOriginal.celular?.trim() || "",
+        carrera:
+            usuarioOriginal.carrera?.trim() || "",
+        activo: usuarioOriginal.activo,
+    };
+
+    const datosModificados =
+        JSON.stringify(actual) !==
+        JSON.stringify(original);
+
+
+    const materiasActuales =
+        [...materiasSeleccionadas]
+            .map(Number)
+            .sort((a,b)=>a-b);
+
+    const materiasIniciales =
+        [...materiasOriginales]
+            .map(Number)
+            .sort((a,b)=>a-b);
+
+
+    const materiasModificadas =
+        JSON.stringify(materiasActuales) !==
+        JSON.stringify(materiasIniciales);
+
+
+    return (
+        datosModificados ||
+        materiasModificadas
+    );
+
+};
 
   const validarFormulario = () => {
     if (!usuario.nombre.trim()) {
@@ -398,12 +474,18 @@ function EditarUsuario() {
             </button>
 
             <button
-              type="submit"
-              className="editar-boton-guardar"
-              disabled={guardando}
-            >
-              {guardando ? "Guardando..." : "✓ Guardar cambios"}
-            </button>
+               type="submit"
+               className="editar-boton-guardar"
+               disabled={
+               guardando ||
+               !hayCambios()
+             }
+              >
+                {guardando
+                   ? "Guardando..."
+                  : "✓ Guardar cambios"
+                }
+             </button>
           </div>
         </form>
       </div>
