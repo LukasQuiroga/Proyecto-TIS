@@ -359,12 +359,24 @@ public class UsuarioServicio {
                         "El nombre es obligatorio"
                 );
 
+            } else if(nombres.length() > 30){
+
+                observaciones.add(
+                        "El nombre no puede superar los 30 caracteres"
+                );
+
             }
 
             if(apellidos.isBlank()){
 
                 observaciones.add(
                         "El apellido es obligatorio"
+                );
+
+            } else if(apellidos.length() > 35){
+
+                observaciones.add(
+                        "El apellido no puede superar los 35 caracteres"
                 );
 
             }
@@ -785,7 +797,33 @@ public class UsuarioServicio {
         List<CampoError> errores =
                 new ArrayList<>();
 
-        if(datos.nombre() == null || datos.nombre().isBlank()){
+        String nombre =
+                datos.nombre() == null
+                        ? ""
+                        : datos.nombre().trim();
+
+        String apellido =
+                datos.apellido() == null
+                        ? ""
+                        : datos.apellido().trim();
+
+        String carnetIdentidad =
+                datos.carnetIdentidad() == null
+                        ? ""
+                        : datos.carnetIdentidad().trim();
+
+        String correo =
+                datos.correo() == null
+                        ? ""
+                        : datos.correo().trim();
+
+        String celular =
+                datos.celular() == null
+                        || datos.celular().isBlank()
+                        ? null
+                        : datos.celular().trim();
+
+        if(nombre.isBlank()){
 
             errores.add(
                     new CampoError(
@@ -795,8 +833,18 @@ public class UsuarioServicio {
             );
 
         }
+        else if(nombre.length() > 30){
 
-        if(datos.apellido() == null || datos.apellido().isBlank()){
+            errores.add(
+                    new CampoError(
+                            "nombre",
+                            "El nombre no puede superar los 30 caracteres"
+                    )
+            );
+
+        }
+
+        if(apellido.isBlank()){
 
             errores.add(
                     new CampoError(
@@ -806,9 +854,18 @@ public class UsuarioServicio {
             );
 
         }
+        else if(apellido.length() > 35){
 
-        if(datos.carnetIdentidad() == null
-                || datos.carnetIdentidad().isBlank()){
+            errores.add(
+                    new CampoError(
+                            "apellido",
+                            "El apellido no puede superar los 35 caracteres"
+                    )
+            );
+
+        }
+
+        if(carnetIdentidad.isBlank()){
 
             errores.add(
                     new CampoError(
@@ -828,7 +885,7 @@ public class UsuarioServicio {
                 codigoSis != null
                         && !codigoSis.isBlank();
 
-        if(datos.correo() == null || datos.correo().isBlank()){
+        if(correo.isBlank()){
 
             errores.add(
                     new CampoError(
@@ -838,7 +895,7 @@ public class UsuarioServicio {
             );
 
         } else if(usuarioRepositorio
-                .findByCorreo(datos.correo())
+                .findByCorreo(correo)
                 .isPresent()){
 
             errores.add(
@@ -850,10 +907,9 @@ public class UsuarioServicio {
 
         }
 
-        if(datos.carnetIdentidad() != null
-                && !datos.carnetIdentidad().isBlank()
+        if(!carnetIdentidad.isBlank()
                 && usuarioRepositorio
-                        .findByCarnetIdentidad(datos.carnetIdentidad())
+                        .findByCarnetIdentidad(carnetIdentidad)
                         .isPresent()){
 
             errores.add(
@@ -865,9 +921,8 @@ public class UsuarioServicio {
 
         }
 
-        if(datos.carnetIdentidad() != null
-                && !datos.carnetIdentidad().isBlank()
-                && !soloDigitos(datos.carnetIdentidad())){
+        if(!carnetIdentidad.isBlank()
+                && !soloDigitos(carnetIdentidad)){
 
             errores.add(
                     new CampoError(
@@ -878,9 +933,8 @@ public class UsuarioServicio {
 
         }
 
-        if(datos.celular() != null
-                && !datos.celular().isBlank()
-                && !soloDigitos(datos.celular())){
+        if(celular != null
+                && !soloDigitos(celular)){
 
             errores.add(
                     new CampoError(
@@ -940,33 +994,33 @@ public class UsuarioServicio {
         Usuario usuario = new Usuario();
 
         usuario.setNombre(
-                datos.nombre()
+                nombre
         );
 
         usuario.setApellido(
-                datos.apellido()
+                apellido
         );
 
         usuario.setCarnetIdentidad(
-                datos.carnetIdentidad()
+                carnetIdentidad
         );
 
         usuario.setCorreo(
-                datos.correo()
+                correo
         );
 
         String contrasena =
                 datos.contrasena() == null
                         || datos.contrasena().isBlank()
-                        ? datos.carnetIdentidad()
-                        : datos.contrasena();
+                        ? carnetIdentidad
+                        : datos.contrasena().trim();
 
         usuario.setContrasena(
                 contrasena
         );
 
         usuario.setCelular(
-                datos.celular()
+                celular
         );
 
         if(codigoSis == null || codigoSis.isBlank()){
@@ -1020,36 +1074,81 @@ public class UsuarioServicio {
                 ActualizarUsuarioSolicitud datos
         ){
 
-        if(datos.nombre() == null || datos.nombre().isBlank()){
-                throw new RuntimeException(
-                        "El nombre es obligatorio"
-                );
+String nombre =
+                datos.nombre() == null
+                        ? ""
+                        : datos.nombre().trim();
+
+        String apellido =
+                datos.apellido() == null
+                        ? ""
+                        : datos.apellido().trim();
+
+        String carnetIdentidad =
+                datos.carnetIdentidad() == null
+                        ? ""
+                        : datos.carnetIdentidad().trim();
+
+        String correo =
+                datos.correo() == null
+                        ? ""
+                        : datos.correo().trim();
+
+        if(nombre.isBlank()){
+
+            throw new RuntimeException(
+                    "El nombre es obligatorio"
+            );
+
         }
 
-        if(datos.apellido() == null || datos.apellido().isBlank()){
-                throw new RuntimeException(
-                        "El apellido es obligatorio"
-                );
+        if(nombre.length() > 30){
+
+            throw new RuntimeException(
+                    "El nombre no puede superar los 30 caracteres"
+            );
+
         }
 
-        if(datos.carnetIdentidad() == null
-                || datos.carnetIdentidad().isBlank()){
 
-                throw new RuntimeException(
-                        "El carnet de identidad es obligatorio"
-                );
+        if(apellido.isBlank()){
+
+            throw new RuntimeException(
+                    "El apellido es obligatorio"
+            );
+
         }
 
-        if(datos.correo() == null || datos.correo().isBlank()){
-                throw new RuntimeException(
-                        "El correo es obligatorio"
-                );
+        if(apellido.length() > 35){
+
+            throw new RuntimeException(
+                    "El apellido no puede superar los 35 caracteres"
+            );
+
+        }
+
+
+        if(carnetIdentidad.isBlank()){
+
+            throw new RuntimeException(
+                    "El carnet de identidad es obligatorio"
+            );
+
+        }
+
+
+        if(correo.isBlank()){
+
+            throw new RuntimeException(
+                    "El correo es obligatorio"
+            );
         }
 
         Usuario usuarioExistenteCorreo =
-                usuarioRepositorio
-                        .findByCorreo(datos.correo())
-                        .orElse(null);
+usuarioRepositorio.findByCorreo(
+                        correo
+                )
+                .orElse(null);
 
         if(usuarioExistenteCorreo != null
                 && !usuarioExistenteCorreo
@@ -1062,11 +1161,10 @@ public class UsuarioServicio {
         }
 
         Usuario usuarioExistenteCarnet =
-                usuarioRepositorio
-                        .findByCarnetIdentidad(
-                                datos.carnetIdentidad()
-                        )
-                        .orElse(null);
+usuarioRepositorio.findByCarnetIdentidad(
+                        carnetIdentidad
+                )
+                .orElse(null);
 
         if(usuarioExistenteCarnet != null
                 && !usuarioExistenteCarnet
@@ -1096,19 +1194,19 @@ public class UsuarioServicio {
                         );
 
         usuario.setNombre(
-                datos.nombre()
+                nombre
         );
 
         usuario.setApellido(
-                datos.apellido()
+                apellido
         );
 
         usuario.setCarnetIdentidad(
-                datos.carnetIdentidad()
+                carnetIdentidad
         );
 
         usuario.setCorreo(
-                datos.correo()
+                correo
         );
 
         usuario.setCelular(

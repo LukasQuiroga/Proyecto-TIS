@@ -36,14 +36,6 @@ import {
 } from "../../context/useAuth";
 
 
-const ROLES_REGISTRO = [
-    { idRol: 1, nombre: "Administrador" },
-    { idRol: 2, nombre: "Docente" },
-    { idRol: 3, nombre: "Estudiante" },
-    { idRol: 5, nombre: "Personal de ingreso" }
-];
-
-
 const CARRERAS = [
     "Ingeniería de Sistemas",
     "Ingeniería Informática",
@@ -118,6 +110,16 @@ const ESTADO_INICIAL = {
 };
 
 
+const CLAVE_ERROR = {
+    telefono: "celular"
+};
+
+
+const SOLO_LETRAS = /^[\p{L}\p{M} ]+$/u;
+
+const QUITAR_NO_LETRAS = /[^\p{L}\p{M} ]/gu;
+
+
 
 function RegistroUsuario(){
 
@@ -128,25 +130,6 @@ function RegistroUsuario(){
 
 
     const [roles,setRoles] = useState([]);
-
-    const rolesRegistro =
-        ROLES_REGISTRO
-            .map(
-                opcion => {
-
-                    const rol =
-                        roles.find(
-                            rolExistente =>
-                                rolExistente.idRol === opcion.idRol
-                        );
-
-                    return rol
-                        ? { ...rol, nombreRol: opcion.nombre }
-                        : null;
-
-                }
-            )
-            .filter(Boolean);
 
     const [formulario,setFormulario] =
         useState(ESTADO_INICIAL);
@@ -216,7 +199,7 @@ function RegistroUsuario(){
         setErrores(
             prev => {
                 const nuevo = { ...prev };
-                delete nuevo[campo];
+                delete nuevo[CLAVE_ERROR[campo] || campo];
                 return nuevo;
             }
         );
@@ -236,12 +219,44 @@ function RegistroUsuario(){
                 "El nombre es obligatorio";
 
         }
+        else if(
+            !SOLO_LETRAS.test(
+                formulario.nombre.trim()
+            )
+        ){
+
+            erroresValidos.nombre =
+                "El nombre solo puede contener letras";
+
+        }
+        else if(formulario.nombre.trim().length > 30){
+
+            erroresValidos.nombre =
+                "El nombre no puede superar los 30 caracteres";
+
+        }
 
 
         if(!formulario.apellido.trim()){
 
             erroresValidos.apellido =
                 "El apellido es obligatorio";
+
+        }
+        else if(
+            !SOLO_LETRAS.test(
+                formulario.apellido.trim()
+            )
+        ){
+
+            erroresValidos.apellido =
+                "El apellido solo puede contener letras";
+
+        }
+        else if(formulario.apellido.trim().length > 35){
+
+            erroresValidos.apellido =
+                "El apellido no puede superar los 35 caracteres";
 
         }
 
@@ -262,6 +277,12 @@ function RegistroUsuario(){
                 "Solo debe contener números";
 
         }
+        else if(formulario.carnetIdentidad.trim().length > 11){
+
+            erroresValidos.carnetIdentidad =
+                "El documento no puede superar los 11 caracteres";
+
+        }
 
 
         if(!formulario.correo.trim()){
@@ -278,6 +299,12 @@ function RegistroUsuario(){
 
             erroresValidos.correo =
                 "El correo no tiene un formato válido";
+
+        }
+        else if(formulario.correo.trim().length > 50){
+
+            erroresValidos.correo =
+                "El correo no puede superar los 50 caracteres";
 
         }
 
@@ -297,8 +324,14 @@ function RegistroUsuario(){
             )
         ){
 
-            erroresValidos.telefono =
+            erroresValidos.celular =
                 "Solo debe contener números";
+
+        }
+        else if(formulario.telefono.trim().length > 12){
+
+            erroresValidos.celular =
+                "El teléfono no puede superar los 12 caracteres";
 
         }
 
@@ -315,6 +348,12 @@ function RegistroUsuario(){
 
                 erroresValidos.codigoSis =
                     "El código universitario debe contener solo números";
+
+            }
+            else if(formulario.codigoSis.trim().length > 15){
+
+                erroresValidos.codigoSis =
+                    "El código universitario no puede superar los 15 caracteres";
 
             }
 
@@ -569,10 +608,11 @@ function RegistroUsuario(){
                                     e =>
                                     cambiar(
                                         "nombre",
-                                        e.target.value
+                                        e.target.value.replace(QUITAR_NO_LETRAS, "")
                                     )
                                 }
                                 placeholder="Ingrese nombres"
+                                maxLength={30}
                             />
 
                         </Campo>
@@ -591,10 +631,11 @@ function RegistroUsuario(){
                                     e =>
                                     cambiar(
                                         "apellido",
-                                        e.target.value
+                                        e.target.value.replace(QUITAR_NO_LETRAS, "")
                                     )
                                 }
                                 placeholder="Ingrese apellidos"
+                                maxLength={35}
                             />
 
                         </Campo>
@@ -614,13 +655,19 @@ function RegistroUsuario(){
                                     formulario.carnetIdentidad
                                 }
                                 onChange={
-                                    e =>
-                                    cambiar(
-                                        "carnetIdentidad",
-                                        e.target.value
-                                    )
+                                    e => {
+                                        const valor =
+                                            e.target.value.replace(/\D/g, "");
+
+                                        cambiar(
+                                            "carnetIdentidad",
+                                            valor.slice(0, 11)
+                                        );
+                                    }
                                 }
                                 placeholder="Ingrese documento"
+                                inputMode="numeric"
+                                maxLength={11}
                             />
 
                         </Campo>
@@ -644,6 +691,7 @@ function RegistroUsuario(){
                                     )
                                 }
                                 placeholder="Ingrese correo electrónico"
+                                maxLength={50}
                             />
 
                         </Campo>
@@ -651,7 +699,6 @@ function RegistroUsuario(){
 
                         <Campo
                             etiqueta="Teléfono"
-                            requerido
                             error={errores.celular}
                         >
 
@@ -665,13 +712,19 @@ function RegistroUsuario(){
                                     className="registro-input"
                                     value={formulario.telefono}
                                     onChange={
-                                        e =>
-                                        cambiar(
-                                            "telefono",
-                                            e.target.value
-                                        )
+                                        e => {
+                                            const valor =
+                                                e.target.value.replace(/\D/g, "");
+
+                                            cambiar(
+                                                "telefono",
+                                                valor.slice(0, 12)
+                                            );
+                                        }
                                     }
                                     placeholder="Ingrese número de teléfono"
+                                    inputMode="numeric"
+                                    maxLength={12}
                                 />
 
                             </div>
@@ -729,7 +782,7 @@ function RegistroUsuario(){
 
 
                                 {
-                                    rolesRegistro.map(
+                                    roles.map(
                                         rol => (
                                             <option
                                                 key={rol.idRol}
@@ -803,13 +856,19 @@ function RegistroUsuario(){
                                         className="registro-input"
                                         value={formulario.codigoSis}
                                         onChange={
-                                            e =>
-                                            cambiar(
-                                                "codigoSis",
-                                                e.target.value
-                                            )
+                                            e => {
+                                                const valor =
+                                                    e.target.value.replace(/\D/g, "");
+
+                                                cambiar(
+                                                    "codigoSis",
+                                                    valor.slice(0, 15)
+                                                );
+                                            }
                                         }
                                         placeholder="Ingrese código universitario"
+                                        inputMode="numeric"
+                                        maxLength={15}
                                     />
 
                                 </Campo>
