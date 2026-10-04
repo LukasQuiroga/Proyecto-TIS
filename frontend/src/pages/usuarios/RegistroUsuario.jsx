@@ -298,6 +298,12 @@ function RegistroUsuario(){
                 "El correo no tiene un formato válido";
 
         }
+        else if(formulario.correo.trim().length > 50){
+
+            erroresValidos.correo =
+                "El correo no puede superar los 50 caracteres";
+
+        }
 
 
         if(!formulario.idRol){
@@ -582,16 +588,16 @@ function RegistroUsuario(){
 
                             <input
                                 className="registro-input"
-                                value={formulario.nombre}
+                                value={formulario.correo}
                                 onChange={
                                     e =>
                                     cambiar(
-                                        "nombre",
+                                        "correo",
                                         e.target.value
                                     )
                                 }
-                                placeholder="Ingrese nombres"
-                                maxLength={30}
+                                placeholder="Ingrese correo electrónico"
+                                maxLength={50}
                             />
 
                         </Campo>
