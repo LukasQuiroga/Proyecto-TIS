@@ -147,10 +147,12 @@ public class RecuperacionContrasenaServicio {
     }
 
 
-    @Transactional
-    public VerificarCodigoRespuesta verificarCodigo(
-            VerificarCodigoSolicitud solicitud
-    ){
+    @Transactional(
+               noRollbackFor = IllegalArgumentException.class
+        )
+        public VerificarCodigoRespuesta verificarCodigo(
+               VerificarCodigoSolicitud solicitud
+       ){
 
         Usuario usuario =
                 usuarioRepositorio
@@ -184,24 +186,18 @@ public class RecuperacionContrasenaServicio {
         );
 
 
-        if(
-                recuperacion
-                        .getIntentosFallidos()
-                        >= MAX_INTENTOS
-        ){
+        if(  recuperacion.getIntentosFallidos() >= MAX_INTENTOS){
 
             recuperacion.setUsado(
                     true
             );
 
-
             recuperacionRepositorio.save(
                     recuperacion
             );
 
-
             throw new IllegalArgumentException(
-                    "Maximo de intentos alcanzado"
+                "Se alcanzó el límite de intentos. Solicita un nuevo código"
             );
         }
 
@@ -214,20 +210,29 @@ public class RecuperacionContrasenaServicio {
         ){
 
             int intentos =
-                    recuperacion
-                            .getIntentosFallidos()
-                            + 1;
-
+                    recuperacion.getIntentosFallidos() + 1;
 
             recuperacion.setIntentosFallidos(
                     intentos
             );
+
+            if(intentos >= MAX_INTENTOS){
+                 recuperacion.setUsado(
+                  true
+                 );
+            }
 
 
             recuperacionRepositorio.save(
                     recuperacion
             );
 
+            if(intentos >= MAX_INTENTOS){
+
+                     throw new IllegalArgumentException(
+                      "Se alcanzó el límite de intentos. Solicita un nuevo código"
+               );
+             }
 
             throw new IllegalArgumentException(
                     "Codigo incorrecto"

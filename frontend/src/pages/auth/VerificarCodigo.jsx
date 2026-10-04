@@ -63,13 +63,15 @@ function VerificarCodigo() {
         "/nueva-contrasena"
       );
 
-    } catch {
+     } catch (error) {
 
-      setError(
-        "Código incorrecto o expirado"
-      );
-    }
-  };
+            setError(
+                 error.response?.data?.mensaje ||
+                 error.response?.data?.message ||
+                  "Código incorrecto o expirado"
+            );
+      }
+    };
 
   const cambiarCodigo = (e) => {
 
