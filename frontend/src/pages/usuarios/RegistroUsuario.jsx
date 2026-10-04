@@ -250,6 +250,12 @@ function RegistroUsuario(){
                 "El apellido es obligatorio";
 
         }
+        else if(formulario.apellido.trim().length > 35){
+
+            erroresValidos.apellido =
+                "El apellido no puede superar los 35 caracteres";
+
+        }
 
 
         if(!formulario.carnetIdentidad.trim()){
@@ -602,6 +608,7 @@ function RegistroUsuario(){
                                     )
                                 }
                                 placeholder="Ingrese apellidos"
+                                maxLength={35}
                             />
 
                         </Campo>
