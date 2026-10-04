@@ -1045,18 +1045,18 @@ public class UsuarioServicio {
         }
 
         Usuario usuarioExistenteCorreo =
-                usuarioRepositorio
-                        .findByCorreo(datos.correo())
-                        .orElse(null);
+                 usuarioRepositorio
+                   .findByCorreo(datos.correo())
+                   .orElse(null);
 
         if(usuarioExistenteCorreo != null
                 && !usuarioExistenteCorreo
-                        .getIdUsuario()
-                        .equals(id)){
+                .getIdUsuario()
+                .equals(id)){
 
-                throw new RuntimeException(
-                        "El correo ya está registrado"
-                );
+          throw new RuntimeException(
+            "El correo electrónico ingresado ya está registrado."
+            );
         }
 
         Usuario usuarioExistenteCarnet =
