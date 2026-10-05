@@ -19,6 +19,10 @@
     margin-left:58px;
 }
 
+.plantilla-zona-principal.sin-sidebar{
+    margin-left:0;
+}
+
 .plantilla-contenido{
     width:100%;
     flex:1;
