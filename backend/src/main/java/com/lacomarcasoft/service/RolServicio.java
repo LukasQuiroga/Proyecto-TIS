@@ -103,6 +103,11 @@ public class RolServicio {
         }
         Rol rol = buscar(idRol);
 
+        if ("ADMINISTRADOR".equalsIgnoreCase(rol.getNombreRol())) {
+                throw new IllegalArgumentException(
+                        "No se pueden modificar los permisos del rol ADMINISTRADOR."
+                );
+        }
 
         List<Permiso> permisos =
                 permisoRepositorio.findAllById(idsPermisos);
@@ -112,7 +117,7 @@ public class RolServicio {
         );
 
         return rolRepositorio.save(rol);
-        }
+     }
 
         public RolRespuesta crear(
                 CrearRolSolicitud solicitud

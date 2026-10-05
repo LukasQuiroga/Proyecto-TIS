@@ -9,6 +9,7 @@ function RolesPermisos() {
 
     const [roles, setRoles] = useState([]);
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
+    const esAdministrador = rolSeleccionado?.nombre === "ADMINISTRADOR";
     const [permisos, setPermisos] = useState([]);
     const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
     const [pestana, setPestana] = useState("roles");
@@ -332,6 +333,12 @@ function RolesPermisos() {
                         Permisos del rol
                     </h2>
 
+                    {rolSeleccionado && (
+                        <p className="rol-seleccionado">
+                            {rolSeleccionado.nombre}
+                        </p>
+                    )}
+
                     <div className="lista-permisos">
                         {
                             rolSeleccionado ? (
@@ -349,6 +356,7 @@ function RolesPermisos() {
                                                     permiso.idPermiso
                                                 )
                                             }
+                                            disabled={esAdministrador}
                                             onChange={() => {
 
                                                 if(
@@ -391,27 +399,31 @@ function RolesPermisos() {
                         }
 
                     </div>
+                    
+                    {
+                        !esAdministrador && (
+                            <div className="acciones">
+                                <button
+                                    className="cancelar"
+                                    disabled={!rolSeleccionado}
+                                >
+                                    Cancelar
+                                </button>
 
-                    <div className="acciones">
-                        <button
-                            className="cancelar"
-                            disabled={!rolSeleccionado}
-                        >
-                            Cancelar
-                        </button>
-
-                        <button
-                            className="guardar"
-                            disabled={!rolSeleccionado || guardandoPermisos}
-                            onClick={guardarPermisos}
-                        >
-                            {
-                                guardandoPermisos
-                                ? "Guardando..."
-                                : "Guardar modificaciones"
-                            }
-                        </button>
-                    </div>
+                                <button
+                                    className="guardar"
+                                    disabled={!rolSeleccionado || guardandoPermisos}
+                                    onClick={guardarPermisos}
+                                >
+                                    {
+                                        guardandoPermisos
+                                        ? "Guardando..."
+                                        : "Guardar modificaciones"
+                                    }
+                                </button>
+                            </div>
+                        )
+                    }
                 </section>
             </div>
 
