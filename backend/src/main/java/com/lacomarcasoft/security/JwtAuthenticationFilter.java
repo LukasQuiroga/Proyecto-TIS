@@ -87,6 +87,9 @@ public class JwtAuthenticationFilter
             String rol=
                 jwtService.obtenerRol(token);
 
+            Long idUsuario=
+                jwtService.obtenerIdUsuario(token);
+
             UsernamePasswordAuthenticationToken autenticacion=
                 new UsernamePasswordAuthenticationToken(
                     correo,
@@ -97,6 +100,8 @@ public class JwtAuthenticationFilter
                         )
                     )
                 );
+
+            autenticacion.setDetails(idUsuario);
 
             SecurityContextHolder
                 .getContext()

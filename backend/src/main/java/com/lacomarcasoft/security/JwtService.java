@@ -87,6 +87,14 @@ public class JwtService {
             .get("rol",String.class);
     }
 
+        public Long obtenerIdUsuario(String token) {
+
+            Number idUsuario = obtenerClaims(token)
+                .get("idUsuario", Number.class);
+
+            return idUsuario.longValue();
+        }
+
     public boolean esValido(String token){
 
         try{
