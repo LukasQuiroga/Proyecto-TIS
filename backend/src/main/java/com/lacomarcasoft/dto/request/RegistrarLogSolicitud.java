@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Size;
 
 public record RegistrarLogSolicitud(
 
-        Long idUsuario,
-
         @NotBlank(message = "El tipo de acción es obligatorio")
         @Size(
                 max = 50,
@@ -16,8 +14,6 @@ public record RegistrarLogSolicitud(
 
         @NotBlank(message = "La descripción es obligatoria")
         String descripcion,
-
-        String ipOrigen,
 
         Boolean exitosa
 

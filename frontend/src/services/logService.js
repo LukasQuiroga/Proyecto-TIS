@@ -2,6 +2,8 @@ import api from "./api";
 
 const API_LOGS = "/logs";
 
+export const TAMANIO_PAGINA_AUDITORIA = 10;
+
 export async function consultarLogs({
   busqueda = "",
   tipoAccion = "",
@@ -9,9 +11,12 @@ export async function consultarLogs({
   fechaHasta = "",
   estado = "TODOS",
   pagina = 0,
-  tamanio = 10,
+  tamanio = TAMANIO_PAGINA_AUDITORIA,
 } = {}) {
-  const parametros = {};
+  const parametros = {
+    pagina,
+    tamanio,
+  };
 
   if (busqueda.trim()) {
     parametros.busqueda = busqueda.trim();
@@ -37,9 +42,6 @@ export async function consultarLogs({
     parametros.exitosa = false;
   }
 
-  parametros.pagina = pagina;
-  parametros.tamanio = tamanio;
-
   const respuesta = await api.get(API_LOGS, {
     params: parametros,
   });
@@ -49,6 +51,12 @@ export async function consultarLogs({
 
 export async function obtenerTiposLog() {
   const respuesta = await api.get(`${API_LOGS}/tipos`);
+
+  return respuesta.data;
+}
+
+export async function obtenerLogPorId(idLog) {
+  const respuesta = await api.get(`${API_LOGS}/${idLog}`);
 
   return respuesta.data;
 }
