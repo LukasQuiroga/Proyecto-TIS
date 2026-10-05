@@ -3,6 +3,7 @@ import {Outlet} from "react-router-dom";
 import Navbar from "../Navbar/Navbar.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import useInactividad from "../../hooks/useInactividad.js";
+import {useAuth} from "../../context/useAuth";
 import "./PlantillaPrincipal.css";
 
 function PlantillaPrincipal(){
@@ -10,25 +11,31 @@ function PlantillaPrincipal(){
     const [sidebarAbierto,setSidebarAbierto]=
         useState(false);
 
+    const {token}=useAuth();
+
     useInactividad();
 
     return(
         <div className="plantilla-pagina">
 
-            <Sidebar
-                sidebarAbierto={sidebarAbierto}
-                cambiarSidebar={()=>
-                    setSidebarAbierto(
-                        !sidebarAbierto
-                    )
-                }
-            />
+            {token&&(
+                <Sidebar
+                    sidebarAbierto={sidebarAbierto}
+                    cambiarSidebar={()=>
+                        setSidebarAbierto(
+                            !sidebarAbierto
+                        )
+                    }
+                />
+            )}
 
             <div
                 className={
-                    sidebarAbierto
-                        ?"plantilla-zona-principal abierto"
-                        :"plantilla-zona-principal cerrado"
+                    !token
+                        ?"plantilla-zona-principal sin-sidebar"
+                        :sidebarAbierto
+                            ?"plantilla-zona-principal abierto"
+                            :"plantilla-zona-principal cerrado"
                 }
             >
 
