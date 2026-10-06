@@ -77,6 +77,26 @@
   font-weight: 600;
 }
 
+.acciones-permisos {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.acciones-permisos button {
+  padding: 8px 12px;
+  border: 1px solid #c9d8e4;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0875dc;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.acciones-permisos button:hover {
+  background: #edf5fc;
+}
+
 .lista-roles-titulo button {
   background: #0875dc;
   border: none;
