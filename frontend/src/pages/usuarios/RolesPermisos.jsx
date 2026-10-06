@@ -111,6 +111,15 @@ function RolesPermisos() {
         });
     };
 
+    const seleccionarTodosLosPermisos = () => {
+        setPermisosSeleccionados(
+            permisos.map((permiso) => permiso.idPermiso)
+        );
+    };
+
+    const deseleccionarTodosLosPermisos = () => {
+        setPermisosSeleccionados([]);
+    };
 
     const crearRol = async () => {
         if (nuevoRol.permisos.length === 0) {
@@ -339,6 +348,24 @@ function RolesPermisos() {
                         </p>
                     )}
 
+                    {rolSeleccionado && !esAdministrador && (
+                        <div className="acciones-permisos">
+                            <button
+                                type="button"
+                                onClick={seleccionarTodosLosPermisos}
+                            >
+                                Seleccionar todos
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={deseleccionarTodosLosPermisos}
+                            >
+                                Deseleccionar todos
+                            </button>
+                        </div>
+                    )}
+        
                     <div className="lista-permisos">
                         {
                             rolSeleccionado ? (
