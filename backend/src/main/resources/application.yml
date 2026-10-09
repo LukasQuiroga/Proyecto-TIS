@@ -1,3 +1,6 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   config:
     import: optional:file:.env[.properties]
@@ -6,9 +9,9 @@ spring:
     name: exampass
 
   datasource:
-    url: jdbc:postgresql://ep-cool-cake-b5cbzcnx-pooler.c-7.us-east-2.aws.neon.tech:5432/neondb?sslmode=require
-    username: neondb_owner
-    password: npg_8nRp1WiBScJQ
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:exampass}?sslmode=${DB_SSLMODE:prefer}
+    username: ${DB_USER:exampass}
+    password: ${DB_PASSWORD:exampass}
 
   jpa:
     properties:
