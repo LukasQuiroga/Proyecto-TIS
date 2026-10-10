@@ -156,6 +156,67 @@ public class AsignaturaServicio {
         );
     }
 
+    @Transactional(readOnly = true)
+    public List<AsignaturaRespuesta> listar(String buscar) {
+
+        List<Asignatura> asignaturas;
+
+        if (buscar == null || buscar.isBlank()) {
+
+            asignaturas = asignaturaRepositorio
+                    .findAllByOrderByNombreAsignaturaAsc();
+
+        } else {
+
+            asignaturas = asignaturaRepositorio
+                    .buscarPorCodigoONombre(buscar.trim());
+
+        }
+
+        return asignaturas.stream()
+                .map(this::convertirRespuesta)
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
+    public AsignaturaRespuesta obtenerPorId(Long id) {
+
+        Asignatura asignatura = asignaturaRepositorio
+                .findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Asignatura no encontrada"
+                        )
+                );
+
+        return convertirRespuesta(asignatura);
+    }
+
+
+    private AsignaturaRespuesta convertirRespuesta(
+            Asignatura asignatura
+    ) {
+
+        List<String> carreras = asignaturaCarreraRepositorio
+                .findByIdAsignatura(asignatura.getIdAsignatura())
+                .stream()
+                .map(AsignaturaCarrera::getCarrera)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+        return new AsignaturaRespuesta(
+                asignatura.getIdAsignatura(),
+                asignatura.getCodigoAsignatura(),
+                asignatura.getNombreAsignatura(),
+                asignatura.getSemestre(),
+                asignatura.getActivo(),
+                asignatura.getDescripcion(),
+                carreras
+        );
+    }
+
     private String limpiar(String valor) {
         return valor == null ? "" : valor.trim();
     }

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/asignaturas")
@@ -33,5 +34,29 @@ public class AsignaturaControlador {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(respuesta);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AsignaturaRespuesta>> listar(
+            @RequestParam(
+                    name = "buscar",
+                    required = false
+            ) String buscar
+    ) {
+
+        return ResponseEntity.ok(
+                asignaturaServicio.listar(buscar)
+        );
+    }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AsignaturaRespuesta> obtenerPorId(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                asignaturaServicio.obtenerPorId(id)
+        );
     }
 }
