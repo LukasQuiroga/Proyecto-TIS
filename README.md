@@ -5,7 +5,7 @@ Proyecto para la consultoría de TIS: control de exámenes.
 ## Stack
 
 - **Backend:** Java 21, Spring Boot 4.1.0 (Maven), Spring Security + JWT
-- **Base de datos:** PostgreSQL en la nube (Neon) + Flyway
+- **Base de datos:** PostgreSQL 15 (Neon, nube) + Flyway
 - **Frontend:** React 19, Vite 8, JavaScript, Axios, React Router
 
 ## Requisitos
