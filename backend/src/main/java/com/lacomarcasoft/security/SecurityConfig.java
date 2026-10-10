@@ -15,6 +15,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 public class SecurityConfig {
 
@@ -76,8 +78,11 @@ public class SecurityConfig {
         CorsConfiguration config=
             new CorsConfiguration();
 
-        config.addAllowedOrigin(
-            "http://localhost:5173"
+        config.setAllowedOriginPatterns(
+            List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+            )
         );
 
         config.addAllowedMethod("*");
