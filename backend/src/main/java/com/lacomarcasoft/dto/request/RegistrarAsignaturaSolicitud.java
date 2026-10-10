@@ -8,16 +8,15 @@ public record RegistrarAsignaturaSolicitud(
     @NotBlank(message = "El código es obligatorio")
     @Size(max = 30, message = "El código no puede superar 30 caracteres")
     @Pattern(
-        regexp = "^[A-Za-z0-9_-]+$",
+        regexp = "^$|^[A-Za-z0-9_-]+$",
         message = "El código contiene caracteres no permitidos"
     )
     String codigoAsignatura,
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(
-        min = 3,
         max = 120,
-        message = "El nombre debe tener entre 3 y 120 caracteres"
+        message = "El nombre no puede superar 120 caracteres"
     )
     String nombreAsignatura,
 
