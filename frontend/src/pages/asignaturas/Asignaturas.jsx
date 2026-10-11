@@ -9,6 +9,7 @@ import {
     FiSearch
 } from "react-icons/fi";
 import RegistrarAsignatura from "./RegistrarAsignatura.jsx";
+import DetalleAsignatura from "./DetalleAsignatura.jsx";
 
 import { obtenerAsignaturas } from "../../services/asignaturaService";
 import { useAuth } from "../../context/useAuth";
@@ -432,66 +433,10 @@ function Asignaturas() {
             </section>
 
             {asignaturaDetalle && (
-
-                <div
-                    className="asignaturas-modal-fondo"
-                    onClick={() => setAsignaturaDetalle(null)}
-                >
-
-                    <div
-                        className="asignaturas-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Detalle de asignatura"
-                        onClick={e => e.stopPropagation()}
-                    >
-
-                        <h2>
-                            {asignaturaDetalle.nombreAsignatura}
-                        </h2>
-
-                        <p>
-                            <strong>Código:</strong>{" "}
-                            {asignaturaDetalle.codigoAsignatura}
-                        </p>
-
-                        <p>
-                            <strong>Semestre:</strong>{" "}
-                            {asignaturaDetalle.semestre}
-                        </p>
-
-                        <p>
-                            <strong>Estado:</strong>{" "}
-                            {asignaturaDetalle.activo
-                                ? "Activa"
-                                : "Inactiva"}
-                        </p>
-
-                        <p>
-                            <strong>Carreras:</strong>{" "}
-                            {(asignaturaDetalle.carreras || [])
-                                .join(", ") || "—"}
-                        </p>
-
-                        <p>
-                            <strong>Descripción:</strong>{" "}
-                            {asignaturaDetalle.descripcion || "Sin descripción"}
-                        </p>
-
-                        <button
-                            type="button"
-                            className="asignaturas-boton-principal"
-                            onClick={() =>
-                                setAsignaturaDetalle(null)
-                            }
-                        >
-                            Cerrar
-                        </button>
-
-                    </div>
-
-                </div>
-
+                <DetalleAsignatura
+                    asignatura={asignaturaDetalle}
+                    onCerrar={() => setAsignaturaDetalle(null)}
+                />
             )}
 
             {mostrarRegistro && (
