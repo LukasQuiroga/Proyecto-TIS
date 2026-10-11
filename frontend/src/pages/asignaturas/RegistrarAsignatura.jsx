@@ -1,0 +1,290 @@
+import { useState } from "react";
+import { FiPlus, FiX } from "react-icons/fi";
+
+import { CARRERAS_FCYT } from "../../data/carreras";
+import { registrarAsignatura } from "../../services/asignaturaService";
+
+import "./RegistrarAsignatura.css";
+
+const DATOS_INICIALES = {
+  codigoAsignatura: "",
+  nombreAsignatura: "",
+  semestre: "",
+  activo: true,
+  descripcion: "",
+  carreras: [],
+};
+
+function RegistrarAsignatura({ onCerrar, onExito }) {
+  const [datos, setDatos] = useState(DATOS_INICIALES);
+  const [busquedaCarrera, setBusquedaCarrera] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+
+  const carrerasFiltradas = CARRERAS_FCYT.filter((carrera) =>
+    carrera.toLocaleLowerCase("es").includes(
+      busquedaCarrera.toLocaleLowerCase("es"),
+    ),
+  );
+
+  const actualizarCampo = (campo, valor) => {
+    setDatos((anterior) => ({
+      ...anterior,
+      [campo]: valor,
+    }));
+  };
+
+  const cambiarCarrera = (carrera) => {
+    setDatos((anterior) => ({
+      ...anterior,
+      carreras: anterior.carreras.includes(carrera)
+        ? anterior.carreras.filter((item) => item !== carrera)
+        : [...anterior.carreras, carrera],
+    }));
+  };
+
+  const manejarRegistro = async (evento) => {
+    evento.preventDefault();
+    setError("");
+
+    const codigo = datos.codigoAsignatura.trim();
+    const nombre = datos.nombreAsignatura.trim();
+
+    if (!codigo || !/^[A-Za-z0-9_-]+$/.test(codigo)) {
+      setError("Ingresa un código válido, usando letras, números, - o _.");
+      return;
+    }
+
+    if (nombre.length < 3 || nombre.length > 120) {
+      setError("El nombre debe contener entre 3 y 120 caracteres.");
+      return;
+    }
+
+    if (datos.carreras.length === 0) {
+      setError("Debes seleccionar al menos una carrera.");
+      return;
+    }
+
+    if (!datos.semestre) {
+      setError("Debes seleccionar un semestre.");
+      return;
+    }
+
+    setGuardando(true);
+
+    try {
+      const respuesta = await registrarAsignatura({
+        codigoAsignatura: codigo,
+        nombreAsignatura: nombre,
+        semestre: Number(datos.semestre),
+        activo: datos.activo,
+        descripcion: datos.descripcion.trim(),
+        carreras: datos.carreras,
+      });
+
+      if (respuesta.status === 201) {
+        onExito(respuesta.data);
+      }
+    } catch (err) {
+      console.error("Error registrando asignatura:", err);
+
+      const mensaje = err.response?.data?.mensaje;
+
+      setError(
+        typeof mensaje === "string"
+          ? mensaje
+          : "No se pudo registrar la asignatura. Verifica los datos e intenta nuevamente.",
+      );
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <div className="registro-asignatura-fondo">
+      <div
+        className="registro-asignatura-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="registro-asignatura-titulo"
+      >
+        <header className="registro-asignatura-encabezado">
+          <div>
+            <h2 id="registro-asignatura-titulo">
+              Registrar asignatura
+            </h2>
+            <p>Completa los datos de la nueva asignatura.</p>
+          </div>
+
+          <button
+            type="button"
+            className="registro-asignatura-cerrar"
+            aria-label="Cerrar formulario"
+            onClick={onCerrar}
+            disabled={guardando}
+          >
+            <FiX />
+          </button>
+        </header>
+
+        <form onSubmit={manejarRegistro}>
+          <div className="registro-asignatura-campos">
+            <div className="registro-asignatura-campo">
+              <label htmlFor="asignatura-codigo">
+                Código *
+              </label>
+              <input
+                id="asignatura-codigo"
+                value={datos.codigoAsignatura}
+                onChange={(e) =>
+                  actualizarCampo("codigoAsignatura", e.target.value)
+                }
+                placeholder="Ej. INF-101"
+                maxLength={30}
+                required
+                disabled={guardando}
+              />
+            </div>
+
+            <div className="registro-asignatura-campo">
+              <label htmlFor="asignatura-semestre">
+                Semestre *
+              </label>
+              <select
+                id="asignatura-semestre"
+                value={datos.semestre}
+                onChange={(e) =>
+                  actualizarCampo("semestre", e.target.value)
+                }
+                required
+                disabled={guardando}
+              >
+                <option value="">Seleccionar semestre</option>
+                {Array.from({ length: 10 }, (_, indice) => indice + 1).map(
+                  (numero) => (
+                    <option key={numero} value={numero}>
+                      {numero}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-nombre">
+              Nombre de la asignatura *
+            </label>
+            <input
+              id="asignatura-nombre"
+              value={datos.nombreAsignatura}
+              onChange={(e) =>
+                actualizarCampo("nombreAsignatura", e.target.value)
+              }
+              placeholder="Ej. Programación I"
+              minLength={3}
+              maxLength={120}
+              required
+              disabled={guardando}
+            />
+          </div>
+
+          <fieldset className="registro-asignatura-carreras">
+            <legend>Carreras asociadas *</legend>
+
+            <input
+              type="search"
+              aria-label="Buscar carrera"
+              placeholder="Buscar carrera..."
+              value={busquedaCarrera}
+              onChange={(e) => setBusquedaCarrera(e.target.value)}
+              disabled={guardando}
+            />
+
+            <div className="registro-asignatura-lista-carreras">
+              {carrerasFiltradas.map((carrera) => (
+                <label key={carrera}>
+                  <input
+                    type="checkbox"
+                    checked={datos.carreras.includes(carrera)}
+                    onChange={() => cambiarCarrera(carrera)}
+                    disabled={guardando}
+                  />
+                  <span>{carrera}</span>
+                </label>
+              ))}
+              {carrerasFiltradas.length === 0 && (
+                <p>No se encontraron carreras.</p>
+              )}
+            </div>
+
+            <small>
+              {datos.carreras.length} carrera(s) seleccionada(s)
+            </small>
+          </fieldset>
+
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-estado">
+              Estado *
+            </label>
+            <select
+              id="asignatura-estado"
+              value={datos.activo ? "ACTIVA" : "INACTIVA"}
+              onChange={(e) =>
+                actualizarCampo("activo", e.target.value === "ACTIVA")
+              }
+              disabled={guardando}
+            >
+              <option value="ACTIVA">Activa</option>
+              <option value="INACTIVA">Inactiva</option>
+            </select>
+          </div>
+
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-descripcion">
+              Descripción (opcional)
+            </label>
+            <textarea
+              id="asignatura-descripcion"
+              value={datos.descripcion}
+              onChange={(e) =>
+                actualizarCampo("descripcion", e.target.value)
+              }
+              placeholder="Descripción de la asignatura"
+              rows={3}
+              disabled={guardando}
+            />
+          </div>
+
+          {error && (
+            <div className="registro-asignatura-error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <footer className="registro-asignatura-acciones">
+            <button
+              type="button"
+              className="registro-asignatura-cancelar"
+              onClick={onCerrar}
+              disabled={guardando}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="registro-asignatura-guardar"
+              disabled={guardando}
+            >
+              <FiPlus />
+              {guardando ? "Registrando..." : "Registrar asignatura"}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default RegistrarAsignatura;
