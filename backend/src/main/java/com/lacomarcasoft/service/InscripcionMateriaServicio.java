@@ -54,7 +54,6 @@ public class InscripcionMateriaServicio {
             Long idEstudiante
     ) {
 
-        // 1. Verificar datos obligatorios
         if (token == null || token.isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -69,14 +68,12 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 2. Buscar estudiante
         Usuario estudiante = usuarioRepositorio.findById(idEstudiante)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Estudiante no encontrado"
                 ));
 
-        // 3. Validar usuario activo
         if (!Boolean.TRUE.equals(estudiante.getActivo())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
@@ -84,7 +81,6 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 4. Validar rol estudiante
         if (estudiante.getRol() == null ||
                 !"ESTUDIANTE".equalsIgnoreCase(
                         estudiante.getRol().getNombreRol()
@@ -95,17 +91,14 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 5. Calcular hash del token recibido
         String tokenHash = qrServicio.calcularHash(token);
 
-        // 6. Buscar QR registrado
         QrInscripcion qr = qrRepositorio.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "El codigo QR no es valido"
                 ));
 
-        // 7. Verificar si fue revocado
         if (qr.isRevocado()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -113,7 +106,6 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 8. Verificar fecha de vencimiento
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
         if (!qr.getFechaExpiracion().isAfter(ahora)) {
@@ -123,7 +115,6 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 9. Obtener materia asociada al QR
         Materia materia = qr.getMateria();
 
         if (materia == null) {
@@ -135,7 +126,6 @@ public class InscripcionMateriaServicio {
 
         Long idMateria = materia.getIdMateria();
 
-        // 10. Verificar inscripcion duplicada
         if (inscripcionRepositorio
                 .existsByMateria_IdMateriaAndEstudiante_IdUsuario(
                         idMateria,
@@ -148,7 +138,7 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 11. Crear la inscripcion
+
         MateriaEstudiante inscripcion = new MateriaEstudiante();
 
         inscripcion.setId(
@@ -159,9 +149,6 @@ public class InscripcionMateriaServicio {
         inscripcion.setEstudiante(estudiante);
         inscripcion.setQrInscripcion(qr);
 
-        // 12. Guardar la inscripcion
-        // saveAndFlush permite detectar conflictos de integridad
-        // dentro de este metodo.
         try {
             inscripcionRepositorio.saveAndFlush(inscripcion);
         } catch (DataIntegrityViolationException e) {
@@ -173,7 +160,6 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        // 13. Retornar confirmacion
         return new ResultadoInscripcion(
                 idMateria,
                 idEstudiante,
