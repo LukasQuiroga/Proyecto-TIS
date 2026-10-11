@@ -9,6 +9,7 @@ import {
     FiClock,
     FiGrid,
     FiHome,
+    FiMaximize,
     FiMap,
     FiMenu,
     FiTarget,
@@ -180,6 +181,15 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                             >
                                 Asignaturas
                             </Opcion>
+                        )}
+                        
+                        {usuario?.nombreRol === "DOCENTE" && (
+                            <Opcion
+                                to="/asignaturas/inscripcion-qr"
+                                icono={<FiMaximize />}
+                            >
+                               Inscripción QR
+                          </Opcion>
                         )}
 
                         {tienePermiso("GESTIONAR_EXAMENES")&&(
