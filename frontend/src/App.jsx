@@ -21,6 +21,7 @@ import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
 import RegistroUsuario from "./pages/usuarios/RegistroUsuario.jsx";
 import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 import PermisosActualizadosModal from "./components/Modal/PermisosActualizadosModal";
+import Asignaturas from "./pages/asignaturas/Asignaturas.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -153,7 +154,16 @@ function App(){
                             }
                         />
 
+                        {/* ASIGNATURAS */}
 
+                        <Route
+                            path="/asignaturas"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_MATERIAS">
+                                    <Asignaturas />
+                                </ProtectedPermission>
+                            }
+                        />
 
                         {/* AUDITORIA */}
 

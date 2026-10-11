@@ -2,6 +2,7 @@ import {useState} from "react";
 import {NavLink} from "react-router-dom";
 import {
     FiBarChart2,
+    FiBookOpen,
     FiChevronDown,
     FiChevronUp,
     FiClipboard,
@@ -170,6 +171,15 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                     </div>
                                 )}
                             </>
+                        )}
+
+                        {tienePermiso("GESTIONAR_MATERIAS") && (
+                            <Opcion
+                                to="/asignaturas"
+                                icono={<FiBookOpen />}
+                            >
+                                Asignaturas
+                            </Opcion>
                         )}
 
                         {tienePermiso("GESTIONAR_EXAMENES")&&(
