@@ -1,3 +1,6 @@
+/* ==========================================
+   HU12 - ESTILOS GENERALES
+========================================== */
 
 .hu12-pagina {
   padding: 24px;
@@ -32,6 +35,11 @@
 .hu12-volver:hover {
   text-decoration: underline;
 }
+
+
+/* ==========================================
+   HU12 - TARJETAS Y FORMULARIOS
+========================================== */
 
 .hu12-tarjeta {
   background: #ffffff;
@@ -89,6 +97,11 @@
   margin-top: 2px;
 }
 
+
+/* ==========================================
+   HU12 - BOTONES
+========================================== */
+
 .hu12-boton-principal {
   display: inline-flex;
   align-items: center;
@@ -127,6 +140,11 @@
 .hu12-boton-secundario:hover {
   background: #edf4fb;
 }
+
+
+/* ==========================================
+   HU12 - RESULTADO DE GENERACION
+========================================== */
 
 .hu12-resultado-titulo {
   display: flex;
@@ -168,6 +186,81 @@
   color: #315f9d;
 }
 
+
+/* ==========================================
+   HU12 - CODIGO QR VISUAL
+========================================== */
+
+.hu12-codigo-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 28px 16px;
+  margin: 20px 0;
+  background: #f5f9fe;
+  border: 1px solid #dce8f6;
+  border-radius: 10px;
+}
+
+.hu12-codigo-visual svg {
+  max-width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+}
+
+.hu12-codigo-visual p {
+  max-width: 350px;
+  margin: 0;
+  color: #536b89;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+
+/* ==========================================
+   HU12 - INSCRIPCION DEL ESTUDIANTE
+========================================== */
+
+.hu12-datos-estudiante {
+  background: #edf4fb;
+  color: #17365d;
+  padding: 16px;
+  border-radius: 6px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+.hu12-acciones-estudiante {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.hu12-acciones-estudiante a {
+  text-decoration: none;
+}
+
+.hu12-tarjeta > label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.hu12-tarjeta > input {
+  margin-bottom: 12px;
+}
+
+
+/* ==========================================
+   HU12 - VENTANAS EMERGENTES
+========================================== */
 
 .hu12-modal-fondo {
   position: fixed;
@@ -227,7 +320,12 @@
 }
 
 
+/* ==========================================
+   HU12 - DISEÑO RESPONSIVE
+========================================== */
+
 @media (max-width: 600px) {
+
   .hu12-pagina {
     padding: 14px;
   }
@@ -239,4 +337,16 @@
   .hu12-encabezado h1 {
     font-size: 21px;
   }
+
+  .hu12-acciones-estudiante {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hu12-acciones-estudiante button,
+  .hu12-acciones-estudiante a {
+    justify-content: center;
+    text-align: center;
+  }
+
 }

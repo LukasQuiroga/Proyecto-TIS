@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { Link } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -75,6 +76,10 @@ function InscripcionQr() {
     }
   };
 
+  const enlaceInscripcion = resultado?.token
+  ? `${window.location.origin}/inscripcion-qr/inscribir?token=${encodeURIComponent(resultado.token)}`
+  : "";
+
   const fechaVencimiento = resultado?.fechaExpiracion
     ? new Date(resultado.fechaExpiracion)
     : null;
@@ -128,9 +133,8 @@ function InscripcionQr() {
 
           <p className="hu12-ayuda">
             <FiInfo />
-            Usa el identificador de la materia/grupo,
-            no el código de asignatura. Este campo será
-            reemplazado por un selector de materias asignadas.
+            Ingresa el identificador de la materia o grupo
+            asignado para generar su código de inscripción.
           </p>
 
           <button
@@ -150,6 +154,21 @@ function InscripcionQr() {
             <FiCheckCircle />
             <h2>Código de inscripción generado</h2>
           </div>
+
+        <div className="hu12-codigo-visual">
+          <QRCodeSVG
+               value={enlaceInscripcion}
+               size={230}
+               level="M"
+               marginSize={2}
+               title="Código QR de inscripción a la materia"
+         />
+
+         <p>
+                  Escanea este código con tu celular para
+                  inscribirte en la materia.
+         </p>
+        </div>
 
           <div className="hu12-token">
             <span>Token de inscripción</span>
