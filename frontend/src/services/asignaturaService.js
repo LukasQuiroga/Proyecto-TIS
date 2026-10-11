@@ -15,3 +15,7 @@ export const buscarAsignaturas = (texto) => {
 export const obtenerAsignaturaPorId = (id) => {
   return api.get(`/asignaturas/${id}`)
 }
+
+export const registrarAsignatura = (datos) => {
+  return api.post('/asignaturas', datos)
+}

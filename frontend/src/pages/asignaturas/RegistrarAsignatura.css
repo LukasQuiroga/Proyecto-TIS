@@ -1,0 +1,194 @@
+.registro-asignatura-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.registro-asignatura-modal {
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 28px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  color: #183b5d;
+}
+
+.registro-asignatura-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.registro-asignatura-encabezado h2 {
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.registro-asignatura-encabezado p {
+  margin: 0;
+  font-size: 13px;
+  color: #526b82;
+}
+
+.registro-asignatura-cerrar {
+  border: none;
+  background: transparent;
+  color: #526b82;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.registro-asignatura-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.registro-asignatura-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.registro-asignatura-campo label,
+.registro-asignatura-carreras legend {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.registro-asignatura-campo input,
+.registro-asignatura-campo select,
+.registro-asignatura-campo textarea,
+.registro-asignatura-carreras > input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d9e2ee;
+  border-radius: 6px;
+  background: white;
+  color: #183b5d;
+  font: inherit;
+  font-size: 13px;
+}
+
+.registro-asignatura-campo textarea {
+  resize: vertical;
+}
+
+.registro-asignatura-carreras {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid #d9e2ee;
+  border-radius: 6px;
+}
+
+.registro-asignatura-carreras legend {
+  padding: 0 5px;
+}
+
+.registro-asignatura-lista-carreras {
+  max-height: 170px;
+  overflow-y: auto;
+  margin: 12px 0;
+  padding: 8px;
+  border: 1px solid #e8eef5;
+  border-radius: 6px;
+}
+
+.registro-asignatura-lista-carreras label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.registro-asignatura-lista-carreras label:hover {
+  background: #f1f6fd;
+}
+
+.registro-asignatura-lista-carreras input {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.registro-asignatura-carreras small {
+  color: #526b82;
+}
+
+.registro-asignatura-error {
+  margin-bottom: 16px;
+  padding: 11px;
+  background: #fff0f0;
+  border: 1px solid #f0b4b4;
+  border-radius: 6px;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.registro-asignatura-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.registro-asignatura-acciones button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.registro-asignatura-cancelar {
+  border: 1px solid #d9e2ee;
+  background: white;
+  color: #526b82;
+}
+
+.registro-asignatura-guardar {
+  border: none;
+  background: #0875dc;
+  color: white;
+}
+
+.registro-asignatura-guardar:hover:not(:disabled) {
+  background: #065fac;
+}
+
+.registro-asignatura-acciones button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .registro-asignatura-modal {
+    padding: 18px;
+  }
+
+  .registro-asignatura-campos {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .registro-asignatura-acciones {
+    flex-direction: column-reverse;
+  }
+}

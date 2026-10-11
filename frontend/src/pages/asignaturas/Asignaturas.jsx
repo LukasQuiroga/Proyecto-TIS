@@ -8,6 +8,7 @@ import {
     FiRefreshCw,
     FiSearch
 } from "react-icons/fi";
+import RegistrarAsignatura from "./RegistrarAsignatura.jsx";
 
 import { obtenerAsignaturas } from "../../services/asignaturaService";
 import { useAuth } from "../../context/useAuth";
@@ -30,6 +31,8 @@ function Asignaturas() {
     const [pagina, setPagina] = useState(1);
 
     const [asignaturaDetalle, setAsignaturaDetalle] = useState(null);
+    const [mostrarRegistro, setMostrarRegistro] = useState(false);
+    const [mostrarExito, setMostrarExito] = useState(false);
 
     const esAdministrador =
         usuario?.nombreRol === "ADMINISTRADOR";
@@ -193,8 +196,7 @@ function Asignaturas() {
                     <button
                         type="button"
                         className="asignaturas-boton-principal"
-                        disabled
-                        title="El formulario se implementará en el siguiente commit"
+                        onClick={() => setMostrarRegistro(true)}
                     >
                         <FiPlus />
                         Nueva asignatura
@@ -492,6 +494,47 @@ function Asignaturas() {
 
             )}
 
+            {mostrarRegistro && (
+                <RegistrarAsignatura
+                    onCerrar={() => setMostrarRegistro(false)}
+                    onExito={() => {
+                    setMostrarRegistro(false);
+                    setMostrarExito(true);
+                    cargarAsignaturas();
+                    }}
+                />
+                )}
+
+                {mostrarExito && (
+                <div className="asignaturas-modal-fondo">
+                    <div
+                    className="asignaturas-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="asignatura-exito-titulo"
+                    >
+                    <div className="asignaturas-exito-contenido">
+                        <FiBookOpen size={38} color="#16824a" />
+
+                        <h2 id="asignatura-exito-titulo">
+                        ¡Asignatura registrada!
+                        </h2>
+
+                        <p>
+                        La asignatura se guardó correctamente.
+                        </p>
+
+                        <button
+                        type="button"
+                        className="asignaturas-boton-principal"
+                        onClick={() => setMostrarExito(false)}
+                        >
+                        Aceptar
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,0 +1,20 @@
+export const CARRERAS_FCYT = [
+  'Ingeniería de Alimentos',
+  'Ingeniería Civil',
+  'Ingeniería Mecánica',
+  'Ingeniería Electromecánica',
+  'Ingeniería Industrial',
+  'Ingeniería de Sistemas',
+  'Ingeniería Química',
+  'Ingeniería Eléctrica',
+  'Ingeniería Informática',
+  'Ingeniería Petroquímica',
+  'Ingeniería Electrónica',
+  'Ingeniería en Energía',
+  'Ingeniería Matemática',
+  'Ingeniería en Biotecnología',
+  'Licenciatura en Biología',
+  'Licenciatura en Física',
+  'Licenciatura en Matemáticas',
+  'Licenciatura en Química'
+]

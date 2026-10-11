@@ -258,6 +258,23 @@
     overflow-wrap: anywhere;
 }
 
+.asignaturas-exito-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.asignaturas-exito-contenido h2,
+.asignaturas-exito-contenido p {
+  margin: 0;
+}
+
+.asignaturas-exito-contenido .asignaturas-boton-principal {
+  margin-top: 10px;
+}
+
 @media (max-width: 850px) {
     .asignaturas-filtros {
         grid-template-columns: 1fr 1fr;
