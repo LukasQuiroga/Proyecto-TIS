@@ -1,7 +1,8 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Link } from "react-router-dom";
+
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -13,6 +14,7 @@ import {
 } from "react-icons/fi";
 
 import {
+  obtenerMateriasDocenteQr,
   generarQrInscripcion,
   obtenerMensajeErrorQr
 } from "../../services/inscripcionQrService";
@@ -20,11 +22,46 @@ import {
 import "./InscripcionQr.css";
 
 function InscripcionQr() {
+  const [materias, setMaterias] = useState([]);
   const [idMateria, setIdMateria] = useState("");
+  const [cargandoMaterias, setCargandoMaterias] = useState(true);
+  const [errorMaterias, setErrorMaterias] = useState("");
+
   const [generando, setGenerando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [mensaje, setMensaje] = useState(null);
   const [copiado, setCopiado] = useState(false);
+
+  // HU12 - Cargar las materias asignadas al docente
+  useEffect(() => {
+    let activo = true;
+
+    const cargarMaterias = async () => {
+      try {
+        const datos = await obtenerMateriasDocenteQr();
+
+        if (activo) {
+          setMaterias(datos);
+          setErrorMaterias("");
+        }
+      } catch (error) {
+        if (activo) {
+          setMaterias([]);
+          setErrorMaterias(obtenerMensajeErrorQr(error));
+        }
+      } finally {
+        if (activo) {
+          setCargandoMaterias(false);
+        }
+      }
+    };
+
+    cargarMaterias();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -35,10 +72,14 @@ function InscripcionQr() {
 
     const materiaId = Number(idMateria);
 
-    if (!Number.isSafeInteger(materiaId) || materiaId <= 0) {
+    if (
+      !Number.isSafeInteger(materiaId) ||
+      materiaId <= 0 ||
+      !materias.some((materia) => materia.idMateria === materiaId)
+    ) {
       mostrarMensaje(
         "error",
-        "Ingresa un ID de materia válido."
+        "Selecciona una materia válida de la lista."
       );
       return;
     }
@@ -50,20 +91,32 @@ function InscripcionQr() {
     try {
       const datos = await generarQrInscripcion(materiaId);
 
+      if (!datos?.token) {
+        throw new Error(
+          "El servidor no devolvió un código de inscripción válido."
+        );
+      }
+
       setResultado(datos);
+
       mostrarMensaje(
         "exito",
         "El código de inscripción se generó correctamente."
       );
     } catch (error) {
-      mostrarMensaje("error", obtenerMensajeErrorQr(error));
+      mostrarMensaje(
+        "error",
+        obtenerMensajeErrorQr(error)
+      );
     } finally {
       setGenerando(false);
     }
   };
 
   const copiarToken = async () => {
-    if (!resultado?.token) return;
+    if (!resultado?.token) {
+      return;
+    }
 
     try {
       await navigator.clipboard.writeText(resultado.token);
@@ -76,15 +129,20 @@ function InscripcionQr() {
     }
   };
 
+  const materiaSeleccionada = materias.find(
+    (materia) => String(materia.idMateria) === idMateria
+  );
+
   const enlaceInscripcion = resultado?.token
-  ? `${window.location.origin}/inscripcion-qr/inscribir?token=${encodeURIComponent(resultado.token)}`
-  : "";
+    ? `${window.location.origin}/inscripcion-qr/inscribir?token=${encodeURIComponent(resultado.token)}`
+    : "";
 
   const fechaVencimiento = resultado?.fechaExpiracion
     ? new Date(resultado.fechaExpiracion)
     : null;
 
-  const fechaValida = fechaVencimiento &&
+  const fechaValida =
+    fechaVencimiento &&
     !Number.isNaN(fechaVencimiento.getTime());
 
   return (
@@ -96,6 +154,7 @@ function InscripcionQr() {
           </Link>
 
           <h1>Inscripción de estudiantes mediante QR</h1>
+
           <p>
             Genera un código temporal para que los estudiantes
             se inscriban en una materia asignada.
@@ -106,6 +165,7 @@ function InscripcionQr() {
       <section className="hu12-tarjeta">
         <div className="hu12-tarjeta-titulo">
           <h2>Generar código de inscripción</h2>
+
           <p>
             El código será válido durante 10 minutos.
           </p>
@@ -113,34 +173,77 @@ function InscripcionQr() {
 
         <form onSubmit={generarCodigo}>
           <label htmlFor="hu12-materia">
-            ID de materia o grupo
+            Seleccionar materia asignada
           </label>
 
-          <input
+          <select
             id="hu12-materia"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="Ejemplo: 12"
+            className="hu12-selector-materia"
             value={idMateria}
             onChange={(event) => {
               setIdMateria(event.target.value);
               setResultado(null);
               setCopiado(false);
             }}
+            disabled={cargandoMaterias || generando || materias.length === 0}
             required
-          />
+          >
+            <option value="">
+              {cargandoMaterias
+                ? "Cargando materias..."
+                : materias.length === 0
+                  ? "No hay materias disponibles"
+                  : "Selecciona una materia"}
+            </option>
 
-          <p className="hu12-ayuda">
-            <FiInfo />
-            Ingresa el identificador de la materia o grupo
-            asignado para generar su código de inscripción.
-          </p>
+            {materias.map((materia) => (
+              <option
+                key={materia.idMateria}
+                value={materia.idMateria}
+              >
+                {materia.nombreMateria}
+                {materia.grupo ? ` - Grupo ${materia.grupo}` : ""}
+              </option>
+            ))}
+          </select>
+
+          {errorMaterias && (
+            <p className="hu12-error-materias" role="alert">
+              <FiInfo />
+              {errorMaterias}
+            </p>
+          )}
+
+          {!cargandoMaterias &&
+            !errorMaterias &&
+            materias.length === 0 && (
+              <p className="hu12-ayuda">
+                <FiInfo />
+                No tienes materias asignadas actualmente.
+                Contacta al responsable académico.
+              </p>
+            )}
+
+          {materiaSeleccionada && (
+            <p className="hu12-ayuda">
+              <FiInfo />
+              Generarás un QR para
+              {" "}<strong>{materiaSeleccionada.nombreMateria}</strong>
+              {materiaSeleccionada.grupo
+                ? `, grupo ${materiaSeleccionada.grupo}.`
+                : "."}
+            </p>
+          )}
 
           <button
             type="submit"
             className="hu12-boton-principal"
-            disabled={generando}
+            disabled={
+              cargandoMaterias ||
+              generando ||
+              !idMateria ||
+              materias.length === 0
+            }
           >
             <FiRefreshCw />
             {generando ? "Generando..." : "Generar código"}
@@ -155,20 +258,20 @@ function InscripcionQr() {
             <h2>Código de inscripción generado</h2>
           </div>
 
-        <div className="hu12-codigo-visual">
-          <QRCodeSVG
-               value={enlaceInscripcion}
-               size={230}
-               level="M"
-               marginSize={2}
-               title="Código QR de inscripción a la materia"
-         />
+          <div className="hu12-codigo-visual">
+            <QRCodeSVG
+              value={enlaceInscripcion}
+              size={230}
+              level="M"
+              marginSize={2}
+              title="Código QR de inscripción a la materia"
+            />
 
-         <p>
-                  Escanea este código con tu celular para
-                  inscribirte en la materia.
-         </p>
-        </div>
+            <p>
+              Escanea este código con tu celular para
+              inscribirte en la materia.
+            </p>
+          </div>
 
           <div className="hu12-token">
             <span>Token de inscripción</span>

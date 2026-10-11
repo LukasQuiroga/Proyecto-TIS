@@ -1,6 +1,20 @@
 
 import api from "./api";
 
+export const obtenerMateriasDocenteQr = async () => {
+  const respuesta = await api.get(
+    "/inscripciones-qr/materias/docente"
+  );
+
+  if (!Array.isArray(respuesta.data)) {
+    throw new Error(
+      "No se pudo obtener la lista de materias del docente."
+    );
+  }
+
+  return respuesta.data;
+};
+
 export const generarQrInscripcion = async (idMateria) => {
   if (!idMateria) {
     throw new Error("Debe seleccionar una materia");

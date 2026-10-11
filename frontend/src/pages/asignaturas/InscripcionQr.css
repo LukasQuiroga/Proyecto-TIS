@@ -350,3 +350,43 @@
   }
 
 }
+/* ==========================================
+   HU12 - SELECTOR DE MATERIAS DEL DOCENTE
+========================================== */
+
+.hu12-selector-materia {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d9e2ee;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17365d;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hu12-selector-materia:focus {
+  outline: 2px solid #a8c9f4;
+  border-color: #0969df;
+}
+
+.hu12-selector-materia:disabled {
+  background: #f2f5fa;
+  color: #667b99;
+  cursor: not-allowed;
+}
+
+.hu12-error-materias {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #b42318;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hu12-error-materias svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

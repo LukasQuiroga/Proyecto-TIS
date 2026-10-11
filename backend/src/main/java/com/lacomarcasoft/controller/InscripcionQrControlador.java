@@ -2,6 +2,9 @@
 package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.InscripcionQrSolicitud;
+import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.repository.MateriaRepositorio;
+import com.lacomarcasoft.repository.UsuarioRepositorio;
 import com.lacomarcasoft.service.InscripcionMateriaServicio;
 import com.lacomarcasoft.service.QrInscripcionServicio;
 
@@ -13,19 +16,27 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/inscripciones-qr")
 public class InscripcionQrControlador {
 
     private final QrInscripcionServicio qrServicio;
     private final InscripcionMateriaServicio inscripcionServicio;
+    private final MateriaRepositorio materiaRepositorio;
+    private final UsuarioRepositorio usuarioRepositorio;
 
     public InscripcionQrControlador(
             QrInscripcionServicio qrServicio,
-            InscripcionMateriaServicio inscripcionServicio
+            InscripcionMateriaServicio inscripcionServicio,
+            MateriaRepositorio materiaRepositorio,
+            UsuarioRepositorio usuarioRepositorio
     ) {
         this.qrServicio = qrServicio;
         this.inscripcionServicio = inscripcionServicio;
+        this.materiaRepositorio = materiaRepositorio;
+        this.usuarioRepositorio = usuarioRepositorio;
     }
 
     private Long obtenerIdUsuario(Authentication authentication) {
@@ -49,6 +60,58 @@ public class InscripcionQrControlador {
         }
 
         return (Long) detalles;
+    }
+
+    public record MateriaDocenteRespuesta(
+            Long idMateria,
+            String nombreMateria,
+            String grupo
+    ) {}
+
+    @GetMapping("/materias/docente")
+    public ResponseEntity<List<MateriaDocenteRespuesta>>
+    obtenerMateriasDocente(Authentication authentication) {
+
+        Long idDocente = obtenerIdUsuario(authentication);
+
+        Usuario docente = usuarioRepositorio.findById(idDocente)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Usuario no encontrado"
+                ));
+
+        if (!Boolean.TRUE.equals(docente.getActivo())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "El usuario se encuentra inactivo"
+            );
+        }
+
+        if (docente.getRol() == null ||
+                !"DOCENTE".equalsIgnoreCase(
+                        docente.getRol().getNombreRol()
+                )) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Solo los docentes pueden consultar sus materias"
+            );
+        }
+
+        List<MateriaDocenteRespuesta> materias =
+                materiaRepositorio
+                        .findByDocente_IdUsuarioOrderByNombreMateriaAscGrupoAsc(
+                                idDocente
+                        )
+                        .stream()
+                        .map(materia -> new MateriaDocenteRespuesta(
+                                materia.getIdMateria(),
+                                materia.getNombreMateria(),
+                                materia.getGrupo()
+                        ))
+                        .toList();
+
+        return ResponseEntity.ok(materias);
     }
 
     @PostMapping("/materias/{idMateria}/generar")
