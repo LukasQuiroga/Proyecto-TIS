@@ -54,6 +54,9 @@ export const obtenerMensajeErrorQr = (error) => {
   if (error?.response?.status === 409) {
     return "El estudiante ya esta inscrito o existe un conflicto de inscripcion.";
   }
+  if (error?.response?.status === 400) {
+       return "El código QR es inválido, ha expirado o no existe. Solicita un nuevo código a tu docente.";
+  }
 
   const mensajeBackend = error?.response?.data;
 

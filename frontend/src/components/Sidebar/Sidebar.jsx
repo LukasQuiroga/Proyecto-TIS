@@ -239,6 +239,14 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 </span>
                             </div>
                         )}
+                        {usuario?.nombreRol === "ESTUDIANTE" && (
+                           <Opcion
+                                to="/inscripcion-qr/inscribir"
+                                icono={<FiMaximize />}
+                            >
+                                   Inscripción QR
+                           </Opcion>
+                        )}
 
                         {tienePermiso("GENERAR_REPORTES")&&(
                             <div className="sidebar-opcion">
