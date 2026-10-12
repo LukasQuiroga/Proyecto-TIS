@@ -68,6 +68,24 @@ public class SecurityConfig {
                         "/api/asignaturas/"
                     )
                     .hasRole("ADMINISTRADOR")
+
+                   .requestMatchers(
+                       HttpMethod.GET,
+                       "/api/inscripciones-qr/materias/docente"
+                    )
+                    .hasRole("DOCENTE")
+                     
+                    .requestMatchers(
+                         HttpMethod.POST,
+                        "/api/inscripciones-qr/materias/*/generar"
+                    )
+                    .hasRole("DOCENTE")
+
+                    .requestMatchers(
+                         HttpMethod.POST,
+                       "/api/inscripciones-qr/inscribir"
+                    )
+                    .hasRole("ESTUDIANTE")
                     
                     .anyRequest()
                     .authenticated()

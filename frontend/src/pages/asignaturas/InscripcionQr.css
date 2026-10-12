@@ -1,0 +1,392 @@
+/* ==========================================
+   HU12 - ESTILOS GENERALES
+========================================== */
+
+.hu12-pagina {
+  padding: 24px;
+  color: #17365d;
+}
+
+.hu12-encabezado {
+  margin-bottom: 24px;
+}
+
+.hu12-encabezado h1 {
+  margin: 12px 0 8px;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.hu12-encabezado p,
+.hu12-tarjeta-titulo p {
+  color: #667b99;
+  font-size: 14px;
+}
+
+.hu12-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0969df;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.hu12-volver:hover {
+  text-decoration: underline;
+}
+
+
+/* ==========================================
+   HU12 - TARJETAS Y FORMULARIOS
+========================================== */
+
+.hu12-tarjeta {
+  background: #ffffff;
+  border: 1px solid #dfe7f1;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  max-width: 850px;
+}
+
+.hu12-tarjeta h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+.hu12-tarjeta form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.hu12-tarjeta label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.hu12-tarjeta input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d9e2ee;
+  border-radius: 6px;
+  font: inherit;
+  color: #17365d;
+}
+
+.hu12-tarjeta input:focus {
+  outline: 2px solid #a8c9f4;
+  border-color: #0969df;
+}
+
+.hu12-ayuda {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #667b99;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hu12-ayuda svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+
+/* ==========================================
+   HU12 - BOTONES
+========================================== */
+
+.hu12-boton-principal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0969df;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hu12-boton-principal:hover:not(:disabled) {
+  background: #0759be;
+}
+
+.hu12-boton-principal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hu12-boton-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #c8d8ec;
+  padding: 10px 14px;
+  border-radius: 6px;
+  color: #0969df;
+  cursor: pointer;
+}
+
+.hu12-boton-secundario:hover {
+  background: #edf4fb;
+}
+
+
+/* ==========================================
+   HU12 - RESULTADO DE GENERACION
+========================================== */
+
+.hu12-resultado-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #16824a;
+}
+
+.hu12-token {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.hu12-token span {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.hu12-token code {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  background: #edf4fb;
+  color: #17365d;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.hu12-vencimiento {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #315f9d;
+}
+
+
+/* ==========================================
+   HU12 - CODIGO QR VISUAL
+========================================== */
+
+.hu12-codigo-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 28px 16px;
+  margin: 20px 0;
+  background: #f5f9fe;
+  border: 1px solid #dce8f6;
+  border-radius: 10px;
+}
+
+.hu12-codigo-visual svg {
+  max-width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+}
+
+.hu12-codigo-visual p {
+  max-width: 350px;
+  margin: 0;
+  color: #536b89;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+
+/* ==========================================
+   HU12 - INSCRIPCION DEL ESTUDIANTE
+========================================== */
+
+.hu12-datos-estudiante {
+  background: #edf4fb;
+  color: #17365d;
+  padding: 16px;
+  border-radius: 6px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+.hu12-acciones-estudiante {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.hu12-acciones-estudiante a {
+  text-decoration: none;
+}
+
+.hu12-tarjeta > label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.hu12-tarjeta > input {
+  margin-bottom: 12px;
+}
+
+
+/* ==========================================
+   HU12 - VENTANAS EMERGENTES
+========================================== */
+
+.hu12-modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 29, 52, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+.hu12-modal {
+  position: relative;
+  box-sizing: border-box;
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 430px;
+  text-align: center;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+}
+
+.hu12-modal-cerrar {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #667b99;
+}
+
+.hu12-modal-icono {
+  font-size: 42px;
+  margin-bottom: 14px;
+}
+
+.hu12-modal-icono.exito {
+  color: #16824a;
+}
+
+.hu12-modal-icono.error {
+  color: #b42318;
+}
+
+.hu12-modal h2 {
+  margin: 0 0 12px;
+  color: #17365d;
+}
+
+.hu12-modal p {
+  color: #667b99;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+
+/* ==========================================
+   HU12 - DISEÑO RESPONSIVE
+========================================== */
+
+@media (max-width: 600px) {
+
+  .hu12-pagina {
+    padding: 14px;
+  }
+
+  .hu12-tarjeta {
+    padding: 16px;
+  }
+
+  .hu12-encabezado h1 {
+    font-size: 21px;
+  }
+
+  .hu12-acciones-estudiante {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hu12-acciones-estudiante button,
+  .hu12-acciones-estudiante a {
+    justify-content: center;
+    text-align: center;
+  }
+
+}
+/* ==========================================
+   HU12 - SELECTOR DE MATERIAS DEL DOCENTE
+========================================== */
+
+.hu12-selector-materia {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d9e2ee;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17365d;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hu12-selector-materia:focus {
+  outline: 2px solid #a8c9f4;
+  border-color: #0969df;
+}
+
+.hu12-selector-materia:disabled {
+  background: #f2f5fa;
+  color: #667b99;
+  cursor: not-allowed;
+}
+
+.hu12-error-materias {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #b42318;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hu12-error-materias svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

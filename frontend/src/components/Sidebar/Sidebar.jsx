@@ -9,6 +9,7 @@ import {
     FiClock,
     FiGrid,
     FiHome,
+    FiMaximize,
     FiMap,
     FiMenu,
     FiTarget,
@@ -181,6 +182,15 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                 Asignaturas
                             </Opcion>
                         )}
+                        
+                        {usuario?.nombreRol === "DOCENTE" && (
+                            <Opcion
+                                to="/asignaturas/inscripcion-qr"
+                                icono={<FiMaximize />}
+                            >
+                               Inscripción QR
+                          </Opcion>
+                        )}
 
                         {tienePermiso("GESTIONAR_EXAMENES")&&(
                             <div className="sidebar-opcion">
@@ -228,6 +238,14 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                     Control de ingreso
                                 </span>
                             </div>
+                        )}
+                        {usuario?.nombreRol === "ESTUDIANTE" && (
+                           <Opcion
+                                to="/inscripcion-qr/inscribir"
+                                icono={<FiMaximize />}
+                            >
+                                   Inscripción QR
+                           </Opcion>
                         )}
 
                         {tienePermiso("GENERAR_REPORTES")&&(

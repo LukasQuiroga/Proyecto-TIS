@@ -22,6 +22,8 @@ import RegistroUsuario from "./pages/usuarios/RegistroUsuario.jsx";
 import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 import PermisosActualizadosModal from "./components/Modal/PermisosActualizadosModal";
 import Asignaturas from "./pages/asignaturas/Asignaturas.jsx";
+import InscripcionQr from "./pages/asignaturas/InscripcionQr.jsx";
+import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -163,6 +165,18 @@ function App(){
                                     <Asignaturas />
                                 </ProtectedPermission>
                             }
+                        />
+
+                        {/* HU12 - Inscripción de estudiantes mediante QR */}
+                        <Route
+                            path="/asignaturas/inscripcion-qr"
+                            element={<InscripcionQr />}
+                        />
+
+                        {/* HU12 - Confirmación de inscripción del estudiante */}
+                        <Route
+                            path="/inscripcion-qr/inscribir"
+                            element={<InscripcionEstudianteQr />}
                         />
 
                         {/* AUDITORIA */}
