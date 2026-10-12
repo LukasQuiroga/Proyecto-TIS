@@ -205,15 +205,12 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                         )}
 
                         {tienePermiso("GESTIONAR_AMBIENTES")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiMap/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Ambientes
-                                </span>
-                            </div>
+                            <Opcion
+                                to="/ambientes"
+                                icono={<FiMap/>}
+                            >
+                                Ambientes
+                            </Opcion>
                         )}
 
                         {tienePermiso("GESTIONAR_HABILITACIONES")&&(
