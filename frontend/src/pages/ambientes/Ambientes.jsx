@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -33,35 +33,36 @@ function Ambientes() {
   const [ambienteEditar, setAmbienteEditar] = useState(null);
   const [mensajeExito, setMensajeExito] = useState("");
 
-  const cargarAmbientes = useCallback(async () => {
-    setCargando(true);
-    setError("");
-
-    try {
-      const respuesta = await obtenerAmbientes();
-
-      setAmbientes(
-        Array.isArray(respuesta.data)
-          ? respuesta.data
-          : [],
-      );
-    } catch (err) {
-      console.error(
-        "Error cargando ambientes:",
-        err,
-      );
-
-      setError(
-        "No se pudieron cargar los ambientes. Intenta nuevamente.",
-      );
-    } finally {
-      setCargando(false);
-    }
-  }, []);
+  const [recarga, setRecarga] = useState(0);
 
   useEffect(() => {
-    cargarAmbientes();
-  }, [cargarAmbientes]);
+    let activo = true;
+
+    obtenerAmbientes()
+      .then((respuesta) => {
+        if (!activo) return;
+        setAmbientes(Array.isArray(respuesta.data) ? respuesta.data : []);
+        setError("");
+      })
+      .catch((err) => {
+        if (!activo) return;
+        console.error("Error cargando ambientes:", err);
+        setError("No se pudieron cargar los ambientes. Intenta nuevamente.");
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [recarga]);
+
+  const cargarAmbientes = () => {
+    setCargando(true);
+    setError("");
+    setRecarga((actual) => actual + 1);
+  };
 
   const ambientesFiltrados = useMemo(() => {
     const texto = buscar
