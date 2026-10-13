@@ -96,6 +96,10 @@ pnpm dev   # http://localhost:5173, proxy de /api a localhost:8080
   - `V11__particionar_examen_estudiante.sql`
   - `V12__usuario_facultad.sql`
   - `V13__crear_token_sesion.sql`
+  - `V14__catalogo_asignaturas.sql`
+  - `V15__actualizar_descripcion_permiso_materias.sql`
+  - `V16__inscripcion_materias_qr.sql`
+  - `V18__carrera_facultad.sql`
 
 Flyway ejecuta automáticamente las migraciones pendientes al iniciar el backend.
 

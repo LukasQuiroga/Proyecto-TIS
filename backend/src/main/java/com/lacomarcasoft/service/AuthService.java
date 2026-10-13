@@ -1,6 +1,7 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.LoginRequest;
+import com.lacomarcasoft.dto.response.CarreraRespuesta;
 import com.lacomarcasoft.dto.response.LoginRespuesta;
 import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
@@ -86,7 +87,21 @@ public class AuthService {
                 usuario.getCarnetIdentidad(),
                 usuario.getCorreo(),
                 usuario.getCelular(),
-                usuario.getCarrera(),
+                usuario.getCarreras() == null
+                    ? List.of()
+                    : usuario.getCarreras()
+                        .stream()
+                        .map(
+                            carrera->
+                                new CarreraRespuesta(
+                                    carrera.getIdCarrera(),
+                                    carrera.getNombre(),
+                                    carrera.getFacultad().getIdFacultad(),
+                                    carrera.getFacultad().getCodigo(),
+                                    carrera.getFacultad().getNombre()
+                                )
+                        )
+                        .toList(),
                 usuario.getCodigoSis(),
                 usuario.getRol().getIdRol(),
                 usuario.getRol().getNombreRol(),

@@ -36,64 +36,64 @@ public class SecurityConfig {
     ) throws Exception{
 
         http
-            .csrf(
-                csrf->csrf.disable()
-            )
-            .cors(
-                Customizer.withDefaults()
-            )
-            .sessionManagement(
-                session->
-                    session.sessionCreationPolicy(
-                        SessionCreationPolicy.STATELESS
-                    )
-            )
-            .authorizeHttpRequests(
-                auth->auth
+                .csrf(
+                        csrf -> csrf.disable()
+                )
+                .cors(
+                        Customizer.withDefaults()
+                )
+                .sessionManagement(
+                        session ->
+                                session.sessionCreationPolicy(
+                                        SessionCreationPolicy.STATELESS
+                                )
+                )
+                .authorizeHttpRequests(
+                        auth -> auth
 
-                    .requestMatchers(
-                        "/api/auth/login",
-                        "/api/auth/recuperacion/**"
-                    )
-                    .permitAll()
+                                .requestMatchers(
+                                        "/api/auth/login",
+                                        "/api/auth/recuperacion/**"
+                                )
+                                .permitAll()
 
-                    .requestMatchers(
-                        "/api/logs/**"
-                    )
-                    .hasRole("ADMINISTRADOR")
+                                .requestMatchers(
+                                        "/api/logs/**"
+                                )
+                                .hasRole("ADMINISTRADOR")
 
-                    .requestMatchers(
-                        HttpMethod.POST,
-                        "/api/asignaturas",
-                        "/api/asignaturas/"
-                    )
-                    .hasRole("ADMINISTRADOR")
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/asignaturas",
+                                        "/api/asignaturas/"
+                                )
+                                .hasRole("ADMINISTRADOR")
 
-                   .requestMatchers(
-                       HttpMethod.GET,
-                       "/api/inscripciones-qr/materias/docente"
-                    )
-                    .hasRole("DOCENTE")
-                     
-                    .requestMatchers(
-                         HttpMethod.POST,
-                        "/api/inscripciones-qr/materias/*/generar"
-                    )
-                    .hasRole("DOCENTE")
+                                .requestMatchers(
+                                        HttpMethod.GET,
+                                        "/api/inscripciones-qr/materias/docente"
+                                )
+                                .hasRole("DOCENTE")
 
-                    .requestMatchers(
-                         HttpMethod.POST,
-                       "/api/inscripciones-qr/inscribir"
-                    )
-                    .hasRole("ESTUDIANTE")
-                    
-                    .anyRequest()
-                    .authenticated()
-            )
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/inscripciones-qr/materias/*/generar"
+                                )
+                                .hasRole("DOCENTE")
+
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/inscripciones-qr/inscribir"
+                                )
+                                .hasRole("ESTUDIANTE")
+
+                                .anyRequest()
+                                .authenticated()
+                )
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

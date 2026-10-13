@@ -29,7 +29,6 @@ import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 
-
 function App(){
 
     return(
@@ -155,7 +154,7 @@ function App(){
                                 </ProtectedPermission>
                             }
                         />
-
+                        
                         {/* ASIGNATURAS */}
 
                         <Route

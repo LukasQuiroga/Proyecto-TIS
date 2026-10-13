@@ -27,3 +27,6 @@ dist/
 image.png
 image2.png
 image3.png
+
+# Respaldos de base de datos
+db/

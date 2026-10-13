@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+
 public record RegistrarUsuarioSolicitud(
 
         @NotBlank(message = "El nombre es obligatorio")
@@ -30,7 +32,7 @@ public record RegistrarUsuarioSolicitud(
 
         String codigoSis,
 
-        String carrera
+        List<Long> idsCarreras
 
 ) {
 }

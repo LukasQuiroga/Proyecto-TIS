@@ -2,6 +2,7 @@ package com.lacomarcasoft.modelo;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name="usuario",schema="seguridad")
@@ -34,11 +35,14 @@ public class Usuario {
     @Column(name="celular")
     private String celular;
 
-    @Column(name="carrera")
-    private String carrera;
-
-    @Column(name="facultad")
-    private String facultad;
+    @ManyToMany(fetch=FetchType.EAGER)
+    @JoinTable(
+        name="usuario_carrera",
+        schema="academico",
+        joinColumns=@JoinColumn(name="id_usuario"),
+        inverseJoinColumns=@JoinColumn(name="id_carrera")
+    )
+    private List<Carrera> carreras;
 
     @Column(name="codigo_sis",unique=true)
     private String codigoSis;
@@ -115,12 +119,12 @@ public class Usuario {
         this.celular=celular;
     }
 
-    public String getCarrera(){
-        return carrera;
+    public List<Carrera> getCarreras(){
+        return carreras;
     }
 
-    public void setCarrera(String carrera){
-        this.carrera=carrera;
+    public void setCarreras(List<Carrera> carreras){
+        this.carreras=carreras;
     }
 
     public String getCodigoSis(){
@@ -129,14 +133,6 @@ public class Usuario {
 
     public void setCodigoSis(String codigoSis){
         this.codigoSis=codigoSis;
-    }
-
-    public String getFacultad(){
-        return facultad;
-    }
-
-    public void setFacultad(String facultad){
-        this.facultad=facultad;
     }
 
     public Boolean getActivo(){

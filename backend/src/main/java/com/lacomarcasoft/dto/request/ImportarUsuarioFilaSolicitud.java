@@ -20,9 +20,7 @@ public record ImportarUsuarioFilaSolicitud(
 
         String codigoSis,
 
-        String carrera,
-
-        String facultad
+        String carreras
 
 ) {
 }

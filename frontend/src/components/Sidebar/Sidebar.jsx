@@ -10,7 +10,6 @@ import {
     FiGrid,
     FiHome,
     FiMaximize,
-    FiMap,
     FiMenu,
     FiTarget,
     FiUsers
@@ -204,19 +203,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                             </div>
                         )}
 
-                        {tienePermiso("GESTIONAR_AMBIENTES")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiMap/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Ambientes
-                                </span>
-                            </div>
-                        )}
-
-                        {tienePermiso("GESTIONAR_HABILITACIONES")&&(
+{tienePermiso("GESTIONAR_HABILITACIONES")&&(
                             <div className="sidebar-opcion">
                                 <span className="sidebar-icono">
                                     <FiGrid/>

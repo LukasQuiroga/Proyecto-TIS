@@ -496,3 +496,48 @@
     }
 
 }
+
+.registro-carreras{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    width:100%;
+}
+
+.registro-carreras-vacio{
+    color:#6b7280;
+    font-size:14px;
+}
+
+.registro-facultad{
+    border:1px solid #d6dee6;
+    border-radius:10px;
+    padding:10px 12px;
+    background:#f8fafc;
+}
+
+.registro-facultad-titulo{
+    font-weight:600;
+    font-size:13px;
+    color:#0a2a4a;
+    margin-bottom:8px;
+}
+
+.registro-facultad-carreras{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:6px;
+}
+
+.registro-carrera-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:14px;
+    color:#374151;
+    cursor:pointer;
+}
+
+.registro-carrera-item input{
+    accent-color:#0a63c9;
+}

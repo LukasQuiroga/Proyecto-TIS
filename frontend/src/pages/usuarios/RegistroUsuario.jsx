@@ -32,24 +32,12 @@ import {
 } from "../../services/rolService";
 
 import {
+    obtenerFacultades
+} from "../../services/facultadService";
+
+import {
     useAuth
 } from "../../context/useAuth";
-
-
-const CARRERAS = [
-    "Ingeniería de Sistemas",
-    "Ingeniería Informática",
-    "Ingeniería Industrial",
-    "Ingeniería Civil",
-    "Ingeniería Eléctrica",
-    "Ingeniería Mecánica",
-    "Lic. en Administración",
-    "Lic. en Contaduría Pública",
-    "Medicina",
-    "Derecho",
-    "Arquitectura",
-    "Lic. en Sociología"
-];
 
 
 function Campo(
@@ -106,7 +94,7 @@ const ESTADO_INICIAL = {
     idRol: "",
     activo: true,
     codigoSis: "",
-    carrera: ""
+    idsCarreras: []
 };
 
 
@@ -130,6 +118,8 @@ function RegistroUsuario(){
 
 
     const [roles,setRoles] = useState([]);
+
+    const [facultades,setFacultades] = useState([]);
 
     const [formulario,setFormulario] =
         useState(ESTADO_INICIAL);
@@ -183,6 +173,20 @@ function RegistroUsuario(){
                 }
             );
 
+        obtenerFacultades()
+            .then(
+                respuesta =>
+                    setFacultades(respuesta.data)
+            )
+            .catch(
+                error => {
+                    console.error(
+                        "Error cargando carreras:",
+                        error
+                    );
+                }
+            );
+
     },[]);
 
 
@@ -200,6 +204,41 @@ function RegistroUsuario(){
             prev => {
                 const nuevo = { ...prev };
                 delete nuevo[CLAVE_ERROR[campo] || campo];
+                return nuevo;
+            }
+        );
+
+    };
+
+
+
+    const cambiarCarrera = (idCarrera) => {
+
+        setFormulario(
+            prev => {
+
+                const actuales =
+                    prev.idsCarreras || [];
+
+                const nuevos =
+                    actuales.includes(idCarrera)
+                        ? actuales.filter(
+                            idActual => idActual !== idCarrera
+                        )
+                        : [...actuales, idCarrera];
+
+                return {
+                    ...prev,
+                    idsCarreras: nuevos
+                };
+
+            }
+        );
+
+        setErrores(
+            prev => {
+                const nuevo = { ...prev };
+                delete nuevo.idsCarreras;
                 return nuevo;
             }
         );
@@ -357,10 +396,13 @@ function RegistroUsuario(){
 
             }
 
-            if(!formulario.carrera){
+            if(
+                !formulario.idsCarreras ||
+                formulario.idsCarreras.length === 0
+            ){
 
-                erroresValidos.carrera =
-                    "Debe seleccionar una carrera";
+                erroresValidos.idsCarreras =
+                    "Debe seleccionar al menos una carrera";
 
             }
 
@@ -413,8 +455,8 @@ function RegistroUsuario(){
             datos.codigoSis =
                 formulario.codigoSis.trim();
 
-            datos.carrera =
-                formulario.carrera;
+            datos.idsCarreras =
+                formulario.idsCarreras;
 
         }
 
@@ -875,42 +917,81 @@ function RegistroUsuario(){
 
 
                                 <Campo
-                                    etiqueta="Carrera"
+                                    etiqueta="Carreras"
                                     requerido
-                                    error={errores.carrera}
+                                    error={errores.idsCarreras}
                                 >
 
-                                    <select
-                                        className="registro-input"
-                                        value={formulario.carrera}
-                                        onChange={
-                                            e =>
-                                            cambiar(
-                                                "carrera",
-                                                e.target.value
-                                            )
-                                        }
-                                    >
-
-                                        <option value="">
-                                            Seleccione una carrera
-                                        </option>
-
+                                    <div className="registro-carreras">
 
                                         {
-                                            CARRERAS.map(
-                                                carrera => (
-                                                    <option
-                                                        key={carrera}
-                                                        value={carrera}
-                                                    >
-                                                        {carrera}
-                                                    </option>
+                                            facultades.length === 0 ? (
+
+                                                <p className="registro-carreras-vacio">
+                                                    No hay carreras registradas.
+                                                </p>
+
+                                            ) : (
+
+                                                facultades.map(
+                                                    facultad => (
+
+                                                        <div
+                                                            className="registro-facultad"
+                                                            key={facultad.idFacultad}
+                                                        >
+
+                                                            <div className="registro-facultad-titulo">
+                                                                {facultad.nombre}
+                                                            </div>
+
+                                                            <div className="registro-facultad-carreras">
+
+                                                                {
+                                                                    facultad.carreras.map(
+                                                                        carrera => (
+
+                                                                            <label
+                                                                                className="registro-carrera-item"
+                                                                                key={carrera.idCarrera}
+                                                                            >
+
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={
+                                                                                        formulario.idsCarreras.includes(
+                                                                                            carrera.idCarrera
+                                                                                        )
+                                                                                    }
+                                                                                    onChange={
+                                                                                        () =>
+                                                                                        cambiarCarrera(
+                                                                                            carrera.idCarrera
+                                                                                        )
+                                                                                    }
+                                                                                />
+
+                                                                                <span>
+                                                                                    {carrera.nombre}
+                                                                                </span>
+
+                                                                            </label>
+
+                                                                        )
+                                                                    )
+                                                                }
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    )
                                                 )
+
                                             )
                                         }
 
-                                    </select>
+                                    </div>
 
                                 </Campo>
 

@@ -1,11 +1,13 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.modelo.Materia;
+import com.lacomarcasoft.modelo.Carrera;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuarioFilaSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
 import com.lacomarcasoft.dto.response.CampoError;
+import com.lacomarcasoft.dto.response.CarreraRespuesta;
 import com.lacomarcasoft.dto.response.DeteccionDuplicadosRespuesta;
 import com.lacomarcasoft.dto.response.FilaImportacionRespuesta;
 import com.lacomarcasoft.dto.response.ImportarAnalisisRespuesta;
@@ -15,6 +17,7 @@ import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.exception.ValidacionRegistroException;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,15 +49,18 @@ public class UsuarioServicio {
     private final UsuarioRepositorio usuarioRepositorio;
     private final RolRepositorio rolRepositorio;
     private final MateriaRepositorio materiaRepositorio;
+    private final CarreraRepositorio carreraRepositorio;
 
     public UsuarioServicio(
             UsuarioRepositorio usuarioRepositorio,
             RolRepositorio rolRepositorio,
-            MateriaRepositorio materiaRepositorio
+            MateriaRepositorio materiaRepositorio,
+            CarreraRepositorio carreraRepositorio
     ){
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRepositorio = rolRepositorio;
         this.materiaRepositorio = materiaRepositorio;
+        this.carreraRepositorio = carreraRepositorio;
     }
 
     public List<UsuarioRespuesta> listar(){
@@ -329,14 +336,14 @@ public class UsuarioServicio {
                             fila.codigoSis()
                     );
 
-            String carrera =
+            String carrerasTexto =
                     limpiar(
-                            fila.carrera()
+                            fila.carreras()
                     );
 
-            String facultad =
-                    limpiar(
-                            fila.facultad()
+            List<String> carreras =
+                    separarCarreras(
+                            carrerasTexto
                     );
 
             if(documento.isBlank()){
@@ -450,11 +457,25 @@ public class UsuarioServicio {
 
                 }
 
-                if(carrera.isBlank()){
+                if(carreras.isEmpty()){
 
                     observaciones.add(
                             "La carrera es obligatoria"
                     );
+
+                } else {
+
+                    for(String nombreCarrera : carreras){
+
+                        if(buscarCarreraPorNombre(nombreCarrera) == null){
+
+                            observaciones.add(
+                                    "Carrera no válida: " + nombreCarrera
+                            );
+
+                        }
+
+                    }
 
                 }
 
@@ -543,12 +564,14 @@ public class UsuarioServicio {
 
                         usuario.setCodigoSis(codigoSis);
 
-                        usuario.setCarrera(carrera);
+                        usuario.setCarreras(
+                                resolverCarrerasPorNombre(carreras)
+                        );
 
-                        usuario.setFacultad(
-                                facultad.isBlank()
-                                        ? null
-                                        : facultad
+                    } else {
+
+                        usuario.setCarreras(
+                                List.of()
                         );
 
                     }
@@ -574,8 +597,7 @@ public class UsuarioServicio {
                                     rolTexto,
                                     "Registrado",
                                     codigoSis,
-                                    carrera,
-                                    facultad,
+                                    carreras,
                                     observaciones
                             )
                     );
@@ -596,8 +618,7 @@ public class UsuarioServicio {
                                     telefono,
                                     rolTexto,
                                     codigoSis,
-                                    carrera,
-                                    facultad,
+                                    carreras,
                                     observaciones
                             )
                     );
@@ -616,8 +637,7 @@ public class UsuarioServicio {
                                 telefono,
                                 rolTexto,
                                 codigoSis,
-                                carrera,
-                                facultad,
+                                carreras,
                                 observaciones
                         )
                 );
@@ -639,8 +659,7 @@ public class UsuarioServicio {
             String telefono,
             String rol,
             String codigoSis,
-            String carrera,
-            String facultad,
+            List<String> carreras,
             List<String> observaciones
     ){
 
@@ -656,8 +675,7 @@ public class UsuarioServicio {
                         ? "Activo"
                         : "Inválido",
                 codigoSis,
-                carrera,
-                facultad,
+                carreras,
                 observaciones
         );
 
@@ -787,6 +805,115 @@ public class UsuarioServicio {
                 .replaceAll("\\p{M}", "")
                 .trim()
                 .toLowerCase(Locale.ROOT);
+
+    }
+
+    private List<String> separarCarreras(String texto){
+
+        if(texto == null || texto.isBlank()){
+
+            return new ArrayList<>();
+
+        }
+
+        return Arrays
+                .stream(texto.split(";"))
+                .map(String::trim)
+                .filter(nombre -> !nombre.isBlank())
+                .distinct()
+                .toList();
+
+    }
+
+    private Carrera buscarCarreraPorNombre(String nombre){
+
+        if(nombre == null || nombre.isBlank()){
+
+            return null;
+
+        }
+
+        String buscado =
+                normalizar(nombre);
+
+        return carreraRepositorio.findAll()
+                .stream()
+                .filter(
+                        carrera ->
+                                normalizar(
+                                        carrera.getNombre()
+                                ).equals(buscado)
+                )
+                .findFirst()
+                .orElse(null);
+
+    }
+
+    private List<Carrera> resolverCarrerasPorNombre(
+            List<String> nombresCarreras
+    ){
+
+        List<Carrera> carreras =
+                new ArrayList<>();
+
+        for(String nombre : nombresCarreras){
+
+            Carrera carrera =
+                    buscarCarreraPorNombre(nombre);
+
+            if(carrera != null){
+
+                carreras.add(carrera);
+
+            }
+
+        }
+
+        return carreras;
+
+    }
+
+    private List<Carrera> resolverCarreras(
+            List<Long> idsCarreras
+    ){
+
+        if(idsCarreras == null || idsCarreras.isEmpty()){
+
+            return List.of();
+
+        }
+
+        List<Long> idsUnicos =
+                idsCarreras.stream()
+                        .distinct()
+                        .toList();
+
+        List<Carrera> carreras =
+                carreraRepositorio.findAllById(idsUnicos);
+
+        if(carreras.size() != idsUnicos.size()){
+
+            throw new RuntimeException(
+                    "Una o más carreras seleccionadas no existen"
+            );
+
+        }
+
+        return carreras;
+
+    }
+
+    private CarreraRespuesta convertirCarrera(
+            Carrera carrera
+    ){
+
+        return new CarreraRespuesta(
+                carrera.getIdCarrera(),
+                carrera.getNombre(),
+                carrera.getFacultad().getIdFacultad(),
+                carrera.getFacultad().getCodigo(),
+                carrera.getFacultad().getNombre()
+        );
 
     }
 
@@ -983,6 +1110,30 @@ public class UsuarioServicio {
 
         }
 
+        if(datos.idsCarreras() != null
+                && !datos.idsCarreras().isEmpty()){
+
+            List<Long> idsUnicos =
+                    datos.idsCarreras()
+                            .stream()
+                            .distinct()
+                            .toList();
+
+            if(carreraRepositorio
+                    .findAllById(idsUnicos)
+                    .size() != idsUnicos.size()){
+
+                errores.add(
+                        new CampoError(
+                                "idsCarreras",
+                                "Una o más carreras seleccionadas no existen"
+                        )
+                );
+
+            }
+
+        }
+
         if(!errores.isEmpty()){
 
             throw new ValidacionRegistroException(
@@ -1037,8 +1188,10 @@ public class UsuarioServicio {
 
         }
 
-        usuario.setCarrera(
-                datos.carrera()
+        usuario.setCarreras(
+                resolverCarreras(
+                        datos.idsCarreras()
+                )
         );
 
         usuario.setActivo(
@@ -1246,12 +1399,15 @@ public class UsuarioServicio {
                         : datos.celular()
         );
 
-        usuario.setCarrera(
-                datos.carrera() == null
-                        || datos.carrera().isBlank()
-                        ? null
-                        : datos.carrera()
-        );
+        if(datos.idsCarreras() != null){
+
+            usuario.setCarreras(
+                    resolverCarreras(
+                            datos.idsCarreras()
+                    )
+            );
+
+        }
 
         usuario.setCodigoSis(
                 datos.codigoSis() == null
@@ -1382,7 +1538,12 @@ public class UsuarioServicio {
 
                 usuario.getCelular(),
 
-                usuario.getCarrera(),
+                usuario.getCarreras() == null
+                        ? List.of()
+                        : usuario.getCarreras()
+                                .stream()
+                                .map(this::convertirCarrera)
+                                .toList(),
 
                 usuario.getCodigoSis(),
 
