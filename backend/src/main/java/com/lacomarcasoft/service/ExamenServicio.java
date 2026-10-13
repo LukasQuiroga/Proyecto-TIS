@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
@@ -96,6 +98,7 @@ public class ExamenServicio {
 }
 
 
+
 @Transactional
 public ExamenRespuesta configurar(
         Long id,
@@ -120,11 +123,30 @@ public ExamenRespuesta configurar(
         );
         }
 
+        LocalDateTime ahora = LocalDateTime.now(
+                ZoneId.of("America/La_Paz")
+        );
+
+        if (solicitud.fechaExamen().isBefore(ahora.toLocalDate())) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La fecha del examen no puede ser anterior a la fecha actual"
+        );
+        }
+
+        if (solicitud.fechaExamen().isEqual(ahora.toLocalDate()) &&
+                !solicitud.horaInicio().isAfter(ahora.toLocalTime())) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La hora de inicio debe ser posterior a la hora actual"
+        );
+        }
+
         LocalTime horaFin = solicitud.horaInicio()
                 .plusMinutes(solicitud.duracionMinutos());
 
         if (!horaFin.isAfter(solicitud.horaInicio())) {
-                throw new ResponseStatusException(
+        throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "El examen debe finalizar el mismo día"
         );
@@ -145,7 +167,6 @@ public ExamenRespuesta configurar(
 
         return convertir(examenRepositorio.save(examen));
 }
-
 
     @Transactional(readOnly = true)
     public List<ExamenRespuesta> listar(String buscar) {
