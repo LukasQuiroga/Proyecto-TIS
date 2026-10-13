@@ -1,5 +1,6 @@
 package com.lacomarcasoft.controller;
 
+import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
 import com.lacomarcasoft.service.ExamenServicio;
@@ -68,4 +69,17 @@ public class ExamenControlador {
                 examenServicio.actualizar(id, solicitud)
         );
     }
+
+
+@PutMapping("/{id}/configuracion")
+public ResponseEntity<ExamenRespuesta> configurar(
+        @PathVariable Long id,
+        @Valid @RequestBody ConfigurarExamenSolicitud solicitud
+) {
+
+        return ResponseEntity.ok(
+                examenServicio.configurar(id, solicitud)
+        );
+}
+
 }
