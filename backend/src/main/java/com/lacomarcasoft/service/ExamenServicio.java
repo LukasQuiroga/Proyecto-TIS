@@ -1,5 +1,6 @@
 package com.lacomarcasoft.service;
 
+import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
 import com.lacomarcasoft.modelo.Examen;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Locale;
 
@@ -91,7 +93,59 @@ public class ExamenServicio {
         aplicar(examen, solicitud, codigo);
 
         return convertir(examenRepositorio.save(examen));
-    }
+}
+
+
+@Transactional
+public ExamenRespuesta configurar(
+        Long id,
+        ConfigurarExamenSolicitud solicitud
+) {
+
+        if (solicitud == null ||
+                solicitud.fechaExamen() == null ||
+                solicitud.horaInicio() == null ||
+                solicitud.duracionMinutos() == null) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La fecha, hora y duración son obligatorias"
+        );
+        }
+
+        if (solicitud.duracionMinutos() <= 0 ||
+                solicitud.duracionMinutos() >= 1440) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La duración debe ser mayor a cero y menor a 1440 minutos"
+        );
+        }
+
+        LocalTime horaFin = solicitud.horaInicio()
+                .plusMinutes(solicitud.duracionMinutos());
+
+        if (!horaFin.isAfter(solicitud.horaInicio())) {
+                throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "El examen debe finalizar el mismo día"
+        );
+        }
+
+        Examen examen = examenRepositorio
+                .obtenerDetalle(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Examen no encontrado"
+                        )
+                );
+
+        examen.setFechaExamen(solicitud.fechaExamen());
+        examen.setHoraInicio(solicitud.horaInicio());
+        examen.setHoraFin(horaFin);
+
+        return convertir(examenRepositorio.save(examen));
+}
+
 
     @Transactional(readOnly = true)
     public List<ExamenRespuesta> listar(String buscar) {
