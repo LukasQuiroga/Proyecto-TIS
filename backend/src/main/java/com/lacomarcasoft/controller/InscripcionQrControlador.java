@@ -64,7 +64,7 @@ public class InscripcionQrControlador {
 
     public record MateriaDocenteRespuesta(
             Long idMateria,
-            String nombreMateria,
+            String nombreAsignatura,
             String grupo
     ) {}
 
@@ -100,13 +100,11 @@ public class InscripcionQrControlador {
 
         List<MateriaDocenteRespuesta> materias =
                 materiaRepositorio
-                        .findByDocente_IdUsuarioOrderByNombreMateriaAscGrupoAsc(
-                                idDocente
-                        )
+                        .listarPorDocente(idDocente)
                         .stream()
                         .map(materia -> new MateriaDocenteRespuesta(
                                 materia.getIdMateria(),
-                                materia.getNombreMateria(),
+                                materia.getAsignatura().getNombreAsignatura(),
                                 materia.getGrupo()
                         ))
                         .toList();

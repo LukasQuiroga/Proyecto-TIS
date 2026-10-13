@@ -43,7 +43,7 @@ public class InscripcionMateriaServicio {
     public record ResultadoInscripcion(
             Long idMateria,
             Long idEstudiante,
-            String nombreMateria,
+            String nombreAsignatura,
             String grupo,
             String mensaje
     ) {}
@@ -163,7 +163,7 @@ public class InscripcionMateriaServicio {
         return new ResultadoInscripcion(
                 idMateria,
                 idEstudiante,
-                materia.getNombreMateria(),
+                materia.getAsignatura().getNombreAsignatura(),
                 materia.getGrupo(),
                 "Inscripcion realizada correctamente"
         );

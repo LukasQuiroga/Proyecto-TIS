@@ -26,6 +26,18 @@ public interface AsignaturaRepositorio
 
 
     // Verificar si existe una asignatura con el mismo
+    // nombre (sin distinguir mayusculas ni espacios externos).
+
+    @Query("""
+        SELECT COUNT(a) > 0
+        FROM Asignatura a
+        WHERE LOWER(TRIM(a.nombreAsignatura)) =
+              LOWER(TRIM(:nombre))
+        """)
+    boolean existeNombre(@Param("nombre") String nombre);
+
+
+    // Verificar si existe una asignatura con el mismo
     // nombre en una carrera determinada.
 
     @Query("""

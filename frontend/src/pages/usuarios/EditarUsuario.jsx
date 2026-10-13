@@ -541,7 +541,7 @@ function EditarUsuario() {
                         onChange={() => cambiarMateria(materia.idMateria)}
                       />
 
-                      <span>{materia.nombreMateria}</span>
+                      <span>{materia.nombreAsignatura}</span>
 
                       <strong>Grupo {materia.grupo}</strong>
                     </label>

@@ -228,7 +228,7 @@ function VerUsuario(){
 
                             {materias.map(materia=>(
                                 <div className="ver-materia-fila" key={materia.idMateria}>
-                                    <span>{materia.nombreMateria}</span>
+                                    <span>{materia.nombreAsignatura}</span>
                                     <span className="ver-grupo-badge">
                                         Grupo {materia.grupo}
                                     </span>

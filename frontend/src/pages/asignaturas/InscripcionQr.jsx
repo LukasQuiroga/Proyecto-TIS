@@ -201,7 +201,7 @@ function InscripcionQr() {
                 key={materia.idMateria}
                 value={materia.idMateria}
               >
-                {materia.nombreMateria}
+                {materia.nombreAsignatura}
                 {materia.grupo ? ` - Grupo ${materia.grupo}` : ""}
               </option>
             ))}
@@ -228,7 +228,7 @@ function InscripcionQr() {
             <p className="hu12-ayuda">
               <FiInfo />
               Generarás un QR para
-              {" "}<strong>{materiaSeleccionada.nombreMateria}</strong>
+              {" "}<strong>{materiaSeleccionada.nombreAsignatura}</strong>
               {materiaSeleccionada.grupo
                 ? `, grupo ${materiaSeleccionada.grupo}.`
                 : "."}
