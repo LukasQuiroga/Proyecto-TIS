@@ -3,6 +3,7 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.RegistrarAsignaturaSolicitud;
 import com.lacomarcasoft.dto.response.AsignaturaRespuesta;
 import com.lacomarcasoft.service.AsignaturaServicio;
+import com.lacomarcasoft.dto.response.GrupoAsignaturaRespuesta;
 
 import jakarta.validation.Valid;
 
@@ -59,4 +60,14 @@ public class AsignaturaControlador {
                 asignaturaServicio.obtenerPorId(id)
         );
     }
+
+        @GetMapping("/{id}/grupos")
+        public ResponseEntity<List<GrupoAsignaturaRespuesta>> listarGrupos(
+                @PathVariable Long id
+        ) {
+        return ResponseEntity.ok(
+                asignaturaServicio.listarGrupos(id)
+        );
+        }
+
 }

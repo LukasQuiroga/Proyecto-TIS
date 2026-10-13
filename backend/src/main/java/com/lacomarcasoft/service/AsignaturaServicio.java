@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.lacomarcasoft.dto.response.GrupoAsignaturaRespuesta;
+import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.repository.MateriaRepositorio;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,13 +27,16 @@ public class AsignaturaServicio {
 
     private final AsignaturaRepositorio asignaturaRepositorio;
     private final AsignaturaCarreraRepositorio asignaturaCarreraRepositorio;
+    private final MateriaRepositorio materiaRepositorio;
 
     public AsignaturaServicio(
             AsignaturaRepositorio asignaturaRepositorio,
-            AsignaturaCarreraRepositorio asignaturaCarreraRepositorio
+            AsignaturaCarreraRepositorio asignaturaCarreraRepositorio,
+            MateriaRepositorio materiaRepositorio
     ) {
         this.asignaturaRepositorio = asignaturaRepositorio;
         this.asignaturaCarreraRepositorio = asignaturaCarreraRepositorio;
+        this.materiaRepositorio = materiaRepositorio;
     }
 
     @Transactional
@@ -208,6 +215,38 @@ public class AsignaturaServicio {
                 asignatura.getDescripcion(),
                 carreras
         );
+    }
+
+    @Transactional(readOnly = true)
+        public List<GrupoAsignaturaRespuesta> listarGrupos(
+                Long idAsignatura
+        ) {
+        if (!asignaturaRepositorio.existsById(idAsignatura)) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Asignatura no encontrada"
+                );
+        }
+
+        return materiaRepositorio
+                .listarPorAsignatura(idAsignatura)
+                .stream()
+                .map(materia -> {
+                        Usuario docente = materia.getDocente();
+
+                        String nombreCompleto = (
+                                docente.getNombre() + " " +
+                                docente.getApellido()
+                        ).trim();
+
+                        return new GrupoAsignaturaRespuesta(
+                                materia.getIdMateria(),
+                                materia.getGrupo(),
+                                docente.getIdUsuario(),
+                                nombreCompleto
+                        );
+                })
+                .toList();
     }
 
     private String limpiar(String valor) {

@@ -16,6 +16,10 @@ export const obtenerAsignaturaPorId = (id) => {
   return api.get(`/asignaturas/${id}`)
 }
 
+export const obtenerGruposPorAsignatura = (idAsignatura) => {
+  return api.get(`/asignaturas/${idAsignatura}/grupos`)
+}
+
 export const registrarAsignatura = (datos) => {
   return api.post('/asignaturas', datos)
 }

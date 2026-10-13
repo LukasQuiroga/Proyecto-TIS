@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FiBookOpen, FiX } from "react-icons/fi";
 
 import { obtenerFacultades } from "../../services/catalogoService";
+import { obtenerGruposPorAsignatura } from "../../services/asignaturaService";
 
 import "./DetalleAsignatura.css";
 
@@ -9,6 +10,9 @@ function DetalleAsignatura({ asignatura, onCerrar }) {
   const [facultades, setFacultades] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [errorCatalogo, setErrorCatalogo] = useState("");
+  const [grupos, setGrupos] = useState([]);
+  const [cargandoGrupos, setCargandoGrupos] = useState(true);
+  const [errorGrupos, setErrorGrupos] = useState("");
 
   useEffect(() => {
     if (!asignatura) return;
@@ -48,6 +52,53 @@ function DetalleAsignatura({ asignatura, onCerrar }) {
       activo = false;
     };
   }, [asignatura]);
+
+  useEffect(() => {
+    if (!asignatura?.idAsignatura) {
+      setGrupos([]);
+      setCargandoGrupos(false);
+      return;
+    }
+
+    let activo = true;
+
+    const cargarGrupos = async () => {
+      setCargandoGrupos(true);
+      setErrorGrupos("");
+      setGrupos([]);
+
+      try {
+        const respuesta = await obtenerGruposPorAsignatura(
+          asignatura.idAsignatura
+        );
+
+        if (!activo) return;
+
+        setGrupos(
+          Array.isArray(respuesta.data) ? respuesta.data : []
+        );
+      } catch (error) {
+        console.error("Error cargando grupos:", error);
+
+        if (activo) {
+          setErrorGrupos(
+            "No se pudieron cargar los grupos y docentes."
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargandoGrupos(false);
+        }
+      }
+    };
+
+    cargarGrupos();
+
+    return () => {
+      activo = false;
+    };
+  }, [asignatura?.idAsignatura]);
+
 
   const gruposFacultades = useMemo(() => {
     const carrerasAsignatura = asignatura?.carreras || [];
@@ -217,6 +268,50 @@ function DetalleAsignatura({ asignatura, onCerrar }) {
               {asignatura.descripcion || "Sin descripción registrada."}
             </p>
           </div>
+          
+          <div className="detalle-asignatura-campo">
+            <span>Grupos y docentes asignados</span>
+
+            {cargandoGrupos ? (
+              <p className="detalle-asignatura-mensaje">
+                Cargando grupos y docentes...
+              </p>
+            ) : errorGrupos ? (
+              <p className="detalle-asignatura-error" role="alert">
+                {errorGrupos}
+              </p>
+            ) : grupos.length === 0 ? (
+              <p className="detalle-asignatura-mensaje">
+                Esta asignatura todavía no tiene grupos ni docentes asignados.
+              </p>
+            ) : (
+              <div className="detalle-asignatura-tabla-contenedor">
+                <table className="detalle-asignatura-tabla">
+                  <thead>
+                    <tr>
+                      <th>Grupo</th>
+                      <th>Docente responsable</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {grupos.map((grupo) => (
+                      <tr key={grupo.idMateria}>
+                        <td>
+                          <span className="detalle-asignatura-grupo">
+                            {grupo.grupo}
+                          </span>
+                        </td>
+
+                        <td>{grupo.nombreDocente}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
         </section>
 
         <footer className="detalle-asignatura-acciones">
