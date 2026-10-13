@@ -1,5 +1,6 @@
 package com.lacomarcasoft.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +23,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.cors.allowed-origins:http://localhost:*}")
+    private String allowedOrigins;
 
     public SecurityConfig(
         JwtAuthenticationFilter jwtAuthenticationFilter
@@ -53,7 +57,8 @@ public class SecurityConfig {
 
                                 .requestMatchers(
                                         "/api/auth/login",
-                                        "/api/auth/recuperacion/**"
+                                        "/api/auth/recuperacion/**",
+                                        "/actuator/health"
                                 )
                                 .permitAll()
 
@@ -111,10 +116,7 @@ public class SecurityConfig {
             new CorsConfiguration();
 
         config.setAllowedOriginPatterns(
-            List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-            )
+            List.of(allowedOrigins.split("\\s*,\\s*"))
         );
 
         config.addAllowedMethod("*");
