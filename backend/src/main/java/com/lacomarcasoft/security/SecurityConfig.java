@@ -87,6 +87,12 @@ public class SecurityConfig {
                                 )
                                 .hasRole("ESTUDIANTE")
 
+                                .requestMatchers(
+                                        "/api/examenes",
+                                        "/api/examenes/**"
+                                )
+                                .hasAuthority("GESTIONAR_EXAMENES")
+
                                 .anyRequest()
                                 .authenticated()
                 )

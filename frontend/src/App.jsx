@@ -27,6 +27,7 @@ import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr
 
 import Examenes from "./pages/examenes/Examenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
+import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -186,7 +187,10 @@ function App(){
                         <Route
                             path="/examenes"
                             element={
-                                <ProtectedPermission permiso="GESTIONAR_EXAMENES">
+                                <ProtectedPermission
+                                    permiso="GESTIONAR_EXAMENES"
+                                    accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                                >
                                     <Examenes />
                                 </ProtectedPermission>
                             }
@@ -195,7 +199,10 @@ function App(){
                         <Route
                             path="/examenes/registro"
                             element={
-                                <ProtectedPermission permiso="GESTIONAR_EXAMENES">
+                                <ProtectedPermission
+                                    permiso="GESTIONAR_EXAMENES"
+                                    accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                                >
                                     <RegistrarExamen />
                                 </ProtectedPermission>
                             }
@@ -204,7 +211,10 @@ function App(){
                         <Route
                             path="/examenes/:id/editar"
                             element={
-                                <ProtectedPermission permiso="GESTIONAR_EXAMENES">
+                                <ProtectedPermission
+                                    permiso="GESTIONAR_EXAMENES"
+                                    accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                                >
                                     <RegistrarExamen />
                                 </ProtectedPermission>
                             }

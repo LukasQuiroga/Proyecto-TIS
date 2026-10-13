@@ -4,7 +4,8 @@ import AccesoDenegado from "./AccesoDenegado";
 
 function ProtectedPermission({
     children,
-    permiso
+    permiso,
+    accesoDenegado = <AccesoDenegado />
 }) {
     const { usuario } = useAuth();
 
@@ -22,7 +23,7 @@ function ProtectedPermission({
 
     if(!tienePermiso){
 
-        return <AccesoDenegado />;
+        return accesoDenegado;
 
     }
     return children;

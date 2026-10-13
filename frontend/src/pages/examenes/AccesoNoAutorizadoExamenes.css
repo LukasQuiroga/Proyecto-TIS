@@ -1,0 +1,123 @@
+.acceso-examenes-pagina {
+  min-height: 100%;
+  padding: 28px 30px 40px;
+  background: #ffffff;
+}
+
+.acceso-examenes-titulo {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  color: #081b70;
+  text-align: left;
+}
+
+.acceso-examenes-tarjeta {
+  width: 695px;
+  max-width: 90%;
+  min-height: 450px;
+  margin: 90px auto 0;
+  padding: 52px 40px 46px;
+  background: #ffffff;
+  border: 1px solid #d9e6f8;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.acceso-examenes-icono {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: #fde8e9;
+  color: #ef3038;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.acceso-examenes-icono svg {
+  width: 75px;
+  height: 75px;
+}
+
+.acceso-examenes-mensaje-titulo {
+  margin: 18px 0 0;
+  font-size: 34px;
+  font-weight: 700;
+  color: #081b70;
+}
+
+.acceso-examenes-mensaje {
+  margin: 18px 0 0;
+  max-width: 560px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 400;
+  color: #6474ae;
+}
+
+.acceso-examenes-boton {
+  margin-top: 28px;
+  width: 248px;
+  height: 55px;
+  background: #ffffff;
+  border: 2px solid #4c8dff;
+  border-radius: 6px;
+  color: #293e9d;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.acceso-examenes-boton:hover {
+  background: #f2f7ff;
+}
+
+@media (max-width: 760px) {
+  .acceso-examenes-pagina {
+    padding: 20px 16px 32px;
+  }
+
+  .acceso-examenes-titulo {
+    font-size: 28px;
+  }
+
+  .acceso-examenes-tarjeta {
+    margin-top: 40px;
+    min-height: 0;
+    padding: 36px 22px;
+  }
+
+  .acceso-examenes-icono {
+    width: 110px;
+    height: 110px;
+  }
+
+  .acceso-examenes-icono svg {
+    width: 58px;
+    height: 58px;
+  }
+
+  .acceso-examenes-mensaje-titulo {
+    font-size: 26px;
+  }
+
+  .acceso-examenes-mensaje {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  .acceso-examenes-boton {
+    width: 100%;
+    max-width: 248px;
+  }
+}
