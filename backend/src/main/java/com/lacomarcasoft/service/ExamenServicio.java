@@ -184,6 +184,13 @@ public class ExamenServicio {
             );
         }
 
+        if (!gestion.matches("\\d{1,2}/\\d{4}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La gestión debe tener el formato periodo/año, por ejemplo 2/2026"
+            );
+        }
+
         if (!ESTADOS.contains(estado)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

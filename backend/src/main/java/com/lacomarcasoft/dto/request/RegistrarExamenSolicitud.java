@@ -24,6 +24,10 @@ public record RegistrarExamenSolicitud(
 
     @NotBlank(message = "La gestión es obligatoria")
     @Size(max = 20, message = "La gestión no puede superar 20 caracteres")
+    @Pattern(
+        regexp = "^\\d{1,2}/\\d{4}$",
+        message = "La gestión debe tener el formato periodo/año, por ejemplo 2/2026"
+    )
     String gestion,
 
     @NotBlank(message = "Debe seleccionar un estado")

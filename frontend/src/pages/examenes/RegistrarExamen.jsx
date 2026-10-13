@@ -38,6 +38,21 @@ const DATOS_INICIALES = {
 const MENSAJE_VALIDACION =
   "Complete la información obligatoria antes de guardar.";
 
+const GESTION_PATRON = /^\d{1,2}\/\d{4}$/;
+
+const sanearGestion = (valor) => {
+  const limpio = valor.replace(/[^0-9/]/g, "");
+  const partes = limpio.split("/");
+  const periodo = partes[0].slice(0, 2);
+  const anio = partes.slice(1).join("").slice(0, 4);
+
+  if (!limpio.includes("/") || !periodo) {
+    return periodo;
+  }
+
+  return `${periodo}/${anio}`;
+};
+
 function Campo({ id, etiqueta, requerido = false, error, children }) {
   return (
     <div className="registrar-examen-campo">
@@ -210,6 +225,8 @@ function RegistrarExamen() {
 
     if (!datos.gestion.trim()) {
       nuevos.gestion = "Este campo es obligatorio.";
+    } else if (!GESTION_PATRON.test(datos.gestion.trim())) {
+      nuevos.gestion = "Use el formato periodo/año. Ej. 2/2026.";
     }
 
     if (!datos.estado) {
@@ -416,9 +433,11 @@ function RegistrarExamen() {
                   id="examen-gestion"
                   className={claseControl("gestion")}
                   value={datos.gestion}
-                  onChange={(e) => actualizarCampo("gestion", e.target.value)}
+                  onChange={(e) =>
+                    actualizarCampo("gestion", sanearGestion(e.target.value))
+                  }
                   placeholder="Ej. 2/2026"
-                  maxLength={20}
+                  maxLength={7}
                   disabled={guardando}
                 />
               </Campo>
