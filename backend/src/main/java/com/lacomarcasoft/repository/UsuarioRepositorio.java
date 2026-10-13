@@ -4,6 +4,7 @@ import com.lacomarcasoft.modelo.Usuario;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -26,5 +27,13 @@ Optional<Usuario> findByCodigoSis(
     List<Usuario> findByCodigoSisIn(
         Collection<String> codigosSis
    );
-
+   
+    @Query("""
+        SELECT u
+        FROM Usuario u
+        WHERE u.activo = true
+        AND UPPER(u.rol.nombreRol) = 'DOCENTE'
+        ORDER BY u.nombre ASC, u.apellido ASC
+        """)
+    List<Usuario> listarDocentesActivos();
 }

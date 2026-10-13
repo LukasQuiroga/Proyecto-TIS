@@ -34,6 +34,13 @@ public record RegistrarAsignaturaSolicitud(
         @NotBlank(message = "El nombre de la carrera no puede estar vacío")
         @Size(max = 120, message = "La carrera no puede superar 120 caracteres")
         String
-    > carreras
+    > carreras,
 
+    @NotNull(message = "Debe seleccionar un docente")
+    @Positive(message = "El docente seleccionado no es válido")
+    Long idDocente,
+
+    @NotBlank(message = "El grupo es obligatorio")
+    @Size(max = 20, message = "El grupo no puede superar 20 caracteres")
+    String grupo
 ) {}
