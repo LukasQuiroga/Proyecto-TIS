@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  FiCheckCircle,
   FiChevronLeft,
   FiChevronRight,
   FiClipboard,
@@ -9,7 +8,6 @@ import {
   FiEye,
   FiPlus,
   FiSearch,
-  FiX,
 } from "react-icons/fi";
 
 import {
@@ -38,7 +36,6 @@ const ESTADOS_FILTRO = [
 
 function Examenes() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [examenes, setExamenes] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -49,9 +46,6 @@ function Examenes() {
   const [pagina, setPagina] = useState(1);
 
   const [examenDetalle, setExamenDetalle] = useState(null);
-  const [mensajeExito, setMensajeExito] = useState(
-    () => location.state?.mensaje ?? "",
-  );
 
   const extraerLista = (datos) => {
     if (Array.isArray(datos)) {
@@ -64,12 +58,6 @@ function Examenes() {
 
     return [];
   };
-
-  useEffect(() => {
-    if (location.state?.mensaje) {
-      navigate(location.pathname, { replace: true, state: null });
-    }
-  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     let activo = true;
@@ -160,34 +148,12 @@ function Examenes() {
         <button
           type="button"
           className="examenes-boton-principal"
-          onClick={() => {
-            setMensajeExito("");
-            navigate("/examenes/registro");
-          }}
+          onClick={() => navigate("/examenes/registro")}
         >
           <FiPlus />
           Nuevo examen
         </button>
       </header>
-
-      {mensajeExito && (
-        <div className="examenes-alerta-exito" role="status">
-          <FiCheckCircle size={22} />
-
-          <div>
-            <strong>¡Operación exitosa!</strong>
-            <span>{mensajeExito}</span>
-          </div>
-
-          <button
-            type="button"
-            aria-label="Cerrar notificación"
-            onClick={() => setMensajeExito("")}
-          >
-            <FiX />
-          </button>
-        </div>
-      )}
 
       <section className="examenes-filtros">
         <div className="examenes-buscador">
@@ -329,10 +295,11 @@ function Examenes() {
                             className="examenes-boton-accion"
                             title="Editar examen"
                             aria-label="Editar examen"
-                            onClick={() => {
-                              setMensajeExito("");
-                              navigate(`/examenes/${examen.idExamen ?? examen.id}/editar`);
-                            }}
+                            onClick={() =>
+                              navigate(
+                                `/examenes/${examen.idExamen ?? examen.id}/editar`,
+                              )
+                            }
                           >
                             <FiEdit2 />
                           </button>

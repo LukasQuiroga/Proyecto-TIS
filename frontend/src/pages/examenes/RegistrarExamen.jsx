@@ -7,6 +7,7 @@ import {
   obtenerExamenPorId,
   registrarExamen,
 } from "../../services/examenService";
+import ModalExito from "../../components/Modal/ModalExito.jsx";
 
 import "./RegistrarExamen.css";
 
@@ -75,6 +76,7 @@ function RegistrarExamen() {
 
   const [cargandoExamen, setCargandoExamen] = useState(modoEdicion);
   const [guardando, setGuardando] = useState(false);
+  const [mostrarExito, setMostrarExito] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -253,13 +255,7 @@ function RegistrarExamen() {
         await registrarExamen(cuerpo);
       }
 
-      navigate("/examenes", {
-        state: {
-          mensaje: modoEdicion
-            ? "Examen actualizado correctamente."
-            : "Examen registrado correctamente.",
-        },
-      });
+      setMostrarExito(true);
     } catch (error) {
       console.error("Error guardando el examen:", error);
 
@@ -498,6 +494,17 @@ function RegistrarExamen() {
           </form>
         )}
       </section>
+
+      <ModalExito
+        abierto={mostrarExito}
+        titulo={modoEdicion ? "Examen actualizado" : "Examen registrado"}
+        mensaje={
+          modoEdicion
+            ? "El examen se actualizó correctamente."
+            : "El examen se registró correctamente."
+        }
+        onCerrar={() => navigate("/examenes")}
+      />
     </div>
   );
 }

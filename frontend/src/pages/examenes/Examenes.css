@@ -43,49 +43,6 @@
     background: #0046c4;
 }
 
-.examenes-alerta-exito {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
-    margin-bottom: 18px;
-    background: #e7f8ee;
-    border: 1px solid #a9e2c2;
-    border-left: 4px solid #1a9e5f;
-    border-radius: 6px;
-    color: #147a45;
-}
-
-.examenes-alerta-exito svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-.examenes-alerta-exito > div {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-}
-
-.examenes-alerta-exito strong {
-    font-size: 14px;
-}
-
-.examenes-alerta-exito span {
-    font-size: 13px;
-    color: #2f7d57;
-}
-
-.examenes-alerta-exito button {
-    border: none;
-    background: transparent;
-    color: #147a45;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-}
-
 .examenes-filtros {
     display: grid;
     grid-template-columns: minmax(0, 70fr) minmax(0, 28fr);
