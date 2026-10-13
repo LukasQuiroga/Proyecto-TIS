@@ -200,16 +200,13 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                             </Opcion>
                         )}
 
-{tienePermiso("GESTIONAR_HABILITACIONES")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiGrid/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Habilitaciones
-                                </span>
-                            </div>
+                        {usuario?.nombreRol === "DOCENTE" && (
+                            <Opcion
+                                to="/habilitaciones"
+                                icono={<FiGrid />}
+                            >
+                                Habilitaciones
+                            </Opcion>
                         )}
 
                         {tienePermiso("CONTROL_INGRESO")&&(

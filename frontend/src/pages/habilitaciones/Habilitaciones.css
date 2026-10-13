@@ -1,0 +1,603 @@
+
+.hab-pagina {
+    padding: 24px;
+    color: #17365d;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.hab-encabezado {
+    margin-bottom: 22px;
+}
+
+.hab-encabezado h1 {
+    margin: 0 0 6px;
+    font-size: 36px;
+    font-weight: 700;
+    color: #081b70;
+}
+
+.hab-encabezado p {
+    margin: 0;
+    color: #5b6b84;
+    font-size: 14px;
+}
+
+.hab-panel {
+    margin-bottom: 20px;
+    background: #ffffff;
+    border: 1px solid #dfe7f1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.hab-seleccion {
+    padding: 20px;
+}
+
+.hab-seleccion form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.hab-seleccion label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.hab-seleccion input {
+    width: 160px;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid #d9e2ee;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #17365d;
+    outline: none;
+}
+
+.hab-seleccion input:focus {
+    border-color: #0057f5;
+}
+
+.hab-ayuda {
+    margin: 12px 0 0;
+    color: #7184a0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.hab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.hab-btn-pri {
+    background: #0057f5;
+    color: #ffffff;
+}
+
+.hab-btn-pri:hover {
+    background: #0046c4;
+}
+
+.hab-btn-sec {
+    background: #edf4fb;
+    color: #315f9d;
+}
+
+.hab-btn-sec:hover {
+    background: #dceafa;
+}
+
+.hab-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.hab-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid #e8eef5;
+}
+
+.hab-resumen > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid #dfe7f1;
+    border-radius: 8px;
+    background: #f7faff;
+}
+
+.hab-resumen strong {
+    font-size: 28px;
+    font-weight: 700;
+    color: #081b70;
+}
+
+.hab-resumen span {
+    font-size: 13px;
+    color: #667b99;
+}
+
+.hab-resumen > div:nth-child(2) strong {
+    color: #16824a;
+}
+
+.hab-resumen > div:nth-child(3) strong {
+    color: #b42318;
+}
+
+.hab-filtros {
+    display: grid;
+    grid-template-columns: minmax(0, 70fr) minmax(0, 28fr);
+    gap: 2%;
+    padding: 18px 20px;
+}
+
+.hab-buscador {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 0 12px;
+    background: #ffffff;
+    border: 1px solid #d9e2ee;
+    border-radius: 6px;
+    color: #7184a0;
+}
+
+.hab-buscador input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #17365d;
+}
+
+.hab-filtros select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #d9e2ee;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #17365d;
+    cursor: pointer;
+}
+
+.hab-tabla-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.hab-tabla {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+
+.hab-tabla thead {
+    background: #edf4fb;
+}
+
+.hab-tabla th,
+.hab-tabla td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e8eef5;
+    vertical-align: middle;
+}
+
+.hab-tabla th {
+    font-weight: 700;
+    color: #17365d;
+    white-space: nowrap;
+}
+
+.hab-tabla td {
+    color: #31506e;
+}
+
+.hab-tabla tbody tr:hover {
+    background: #f8fbff;
+}
+
+.hab-estado {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.hab-habilitado {
+    background: #ddf7e9;
+    color: #16824a;
+}
+
+.hab-inhabilitado {
+    background: #fde9e9;
+    color: #b42318;
+}
+
+.hab-acciones {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hab-acciones button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #dce5f0;
+    border-radius: 5px;
+    background: #f7faff;
+    color: #315f9d;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.hab-acciones button:hover {
+    background: #eaf2ff;
+}
+
+.hab-vacio {
+    padding: 48px 15px !important;
+    text-align: center;
+    color: #7184a0;
+}
+
+.hab-paginacion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 14px;
+    font-size: 12px;
+    color: #667b99;
+}
+
+.hab-paginacion > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hab-paginacion button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 1px solid #d9e2ee;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #315f9d;
+    cursor: pointer;
+}
+
+.hab-paginacion button:hover:not(:disabled) {
+    background: #edf4fb;
+}
+
+.hab-paginacion button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.hab-error,
+.hab-exito {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.hab-error {
+    border: 1px solid #f0b4b4;
+    background: #fff0f0;
+    color: #b42318;
+}
+
+.hab-exito {
+    border: 1px solid #a7e4c1;
+    background: #eafaf0;
+    color: #16824a;
+}
+
+.hab-inicial {
+    padding: 65px 20px;
+    border: 1px dashed #d9e2ee;
+    border-radius: 8px;
+    background: #ffffff;
+    text-align: center;
+    color: #7184a0;
+}
+
+.hab-inicial svg {
+    display: block;
+    margin: 0 auto 12px;
+    font-size: 38px;
+}
+
+.hab-inicial p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.hab-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 35, 65, 0.6);
+}
+
+.hab-modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 15px 45px rgba(15, 35, 65, 0.2);
+}
+
+.hab-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #e8eef5;
+}
+
+.hab-modal-header h2 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #081b70;
+}
+
+.hab-modal-header p {
+    margin: 0;
+    font-size: 14px;
+    color: #667b99;
+}
+
+.hab-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border: 1px solid #dce5f0;
+    border-radius: 5px;
+    background: #f7faff;
+    color: #315f9d;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.hab-icono:hover {
+    background: #eaf2ff;
+}
+
+.hab-modal-body {
+    display: grid;
+    gap: 18px;
+    padding: 22px 24px;
+}
+
+.hab-detalles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+}
+
+.hab-detalles div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.hab-detalles dt {
+    font-size: 12px;
+    color: #7184a0;
+}
+
+.hab-detalles dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #17365d;
+    overflow-wrap: anywhere;
+}
+
+.hab-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #17365d;
+}
+
+.hab-campo select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #d9e2ee;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #17365d;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.hab-campo select:focus {
+    outline: none;
+    border-color: #0057f5;
+}
+
+.hab-campo select:disabled {
+    background: #f1f5f9;
+    cursor: not-allowed;
+}
+
+.hab-valor {
+    padding: 12px;
+    border: 1px solid #e8eef5;
+    border-radius: 6px;
+    background: #f7faff;
+    font-size: 14px;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+}
+
+.hab-descripcion {
+    margin: 0;
+    padding: 13px;
+    border-radius: 6px;
+    background: #edf4fb;
+    color: #31506e;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.hab-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #e8eef5;
+}
+
+@media (max-width: 850px) {
+    .hab-filtros {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .hab-resumen {
+        gap: 12px;
+    }
+
+    .hab-resumen > div {
+        padding: 14px;
+    }
+
+    .hab-resumen strong {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 560px) {
+    .hab-pagina {
+        padding: 15px;
+    }
+
+    .hab-encabezado h1 {
+        font-size: 28px;
+    }
+
+    .hab-seleccion {
+        padding: 15px;
+    }
+
+    .hab-seleccion form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hab-seleccion input {
+        width: 100%;
+    }
+
+    .hab-resumen {
+        grid-template-columns: 1fr;
+        padding: 15px;
+    }
+
+    .hab-filtros {
+        padding: 15px;
+    }
+
+    .hab-paginacion {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hab-paginacion > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .hab-overlay {
+        padding: 10px;
+    }
+
+    .hab-modal {
+        max-height: calc(100vh - 20px);
+    }
+
+    .hab-modal-header {
+        padding: 17px;
+    }
+
+    .hab-modal-header h2 {
+        font-size: 19px;
+    }
+
+    .hab-modal-body {
+        padding: 17px;
+    }
+
+    .hab-detalles {
+        grid-template-columns: 1fr;
+    }
+
+    .hab-modal-footer {
+        padding: 15px;
+    }
+
+    .hab-modal-footer .hab-btn {
+        flex: 1;
+        padding: 11px 10px;
+    }
+}
