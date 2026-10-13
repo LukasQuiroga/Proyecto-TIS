@@ -193,10 +193,10 @@ function InscripcionEstudianteQr() {
             <h2>Inscripción registrada</h2>
           </div>
 
-          {resultado?.nombreMateria && (
+          {resultado?.nombreAsignatura && (
             <p>
               <strong>Materia:</strong>{" "}
-              {resultado.nombreMateria}
+              {resultado.nombreAsignatura}
             </p>
           )}
 

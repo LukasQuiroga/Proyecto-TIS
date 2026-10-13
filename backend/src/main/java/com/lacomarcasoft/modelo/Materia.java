@@ -15,8 +15,9 @@ public class Materia {
     @JoinColumn(name="id_docente",nullable=false)
     private Usuario docente;
 
-    @Column(name="nombre_materia",nullable=false)
-    private String nombreMateria;
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="id_asignatura",nullable=false)
+    private Asignatura asignatura;
 
     @Column(name="grupo",nullable=false)
     private String grupo;
@@ -39,12 +40,12 @@ public class Materia {
         this.docente=docente;
     }
 
-    public String getNombreMateria(){
-        return nombreMateria;
+    public Asignatura getAsignatura(){
+        return asignatura;
     }
 
-    public void setNombreMateria(String nombreMateria){
-        this.nombreMateria=nombreMateria;
+    public void setAsignatura(Asignatura asignatura){
+        this.asignatura=asignatura;
     }
 
     public String getGrupo(){

@@ -96,18 +96,11 @@ public class AsignaturaServicio {
             );
         }
 
-        for (String carrera : carreras) {
-
-            if (asignaturaRepositorio.existeNombreEnCarrera(
-                    nombre,
-                    carrera
-            )) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Ya existe una asignatura con el nombre "
-                                + nombre + " en la carrera " + carrera
-                );
-            }
+        if (asignaturaRepositorio.existeNombre(nombre)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya existe una asignatura con el nombre " + nombre
+            );
         }
 
         Asignatura asignatura = new Asignatura();

@@ -81,13 +81,13 @@ public class UsuarioServicio {
     public List<MateriaRespuesta> listarMaterias(){
 
         return materiaRepositorio
-                .findAllByOrderByNombreMateriaAscGrupoAsc()
+                .listarTodas()
                 .stream()
                 .map(
                         materia ->
                                 new MateriaRespuesta(
                                         materia.getIdMateria(),
-                                        materia.getNombreMateria(),
+                                        materia.getAsignatura().getNombreAsignatura(),
                                         materia.getGrupo()
                                 )
                 )
@@ -1509,7 +1509,7 @@ public class UsuarioServicio {
 
         List<MateriaRespuesta> materias =
                 materiaRepositorio
-                        .findByDocente_IdUsuarioOrderByNombreMateriaAscGrupoAsc(
+                        .listarPorDocente(
                                 usuario.getIdUsuario()
                         )
                         .stream()
@@ -1517,7 +1517,7 @@ public class UsuarioServicio {
                                 materia ->
                                         new MateriaRespuesta(
                                                 materia.getIdMateria(),
-                                                materia.getNombreMateria(),
+                                                materia.getAsignatura().getNombreAsignatura(),
                                                 materia.getGrupo()
                                         )
                         )
