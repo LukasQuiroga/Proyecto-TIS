@@ -13,6 +13,7 @@ import DetalleAsignatura from "./DetalleAsignatura.jsx";
 
 import { obtenerAsignaturas } from "../../services/asignaturaService";
 import { useAuth } from "../../context/useAuth";
+import { obtenerFacultades } from "../../services/catalogoService";
 
 import "./Asignaturas.css";
 
@@ -27,9 +28,13 @@ function Asignaturas() {
     const [error, setError] = useState("");
 
     const [buscar, setBuscar] = useState("");
+    const [facultad, setFacultad] = useState("TODAS");
     const [carrera, setCarrera] = useState("TODAS");
     const [estado, setEstado] = useState("TODOS");
     const [pagina, setPagina] = useState(1);
+
+    const [facultades, setFacultades] = useState([]);
+    const [errorCatalogo, setErrorCatalogo] = useState("");
 
     const [asignaturaDetalle, setAsignaturaDetalle] = useState(null);
     const [mostrarRegistro, setMostrarRegistro] = useState(false);
@@ -105,17 +110,60 @@ function Asignaturas() {
         };
     }, []);
 
+    useEffect(() => {
+        let activo = true;
+
+        const cargarFacultades = async () => {
+            try {
+                const respuesta = await obtenerFacultades();
+
+                if (!activo) return;
+
+                setFacultades(
+                    Array.isArray(respuesta.data)
+                        ? respuesta.data
+                        : []
+                );
+
+                setErrorCatalogo("");
+
+            } catch (err) {
+                console.error("Error cargando facultades:", err);
+
+                if (activo) {
+                    setErrorCatalogo(
+                        "No se pudieron cargar las facultades y carreras."
+                    );
+                }
+            }
+        };
+
+        cargarFacultades();
+
+        return () => {
+            activo = false;
+        };
+    }, []);
+
     const carrerasDisponibles = useMemo(() => {
+        const lista = facultades.flatMap((item) => {
 
-        const carreras = asignaturas.flatMap(
-            asignatura => asignatura.carreras || []
-        );
+            if (
+                facultad !== "TODAS" &&
+                String(item.idFacultad) !== facultad
+            ) {
+                return [];
+            }
 
-        return [...new Set(carreras)].sort(
+            return (item.carreras || []).map(
+                carrera => carrera.nombre
+            );
+        });
+
+        return [...new Set(lista)].sort(
             (a, b) => a.localeCompare(b, "es")
         );
-
-    }, [asignaturas]);
+    }, [facultades, facultad]);
 
     const asignaturasFiltradas = useMemo(() => {
 
@@ -132,9 +180,26 @@ function Asignaturas() {
                     .toLocaleLowerCase("es")
                     .includes(texto);
 
+            const carrerasAsignatura = asignatura.carreras || [];
+
+            const facultadActual = facultades.find(
+                item => String(item.idFacultad) === facultad
+            );
+
+            const nombresCarrerasFacultad =
+                facultadActual?.carreras?.map(
+                    item => item.nombre
+                ) || [];
+
+            const coincideFacultad =
+                facultad === "TODAS" ||
+                carrerasAsignatura.some(
+                    nombre => nombresCarrerasFacultad.includes(nombre)
+                );
+
             const coincideCarrera =
                 carrera === "TODAS" ||
-                (asignatura.carreras || []).includes(carrera);
+                carrerasAsignatura.includes(carrera);
 
             const coincideEstado =
                 estado === "TODOS" ||
@@ -143,13 +208,14 @@ function Asignaturas() {
 
             return (
                 coincideBusqueda &&
+                coincideFacultad &&
                 coincideCarrera &&
                 coincideEstado
             );
 
         });
 
-    }, [asignaturas, buscar, carrera, estado]);
+    }, [asignaturas, buscar, facultad, carrera, estado, facultades]);
 
     const totalPaginas = Math.max(
         1,
@@ -165,6 +231,12 @@ function Asignaturas() {
 
     const actualizarBusqueda = (valor) => {
         setBuscar(valor);
+        setPagina(1);
+    };
+
+    const actualizarFacultad = (valor) => {
+        setFacultad(valor);
+        setCarrera("TODAS");
         setPagina(1);
     };
 
@@ -223,6 +295,27 @@ function Asignaturas() {
                 </div>
 
                 <select
+                    aria-label="Filtrar por facultad"
+                    value={facultad}
+                    onChange={e =>
+                        actualizarFacultad(e.target.value)
+                    }
+                >
+                    <option value="TODAS">
+                        Todas las facultades
+                    </option>
+
+                    {facultades.map(item => (
+                        <option
+                            key={item.idFacultad}
+                            value={String(item.idFacultad)}
+                        >
+                            {item.nombre}
+                        </option>
+                    ))}
+                </select>
+
+                <select
                     aria-label="Filtrar por carrera"
                     value={carrera}
                     onChange={e =>
@@ -276,6 +369,12 @@ function Asignaturas() {
 
             </section>
 
+            {errorCatalogo && (
+                <div className="asignaturas-error" role="alert">
+                    {errorCatalogo}
+                </div>
+            )}
+            
             {error && (
                 <div className="asignaturas-error" role="alert">
                     {error}

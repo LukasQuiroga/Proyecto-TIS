@@ -153,6 +153,43 @@
   background: #065fac;
 }
 
+/* Facultades y carreras asociadas */
+
+.detalle-asignatura-facultades {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-asignatura-facultad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.detalle-asignatura-facultad > strong {
+  color: #17365d;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.detalle-asignatura-facultad .detalle-asignatura-carreras span {
+  border: 1px solid #dce5f0;
+  background: #ffffff;
+}
+
+.detalle-asignatura-mensaje {
+  margin: 0;
+  color: #526b82;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 @media (max-width: 560px) {
   .detalle-asignatura-modal {
     padding: 18px;

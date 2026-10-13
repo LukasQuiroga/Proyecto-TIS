@@ -1,8 +1,92 @@
+import { useEffect, useMemo, useState } from "react";
 import { FiBookOpen, FiX } from "react-icons/fi";
+
+import { obtenerFacultades } from "../../services/catalogoService";
 
 import "./DetalleAsignatura.css";
 
 function DetalleAsignatura({ asignatura, onCerrar }) {
+  const [facultades, setFacultades] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
+
+  useEffect(() => {
+    if (!asignatura) return;
+
+    let activo = true;
+
+    const cargarFacultades = async () => {
+      try {
+        setCargando(true);
+        setErrorCatalogo("");
+
+        const respuesta = await obtenerFacultades();
+
+        if (!activo) return;
+
+        setFacultades(
+          Array.isArray(respuesta.data) ? respuesta.data : []
+        );
+      } catch (error) {
+        console.error("Error cargando facultades:", error);
+
+        if (activo) {
+          setErrorCatalogo(
+            "No se pudieron cargar las facultades."
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargando(false);
+        }
+      }
+    };
+
+    cargarFacultades();
+
+    return () => {
+      activo = false;
+    };
+  }, [asignatura]);
+
+  const gruposFacultades = useMemo(() => {
+    const carrerasAsignatura = asignatura?.carreras || [];
+    const grupos = [];
+    const encontradas = new Set();
+
+    const normalizar = (valor) =>
+      (valor || "").trim().toLocaleLowerCase("es");
+
+    facultades.forEach((facultad) => {
+      const carrerasCoincidentes = (facultad.carreras || [])
+        .filter((carrera) =>
+          carrerasAsignatura.some(
+            (nombre) =>
+              normalizar(nombre) === normalizar(carrera.nombre)
+          )
+        )
+        .map((carrera) => carrera.nombre);
+
+      if (carrerasCoincidentes.length > 0) {
+        grupos.push({
+          idFacultad: facultad.idFacultad,
+          nombre: facultad.nombre,
+          carreras: carrerasCoincidentes,
+        });
+
+        carrerasCoincidentes.forEach((nombre) =>
+          encontradas.add(normalizar(nombre))
+        );
+      }
+    });
+
+    const carrerasSinFacultad = carrerasAsignatura.filter(
+      (nombre) => !encontradas.has(normalizar(nombre))
+    );
+
+    return { grupos, carrerasSinFacultad };
+  }, [facultades, asignatura]);
+
   if (!asignatura) {
     return null;
   }
@@ -68,18 +152,63 @@ function DetalleAsignatura({ asignatura, onCerrar }) {
           </div>
 
           <div className="detalle-asignatura-campo">
-            <span>Carreras asociadas</span>
+            <span>Facultades y carreras asociadas</span>
 
-            <div className="detalle-asignatura-carreras">
-              {(asignatura.carreras || []).map((carrera) => (
-                <span key={carrera}>{carrera}</span>
-              ))}
+            {cargando ? (
+              <p className="detalle-asignatura-mensaje">
+                Cargando facultades y carreras...
+              </p>
+            ) : errorCatalogo ? (
+              <>
+                <p className="detalle-asignatura-mensaje">
+                  {errorCatalogo}
+                </p>
 
-              {(!asignatura.carreras ||
-                asignatura.carreras.length === 0) && (
-                <p>No tiene carreras asociadas.</p>
-              )}
-            </div>
+                <div className="detalle-asignatura-carreras">
+                  {(asignatura.carreras || []).map((carrera) => (
+                    <span key={carrera}>{carrera}</span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="detalle-asignatura-facultades">
+                {gruposFacultades.grupos.map((facultad) => (
+                  <div
+                    key={facultad.idFacultad}
+                    className="detalle-asignatura-facultad"
+                  >
+                    <strong>{facultad.nombre}</strong>
+
+                    <div className="detalle-asignatura-carreras">
+                      {facultad.carreras.map((carrera) => (
+                        <span key={carrera}>{carrera}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {gruposFacultades.carrerasSinFacultad.length > 0 && (
+                  <div className="detalle-asignatura-facultad">
+                    <strong>Carreras sin facultad identificada</strong>
+
+                    <div className="detalle-asignatura-carreras">
+                      {gruposFacultades.carrerasSinFacultad.map(
+                        (carrera) => (
+                          <span key={carrera}>{carrera}</span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(!asignatura.carreras ||
+                  asignatura.carreras.length === 0) && (
+                  <p className="detalle-asignatura-mensaje">
+                    No tiene carreras asociadas.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="detalle-asignatura-campo">
