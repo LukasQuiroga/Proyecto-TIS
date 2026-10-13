@@ -203,7 +203,7 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                             </div>
                         )}
 
-                        {tienePermiso("GESTIONAR_HABILITACIONES")&&(
+{tienePermiso("GESTIONAR_HABILITACIONES")&&(
                             <div className="sidebar-opcion">
                                 <span className="sidebar-icono">
                                     <FiGrid/>
