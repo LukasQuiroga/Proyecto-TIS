@@ -88,6 +88,22 @@ public class SecurityConfig {
                                 .hasRole("ESTUDIANTE")
 
                                 .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/habilitaciones/motivos"
+                                )
+                                .hasRole("ADMINISTRADOR")
+
+                                .requestMatchers(
+                                        "/api/habilitaciones/examenes/**"
+                                )
+                                .hasRole("DOCENTE")
+
+                                .requestMatchers(
+                                        "/api/habilitaciones/**"
+                                )
+                                .hasAnyRole("DOCENTE", "ADMINISTRADOR")
+
+                                .requestMatchers(
                                         "/api/examenes",
                                         "/api/examenes/**"
                                 )
