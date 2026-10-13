@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
 
 import { obtenerFacultades } from "../../services/catalogoService";
-import { registrarAsignatura } from "../../services/asignaturaService";
-
+import {
+  registrarAsignatura,
+  obtenerDocentesActivos,
+} from "../../services/asignaturaService";
 import "./RegistrarAsignatura.css";
 
 const DATOS_INICIALES = {
@@ -24,6 +26,10 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
   const [facultadSeleccionada, setFacultadSeleccionada] = useState("");
   const [cargandoFacultades, setCargandoFacultades] = useState(true);
   const [errorCatalogo, setErrorCatalogo] = useState("");
+  const [docentes, setDocentes] = useState([]);
+  const [busquedaDocente, setBusquedaDocente] = useState("");
+  const [cargandoDocentes, setCargandoDocentes] = useState(true);
+  const [errorDocentes, setErrorDocentes] = useState("");
 
   const carrerasFiltradas = useMemo(() => {
     const facultad = facultades.find(
@@ -38,6 +44,14 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
         .includes(busquedaCarrera.toLocaleLowerCase("es")),
     );
   }, [facultades, facultadSeleccionada, busquedaCarrera]);
+
+  const docentesFiltrados = useMemo(() => {
+    const texto = busquedaDocente.trim().toLocaleLowerCase("es");
+
+    return docentes.filter((docente) =>
+      docente.nombreCompleto.toLocaleLowerCase("es").includes(texto),
+    );
+  }, [docentes, busquedaDocente]);
 
   useEffect(() => {
     let activo = true;
@@ -72,6 +86,39 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
     };
 
     cargarFacultades();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarDocentes = async () => {
+      try {
+        setCargandoDocentes(true);
+        setErrorDocentes("");
+
+        const respuesta = await obtenerDocentesActivos();
+
+        if (!activo) return;
+
+        setDocentes(Array.isArray(respuesta.data) ? respuesta.data : []);
+      } catch (error) {
+        console.error("Error cargando docentes:", error);
+
+        if (activo) {
+          setErrorDocentes("No se pudieron cargar los docentes disponibles.");
+        }
+      } finally {
+        if (activo) {
+          setCargandoDocentes(false);
+        }
+      }
+    };
+
+    cargarDocentes();
 
     return () => {
       activo = false;
@@ -131,6 +178,8 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
         activo: datos.activo,
         descripcion: datos.descripcion.trim(),
         carreras: datos.carreras,
+        idDocente: Number(datos.idDocente),
+        grupo: datos.grupo.trim().toUpperCase(),
       });
 
       if (respuesta.status === 201) {
@@ -254,6 +303,8 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
                 setDatos((anterior) => ({
                   ...anterior,
                   carreras: [],
+                  idDocente: "",
+                  grupo: "",
                 }));
               }}
               disabled={guardando || cargandoFacultades}
@@ -313,6 +364,81 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
           </fieldset>
 
           <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-docente">
+              Docente responsable *
+            </label>
+
+            <input
+              id="asignatura-docente"
+              type="search"
+              placeholder="Buscar docente por nombre o apellido..."
+              value={busquedaDocente}
+              onChange={(e) => {
+                setBusquedaDocente(e.target.value);
+                actualizarCampo("idDocente", "");
+              }}
+              disabled={guardando || cargandoDocentes || Boolean(errorDocentes)}
+              autoComplete="off"
+            />
+
+            <div className="registro-asignatura-lista-docentes">
+              {cargandoDocentes ? (
+                <p>Cargando docentes...</p>
+              ) : docentesFiltrados.length === 0 ? (
+                <p>No se encontraron docentes.</p>
+              ) : (
+                docentesFiltrados.map((docente) => (
+                  <label key={docente.idUsuario}>
+                    <input
+                      type="radio"
+                      name="docenteAsignatura"
+                      value={docente.idUsuario}
+                      checked={String(datos.idDocente) === String(docente.idUsuario)}
+                      onChange={() =>
+                        actualizarCampo("idDocente", String(docente.idUsuario))
+                      }
+                      disabled={guardando}
+                    />
+                    <span>{docente.nombreCompleto}</span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            {datos.idDocente && (
+              <small>
+                Docente seleccionado:{" "}
+                {
+                  docentes.find(
+                    (docente) => String(docente.idUsuario) === String(datos.idDocente),
+                  )?.nombreCompleto
+                }
+              </small>
+            )}
+          </div>
+
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-grupo">
+              Grupo *
+            </label>
+
+            <input
+              id="asignatura-grupo"
+              type="text"
+              placeholder="Ej. 1A"
+              value={datos.grupo}
+              onChange={(e) =>
+                actualizarCampo("grupo", e.target.value.toUpperCase())
+              }
+              maxLength={20}
+              disabled={guardando}
+              required
+            />
+
+            <small>Ejemplos: 1A, 1B, 2A.</small>
+          </div>
+
+          <div className="registro-asignatura-campo">
             <label htmlFor="asignatura-estado">
               Estado *
             </label>
@@ -351,6 +477,12 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
             </div>
           )}
 
+          {errorDocentes && (
+            <div className="registro-asignatura-error" role="alert">
+              {errorDocentes}
+            </div>
+          )}
+
           {error && (
             <div className="registro-asignatura-error" role="alert">
               {error}
@@ -373,7 +505,11 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
               disabled={
                 guardando ||
                 cargandoFacultades ||
-                Boolean(errorCatalogo)
+                cargandoDocentes ||
+                Boolean(errorCatalogo) ||
+                Boolean(errorDocentes) ||
+                !datos.idDocente ||
+                !datos.grupo.trim()
               }
             >
               <FiPlus />

@@ -4,7 +4,7 @@ import com.lacomarcasoft.dto.request.RegistrarAsignaturaSolicitud;
 import com.lacomarcasoft.dto.response.AsignaturaRespuesta;
 import com.lacomarcasoft.service.AsignaturaServicio;
 import com.lacomarcasoft.dto.response.GrupoAsignaturaRespuesta;
-
+import com.lacomarcasoft.dto.response.DocenteRespuesta;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -50,6 +50,13 @@ public class AsignaturaControlador {
         );
     }
 
+    @GetMapping("/docentes")
+        public ResponseEntity<List<DocenteRespuesta>> listarDocentes() {
+
+        return ResponseEntity.ok(
+                asignaturaServicio.listarDocentesActivos()
+        );
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<AsignaturaRespuesta> obtenerPorId(

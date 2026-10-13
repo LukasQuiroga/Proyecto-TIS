@@ -55,18 +55,12 @@ function DetalleAsignatura({ asignatura, onCerrar }) {
 
   useEffect(() => {
     if (!asignatura?.idAsignatura) {
-      setGrupos([]);
-      setCargandoGrupos(false);
       return;
     }
 
     let activo = true;
 
     const cargarGrupos = async () => {
-      setCargandoGrupos(true);
-      setErrorGrupos("");
-      setGrupos([]);
-
       try {
         const respuesta = await obtenerGruposPorAsignatura(
           asignatura.idAsignatura
@@ -77,10 +71,12 @@ function DetalleAsignatura({ asignatura, onCerrar }) {
         setGrupos(
           Array.isArray(respuesta.data) ? respuesta.data : []
         );
+        setErrorGrupos("");
       } catch (error) {
         console.error("Error cargando grupos:", error);
 
         if (activo) {
+          setGrupos([]);
           setErrorGrupos(
             "No se pudieron cargar los grupos y docentes."
           );

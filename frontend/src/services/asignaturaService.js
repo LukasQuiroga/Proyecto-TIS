@@ -23,3 +23,5 @@ export const obtenerGruposPorAsignatura = (idAsignatura) => {
 export const registrarAsignatura = (datos) => {
   return api.post('/asignaturas', datos)
 }
+
+export const obtenerDocentesActivos = () => api.get('/asignaturas/docentes')
