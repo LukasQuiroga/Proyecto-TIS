@@ -22,9 +22,7 @@ public record FilaImportacionRespuesta(
 
         String codigoSis,
 
-        String carrera,
-
-        String facultad,
+        List<String> carreras,
 
         List<String> observaciones
 

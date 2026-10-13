@@ -62,12 +62,6 @@ const CARRERAS = [
     "Enfermería"
 ];
 
-const FACULTADES = [
-    "FCyT", "FCAP", "FCEyF",
-    "FM", "FD", "FADU",
-    "FCS", "FCM", "FCH"
-];
-
 const OBSERVACIONES_INVALIDAS = [
     "Código inválido",
     "Documento inválido",
@@ -90,6 +84,19 @@ const normalizar = (texto) =>
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+
+
+const textoCarreras = (carreras) => {
+
+    if(Array.isArray(carreras)){
+
+        return carreras.join(", ");
+
+    }
+
+    return carreras || "";
+
+};
 
 
 function generarUsuariosDemo(){
@@ -147,15 +154,9 @@ function generarUsuariosDemo(){
             rol,
             estado,
             codigoSis: codigo,
-            carrera:
+            carreras:
                 esEstudiante
                     ? CARRERAS[indice % CARRERAS.length]
-                    : "",
-            facultad:
-                esEstudiante
-                    ? FACULTADES[
-                          (indice * 5) % FACULTADES.length
-                      ]
                     : "",
             observaciones:
                 invalido
@@ -182,8 +183,7 @@ const DATOS_EJEMPLO = [
         rol: "Estudiante",
         estado: "Activo",
         codigo: "20200001",
-        carrera: "Ingeniería de Sistemas",
-        facultad: "FCyT"
+        carreras: "Ingeniería de Sistemas"
     },
     {
         documento: "10000456",
@@ -194,8 +194,7 @@ const DATOS_EJEMPLO = [
         rol: "Estudiante",
         estado: "Activo",
         codigo: "20200002",
-        carrera: "Ingeniería Electromecánica",
-        facultad: "FCyT"
+        carreras: "Ingeniería Electromecánica"
     }
 ];
 
@@ -209,8 +208,7 @@ const COLUMNAS_ARCHIVO = [
     "Rol",
     "Estado",
     "Código universitario (solo Estudiante)",
-    "Carrera (solo Estudiante)",
-    "Facultad (solo Estudiante)"
+    "Carreras (solo Estudiante)"
 ];
 
 
@@ -317,17 +315,12 @@ const COLUMNAS_CSV = [
         ]
     },
     {
-        campo: "carrera",
+        campo: "carreras",
         etiquetas: [
             "carrera",
-            "carrera del estudiante"
-        ]
-    },
-    {
-        campo: "facultad",
-        etiquetas: [
-            "facultad",
-            "facultad del estudiante"
+            "carreras",
+            "carrera del estudiante",
+            "carreras del estudiante"
         ]
     }
 ];
@@ -874,9 +867,7 @@ function convertirFilas(registros){
 
                 codigoSis: valor("codigoSis"),
 
-                carrera: valor("carrera"),
-
-                facultad: valor("facultad"),
+                carreras: valor("carreras"),
 
                 erroresLocales
 
@@ -980,8 +971,7 @@ function ImportarUsuarios(){
                         fila.telefono,
                         fila.rol,
                         fila.codigoSis,
-                        fila.carrera,
-                        fila.facultad,
+                        fila.carreras,
                         textoObservacion(
                             fila.observaciones
                         )
@@ -1001,7 +991,7 @@ function ImportarUsuarios(){
         const cabecera =
             "Documento,Nombres,Apellidos," +
             "Correo,Teléfono,Rol,Estado," +
-            "Código universitario,Carrera,Facultad";
+            "Código universitario,Carreras";
 
         const contenido = DATOS_EJEMPLO.map(
             fila => [
@@ -1014,8 +1004,7 @@ function ImportarUsuarios(){
                 fila.rol,
                 fila.estado,
                 fila.codigo,
-                fila.carrera,
-                fila.facultad
+                fila.carreras
 
             ].map(
                 valor =>
@@ -1522,8 +1511,7 @@ function ImportarUsuarios(){
                                 <th>Rol</th>
                                 <th>Estado</th>
                                 <th>Cod.</th>
-                                <th>Carrera</th>
-                                <th>Facultad</th>
+                                <th>Carreras</th>
                             </tr>
 
                         </thead>
@@ -1546,8 +1534,7 @@ function ImportarUsuarios(){
                                                 </span>
                                             </td>
                                             <td>{fila.codigo}</td>
-                                            <td>{fila.carrera}</td>
-                                            <td>{fila.facultad}</td>
+                                            <td>{textoCarreras(fila.carreras)}</td>
                                         </tr>
                                     )
                                 )
@@ -1635,8 +1622,7 @@ function ImportarUsuarios(){
                                 <th>Rol</th>
                                 <th>Estado</th>
                                 <th>Código</th>
-                                <th>Carrera</th>
-                                <th>Facultad</th>
+                                <th>Carreras</th>
                                 <th>Observaciones</th>
                             </tr>
 
@@ -1680,8 +1666,7 @@ function ImportarUsuarios(){
                                             </td>
 
                                             <td>{fila.codigoSis || "—"}</td>
-                                            <td>{fila.carrera || "—"}</td>
-                                            <td>{fila.facultad || "—"}</td>
+                                            <td>{textoCarreras(fila.carreras) || "—"}</td>
 
                                             <td className="import-observacion">
                                                 {

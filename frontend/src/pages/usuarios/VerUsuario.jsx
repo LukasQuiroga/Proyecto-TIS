@@ -60,6 +60,7 @@ function VerUsuario(){
     }
 
     const materias=usuario.materias||[];
+    const carreras=usuario.carreras||[];
     const inicial=`${usuario.nombre?.charAt(0)||""}${usuario.apellido?.charAt(0)||""}`.toUpperCase();
 
     return(
@@ -136,8 +137,12 @@ function VerUsuario(){
                     </div>
 
                     <div className="ver-dato">
-                        <span>Carrera</span>
-                        <b>{usuario.carrera||"No registrada"}</b>
+                        <span>Carreras</span>
+                        <b>
+                            {carreras.length===0
+                                ? "No registradas"
+                                : carreras.map(carrera=>carrera.nombre).join(", ")}
+                        </b>
                     </div>
                 </section>
 
@@ -179,8 +184,16 @@ function VerUsuario(){
                         </div>
 
                         <div className="ver-dato">
-                            <span>Carrera</span>
-                            <b>{usuario.carrera||"No registrada"}</b>
+                            <span>Facultades</span>
+                            <b>
+                                {carreras.length===0
+                                    ? "No registradas"
+                                    : Array.from(
+                                        new Set(
+                                            carreras.map(carrera=>carrera.nombreFacultad)
+                                        )
+                                    ).join(", ")}
+                            </b>
                         </div>
                     </section>
 

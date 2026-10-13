@@ -70,11 +70,6 @@ public class SecurityConfig {
                                 .hasRole("ADMINISTRADOR")
 
                                 .requestMatchers(
-                                        "/api/ambientes/**"
-                                )
-                                .hasRole("ADMINISTRADOR")
-
-                                .requestMatchers(
                                         HttpMethod.GET,
                                         "/api/inscripciones-qr/materias/docente"
                                 )

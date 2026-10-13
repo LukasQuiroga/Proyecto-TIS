@@ -29,8 +29,6 @@ import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 
-import Ambientes from "./pages/ambientes/Ambientes.jsx";
-
 function App(){
 
     return(
@@ -157,18 +155,6 @@ function App(){
                             }
                         />
                         
-                        {/* AMBIENTES */}
-
-                        <Route
-                        path="/ambientes"
-                        element={
-                            <ProtectedPermission permiso="GESTIONAR_AMBIENTES">
-                            <Ambientes/>
-                            </ProtectedPermission>
-                        }
-                        />
-
-
                         {/* ASIGNATURAS */}
 
                         <Route

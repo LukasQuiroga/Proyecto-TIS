@@ -10,7 +10,6 @@ import {
     FiGrid,
     FiHome,
     FiMaximize,
-    FiMap,
     FiMenu,
     FiTarget,
     FiUsers
@@ -202,15 +201,6 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                                     Exámenes
                                 </span>
                             </div>
-                        )}
-
-                        {tienePermiso("GESTIONAR_AMBIENTES")&&(
-                            <Opcion
-                                to="/ambientes"
-                                icono={<FiMap/>}
-                            >
-                                Ambientes
-                            </Opcion>
                         )}
 
                         {tienePermiso("GESTIONAR_HABILITACIONES")&&(

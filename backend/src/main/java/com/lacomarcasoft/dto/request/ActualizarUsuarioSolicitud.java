@@ -8,7 +8,7 @@ public record ActualizarUsuarioSolicitud(
     String carnetIdentidad,
     String correo,
     String celular,
-    String carrera,
+    List<Long> idsCarreras,
     String codigoSis,
     Boolean activo,
     Long idRol,

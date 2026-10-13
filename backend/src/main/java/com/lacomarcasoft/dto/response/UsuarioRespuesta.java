@@ -10,7 +10,7 @@ public record UsuarioRespuesta(
     String carnetIdentidad,
     String correo,
     String celular,
-    String carrera,
+    List<CarreraRespuesta> carreras,
     String codigoSis,
     Long idRol,
     String nombreRol,

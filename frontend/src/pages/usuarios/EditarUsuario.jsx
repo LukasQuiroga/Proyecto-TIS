@@ -7,6 +7,7 @@ import {
   modificarUsuario,
 } from "../../services/usuarioService";
 import { obtenerRoles } from "../../services/rolService";
+import { obtenerFacultades } from "../../services/facultadService";
 
 function EditarUsuario() {
   const { id } = useParams();
@@ -17,6 +18,11 @@ function EditarUsuario() {
 
   const [roles, setRoles] = useState([]);
   const [materiasDisponibles, setMateriasDisponibles] = useState([]);
+
+  const [facultades, setFacultades] = useState([]);
+
+  const [carrerasSeleccionadas, setCarrerasSeleccionadas] = useState([]);
+  const [carrerasOriginales, setCarrerasOriginales] = useState([]);
 
   const [materiasSeleccionadas, setMateriasSeleccionadas] = useState([]);
   const [materiasOriginales, setMateriasOriginales] = useState([]);
@@ -30,11 +36,12 @@ function EditarUsuario() {
       try {
         setError("");
 
-        const [usuarioRespuesta, rolesRespuesta, materiasRespuesta] =
+        const [usuarioRespuesta, rolesRespuesta, materiasRespuesta, facultadesRespuesta] =
           await Promise.all([
             obtenerUsuario(id),
             obtenerRoles(),
             obtenerMaterias(),
+            obtenerFacultades(),
           ]);
 
         const datos = usuarioRespuesta.data;
@@ -45,7 +52,6 @@ function EditarUsuario() {
                carnetIdentidad: datos.carnetIdentidad || "",
                correo: datos.correo || "",
                celular: datos.celular || "",
-               carrera: datos.carrera || "",
                codigoSis: datos.codigoSis || "",
                idRol: datos.idRol || "",
                activo: datos.activo ?? true,
@@ -61,6 +67,8 @@ function EditarUsuario() {
 
         setMateriasDisponibles(materiasRespuesta.data || []);
 
+        setFacultades(facultadesRespuesta.data || []);
+
        const materiasUsuario = (datos.materias || []).map( 
         (materia) => materia.idMateria
     );
@@ -71,6 +79,18 @@ function EditarUsuario() {
 
              setMateriasOriginales(
              [...materiasUsuario]
+      );
+
+       const carrerasUsuario = (datos.carreras || []).map(
+        (carrera) => carrera.idCarrera
+    );
+
+             setCarrerasSeleccionadas(
+               carrerasUsuario
+     );
+
+             setCarrerasOriginales(
+             [...carrerasUsuario]
       );
 
       } catch (error) {
@@ -103,6 +123,16 @@ function EditarUsuario() {
     });
   };
 
+  const cambiarCarrera = (idCarrera) => {
+    setCarrerasSeleccionadas((actual) => {
+      if (actual.includes(idCarrera)) {
+        return actual.filter((idActual) => idActual !== idCarrera);
+      }
+
+      return [...actual, idCarrera];
+    });
+  };
+
   const hayCambios = () => {
 
     if(!usuarioOriginal || !usuario){
@@ -115,7 +145,6 @@ function EditarUsuario() {
         carnetIdentidad: usuario.carnetIdentidad.trim(),
         correo: usuario.correo.trim(),
         celular: usuario.celular?.trim() || "",
-        carrera: usuario.carrera?.trim() || "",
         activo: usuario.activo,
     };
 
@@ -127,8 +156,6 @@ function EditarUsuario() {
         correo: usuarioOriginal.correo.trim(),
         celular:
             usuarioOriginal.celular?.trim() || "",
-        carrera:
-            usuarioOriginal.carrera?.trim() || "",
         activo: usuarioOriginal.activo,
     };
 
@@ -153,9 +180,26 @@ function EditarUsuario() {
         JSON.stringify(materiasIniciales);
 
 
+    const carrerasActuales =
+        [...carrerasSeleccionadas]
+            .map(Number)
+            .sort((a,b)=>a-b);
+
+    const carrerasIniciales =
+        [...carrerasOriginales]
+            .map(Number)
+            .sort((a,b)=>a-b);
+
+
+    const carrerasModificadas =
+        JSON.stringify(carrerasActuales) !==
+        JSON.stringify(carrerasIniciales);
+
+
     return (
         datosModificados ||
-        materiasModificadas
+        materiasModificadas ||
+        carrerasModificadas
     );
 
 };
@@ -232,11 +276,11 @@ function EditarUsuario() {
         carnetIdentidad: usuario.carnetIdentidad.trim(),
         correo: usuario.correo.trim(),
         celular: usuario.celular?.trim() || "",
-        carrera: usuario.carrera?.trim() || "",
         codigoSis: usuario.codigoSis?.trim() || null,
         activo: usuario.activo,
         idRol: Number(usuario.idRol),
         idsMaterias: materiasSeleccionadas,
+        idsCarreras: carrerasSeleccionadas,
       };
 
       await modificarUsuario(id, datosModificar);
@@ -383,16 +427,6 @@ function EditarUsuario() {
                            placeholder="Ingrese el teléfono"
                  />
                 </div>
-
-                <div className="editar-campo">
-                   <label>Carrera</label>
-
-                <input
-                  value={usuario.carrera}
-                  onChange={(e) => actualizarCampo("carrera", e.target.value)}
-                  placeholder="Ingrese la carrera"
-                />
-              </div>
             </div>
           </section>
 
@@ -444,6 +478,43 @@ function EditarUsuario() {
                   {usuario.codigoSis || "Sin código universitario"}
                 </div>
               </div>
+            </div>
+
+            <div className="editar-materias">
+              <div className="editar-materias-titulo">Carreras</div>
+
+              {facultades.length === 0 ? (
+                <div className="editar-sin-materias">
+                  No existen carreras registradas.
+                </div>
+              ) : (
+                <div className="editar-tabla-materias">
+                  {facultades.map((facultad) =>
+                    facultad.carreras.map((carrera) => (
+                      <label
+                        className="editar-materia-fila"
+                        key={carrera.idCarrera}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={carrerasSeleccionadas.includes(
+                            carrera.idCarrera,
+                          )}
+                          onChange={() => cambiarCarrera(carrera.idCarrera)}
+                        />
+
+                        <span>{carrera.nombre}</span>
+
+                        <strong>{facultad.codigo}</strong>
+                      </label>
+                    )),
+                  )}
+                </div>
+              )}
+
+              <p className="editar-ayuda-materias">
+                Seleccione las carreras que desea asignar al usuario.
+              </p>
             </div>
 
             <div className="editar-materias">
