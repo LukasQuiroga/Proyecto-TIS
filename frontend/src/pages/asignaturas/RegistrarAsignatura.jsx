@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
 
-import { CARRERAS_FCYT } from "../../data/carreras";
-import { registrarAsignatura } from "../../services/asignaturaService";
-
+import { obtenerFacultades } from "../../services/catalogoService";
+import {
+  registrarAsignatura,
+  obtenerDocentesActivos,
+} from "../../services/asignaturaService";
 import "./RegistrarAsignatura.css";
 
 const DATOS_INICIALES = {
@@ -20,12 +22,108 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
   const [busquedaCarrera, setBusquedaCarrera] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  const [facultades, setFacultades] = useState([]);
+  const [facultadSeleccionada, setFacultadSeleccionada] = useState("");
+  const [cargandoFacultades, setCargandoFacultades] = useState(true);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
+  const [docentes, setDocentes] = useState([]);
+  const [busquedaDocente, setBusquedaDocente] = useState("");
+  const [cargandoDocentes, setCargandoDocentes] = useState(true);
+  const [errorDocentes, setErrorDocentes] = useState("");
 
-  const carrerasFiltradas = CARRERAS_FCYT.filter((carrera) =>
-    carrera.toLocaleLowerCase("es").includes(
-      busquedaCarrera.toLocaleLowerCase("es"),
-    ),
-  );
+  const carrerasFiltradas = useMemo(() => {
+    const facultad = facultades.find(
+      (item) => String(item.idFacultad) === facultadSeleccionada,
+    );
+
+    if (!facultad) return [];
+
+    return (facultad.carreras || []).filter((carrera) =>
+      carrera.nombre
+        .toLocaleLowerCase("es")
+        .includes(busquedaCarrera.toLocaleLowerCase("es")),
+    );
+  }, [facultades, facultadSeleccionada, busquedaCarrera]);
+
+  const docentesFiltrados = useMemo(() => {
+    const texto = busquedaDocente.trim().toLocaleLowerCase("es");
+
+    return docentes.filter((docente) =>
+      docente.nombreCompleto.toLocaleLowerCase("es").includes(texto),
+    );
+  }, [docentes, busquedaDocente]);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarFacultades = async () => {
+      try {
+        setCargandoFacultades(true);
+        setErrorCatalogo("");
+
+        const respuesta = await obtenerFacultades();
+
+        if (!activo) return;
+
+        const datos = Array.isArray(respuesta.data)
+          ? respuesta.data
+          : [];
+
+        setFacultades(datos);
+      } catch (error) {
+        console.error("Error cargando facultades:", error);
+
+        if (activo) {
+          setErrorCatalogo(
+            "No se pudieron cargar las facultades y carreras.",
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargandoFacultades(false);
+        }
+      }
+    };
+
+    cargarFacultades();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarDocentes = async () => {
+      try {
+        setCargandoDocentes(true);
+        setErrorDocentes("");
+
+        const respuesta = await obtenerDocentesActivos();
+
+        if (!activo) return;
+
+        setDocentes(Array.isArray(respuesta.data) ? respuesta.data : []);
+      } catch (error) {
+        console.error("Error cargando docentes:", error);
+
+        if (activo) {
+          setErrorDocentes("No se pudieron cargar los docentes disponibles.");
+        }
+      } finally {
+        if (activo) {
+          setCargandoDocentes(false);
+        }
+      }
+    };
+
+    cargarDocentes();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const actualizarCampo = (campo, valor) => {
     setDatos((anterior) => ({
@@ -80,6 +178,8 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
         activo: datos.activo,
         descripcion: datos.descripcion.trim(),
         carreras: datos.carreras,
+        idDocente: Number(datos.idDocente),
+        grupo: datos.grupo.trim().toUpperCase(),
       });
 
       if (respuesta.status === 201) {
@@ -189,6 +289,40 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
             />
           </div>
 
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-facultad">
+              Facultad *
+            </label>
+
+            <select
+              id="asignatura-facultad"
+              value={facultadSeleccionada}
+              onChange={(e) => {
+                setFacultadSeleccionada(e.target.value);
+                setBusquedaCarrera("");
+                setDatos((anterior) => ({
+                  ...anterior,
+                  carreras: [],
+                  idDocente: "",
+                  grupo: "",
+                }));
+              }}
+              disabled={guardando || cargandoFacultades}
+              required
+            >
+              <option value="">Seleccionar facultad</option>
+
+              {facultades.map((facultad) => (
+                <option
+                  key={facultad.idFacultad}
+                  value={facultad.idFacultad}
+                >
+                  {facultad.nombre}
+                </option>
+              ))}
+            </select>
+          </div>    
+      
           <fieldset className="registro-asignatura-carreras">
             <legend>Carreras asociadas *</legend>
 
@@ -203,18 +337,24 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
 
             <div className="registro-asignatura-lista-carreras">
               {carrerasFiltradas.map((carrera) => (
-                <label key={carrera}>
+                <label key={carrera.idCarrera}>
                   <input
                     type="checkbox"
-                    checked={datos.carreras.includes(carrera)}
-                    onChange={() => cambiarCarrera(carrera)}
+                    checked={datos.carreras.includes(carrera.nombre)}
+                    onChange={() => cambiarCarrera(carrera.nombre)}
                     disabled={guardando}
                   />
-                  <span>{carrera}</span>
+
+                  <span>{carrera.nombre}</span>
                 </label>
               ))}
-              {carrerasFiltradas.length === 0 && (
-                <p>No se encontraron carreras.</p>
+
+              {!cargandoFacultades && carrerasFiltradas.length === 0 && (
+                <p>
+                  {facultadSeleccionada
+                    ? "No se encontraron carreras."
+                    : "Selecciona una facultad para ver sus carreras."}
+                </p>
               )}
             </div>
 
@@ -222,6 +362,81 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
               {datos.carreras.length} carrera(s) seleccionada(s)
             </small>
           </fieldset>
+
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-docente">
+              Docente responsable *
+            </label>
+
+            <input
+              id="asignatura-docente"
+              type="search"
+              placeholder="Buscar docente por nombre o apellido..."
+              value={busquedaDocente}
+              onChange={(e) => {
+                setBusquedaDocente(e.target.value);
+                actualizarCampo("idDocente", "");
+              }}
+              disabled={guardando || cargandoDocentes || Boolean(errorDocentes)}
+              autoComplete="off"
+            />
+
+            <div className="registro-asignatura-lista-docentes">
+              {cargandoDocentes ? (
+                <p>Cargando docentes...</p>
+              ) : docentesFiltrados.length === 0 ? (
+                <p>No se encontraron docentes.</p>
+              ) : (
+                docentesFiltrados.map((docente) => (
+                  <label key={docente.idUsuario}>
+                    <input
+                      type="radio"
+                      name="docenteAsignatura"
+                      value={docente.idUsuario}
+                      checked={String(datos.idDocente) === String(docente.idUsuario)}
+                      onChange={() =>
+                        actualizarCampo("idDocente", String(docente.idUsuario))
+                      }
+                      disabled={guardando}
+                    />
+                    <span>{docente.nombreCompleto}</span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            {datos.idDocente && (
+              <small>
+                Docente seleccionado:{" "}
+                {
+                  docentes.find(
+                    (docente) => String(docente.idUsuario) === String(datos.idDocente),
+                  )?.nombreCompleto
+                }
+              </small>
+            )}
+          </div>
+
+          <div className="registro-asignatura-campo">
+            <label htmlFor="asignatura-grupo">
+              Grupo *
+            </label>
+
+            <input
+              id="asignatura-grupo"
+              type="text"
+              placeholder="Ej. 1A"
+              value={datos.grupo}
+              onChange={(e) =>
+                actualizarCampo("grupo", e.target.value.toUpperCase())
+              }
+              maxLength={20}
+              disabled={guardando}
+              required
+            />
+
+            <small>Ejemplos: 1A, 1B, 2A.</small>
+          </div>
 
           <div className="registro-asignatura-campo">
             <label htmlFor="asignatura-estado">
@@ -256,6 +471,18 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
             />
           </div>
 
+          {errorCatalogo && (
+            <div className="registro-asignatura-error" role="alert">
+              {errorCatalogo}
+            </div>
+          )}
+
+          {errorDocentes && (
+            <div className="registro-asignatura-error" role="alert">
+              {errorDocentes}
+            </div>
+          )}
+
           {error && (
             <div className="registro-asignatura-error" role="alert">
               {error}
@@ -275,7 +502,15 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
             <button
               type="submit"
               className="registro-asignatura-guardar"
-              disabled={guardando}
+              disabled={
+                guardando ||
+                cargandoFacultades ||
+                cargandoDocentes ||
+                Boolean(errorCatalogo) ||
+                Boolean(errorDocentes) ||
+                !datos.idDocente ||
+                !datos.grupo.trim()
+              }
             >
               <FiPlus />
               {guardando ? "Registrando..." : "Registrar asignatura"}

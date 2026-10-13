@@ -27,4 +27,17 @@ public interface MateriaRepositorio extends JpaRepository<Materia,Long> {
         ORDER BY m.asignatura.nombreAsignatura ASC, m.grupo ASC
         """)
     List<Materia> listarTodas();
+
+    @Query("""
+        SELECT m
+        FROM Materia m
+        JOIN FETCH m.asignatura
+        JOIN FETCH m.docente
+        WHERE m.asignatura.idAsignatura = :idAsignatura
+        ORDER BY m.grupo ASC
+        """)
+    List<Materia> listarPorAsignatura(
+            @Param("idAsignatura") Long idAsignatura
+    );
+
 }

@@ -153,6 +153,102 @@
   background: #065fac;
 }
 
+/* Facultades y carreras asociadas */
+
+.detalle-asignatura-facultades {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-asignatura-facultad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.detalle-asignatura-facultad > strong {
+  color: #17365d;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.detalle-asignatura-facultad .detalle-asignatura-carreras span {
+  border: 1px solid #dce5f0;
+  background: #ffffff;
+}
+
+.detalle-asignatura-mensaje {
+  margin: 0;
+  color: #526b82;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* Grupos y docentes asignados */
+
+.detalle-asignatura-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+}
+
+.detalle-asignatura-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.detalle-asignatura-tabla thead {
+  background: #edf4fb;
+}
+
+.detalle-asignatura-tabla th,
+.detalle-asignatura-tabla td {
+  padding: 12px;
+  border-bottom: 1px solid #e8eef5;
+}
+
+.detalle-asignatura-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.detalle-asignatura-tabla th {
+  color: #17365d;
+  font-weight: 600;
+}
+
+.detalle-asignatura-tabla td {
+  color: #31506f;
+}
+
+.detalle-asignatura-grupo {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #edf4fb;
+  color: #315f9d;
+  font-weight: 600;
+}
+
+.detalle-asignatura-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #f0b4b4;
+  border-radius: 6px;
+  background: #fff0f0;
+  color: #b42318;
+  font-size: 13px;
+}
+
 @media (max-width: 560px) {
   .detalle-asignatura-modal {
     padding: 18px;
