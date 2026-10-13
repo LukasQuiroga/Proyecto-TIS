@@ -25,6 +25,9 @@ import Asignaturas from "./pages/asignaturas/Asignaturas.jsx";
 import InscripcionQr from "./pages/asignaturas/InscripcionQr.jsx";
 import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr.jsx";
 
+import Examenes from "./pages/examenes/Examenes.jsx";
+import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
+
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
@@ -176,6 +179,35 @@ function App(){
                         <Route
                             path="/inscripcion-qr/inscribir"
                             element={<InscripcionEstudianteQr />}
+                        />
+
+                        {/* EXÁMENES */}
+
+                        <Route
+                            path="/examenes"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_EXAMENES">
+                                    <Examenes />
+                                </ProtectedPermission>
+                            }
+                        />
+
+                        <Route
+                            path="/examenes/registro"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_EXAMENES">
+                                    <RegistrarExamen />
+                                </ProtectedPermission>
+                            }
+                        />
+
+                        <Route
+                            path="/examenes/:id/editar"
+                            element={
+                                <ProtectedPermission permiso="GESTIONAR_EXAMENES">
+                                    <RegistrarExamen />
+                                </ProtectedPermission>
+                            }
                         />
 
                         {/* AUDITORIA */}

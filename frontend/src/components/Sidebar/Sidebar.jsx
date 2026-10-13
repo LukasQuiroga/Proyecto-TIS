@@ -192,15 +192,12 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                         )}
 
                         {tienePermiso("GESTIONAR_EXAMENES")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiClipboard/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Exámenes
-                                </span>
-                            </div>
+                            <Opcion
+                                to="/examenes"
+                                icono={<FiClipboard/>}
+                            >
+                                Exámenes
+                            </Opcion>
                         )}
 
 {tienePermiso("GESTIONAR_HABILITACIONES")&&(
