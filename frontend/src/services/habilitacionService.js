@@ -2,6 +2,13 @@ import api from "./api";
 
 const BASE = "/habilitaciones";
 
+export const buscarExamenPorCodigo = async (codigo) => {
+  const { data } = await api.get(
+    `${BASE}/examenes/codigo/${encodeURIComponent(codigo.trim())}`,
+  );
+  return data.idExamen;
+};
+
 export const listarHabilitaciones = async (idExamen) => {
   const { data } = await api.get(`${BASE}/examenes/${idExamen}`);
   return data;
@@ -41,4 +48,24 @@ export const mensajeErrorHabilitacion = (error) => {
     error?.message ||
     "Ocurrió un error inesperado."
   );
+};
+
+export const actualizarHabilitacionesMasivas = async (
+  idExamen,
+  estudiantes,
+) => {
+  const { data } = await api.put(`${BASE}/examenes/${idExamen}/masivo`, {
+    estudiantes,
+  });
+  return data;
+};
+
+export const consultarHistorialHabilitacion = async (
+  idExamen,
+  idEstudiante,
+) => {
+  const { data } = await api.get(
+    `${BASE}/examenes/${idExamen}/estudiantes/${idEstudiante}/historial`,
+  );
+  return data;
 };

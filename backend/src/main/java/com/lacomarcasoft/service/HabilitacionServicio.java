@@ -2,11 +2,10 @@ package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ModificarHabilitacionSolicitud;
 import com.lacomarcasoft.dto.response.HabilitacionRespuesta;
+import com.lacomarcasoft.dto.response.HistorialHabilitacionRespuesta;
 import com.lacomarcasoft.modelo.Examen;
-import com.lacomarcasoft.modelo.MotivoInhabilitacion;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.ExamenRepositorio;
-import com.lacomarcasoft.repository.MotivoInhabilitacionRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,16 +23,14 @@ public class HabilitacionServicio {
     private final JdbcTemplate jdbc;
     private final ExamenRepositorio examenes;
     private final UsuarioRepositorio usuarios;
-    private final MotivoInhabilitacionRepositorio motivos;
     private final LogActividadServicio auditoria;
 
     public HabilitacionServicio(JdbcTemplate jdbc, ExamenRepositorio examenes,
-            UsuarioRepositorio usuarios, MotivoInhabilitacionRepositorio motivos,
+            UsuarioRepositorio usuarios,
             LogActividadServicio auditoria) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
-        this.motivos = motivos;
         this.auditoria = auditoria;
     }
 
@@ -60,11 +57,11 @@ public class HabilitacionServicio {
                 examenId, examen.getNombreExamen(), rs.getLong("id_estudiante"),
                 rs.getString("codigo_sis"),
                 rs.getString("nombre") + " " + rs.getString("apellido"),
-                rs.getString("estado"), (Long) rs.getObject("id_motivo"),
+                rs.getString("estado"), rs.getObject("id_motivo", Long.class),
                 rs.getString("titulo"), rs.getString("motivo"),
                 leerFecha(rs.getTimestamp("fecha_creacion")),
                 leerFecha(rs.getTimestamp("fecha_actualizacion")),
-                (Long) rs.getObject("id_usuario_responsable"),
+                rs.getObject("id_usuario_responsable", Long.class),
                 rs.getLong("numero_cambios")
             ), examenId, examen.getMateria().getIdMateria());
     }
@@ -113,24 +110,19 @@ public class HabilitacionServicio {
         }
 
         String estado = solicitud.estado();
-        Long motivoId = solicitud.idMotivo();
+        String titulo = solicitud.titulo() == null ? "" : solicitud.titulo().trim();
+        String textoMotivo = solicitud.motivo() == null ? "" : solicitud.motivo().trim();
 
         if ("INHABILITADO".equals(estado)) {
-            MotivoInhabilitacion motivo = motivos.findById(
-                motivoId == null ? -1L : motivoId
-            ).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "Seleccione un motivo valido"));
-
-            if (!Boolean.TRUE.equals(motivo.getActivo())) {
+            if (titulo.isEmpty() || textoMotivo.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El motivo seleccionado esta inactivo");
+                    "Debe escribir el titulo y el motivo de inhabilitacion");
             }
-        } else if ("HABILITADO".equals(estado)) {
-            if (motivoId != null) {
+            if (titulo.length() > 120 || textoMotivo.length() > 500) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Un estudiante habilitado no puede tener motivo");
+                    "El titulo o motivo supera el limite permitido");
             }
-        } else {
+        } else if (!"HABILITADO".equals(estado)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Estado de habilitacion invalido");
         }
@@ -141,13 +133,19 @@ public class HabilitacionServicio {
             WHERE id_examen = ? AND id_estudiante = ?
             """, (rs, i) -> new Object[]{
                 rs.getString("estado"),
-                rs.getObject("id_motivo"),
+                rs.getObject("id_motivo", Long.class),
                 rs.getLong("numero_cambios")
             }, examenId, estudianteId);
 
-        if (anteriores.isEmpty() && "HABILITADO".equals(estado)
-                && solicitud.numeroCambios() == 0L) {
-            return buscar(examenId, estudianteId, responsableId);
+        if (anteriores.isEmpty()) {
+            if (solicitud.numeroCambios() != 0L) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "La habilitacion fue modificada. Actualice los datos");
+            }
+
+            if ("HABILITADO".equals(estado)) {
+                return buscar(examenId, estudianteId, responsableId);
+            }
         }
 
         jdbc.update("""
@@ -168,9 +166,14 @@ public class HabilitacionServicio {
             WHERE id_examen = ? AND id_estudiante = ?
             """, (rs, i) -> new Object[]{
                 rs.getString("estado"),
-                rs.getObject("id_motivo"),
+                rs.getObject("id_motivo", Long.class),
                 rs.getLong("numero_cambios")
             }, examenId, estudianteId);
+
+        if (actuales.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "No se pudo preparar la habilitacion");
+        }
 
         Object[] actual = actuales.get(0);
         long numeroActual = ((Number) actual[2]).longValue();
@@ -178,6 +181,11 @@ public class HabilitacionServicio {
         if (!Objects.equals(numeroActual, solicitud.numeroCambios())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 "La habilitacion fue modificada. Actualice los datos");
+        }
+
+        Long motivoId = null;
+        if ("INHABILITADO".equals(estado)) {
+            motivoId = obtenerOCrearMotivo(titulo, textoMotivo);
         }
 
         if (Objects.equals(actual[0], estado)
@@ -209,6 +217,97 @@ public class HabilitacionServicio {
         return buscar(examenId, estudianteId, responsableId);
     }
 
+    @Transactional(readOnly = true)
+    public List<HistorialHabilitacionRespuesta> historial(
+            Long examenId, Long estudianteId, Long responsableId) {
+        autorizado(examenId, responsableId);
+        buscar(examenId, estudianteId, responsableId);
+
+        String identificador = "Examen " + examenId
+            + ", estudiante " + estudianteId + ":";
+
+        return jdbc.query("""
+            SELECT l.id_log, l.id_usuario, u.nombre, u.apellido,
+                   l.descripcion, l.fecha
+            FROM seguridad.log_actividad l
+            LEFT JOIN seguridad.usuario u
+                ON u.id_usuario = l.id_usuario
+            WHERE l.tipo_accion = 'MODIFICAR_HABILITACION'
+                AND l.exitosa = TRUE
+                AND LEFT(l.descripcion, LENGTH(?)) = ?
+            ORDER BY l.fecha DESC, l.id_log DESC
+            LIMIT 200
+            """, (rs, i) -> {
+                String nombre = rs.getString("nombre");
+                String apellido = rs.getString("apellido");
+                String responsable = nombre == null
+                    ? "Usuario desconocido"
+                    : nombre + " " + (apellido == null ? "" : apellido);
+
+                return new HistorialHabilitacionRespuesta(
+                    rs.getLong("id_log"),
+                    rs.getObject("id_usuario", Long.class),
+                    responsable.trim(),
+                    rs.getString("descripcion"),
+                    leerFecha(rs.getTimestamp("fecha"))
+                );
+            }, identificador, identificador);
+    }
+
+    private Long obtenerOCrearMotivo(String titulo, String texto) {
+        List<Long> existentes = jdbc.query("""
+            SELECT id_motivo FROM academico.motivo_inhabilitacion
+            WHERE LOWER(TRIM(titulo)) = LOWER(TRIM(?))
+            """, (rs, i) -> rs.getLong(1), titulo);
+        if (existentes.isEmpty()) {
+            jdbc.update("""
+                INSERT INTO academico.motivo_inhabilitacion (titulo, motivo)
+                VALUES (?, ?) ON CONFLICT DO NOTHING
+                """, titulo, texto);
+        }
+        return jdbc.query("""
+            SELECT id_motivo, motivo FROM academico.motivo_inhabilitacion
+            WHERE LOWER(TRIM(titulo)) = LOWER(TRIM(?))
+            """, rs -> {
+                if (!rs.next()) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "No se pudo registrar el motivo");
+                }
+                if (!texto.equals(rs.getString("motivo"))) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe ese titulo con otro motivo. Utilice otro titulo");
+                }
+                return rs.getLong("id_motivo");
+            }, titulo);
+    }
+
+    @Transactional(readOnly = true)
+    public Long buscarIdPorCodigo(String codigo, Long responsableId) {
+        if (codigo == null || codigo.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Debe ingresar el codigo del examen");
+        }
+
+        List<Long> ids = jdbc.queryForList("""
+            SELECT id_examen
+            FROM academico.examen
+            WHERE UPPER(TRIM(codigo)) = UPPER(TRIM(?))
+            LIMIT 2
+            """, Long.class, codigo.trim());
+
+        if (ids.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Codigo de examen no encontrado");
+        }
+        if (ids.size() > 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Existe mas de un examen con ese codigo");
+        }
+
+        autorizado(ids.get(0), responsableId);
+        return ids.get(0);
+    }
+
     private Examen autorizado(Long examenId, Long responsableId) {
         Usuario usuario = usuarios.findById(responsableId)
             .orElseThrow(() -> new ResponseStatusException(
@@ -238,7 +337,7 @@ public class HabilitacionServicio {
     }
 
     private OffsetDateTime leerFecha(Timestamp fecha) {
-        return fecha == null ? null :
-            fecha.toInstant().atOffset(ZoneOffset.UTC);
+        return fecha == null ? null
+            : fecha.toInstant().atOffset(ZoneOffset.UTC);
     }
 }

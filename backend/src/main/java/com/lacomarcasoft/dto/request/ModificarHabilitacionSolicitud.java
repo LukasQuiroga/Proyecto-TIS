@@ -1,19 +1,29 @@
-
 package com.lacomarcasoft.dto.request;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record ModificarHabilitacionSolicitud(
     @NotNull(message = "Debe seleccionar un estudiante")
     Long idEstudiante,
 
     @NotBlank(message = "Debe seleccionar un estado")
-    @Pattern(regexp = "HABILITADO|INHABILITADO", message = "Estado no válido")
+    @Pattern(
+        regexp = "HABILITADO|INHABILITADO",
+        message = "Estado no valido"
+    )
     String estado,
 
-    Long idMotivo,
+    @Size(max = 120, message = "El titulo no puede superar 120 caracteres")
+    String titulo,
 
-    @NotNull(message = "Debe proporcionar el número de cambios actual")
-    @Min(value = 0, message = "El número de cambios no puede ser negativo")
+    @Size(max = 500, message = "El motivo no puede superar 500 caracteres")
+    String motivo,
+
+    @NotNull(message = "Debe proporcionar el numero de cambios actual")
+    @Min(value = 0, message = "El numero de cambios no puede ser negativo")
     Long numeroCambios
 ) {}

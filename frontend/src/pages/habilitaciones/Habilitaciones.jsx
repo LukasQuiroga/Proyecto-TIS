@@ -1,30 +1,39 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  FiAlertCircle, FiCheckCircle, FiClipboard, FiEdit2,
-  FiEye, FiRefreshCw, FiSearch, FiX
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClipboard,
+  FiEdit2,
+  FiEye,
+  FiRefreshCw,
+  FiSearch,
+  FiX,
 } from "react-icons/fi";
 import {
   actualizarHabilitacion,
+  buscarExamenPorCodigo,
   consultarHabilitacion,
   listarHabilitaciones,
-  listarMotivos,
-  mensajeErrorHabilitacion
+  mensajeErrorHabilitacion,
 } from "../../services/habilitacionService";
 import "./Habilitaciones.css";
+import HabilitacionesExtras from "./HabilitacionesExtras";
 
 const POR_PAGINA = 10;
 const fecha = (valor) =>
   valor ? new Date(valor).toLocaleString("es-BO") : "Sin modificaciones";
 
 function ModalHabilitacion({
-  estudiante, motivos, modo, onCerrar, onGuardar, guardando
+  estudiante,
+  modo,
+  onCerrar,
+  onGuardar,
+  guardando,
 }) {
   const [estado, setEstado] = useState(estudiante.estado);
-  const [idMotivo, setIdMotivo] = useState(
-    estudiante.idMotivo ? String(estudiante.idMotivo) : ""
-  );
+  const [titulo, setTitulo] = useState(estudiante.tituloMotivo || "");
+  const [motivo, setMotivo] = useState(estudiante.motivo || "");
   const [error, setError] = useState("");
   const editable = modo === "editar";
 
@@ -38,8 +47,8 @@ function ModalHabilitacion({
 
   const guardar = async (event) => {
     event.preventDefault();
-    if (estado === "INHABILITADO" && !idMotivo) {
-      setError("Debes seleccionar un motivo de inhabilitación.");
+    if (estado === "INHABILITADO" && (!titulo.trim() || !motivo.trim())) {
+      setError("Debes escribir el título y el motivo de inhabilitación.");
       return;
     }
     setError("");
@@ -47,8 +56,9 @@ function ModalHabilitacion({
       await onGuardar({
         idEstudiante: estudiante.idEstudiante,
         estado,
-        idMotivo: estado === "INHABILITADO" ? Number(idMotivo) : null,
-        numeroCambios: estudiante.numeroCambios ?? 0
+        titulo: estado === "INHABILITADO" ? titulo.trim() : null,
+        motivo: estado === "INHABILITADO" ? motivo.trim() : null,
+        numeroCambios: estudiante.numeroCambios ?? 0,
       });
     } catch (err) {
       setError(mensajeErrorHabilitacion(err));
@@ -118,7 +128,8 @@ function ModalHabilitacion({
                 value={estado}
                 onChange={(e) => {
                   setEstado(e.target.value);
-                  setIdMotivo("");
+                  setTitulo("");
+                  setMotivo("");
                 }}
               >
                 <option value="HABILITADO">Habilitado</option>
@@ -127,40 +138,34 @@ function ModalHabilitacion({
             </label>
 
             {estado === "INHABILITADO" && (
-              <label className="hab-campo">
-                Motivo de inhabilitación
-                {editable ? (
-                  <select
+              <>
+                <label className="hab-campo">
+                  Título de la inhabilitación
+                  <input
+                    type="text"
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    placeholder="Escribe el título"
+                    maxLength={120}
+                    required={editable}
+                    readOnly={!editable}
                     disabled={guardando}
-                    value={idMotivo}
-                    required
-                    onChange={(e) => setIdMotivo(e.target.value)}
-                  >
-                    <option value="">Selecciona un motivo</option>
-                    {motivos.map((motivo) => (
-                      <option key={motivo.idMotivo} value={motivo.idMotivo}>
-                        {motivo.titulo}
-                      </option>
-                    ))}
-                    {estudiante.idMotivo &&
-                      !motivos.some(
-                        (m) => String(m.idMotivo) === String(estudiante.idMotivo)
-                      ) && (
-                        <option value={estudiante.idMotivo}>
-                          {estudiante.tituloMotivo || "Motivo anterior (inactivo)"}
-                        </option>
-                      )}
-                  </select>
-                ) : (
-                  <div className="hab-valor">
-                    {estudiante.tituloMotivo || "Motivo no disponible"}
-                  </div>
-                )}
-              </label>
-            )}
-
-            {estado === "INHABILITADO" && estudiante.motivo && (
-              <p className="hab-descripcion">{estudiante.motivo}</p>
+                  />
+                </label>
+                <label className="hab-campo">
+                  Motivo
+                  <textarea
+                    value={motivo}
+                    onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Escribe el motivo"
+                    rows={3}
+                    maxLength={500}
+                    required={editable}
+                    readOnly={!editable}
+                    disabled={guardando}
+                  />
+                </label>
+              </>
             )}
 
             {error && (
@@ -187,7 +192,8 @@ function ModalHabilitacion({
                   guardando ||
                   (estado === estudiante.estado &&
                     (estado === "HABILITADO" ||
-                      String(estudiante.idMotivo) === idMotivo))
+                      (titulo.trim() === (estudiante.tituloMotivo || "") &&
+                        motivo.trim() === (estudiante.motivo || ""))))
                 }
               >
                 {guardando ? "Guardando…" : "Guardar cambios"}
@@ -202,10 +208,10 @@ function ModalHabilitacion({
 
 export default function Habilitaciones() {
   const [params, setParams] = useSearchParams();
-  const [idIngresado, setIdIngresado] = useState(params.get("examen") || "");
-  const idExamen = params.get("examen") || "";
+  const codigoExamen = params.get("codigo") || "";
+  const [codigoIngresado, setCodigoIngresado] = useState(codigoExamen);
+  const [idExamen, setIdExamen] = useState(null);
   const [estudiantes, setEstudiantes] = useState([]);
-  const [motivos, setMotivos] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -224,12 +230,8 @@ export default function Habilitaciones() {
     setError("");
     setExito("");
     try {
-      const [lista, catalogo] = await Promise.all([
-        listarHabilitaciones(id),
-        listarMotivos()
-      ]);
+      const lista = await listarHabilitaciones(id);
       setEstudiantes(Array.isArray(lista) ? lista : []);
-      setMotivos(Array.isArray(catalogo) ? catalogo : []);
     } catch (err) {
       setEstudiantes([]);
       setError(mensajeErrorHabilitacion(err));
@@ -239,8 +241,41 @@ export default function Habilitaciones() {
   };
 
   useEffect(() => {
-    cargar(idExamen);
-  }, [idExamen]);
+    let vigente = true;
+
+    const resolverCodigo = async () => {
+      setCodigoIngresado(codigoExamen);
+      setIdExamen(null);
+      setEstudiantes([]);
+      setModal(null);
+      setExito("");
+      setError("");
+
+      if (!codigoExamen) {
+        setCargando(false);
+        return;
+      }
+
+      setCargando(true);
+      try {
+        const id = await buscarExamenPorCodigo(codigoExamen);
+        if (!vigente) return;
+        const lista = await listarHabilitaciones(id);
+        if (!vigente) return;
+        setIdExamen(id);
+        setEstudiantes(Array.isArray(lista) ? lista : []);
+      } catch (err) {
+        if (vigente) setError(mensajeErrorHabilitacion(err));
+      } finally {
+        if (vigente) setCargando(false);
+      }
+    };
+
+    resolverCodigo();
+    return () => {
+      vigente = false;
+    };
+  }, [codigoExamen]);
 
   const filtrados = useMemo(
     () =>
@@ -252,14 +287,14 @@ export default function Habilitaciones() {
           (!filtro || e.estado === filtro)
         );
       }),
-    [estudiantes, busqueda, filtro]
+    [estudiantes, busqueda, filtro],
   );
 
   const paginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaActual = Math.min(pagina, paginas);
   const vista = filtrados.slice(
     (paginaActual - 1) * POR_PAGINA,
-    paginaActual * POR_PAGINA
+    paginaActual * POR_PAGINA,
   );
 
   const abrir = async (estudiante, modo) => {
@@ -267,7 +302,7 @@ export default function Habilitaciones() {
     try {
       const detalle = await consultarHabilitacion(
         idExamen,
-        estudiante.idEstudiante
+        estudiante.idEstudiante,
       );
       setModal({ estudiante: detalle, modo });
     } catch (err) {
@@ -308,27 +343,38 @@ export default function Habilitaciones() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            const valor = idIngresado.trim();
-            if (!/^[1-9]\d*$/.test(valor)) {
-              setError("Introduce un ID de examen válido.");
+            const codigo = codigoIngresado.trim().toUpperCase();
+            if (!codigo) {
+              setError("Introduce el código del examen.");
               return;
             }
             setPagina(1);
-            setParams({ examen: valor });
-            if (idExamen === valor) cargar(valor);
+            if (codigo !== codigoExamen) {
+              setParams({ codigo });
+            } else {
+              setCargando(true);
+              setError("");
+              buscarExamenPorCodigo(codigo)
+                .then(async (id) => {
+                  const lista = await listarHabilitaciones(id);
+                  setIdExamen(id);
+                  setEstudiantes(Array.isArray(lista) ? lista : []);
+                })
+                .catch((err) => setError(mensajeErrorHabilitacion(err)))
+                .finally(() => setCargando(false));
+            }
           }}
         >
-          <label htmlFor="hab-examen">ID del examen</label>
+          <label htmlFor="hab-examen">Código del examen</label>
           <input
             id="hab-examen"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="Ej. 12"
-            value={idIngresado}
-            onChange={(e) => setIdIngresado(e.target.value)}
+            type="text"
+            maxLength={30}
+            placeholder="Ej. EX-004"
+            value={codigoIngresado}
+            onChange={(e) => setCodigoIngresado(e.target.value)}
           />
-          <button className="hab-btn hab-btn-pri" type="submit">
+          <button className="hab-btn hab-btn-pri" type="submit" disabled={cargando}>
             Consultar examen
           </button>
           <button
@@ -341,8 +387,8 @@ export default function Habilitaciones() {
           </button>
         </form>
         <p className="hab-ayuda">
-          Introduce el identificador del examen asignado a tu grupo.
-          Solo su docente responsable puede consultar y modificar estas habilitaciones.
+          Introduce el código del examen asignado a tu materia y grupo.
+          Solo el docente responsable puede consultar y modificar estas habilitaciones.
         </p>
       </section>
 
@@ -508,6 +554,14 @@ export default function Habilitaciones() {
         </section>
       )}
 
+      {idExamen && !cargando && !error && (
+        <HabilitacionesExtras
+          idExamen={idExamen}
+          estudiantes={estudiantes}
+          onActualizar={() => cargar(idExamen)}
+        />
+      )}
+
       {!idExamen && (
         <div className="hab-inicial">
           <FiClipboard />
@@ -521,7 +575,6 @@ export default function Habilitaciones() {
         <ModalHabilitacion
           key={`${modal.estudiante.idEstudiante}-${modal.modo}`}
           estudiante={modal.estudiante}
-          motivos={motivos}
           modo={modal.modo}
           guardando={guardando}
           onCerrar={() => setModal(null)}
