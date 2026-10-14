@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -321,16 +322,31 @@ public ExamenRespuesta configurar(
         examen.setDescripcion(descripcion.isBlank() ? null : descripcion);
     }
 
-    private ExamenRespuesta convertir(Examen examen) {
+
+private ExamenRespuesta convertir(Examen examen) {
 
         Materia materia = examen.getMateria();
 
-        Long idMateria = materia == null ? null : materia.getIdMateria();
+        Long idMateria = materia == null
+                ? null : materia.getIdMateria();
 
         String nombreAsignatura =
                 (materia != null && materia.getAsignatura() != null)
                         ? materia.getAsignatura().getNombreAsignatura()
                         : null;
+
+        Integer duracionMinutos = null;
+
+        if (examen.getHoraInicio() != null &&
+                examen.getHoraFin() != null) {
+
+        duracionMinutos = Math.toIntExact(
+                Duration.between(
+                        examen.getHoraInicio(),
+                        examen.getHoraFin()
+                ).toMinutes()
+        );
+        }
 
         return new ExamenRespuesta(
                 examen.getIdExamen(),
@@ -345,9 +361,10 @@ public ExamenRespuesta configurar(
                 examen.getFechaExamen(),
                 examen.getHoraInicio(),
                 examen.getHoraFin(),
+                duracionMinutos,
                 examen.getAula()
         );
-    }
+}
 
     private String limpiar(String valor) {
         return valor == null ? "" : valor.trim();
