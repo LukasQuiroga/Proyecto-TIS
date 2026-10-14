@@ -26,13 +26,6 @@ export default function HabilitacionesExtras({
     [estudiantes]
   );
 
-  useEffect(() => {
-    setSeleccionados([]);
-    setHistorial([]);
-    setHistorialId("");
-    setResultado(null);
-  }, [idExamen]);
-
   const alternar = (id) => {
     setSeleccionados((actuales) =>
       actuales.includes(id)

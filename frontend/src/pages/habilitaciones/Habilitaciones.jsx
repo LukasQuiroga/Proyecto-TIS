@@ -556,6 +556,7 @@ export default function Habilitaciones() {
 
       {idExamen && !cargando && !error && (
         <HabilitacionesExtras
+          key={idExamen}
           idExamen={idExamen}
           estudiantes={estudiantes}
           onActualizar={() => cargar(idExamen)}
