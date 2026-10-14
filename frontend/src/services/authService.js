@@ -28,13 +28,10 @@ export async function solicitarRecuperacion(correo) {
 }
 
 export async function verificarCodigoRecuperacion(correo, codigo) {
-  const respuesta = await api.post(
-    "/auth/recuperacion/verificar-codigo",
-    {
-      correo,
-      codigo,
-    },
-  );
+  const respuesta = await api.post("/auth/recuperacion/verificar-codigo", {
+    correo,
+    codigo,
+  });
 
   return respuesta.data;
 }

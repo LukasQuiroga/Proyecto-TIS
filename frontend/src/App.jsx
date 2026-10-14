@@ -14,6 +14,8 @@ import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
 import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
 import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
 
+import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
+
 import Usuarios from "./pages/usuarios/Usuarios.jsx";
 import EditarUsuario from "./pages/usuarios/EditarUsuario.jsx";
 import RolesPermisos from "./pages/usuarios/RolesPermisos.jsx";
@@ -84,6 +86,8 @@ function App(){
 
                     {/* RUTAS PROTEGIDAS */}
 
+
+
                     <Route
                         element={
                             <ProtectedRoute>
@@ -120,6 +124,11 @@ function App(){
                                     <VerUsuario />
                                 </ProtectedPermission>
                             }
+                        />
+                        
+                        <Route
+                            path="/habilitaciones"
+                            element={<Habilitaciones />}
                         />
 
                         <Route
