@@ -1,11 +1,8 @@
-import axios from "axios";
 import api from "./api";
 
-const API_AUTH = "/api/auth";
-
 export async function login(correo, password) {
-  const respuesta = await axios.post(
-    `${API_AUTH}/login`,
+  const respuesta = await api.post(
+    "/auth/login",
     {
       correo,
       password,
@@ -23,7 +20,7 @@ export async function cerrarSesionBackend() {
 }
 
 export async function solicitarRecuperacion(correo) {
-  const respuesta = await axios.post(`${API_AUTH}/recuperacion/solicitar`, {
+  const respuesta = await api.post("/auth/recuperacion/solicitar", {
     correo,
   });
 
@@ -31,8 +28,8 @@ export async function solicitarRecuperacion(correo) {
 }
 
 export async function verificarCodigoRecuperacion(correo, codigo) {
-  const respuesta = await axios.post(
-    `${API_AUTH}/recuperacion/verificar-codigo`,
+  const respuesta = await api.post(
+    "/auth/recuperacion/verificar-codigo",
     {
       correo,
       codigo,
@@ -48,7 +45,7 @@ export async function restablecerContrasena({
   nuevaContrasena,
   confirmarContrasena,
 }) {
-  const respuesta = await axios.post(`${API_AUTH}/recuperacion/restablecer`, {
+  const respuesta = await api.post("/auth/recuperacion/restablecer", {
     correo,
     token,
     nuevaContrasena,
