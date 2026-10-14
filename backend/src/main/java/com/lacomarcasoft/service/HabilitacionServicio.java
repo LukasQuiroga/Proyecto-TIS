@@ -17,6 +17,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class HabilitacionServicio {
@@ -210,8 +212,9 @@ public class HabilitacionServicio {
 
         auditoria.registrar(responsableId, "MODIFICAR_HABILITACION",
             "Examen " + examenId + ", estudiante " + estudianteId
-                + ": " + actual[0] + " (motivo " + actual[1]
-                + ") -> " + estado + " (motivo " + motivoId + ")",
+                + ": " + actual[0] + " -> " + estado
+                + ". Motivo anterior: " + describirMotivo((Long) actual[1])
+                + ". Motivo nuevo: " + describirMotivo(motivoId),
             null, true);
 
         return buscar(examenId, estudianteId, responsableId);
@@ -248,10 +251,46 @@ public class HabilitacionServicio {
                     rs.getLong("id_log"),
                     rs.getObject("id_usuario", Long.class),
                     responsable.trim(),
-                    rs.getString("descripcion"),
+                    enriquecerDescripcionHistorial(rs.getString("descripcion")),
                     leerFecha(rs.getTimestamp("fecha"))
                 );
             }, identificador, identificador);
+    }
+
+    private String describirMotivo(Long idMotivo) {
+        if (idMotivo == null) {
+            return "Sin motivo";
+        }
+        List<String> datos = jdbc.query("""
+            SELECT titulo, motivo FROM academico.motivo_inhabilitacion
+            WHERE id_motivo = ?
+            """, (rs, i) -> "Titulo: " + rs.getString("titulo")
+                + "; Descripcion: " + rs.getString("motivo"), idMotivo);
+        return datos.isEmpty() ? "Motivo #" + idMotivo + " (no disponible)"
+            : datos.get(0).replaceAll("[\r\n]+", " ");
+    }
+
+    private String enriquecerDescripcionHistorial(String descripcion) {
+        if (descripcion == null) {
+            return "Sin descripcion";
+        }
+        Pattern patron = Pattern.compile(
+            "^(Examen \\d+, estudiante \\d+: )"
+                + "(HABILITADO|INHABILITADO) \\(motivo (null|\\d+)\\)"
+                + " -> (HABILITADO|INHABILITADO) \\(motivo (null|\\d+)\\)$"
+        );
+        Matcher coincidencia = patron.matcher(descripcion);
+        if (!coincidencia.matches()) {
+            return descripcion;
+        }
+        Long anterior = "null".equals(coincidencia.group(3))
+            ? null : Long.valueOf(coincidencia.group(3));
+        Long nuevo = "null".equals(coincidencia.group(5))
+            ? null : Long.valueOf(coincidencia.group(5));
+        return coincidencia.group(1) + coincidencia.group(2)
+            + " -> " + coincidencia.group(4)
+            + ". Motivo anterior: " + describirMotivo(anterior)
+            + ". Motivo nuevo: " + describirMotivo(nuevo);
     }
 
     private Long obtenerOCrearMotivo(String titulo, String texto) {
