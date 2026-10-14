@@ -8,6 +8,7 @@ import {
   FiEye,
   FiPlus,
   FiSearch,
+  FiSettings,
 } from "react-icons/fi";
 
 import {
@@ -103,9 +104,7 @@ function Examenes() {
       ).toLocaleLowerCase("es");
 
       const coincideBusqueda =
-        !termino ||
-        nombre.includes(termino) ||
-        asignatura.includes(termino);
+        !termino || nombre.includes(termino) || asignatura.includes(termino);
 
       const coincideEstado =
         !estado || obtenerEstadoExamen(examen.estado).clave === estado;
@@ -271,9 +270,7 @@ function Examenes() {
                       </td>
 
                       <td>
-                        <span
-                          className={`examenes-recurso ${ambientes.clase}`}
-                        >
+                        <span className={`examenes-recurso ${ambientes.clase}`}>
                           {ambientes.etiqueta}
                         </span>
                       </td>
@@ -302,6 +299,20 @@ function Examenes() {
                             }
                           >
                             <FiEdit2 />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="examenes-boton-accion"
+                            title="Configurar examen"
+                            aria-label="Configurar fecha, hora y duración del examen"
+                            onClick={() =>
+                              navigate(
+                                `/examenes/${examen.idExamen ?? examen.id}/configuracion`,
+                              )
+                            }
+                          >
+                            <FiSettings />
                           </button>
                         </div>
                       </td>

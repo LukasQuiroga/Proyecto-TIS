@@ -27,231 +27,199 @@ import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr
 
 import Examenes from "./pages/examenes/Examenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
+import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 
-function App(){
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <PermisosActualizadosModal />
+        <Routes>
+          {/* RUTAS PUBLICAS */}
 
-    return(
-        <AuthProvider>
+          <Route path="/login" element={<Login />} />
 
-            <BrowserRouter>
-                <PermisosActualizadosModal />
-                <Routes>
+          <Route
+            path="/recuperar-contrasena"
+            element={<RecuperarContrasena />}
+          />
 
+          <Route path="/verificar-codigo" element={<VerificarCodigo />} />
 
-                    {/* RUTAS PUBLICAS */}
+          <Route path="/nueva-contrasena" element={<NuevaContrasena />} />
 
-                    <Route
-                        path="/login"
-                        element={<Login />}
-                    />
+          {/* PAGINA PRINCIPAL PUBLICA */}
 
-                    <Route
-                        path="/recuperar-contrasena"
-                        element={<RecuperarContrasena />}
-                    />
+          <Route element={<PlantillaPrincipal />}>
+            <Route path="/" element={<Inicio />} />
+          </Route>
 
-                    <Route
-                        path="/verificar-codigo"
-                        element={<VerificarCodigo />}
-                    />
+          {/* RUTAS PROTEGIDAS */}
 
-                    <Route
-                        path="/nueva-contrasena"
-                        element={<NuevaContrasena />}
-                    />
+          <Route
+            element={
+              <ProtectedRoute>
+                <PlantillaPrincipal />
+              </ProtectedRoute>
+            }
+          >
+            {/* PERFIL */}
 
+            <Route path="/perfil" element={<Perfil />} />
 
+            {/* USUARIOS */}
 
-                    {/* PAGINA PRINCIPAL PUBLICA */}
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                  <Usuarios />
+                </ProtectedPermission>
+              }
+            />
 
-                    <Route
-                        element={<PlantillaPrincipal />}
-                    >
+            <Route
+              path="/usuarios/:id"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                  <VerUsuario />
+                </ProtectedPermission>
+              }
+            />
 
-                        <Route
-                            path="/"
-                            element={<Inicio />}
-                        />
+            <Route
+              path="/usuarios/:id/editar"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
+                  <EditarUsuario />
+                </ProtectedPermission>
+              }
+            />
 
-                    </Route>
+            <Route
+              path="/usuarios/registro"
+              element={
+                <ProtectedPermission permiso="REGISTRAR_USUARIOS">
+                  <RegistroUsuario />
+                </ProtectedPermission>
+              }
+            />
 
+            <Route
+              path="/usuarios/importar"
+              element={
+                <ProtectedPermission permiso="IMPORTAR_USUARIOS">
+                  <ImportarUsuarios />
+                </ProtectedPermission>
+              }
+            />
 
+            <Route
+              path="/usuarios/roles-permisos"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_ROLES">
+                  <RolesPermisos />
+                </ProtectedPermission>
+              }
+            />
 
-                    {/* RUTAS PROTEGIDAS */}
+            {/* ASIGNATURAS */}
 
-                    <Route
-                        element={
-                            <ProtectedRoute>
-                                <PlantillaPrincipal />
-                            </ProtectedRoute>
-                        }
-                    >
+            <Route
+              path="/asignaturas"
+              element={
+                <ProtectedPermission permiso="GESTIONAR_MATERIAS">
+                  <Asignaturas />
+                </ProtectedPermission>
+              }
+            />
 
+            {/* HU12 - Inscripción de estudiantes mediante QR */}
+            <Route
+              path="/asignaturas/inscripcion-qr"
+              element={<InscripcionQr />}
+            />
 
-                        {/* PERFIL */}
+            {/* HU12 - Confirmación de inscripción del estudiante */}
+            <Route
+              path="/inscripcion-qr/inscribir"
+              element={<InscripcionEstudianteQr />}
+            />
 
-                        <Route
-                            path="/perfil"
-                            element={<Perfil />}
-                        />
+            {/* EXÁMENES */}
 
+            <Route
+              path="/examenes"
+              element={
+                <ProtectedPermission
+                  permiso="GESTIONAR_EXAMENES"
+                  accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                >
+                  <Examenes />
+                </ProtectedPermission>
+              }
+            />
 
+            <Route
+              path="/examenes/registro"
+              element={
+                <ProtectedPermission
+                  permiso="GESTIONAR_EXAMENES"
+                  accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                >
+                  <RegistrarExamen />
+                </ProtectedPermission>
+              }
+            />
 
-                        {/* USUARIOS */}
+            <Route
+              path="/examenes/:id/editar"
+              element={
+                <ProtectedPermission
+                  permiso="GESTIONAR_EXAMENES"
+                  accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                >
+                  <RegistrarExamen />
+                </ProtectedPermission>
+              }
+            />
 
-                        <Route
-                            path="/usuarios"
-                            element={
-                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                                    <Usuarios />
-                                </ProtectedPermission>
-                            }
-                        />
+            <Route
+              path="/examenes/:id/configuracion"
+              element={
+                <ProtectedPermission
+                  permiso="GESTIONAR_EXAMENES"
+                  accesoDenegado={<AccesoNoAutorizadoExamenes />}
+                >
+                  <ConfigurarExamen />
+                </ProtectedPermission>
+              }
+            />
 
-                        <Route
-                            path="/usuarios/:id"
-                            element={
-                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                                    <VerUsuario />
-                                </ProtectedPermission>
-                            }
-                        />
+            {/* AUDITORIA */}
 
-                        <Route
-                            path="/usuarios/:id/editar"
-                            element={
-                                <ProtectedPermission permiso="GESTIONAR_USUARIOS">
-                                    <EditarUsuario />
-                                </ProtectedPermission>
-                            }
-                        />
+            <Route
+              path="/auditoria"
+              element={
+                <ProtectedPermission permiso="VER_AUDITORIA">
+                  <Auditoria />
+                </ProtectedPermission>
+              }
+            />
+          </Route>
 
+          {/* RUTA NO EXISTENTE */}
 
-                        <Route
-                            path="/usuarios/registro"
-                            element={
-                                <ProtectedPermission permiso="REGISTRAR_USUARIOS">
-                                    <RegistroUsuario />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        <Route
-                            path="/usuarios/importar"
-                            element={
-                                <ProtectedPermission permiso="IMPORTAR_USUARIOS">
-                                    <ImportarUsuarios />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        <Route
-                            path="/usuarios/roles-permisos"
-                            element={
-                                <ProtectedPermission permiso="GESTIONAR_ROLES">
-                                    <RolesPermisos />
-                                </ProtectedPermission>
-                            }
-                        />
-                        
-                        {/* ASIGNATURAS */}
-
-                        <Route
-                            path="/asignaturas"
-                            element={
-                                <ProtectedPermission permiso="GESTIONAR_MATERIAS">
-                                    <Asignaturas />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        {/* HU12 - Inscripción de estudiantes mediante QR */}
-                        <Route
-                            path="/asignaturas/inscripcion-qr"
-                            element={<InscripcionQr />}
-                        />
-
-                        {/* HU12 - Confirmación de inscripción del estudiante */}
-                        <Route
-                            path="/inscripcion-qr/inscribir"
-                            element={<InscripcionEstudianteQr />}
-                        />
-
-                        {/* EXÁMENES */}
-
-                        <Route
-                            path="/examenes"
-                            element={
-                                <ProtectedPermission
-                                    permiso="GESTIONAR_EXAMENES"
-                                    accesoDenegado={<AccesoNoAutorizadoExamenes />}
-                                >
-                                    <Examenes />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        <Route
-                            path="/examenes/registro"
-                            element={
-                                <ProtectedPermission
-                                    permiso="GESTIONAR_EXAMENES"
-                                    accesoDenegado={<AccesoNoAutorizadoExamenes />}
-                                >
-                                    <RegistrarExamen />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        <Route
-                            path="/examenes/:id/editar"
-                            element={
-                                <ProtectedPermission
-                                    permiso="GESTIONAR_EXAMENES"
-                                    accesoDenegado={<AccesoNoAutorizadoExamenes />}
-                                >
-                                    <RegistrarExamen />
-                                </ProtectedPermission>
-                            }
-                        />
-
-                        {/* AUDITORIA */}
-
-                        <Route
-                            path="/auditoria"
-                            element={
-                                <ProtectedPermission permiso="VER_AUDITORIA">
-                                    <Auditoria />
-                                </ProtectedPermission>
-                            }
-                        />
-
-
-                    </Route>
-
-
-
-                    {/* RUTA NO EXISTENTE */}
-
-                    <Route
-                        path="*"
-                        element={<Navigate to="/" replace />}
-                    />
-
-
-                </Routes>
-
-            </BrowserRouter>
-
-        </AuthProvider>
-    );
-
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
-
 
 export default App;
