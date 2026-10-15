@@ -83,3 +83,25 @@ export const obtenerNombreAsignatura = (examen) => {
     "—"
   );
 };
+
+export const obtenerEstadoConfiguracion = (examen) => {
+  const estaConfigurado = Boolean(
+    examen?.fechaExamen &&
+    examen?.horaInicio &&
+    examen?.horaFin &&
+    Number.isInteger(examen?.duracionMinutos) &&
+    examen.duracionMinutos > 0,
+  );
+
+  if (estaConfigurado) {
+    return {
+      etiqueta: "Programado",
+      clase: "programado",
+    };
+  }
+
+  return {
+    etiqueta: "Sin configurar",
+    clase: "sin-configurar",
+  };
+};

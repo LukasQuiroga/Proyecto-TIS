@@ -1,3 +1,4 @@
+
 package com.lacomarcasoft.dto.response;
 
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ public record ExamenRespuesta(
     LocalDate fechaExamen,
     LocalTime horaInicio,
     LocalTime horaFin,
+    Integer duracionMinutos,
     String aula
 
 ) {}

@@ -8,6 +8,7 @@ import {
   FiEye,
   FiPlus,
   FiSearch,
+  FiSettings,
 } from "react-icons/fi";
 
 import {
@@ -17,12 +18,14 @@ import {
 import DetalleExamen from "./DetalleExamen.jsx";
 import {
   formatearTipoEvaluacion,
+  obtenerEstadoConfiguracion,
   obtenerEstadoExamen,
   obtenerEstadoRecurso,
   obtenerNombreAsignatura,
 } from "./utilsExamen.js";
 
 import "./Examenes.css";
+import "./EstadoConfiguracionExamen.css";
 
 const TAMANO_PAGINA = 10;
 
@@ -103,9 +106,7 @@ function Examenes() {
       ).toLocaleLowerCase("es");
 
       const coincideBusqueda =
-        !termino ||
-        nombre.includes(termino) ||
-        asignatura.includes(termino);
+        !termino || nombre.includes(termino) || asignatura.includes(termino);
 
       const coincideEstado =
         !estado || obtenerEstadoExamen(examen.estado).clave === estado;
@@ -199,6 +200,7 @@ function Examenes() {
                 <th>Tipo</th>
                 <th>Gestión</th>
                 <th>Estado</th>
+                <th>Configuración</th>
                 <th>Habilitaciones</th>
                 <th>Ambientes</th>
                 <th>Acciones</th>
@@ -208,13 +210,13 @@ function Examenes() {
             <tbody>
               {cargando ? (
                 <tr>
-                  <td colSpan={10} className="examenes-mensaje-tabla">
+                  <td colSpan={11} className="examenes-mensaje-tabla">
                     Cargando exámenes...
                   </td>
                 </tr>
               ) : examenesPagina.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="examenes-mensaje-tabla">
+                  <td colSpan={11} className="examenes-mensaje-tabla">
                     <FiClipboard size={26} />
 
                     <span>
@@ -227,6 +229,9 @@ function Examenes() {
               ) : (
                 examenesPagina.map((examen) => {
                   const estadoVisual = obtenerEstadoExamen(examen.estado);
+
+                  const configuracionVisual =
+                    obtenerEstadoConfiguracion(examen);
 
                   const habilitaciones = obtenerEstadoRecurso(
                     examen.habilitaciones ?? examen.estadoHabilitaciones,
@@ -264,6 +269,14 @@ function Examenes() {
 
                       <td>
                         <span
+                          className={`examenes-configuracion ${configuracionVisual.clase}`}
+                        >
+                          {configuracionVisual.etiqueta}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span
                           className={`examenes-recurso ${habilitaciones.clase}`}
                         >
                           {habilitaciones.etiqueta}
@@ -271,9 +284,7 @@ function Examenes() {
                       </td>
 
                       <td>
-                        <span
-                          className={`examenes-recurso ${ambientes.clase}`}
-                        >
+                        <span className={`examenes-recurso ${ambientes.clase}`}>
                           {ambientes.etiqueta}
                         </span>
                       </td>
@@ -302,6 +313,20 @@ function Examenes() {
                             }
                           >
                             <FiEdit2 />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="examenes-boton-accion"
+                            title="Configurar examen"
+                            aria-label="Configurar fecha, hora y duración del examen"
+                            onClick={() =>
+                              navigate(
+                                `/examenes/${examen.idExamen ?? examen.id}/configuracion`,
+                              )
+                            }
+                          >
+                            <FiSettings />
                           </button>
                         </div>
                       </td>
