@@ -90,22 +90,61 @@ function ConfigurarExamen() {
   const validarFormulario = () => {
     const nuevosErrores = {};
 
+    const partesFechaHora = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/La_Paz",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date());
+
+    const obtenerParte = (tipo) =>
+      partesFechaHora.find((parte) => parte.type === tipo)?.value;
+
+    const fechaActual = `${obtenerParte("year")}-${obtenerParte("month")}-${obtenerParte("day")}`;
+    const horaActual = `${obtenerParte("hour")}:${obtenerParte("minute")}`;
+
     if (!formulario.fechaExamen) {
       nuevosErrores.fechaExamen = "La fecha es obligatoria.";
+    } else if (formulario.fechaExamen < fechaActual) {
+      nuevosErrores.fechaExamen =
+        "La fecha del examen no puede ser anterior a hoy.";
     }
 
     if (!formulario.horaInicio) {
       nuevosErrores.horaInicio = "La hora es obligatoria.";
+    } else if (
+      formulario.fechaExamen === fechaActual &&
+      formulario.horaInicio <= horaActual
+    ) {
+      nuevosErrores.horaInicio =
+        "La hora de inicio debe ser posterior a la hora actual de Bolivia.";
     }
+
+    let duracion = null;
 
     if (!formulario.duracionMinutos) {
       nuevosErrores.duracionMinutos = "La duración es obligatoria.";
     } else {
-      const duracion = Number(formulario.duracionMinutos);
+      duracion = Number(formulario.duracionMinutos);
 
       if (!Number.isInteger(duracion) || duracion <= 0 || duracion >= 1440) {
         nuevosErrores.duracionMinutos =
           "La duración debe estar entre 1 y 1439 minutos.";
+      }
+    }
+
+    if (!nuevosErrores.horaInicio && !nuevosErrores.duracionMinutos) {
+      const [horas, minutos] = formulario.horaInicio.split(":").map(Number);
+
+      const minutosInicio = horas * 60 + minutos;
+      const minutosFin = minutosInicio + duracion;
+
+      if (minutosFin >= 24 * 60) {
+        nuevosErrores.duracionMinutos =
+          "El examen debe finalizar antes de la medianoche.";
       }
     }
 
