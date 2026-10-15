@@ -73,13 +73,19 @@ class ExamenServicioTest {
                 LocalTime.of(8, 0),
                 respuesta.horaInicio()
         );
+
         assertEquals(
                 LocalTime.of(10, 0),
                 respuesta.horaFin()
         );
 
+        assertEquals(
+                120,
+                respuesta.duracionMinutos()
+        );
+
         verify(examenRepositorio).save(examen);
-    }
+}
 
     @Test
     void debeRechazarFechaPasada() {
@@ -324,5 +330,109 @@ class ExamenServicioTest {
         );
 
         verify(examenRepositorio).save(examen);
-    }
+}
+
+@Test
+void debeAceptarDuracionMinimaDeUnMinuto() {
+
+        LocalDate fecha = LocalDate.now(ZONA_BOLIVIA)
+                .plusDays(1);
+
+        Examen examen = new Examen();
+        examen.setIdExamen(20L);
+
+        when(examenRepositorio.obtenerDetalle(20L))
+                .thenReturn(Optional.of(examen));
+
+        when(examenRepositorio.save(examen))
+                .thenReturn(examen);
+
+        ConfigurarExamenSolicitud solicitud =
+                new ConfigurarExamenSolicitud(
+                        fecha,
+                        LocalTime.of(8, 0),
+                        1
+                );
+
+        ExamenRespuesta respuesta =
+                examenServicio.configurar(20L, solicitud);
+
+        assertEquals(
+                LocalTime.of(8, 1),
+                respuesta.horaFin()
+        );
+
+        assertEquals(
+                1,
+                respuesta.duracionMinutos()
+        );
+
+        verify(examenRepositorio).save(examen);
+}
+
+@Test
+void debeAceptarDuracionMaximaDelMismoDia() {
+
+        LocalDate fecha = LocalDate.now(ZONA_BOLIVIA)
+                .plusDays(1);
+
+        Examen examen = new Examen();
+        examen.setIdExamen(21L);
+
+        when(examenRepositorio.obtenerDetalle(21L))
+                .thenReturn(Optional.of(examen));
+
+        when(examenRepositorio.save(examen))
+                .thenReturn(examen);
+
+        ConfigurarExamenSolicitud solicitud =
+                new ConfigurarExamenSolicitud(
+                        fecha,
+                        LocalTime.MIDNIGHT,
+                        1439
+                );
+
+        ExamenRespuesta respuesta =
+                examenServicio.configurar(21L, solicitud);
+
+        assertEquals(
+                LocalTime.of(23, 59),
+                respuesta.horaFin()
+        );
+
+        assertEquals(
+                1439,
+                respuesta.duracionMinutos()
+        );
+
+        verify(examenRepositorio).save(examen);
+}
+
+@Test
+void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
+
+        LocalDate fecha = LocalDate.now(ZONA_BOLIVIA)
+                .plusDays(1);
+
+        ConfigurarExamenSolicitud solicitud =
+                new ConfigurarExamenSolicitud(
+                        fecha,
+                        LocalTime.of(23, 0),
+                        60
+                );
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> examenServicio.configurar(
+                        22L, solicitud
+                )
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                error.getStatusCode()
+        );
+
+        verifyNoInteractions(examenRepositorio);
+}
 }
