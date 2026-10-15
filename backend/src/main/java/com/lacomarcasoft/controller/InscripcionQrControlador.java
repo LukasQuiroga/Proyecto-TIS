@@ -112,25 +112,25 @@ public class InscripcionQrControlador {
         return ResponseEntity.ok(materias);
     }
 
-  @GetMapping("/materias/{idMateria}/activo")
+    @GetMapping("/materias/{idMateria}/activo")
     public ResponseEntity<QrInscripcionServicio.ResultadoConsultaQr>
     consultarQrActivo(
-        @PathVariable Long idMateria,
-        Authentication authentication
-     ) {
-          Long idDocente = obtenerIdUsuario(authentication);
+            @PathVariable Long idMateria,
+            Authentication authentication
+    ) {
+        Long idDocente = obtenerIdUsuario(authentication);
 
-         var resultado = qrServicio.consultarQrActivo(
-            idMateria,
-            idDocente
-       );
+        var resultado = qrServicio.consultarQrActivo(
+                idMateria,
+                idDocente
+        );
 
-         if (resultado == null) {
-           return ResponseEntity.noContent().build();
+        if (resultado == null) {
+            return ResponseEntity.noContent().build();
         }
 
         return ResponseEntity.ok(resultado);
-  }
+    }
 
     @PostMapping("/materias/{idMateria}/generar")
     public ResponseEntity<QrInscripcionServicio.ResultadoGeneracionQr>
@@ -138,7 +138,6 @@ public class InscripcionQrControlador {
             @PathVariable Long idMateria,
             Authentication authentication
     ) {
-
         Long idDocente = obtenerIdUsuario(authentication);
 
         var resultado = qrServicio.generarQr(
@@ -151,13 +150,46 @@ public class InscripcionQrControlador {
                 .body(resultado);
     }
 
+    @PostMapping("/materias/{idMateria}/renovar")
+    public ResponseEntity<QrInscripcionServicio.ResultadoGeneracionQr>
+    renovarQr(
+            @PathVariable Long idMateria,
+            Authentication authentication
+    ) {
+        Long idDocente = obtenerIdUsuario(authentication);
+
+        var resultado = qrServicio.renovarQr(
+                idMateria,
+                idDocente
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(resultado);
+    }
+
+    @PatchMapping("/materias/{idMateria}/desactivar")
+    public ResponseEntity<QrInscripcionServicio.ResultadoEstadoQr>
+    desactivarQr(
+            @PathVariable Long idMateria,
+            Authentication authentication
+    ) {
+        Long idDocente = obtenerIdUsuario(authentication);
+
+        var resultado = qrServicio.desactivarQr(
+                idMateria,
+                idDocente
+        );
+
+        return ResponseEntity.ok(resultado);
+    }
+
     @PostMapping("/inscribir")
     public ResponseEntity<InscripcionMateriaServicio.ResultadoInscripcion>
     inscribir(
             @Valid @RequestBody InscripcionQrSolicitud solicitud,
             Authentication authentication
     ) {
-
         Long idEstudiante = obtenerIdUsuario(authentication);
 
         var resultado = inscripcionServicio.inscribirEstudiante(

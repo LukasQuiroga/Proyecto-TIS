@@ -15,10 +15,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*}")
@@ -29,12 +31,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
+
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/login",
@@ -60,10 +65,20 @@ public class SecurityConfig {
                     HttpMethod.POST,
                     "/api/inscripciones-qr/materias/*/generar"
                 ).hasRole("DOCENTE")
-                
+
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/inscripciones-qr/materias/*/activo"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/inscripciones-qr/materias/*/renovar"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/inscripciones-qr/materias/*/desactivar"
                 ).hasRole("DOCENTE")
 
                 .requestMatchers(
@@ -121,7 +136,9 @@ public class SecurityConfig {
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
 
         return source;
@@ -129,7 +146,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
+            AuthenticationConfiguration configuration
+    ) throws Exception {
         return configuration.getAuthenticationManager();
     }
 }

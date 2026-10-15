@@ -19,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.List;
 
 @Service
 public class QrInscripcionServicio {
@@ -57,10 +58,17 @@ public class QrInscripcionServicio {
             String estado
     ) {}
 
-    @Transactional
-    public ResultadoGeneracionQr generarQr(
+    public record ResultadoEstadoQr(
+            Long idQr,
             Long idMateria,
-            Long idDocente
+            String estado,
+            String mensaje
+    ) {}
+
+    private Materia validarMateriaDocente(
+            Long idMateria,
+            Long idDocente,
+            boolean bloquear
     ) {
         if (idMateria == null || idDocente == null) {
             throw new ResponseStatusException(
@@ -69,7 +77,9 @@ public class QrInscripcionServicio {
             );
         }
 
-        Materia materia = materiaRepositorio.bloquearMateria(idMateria)
+        Materia materia = (bloquear
+                ? materiaRepositorio.bloquearMateria(idMateria)
+                : materiaRepositorio.findById(idMateria))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "La materia no existe"
@@ -79,7 +89,7 @@ public class QrInscripcionServicio {
                 !idDocente.equals(materia.getDocente().getIdUsuario())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "No tiene permiso para generar el QR de esta materia"
+                    "No tiene permiso para gestionar el QR de esta materia"
             );
         }
 
@@ -90,23 +100,26 @@ public class QrInscripcionServicio {
             );
         }
 
-        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+        return materia;
+    }
 
-        boolean existeQrActivo = qrRepositorio
+    private List<QrInscripcion> buscarQrActivos(
+            Long idMateria,
+            OffsetDateTime ahora
+    ) {
+        return qrRepositorio
                 .findByMateria_IdMateriaOrderByFechaCreacionDesc(idMateria)
                 .stream()
-                .anyMatch(qr ->
-                        !qr.isRevocado() &&
-                        qr.getFechaExpiracion().isAfter(ahora)
-                );
+                .filter(qr -> !qr.isRevocado())
+                .filter(qr -> qr.getFechaExpiracion() != null)
+                .filter(qr -> qr.getFechaExpiracion().isAfter(ahora))
+                .toList();
+    }
 
-        if (existeQrActivo) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "La materia ya tiene un código QR activo."
-            );
-        }
-
+    private ResultadoGeneracionQr crearQr(
+            Materia materia,
+            OffsetDateTime ahora
+    ) {
         byte[] bytesToken = new byte[TAMANO_TOKEN_BYTES];
         secureRandom.nextBytes(bytesToken);
 
@@ -116,7 +129,9 @@ public class QrInscripcionServicio {
 
         String tokenHash = calcularHash(token);
 
-        OffsetDateTime expiracion = ahora.plusMinutes(DURACION_MINUTOS);
+        OffsetDateTime expiracion = ahora.plusMinutes(
+                DURACION_MINUTOS
+        );
 
         QrInscripcion qr = new QrInscripcion();
         qr.setMateria(materia);
@@ -135,48 +150,104 @@ public class QrInscripcionServicio {
         );
     }
 
+    @Transactional
+    public ResultadoGeneracionQr generarQr(
+            Long idMateria,
+            Long idDocente
+    ) {
+        Materia materia = validarMateriaDocente(
+                idMateria, idDocente, true
+        );
+
+        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+
+        if (!buscarQrActivos(idMateria, ahora).isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La materia ya tiene un codigo QR activo"
+            );
+        }
+
+        return crearQr(materia, ahora);
+    }
+
+    @Transactional
+    public ResultadoGeneracionQr renovarQr(
+            Long idMateria,
+            Long idDocente
+    ) {
+        Materia materia = validarMateriaDocente(
+                idMateria, idDocente, true
+        );
+
+        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+
+        List<QrInscripcion> codigosActivos = buscarQrActivos(
+                idMateria, ahora
+        );
+
+        if (codigosActivos.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No existe un QR activo para renovar"
+            );
+        }
+
+        for (QrInscripcion qr : codigosActivos) {
+            qr.setRevocado(true);
+        }
+
+        qrRepositorio.saveAllAndFlush(codigosActivos);
+
+        return crearQr(materia, ahora);
+    }
+
+    @Transactional
+    public ResultadoEstadoQr desactivarQr(
+            Long idMateria,
+            Long idDocente
+    ) {
+        validarMateriaDocente(idMateria, idDocente, true);
+
+        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+
+        List<QrInscripcion> codigosActivos = buscarQrActivos(
+                idMateria, ahora
+        );
+
+        if (codigosActivos.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No existe un QR activo para desactivar"
+            );
+        }
+
+        for (QrInscripcion qr : codigosActivos) {
+            qr.setRevocado(true);
+        }
+
+        qrRepositorio.saveAllAndFlush(codigosActivos);
+
+        return new ResultadoEstadoQr(
+                codigosActivos.get(0).getIdQr(),
+                idMateria,
+                "DESACTIVADO",
+                "El codigo QR fue desactivado correctamente"
+        );
+    }
+
     @Transactional(readOnly = true)
     public ResultadoConsultaQr consultarQrActivo(
             Long idMateria,
             Long idDocente
     ) {
-        if (idMateria == null || idDocente == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "La materia y el docente son obligatorios"
-            );
-        }
-
-        Materia materia = materiaRepositorio.findById(idMateria)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "La materia no existe"
-                ));
-
-        if (materia.getDocente() == null ||
-                !idDocente.equals(materia.getDocente().getIdUsuario())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "No tiene permiso para consultar el QR de esta materia"
-            );
-        }
-
-        if (!Boolean.TRUE.equals(materia.getDocente().getActivo())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "El docente no se encuentra activo"
-            );
-        }
+        validarMateriaDocente(idMateria, idDocente, false);
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
-        QrInscripcion qrActivo = qrRepositorio
-                .findByMateria_IdMateriaOrderByFechaCreacionDesc(idMateria)
-                .stream()
-                .filter(qr -> !qr.isRevocado())
-                .filter(qr -> qr.getFechaExpiracion().isAfter(ahora))
-                .findFirst()
-                .orElse(null);
+        QrInscripcion qrActivo = buscarQrActivos(
+                idMateria, ahora
+        ).stream().findFirst().orElse(null);
 
         if (qrActivo == null) {
             return null;

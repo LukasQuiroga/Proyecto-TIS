@@ -7,9 +7,12 @@ import com.lacomarcasoft.modelo.MateriaEstudianteId;
 import com.lacomarcasoft.modelo.QrInscripcion;
 import com.lacomarcasoft.modelo.Usuario;
 
+import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.MateriaEstudianteRepositorio;
 import com.lacomarcasoft.repository.QrInscripcionRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+
+import jakarta.persistence.EntityManager;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -24,20 +27,26 @@ import java.time.ZoneOffset;
 public class InscripcionMateriaServicio {
 
     private final QrInscripcionRepositorio qrRepositorio;
+    private final MateriaRepositorio materiaRepositorio;
     private final MateriaEstudianteRepositorio inscripcionRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
     private final QrInscripcionServicio qrServicio;
+    private final EntityManager entityManager;
 
     public InscripcionMateriaServicio(
             QrInscripcionRepositorio qrRepositorio,
+            MateriaRepositorio materiaRepositorio,
             MateriaEstudianteRepositorio inscripcionRepositorio,
             UsuarioRepositorio usuarioRepositorio,
-            QrInscripcionServicio qrServicio
+            QrInscripcionServicio qrServicio,
+            EntityManager entityManager
     ) {
         this.qrRepositorio = qrRepositorio;
+        this.materiaRepositorio = materiaRepositorio;
         this.inscripcionRepositorio = inscripcionRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
         this.qrServicio = qrServicio;
+        this.entityManager = entityManager;
     }
 
     public record ResultadoInscripcion(
@@ -99,6 +108,25 @@ public class InscripcionMateriaServicio {
                         "El codigo QR no es valido"
                 ));
 
+        Materia materiaQr = qr.getMateria();
+
+        if (materiaQr == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El QR no tiene una materia asociada"
+            );
+        }
+
+        Long idMateria = materiaQr.getIdMateria();
+
+        Materia materia = materiaRepositorio.bloquearMateria(idMateria)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "La materia no existe"
+                ));
+
+        entityManager.refresh(qr);
+
         if (qr.isRevocado()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -108,36 +136,24 @@ public class InscripcionMateriaServicio {
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
-        if (!qr.getFechaExpiracion().isAfter(ahora)) {
+        if (qr.getFechaExpiracion() == null ||
+                !qr.getFechaExpiracion().isAfter(ahora)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "El codigo QR ha expirado"
             );
         }
 
-        Materia materia = qr.getMateria();
-
-        if (materia == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El QR no tiene una materia asociada"
-            );
-        }
-
-        Long idMateria = materia.getIdMateria();
-
         if (inscripcionRepositorio
                 .existsByMateria_IdMateriaAndEstudiante_IdUsuario(
                         idMateria,
                         idEstudiante
                 )) {
-
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "El estudiante ya esta inscrito en esta materia"
             );
         }
-
 
         MateriaEstudiante inscripcion = new MateriaEstudiante();
 
