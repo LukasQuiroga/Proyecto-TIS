@@ -27,6 +27,22 @@ export const generarQrInscripcion = async (idMateria) => {
   return respuesta.data;
 };
 
+export const consultarQrActivo = async (idMateria) => {
+  if (!idMateria) {
+    throw new Error("Debe seleccionar una materia");
+  }
+
+  const respuesta = await api.get(
+    `/inscripciones-qr/materias/${encodeURIComponent(idMateria)}/activo`
+  );
+
+  if (respuesta.status === 204) {
+    return null;
+  }
+
+  return respuesta.data;
+};
+
 export const inscribirEstudianteConQr = async (token) => {
   if (typeof token !== "string" || !token.trim()) {
     throw new Error("El codigo QR es obligatorio");
@@ -42,20 +58,25 @@ export const inscribirEstudianteConQr = async (token) => {
   return respuesta.data;
 };
 
-export const obtenerMensajeErrorQr = (error) => {
+export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
   if (error?.response?.status === 401) {
-    return "Tu sesion ha expirado. Inicia sesion nuevamente.";
+    return "Tu sesión ha expirado. Inicia sesión nuevamente.";
   }
 
   if (error?.response?.status === 403) {
-    return "No tienes permisos para realizar esta operacion.";
+    return "No tienes permisos para realizar esta operación.";
   }
 
   if (error?.response?.status === 409) {
-    return "El estudiante ya esta inscrito o existe un conflicto de inscripcion.";
+    if (operacion === "generar") {
+      return "Esta materia ya tiene un código QR activo. Utiliza el existente o espera a que venza.";
+    }
+
+    return "El estudiante ya está inscrito o existe un conflicto de inscripción.";
   }
+
   if (error?.response?.status === 400) {
-       return "El código QR es inválido, ha expirado o no existe. Solicita un nuevo código a tu docente.";
+    return "El código QR es inválido, ha expirado o no existe. Solicita un nuevo código a tu docente.";
   }
 
   const mensajeBackend = error?.response?.data;
@@ -78,5 +99,5 @@ export const obtenerMensajeErrorQr = (error) => {
     return mensajeBackend.detail;
   }
 
-  return error?.message || "No se pudo completar la operacion.";
+  return error?.message || "No se pudo completar la operación.";
 };

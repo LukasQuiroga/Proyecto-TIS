@@ -16,6 +16,7 @@ import {
 import {
   obtenerMateriasDocenteQr,
   generarQrInscripcion,
+  consultarQrActivo,
   obtenerMensajeErrorQr
 } from "../../services/inscripcionQrService";
 
@@ -28,11 +29,13 @@ function InscripcionQr() {
   const [errorMaterias, setErrorMaterias] = useState("");
 
   const [generando, setGenerando] = useState(false);
+  const [consultandoQr, setConsultandoQr] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [mensaje, setMensaje] = useState(null);
   const [copiado, setCopiado] = useState(false);
+  const [ahora, setAhora] = useState(Date.now());
+  const [versionConsulta, setVersionConsulta] = useState(0);
 
-  // HU12 - Cargar las materias asignadas al docente
   useEffect(() => {
     let activo = true;
 
@@ -63,9 +66,82 @@ function InscripcionQr() {
     };
   }, []);
 
+  useEffect(() => {
+    const intervalo = window.setInterval(() => {
+      setAhora(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalo);
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarQrActivo = async () => {
+      setResultado(null);
+      setCopiado(false);
+      setMensaje(null);
+
+      if (!idMateria) {
+        setConsultandoQr(false);
+        return;
+      }
+
+      setConsultandoQr(true);
+
+      try {
+        const datos = await consultarQrActivo(Number(idMateria));
+
+        if (!activo) {
+          return;
+        }
+
+        if (datos?.estado === "ACTIVO" && datos?.token) {
+          setResultado(datos);
+        } else if (datos?.estado === "ACTIVO_SIN_TOKEN_RECUPERABLE") {
+          setMensaje({
+            tipo: "error",
+            texto:
+              "Existe un código QR activo generado anteriormente, pero no es posible recuperar su token. Espera a que venza para generar otro."
+          });
+        }
+      } catch (error) {
+        if (activo) {
+          setMensaje({
+            tipo: "error",
+            texto: obtenerMensajeErrorQr(error)
+          });
+        }
+      } finally {
+        if (activo) {
+          setConsultandoQr(false);
+        }
+      }
+    };
+
+    cargarQrActivo();
+
+    return () => {
+      activo = false;
+    };
+  }, [idMateria, versionConsulta]);
+
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
   };
+
+  const fechaVencimiento = resultado?.fechaExpiracion
+    ? new Date(resultado.fechaExpiracion)
+    : null;
+
+  const fechaValida =
+    fechaVencimiento &&
+    !Number.isNaN(fechaVencimiento.getTime());
+
+  const qrVigente =
+    Boolean(resultado?.token) &&
+    Boolean(fechaValida) &&
+    fechaVencimiento.getTime() > ahora;
 
   const generarCodigo = async (event) => {
     event.preventDefault();
@@ -84,9 +160,21 @@ function InscripcionQr() {
       return;
     }
 
+    if (qrVigente) {
+      mostrarMensaje(
+        "error",
+        "Esta materia ya tiene un código QR activo. Puedes utilizar el código que aparece en pantalla hasta su vencimiento."
+      );
+      return;
+    }
+
+    if (generando || consultandoQr) {
+      return;
+    }
+
     setGenerando(true);
-    setResultado(null);
     setCopiado(false);
+    setMensaje(null);
 
     try {
       const datos = await generarQrInscripcion(materiaId);
@@ -104,17 +192,23 @@ function InscripcionQr() {
         "El código de inscripción se generó correctamente."
       );
     } catch (error) {
+      const estado = error?.response?.status;
+
       mostrarMensaje(
         "error",
-        obtenerMensajeErrorQr(error)
+        obtenerMensajeErrorQr(error, "generar")
       );
+
+      if (estado === 409) {
+        setVersionConsulta((valor) => valor + 1);
+      }
     } finally {
       setGenerando(false);
     }
   };
 
   const copiarToken = async () => {
-    if (!resultado?.token) {
+    if (!resultado?.token || !qrVigente) {
       return;
     }
 
@@ -133,17 +227,9 @@ function InscripcionQr() {
     (materia) => String(materia.idMateria) === idMateria
   );
 
-  const enlaceInscripcion = resultado?.token
+  const enlaceInscripcion = qrVigente
     ? `${window.location.origin}/inscripcion-qr/inscribir?token=${encodeURIComponent(resultado.token)}`
     : "";
-
-  const fechaVencimiento = resultado?.fechaExpiracion
-    ? new Date(resultado.fechaExpiracion)
-    : null;
-
-  const fechaValida =
-    fechaVencimiento &&
-    !Number.isNaN(fechaVencimiento.getTime());
 
   return (
     <main className="hu12-pagina">
@@ -185,7 +271,11 @@ function InscripcionQr() {
               setResultado(null);
               setCopiado(false);
             }}
-            disabled={cargandoMaterias || generando || materias.length === 0}
+            disabled={
+              cargandoMaterias ||
+              generando ||
+              materias.length === 0
+            }
             required
           >
             <option value="">
@@ -202,7 +292,9 @@ function InscripcionQr() {
                 value={materia.idMateria}
               >
                 {materia.nombreAsignatura}
-                {materia.grupo ? ` - Grupo ${materia.grupo}` : ""}
+                {materia.grupo
+                  ? ` - Grupo ${materia.grupo}`
+                  : ""}
               </option>
             ))}
           </select>
@@ -227,11 +319,29 @@ function InscripcionQr() {
           {materiaSeleccionada && (
             <p className="hu12-ayuda">
               <FiInfo />
-              Generarás un QR para
-              {" "}<strong>{materiaSeleccionada.nombreAsignatura}</strong>
+              {qrVigente
+                ? "Código QR activo para "
+                : "Generarás un QR para "}
+              <strong>
+                {materiaSeleccionada.nombreAsignatura}
+              </strong>
               {materiaSeleccionada.grupo
                 ? `, grupo ${materiaSeleccionada.grupo}.`
                 : "."}
+            </p>
+          )}
+
+          {consultandoQr && (
+            <p className="hu12-ayuda">
+              <FiRefreshCw />
+              Consultando código QR activo...
+            </p>
+          )}
+
+          {qrVigente && (
+            <p className="hu12-ayuda">
+              <FiCheckCircle />
+              Esta materia ya tiene un código QR vigente.
             </p>
           )}
 
@@ -240,22 +350,33 @@ function InscripcionQr() {
             className="hu12-boton-principal"
             disabled={
               cargandoMaterias ||
+              consultandoQr ||
               generando ||
+              qrVigente ||
               !idMateria ||
               materias.length === 0
             }
           >
-            <FiRefreshCw />
-            {generando ? "Generando..." : "Generar código"}
+            {qrVigente
+              ? <FiCheckCircle />
+              : <FiRefreshCw />}
+
+            {generando
+              ? "Generando..."
+              : consultandoQr
+                ? "Consultando..."
+                : qrVigente
+                  ? "Código QR activo"
+                  : "Generar código"}
           </button>
         </form>
       </section>
 
-      {resultado && (
+      {qrVigente && (
         <section className="hu12-tarjeta">
           <div className="hu12-resultado-titulo">
             <FiCheckCircle />
-            <h2>Código de inscripción generado</h2>
+            <h2>Código de inscripción activo</h2>
           </div>
 
           <div className="hu12-codigo-visual">
@@ -293,6 +414,20 @@ function InscripcionQr() {
             {fechaValida
               ? `Vence el ${fechaVencimiento.toLocaleString("es-BO")}`
               : "No se pudo determinar la fecha de vencimiento."}
+          </p>
+        </section>
+      )}
+
+      {resultado && !qrVigente && (
+        <section className="hu12-tarjeta">
+          <div className="hu12-resultado-titulo">
+            <FiClock />
+            <h2>Código QR vencido</h2>
+          </div>
+
+          <p className="hu12-ayuda">
+            El código de inscripción ha vencido.
+            Puedes generar uno nuevo.
           </p>
         </section>
       )}
