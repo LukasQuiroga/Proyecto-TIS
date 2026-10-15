@@ -1,11 +1,13 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Html5Qrcode } from "html5-qrcode";
 
 import {
   FiCheckCircle,
   FiInfo,
   FiBookOpen,
+  FiCamera,
   FiX
 } from "react-icons/fi";
 
@@ -19,163 +21,73 @@ import { useAuth } from "../../context/useAuth";
 
 import "./InscripcionQr.css";
 
+function obtenerToken(valor) {
+  if (typeof valor !== "string") {
+    return "";
+  }
+
+  const codigo = valor.trim();
+
+  if (!codigo) {
+    return "";
+  }
+
+  try {
+    const url = new URL(codigo);
+
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.pathname !== "/inscripcion-qr/inscribir"
+    ) {
+      return "";
+    }
+
+    return url.searchParams.get("token")?.trim() || "";
+  } catch {
+    return codigo;
+  }
+}
+
+function obtenerFechaFormateada(fecha) {
+  if (!fecha) {
+    return "No disponible";
+  }
+
+  const valor = new Date(fecha);
+
+  if (Number.isNaN(valor.getTime())) {
+    return "No disponible";
+  }
+
+  return valor.toLocaleString("es-BO", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+}
+
 function InscripcionEstudianteQr() {
   const [searchParams] = useSearchParams();
   const { usuario } = useAuth();
 
   const tokenUrl = searchParams.get("token") || "";
+  const esEstudiante = usuario?.nombreRol === "ESTUDIANTE";
 
   const [tokenManual, setTokenManual] = useState("");
   const [procesando, setProcesando] = useState(false);
   const [vistaPrevia, setVistaPrevia] = useState(null);
   const [resultado, setResultado] = useState(null);
   const [mensaje, setMensaje] = useState(null);
+  const [camaraAbierta, setCamaraAbierta] = useState(false);
 
   const solicitudActual = useRef(0);
+  const lecturaRealizada = useRef(false);
 
-  const esEstudiante =
-    usuario?.nombreRol === "ESTUDIANTE";
-
-  const obtenerToken = (valor) => {
-    if (typeof valor !== "string") {
-      return "";
-    }
-
-    const codigo = valor.trim();
-
-    if (!codigo) {
-      return "";
-    }
-
-    try {
-      const url = new URL(codigo);
-
-      if (
-        !["http:", "https:"].includes(url.protocol) ||
-        url.pathname !== "/inscripcion-qr/inscribir"
-      ) {
-        return "";
-      }
-
-      return url.searchParams.get("token")?.trim() || "";
-    } catch {
-      return codigo;
-    }
-  };
-
-  const obtenerFechaFormateada = (fecha) => {
-    if (!fecha) {
-      return "No disponible";
-    }
-
-    const valor = new Date(fecha);
-
-    if (Number.isNaN(valor.getTime())) {
-      return "No disponible";
-    }
-
-    return valor.toLocaleString("es-BO", {
-      dateStyle: "medium",
-      timeStyle: "short"
-    });
-  };
-
-  useEffect(() => {
-    const numeroSolicitud = ++solicitudActual.current;
-
-    setVistaPrevia(null);
-    setResultado(null);
-    setMensaje(null);
-    setProcesando(false);
-
-    if (!tokenUrl || !esEstudiante) {
-      return;
-    }
-
-    const token = obtenerToken(tokenUrl);
-
-    if (!token) {
-      setMensaje({
-        tipo: "error",
-        texto: "El enlace de inscripción no contiene un código válido."
-      });
-      return;
-    }
-
-    const cargarVistaPrevia = async () => {
-      setProcesando(true);
-
-      try {
-        const datos = await validarQrInscripcion(token);
-
-        if (numeroSolicitud !== solicitudActual.current) {
-          return;
-        }
-
-        setVistaPrevia({
-          token,
-          datos
-        });
-      } catch (error) {
-        if (numeroSolicitud !== solicitudActual.current) {
-          return;
-        }
-
-        setMensaje({
-          tipo: "error",
-          texto: obtenerMensajeErrorQr(error, "validar")
-        });
-      } finally {
-        if (numeroSolicitud === solicitudActual.current) {
-          setProcesando(false);
-        }
-      }
-    };
-
-    cargarVistaPrevia();
-
-    return () => {
-      solicitudActual.current++;
-    };
-  }, [tokenUrl, esEstudiante]);
-
-  const cambiarTokenManual = (event) => {
-    solicitudActual.current++;
-
-    setTokenManual(event.target.value);
-    setVistaPrevia(null);
-    setResultado(null);
-    setMensaje(null);
-    setProcesando(false);
-  };
-
-  const validarCodigoManual = async () => {
-    if (procesando || resultado !== null) {
-      return;
-    }
-
-    if (!esEstudiante) {
-      setMensaje({
-        tipo: "error",
-        texto: "Solo los estudiantes pueden inscribirse mediante QR."
-      });
-      return;
-    }
-
-    const token = obtenerToken(tokenManual);
-
-    if (!token) {
-      setMensaje({
-        tipo: "error",
-        texto: "Ingresa un código o enlace de inscripción válido."
-      });
-      return;
-    }
-
+  const validarToken = useCallback(async (token) => {
     const numeroSolicitud = ++solicitudActual.current;
 
     setProcesando(true);
     setVistaPrevia(null);
+    setResultado(null);
     setMensaje(null);
 
     try {
@@ -203,10 +115,196 @@ function InscripcionEstudianteQr() {
         setProcesando(false);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    const numeroSolicitud = ++solicitudActual.current;
+
+    if (!tokenUrl || !esEstudiante) {
+      return () => {
+        if (numeroSolicitud === solicitudActual.current) {
+          solicitudActual.current++;
+        }
+      };
+    }
+
+    const token = obtenerToken(tokenUrl);
+
+    if (!token) {
+      setMensaje({
+        tipo: "error",
+        texto: "El enlace no contiene un código QR válido."
+      });
+    } else {
+      validarToken(token);
+    }
+
+    return () => {
+      solicitudActual.current++;
+    };
+  }, [tokenUrl, esEstudiante, validarToken]);
+
+  useEffect(() => {
+    if (!camaraAbierta) {
+      return;
+    }
+
+    let cancelado = false;
+    let scanner = null;
+    let iniciado = false;
+
+    const iniciarCamara = async () => {
+      try {
+        scanner = new Html5Qrcode("hu12-lector-qr", {
+          verbose: false
+        });
+
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10
+          },
+          (textoEscaneado) => {
+            if (
+              cancelado ||
+              lecturaRealizada.current
+            ) {
+              return;
+            }
+
+            lecturaRealizada.current = true;
+
+            const token = obtenerToken(textoEscaneado);
+
+            setCamaraAbierta(false);
+
+            if (!token) {
+              setMensaje({
+                tipo: "error",
+                texto: "El QR escaneado no contiene un enlace de inscripción válido."
+              });
+              return;
+            }
+
+            setTokenManual(token);
+            validarToken(token);
+          },
+          () => {}
+        );
+
+        iniciado = true;
+
+        if (cancelado) {
+          await scanner.stop();
+          iniciado = false;
+          await scanner.clear();
+        }
+      } catch (error) {
+        if (!cancelado) {
+          console.error("ERROR CAMARA QR:", error);
+
+          setCamaraAbierta(false);
+          setMensaje({
+            tipo: "error",
+            texto:
+              "No se pudo abrir la cámara. Verifica los permisos del navegador y utiliza localhost o HTTPS."
+          });
+        }
+      }
+    };
+
+    iniciarCamara();
+
+    return () => {
+      cancelado = true;
+
+      if (scanner && iniciado) {
+        scanner.stop()
+          .catch(() => {})
+          .finally(() => {
+            scanner.clear().catch(() => {});
+          });
+      }
+    };
+  }, [camaraAbierta, validarToken]);
+
+  useEffect(() => {
+    return () => {
+      solicitudActual.current++;
+    };
+  }, []);
+
+  const cambiarTokenManual = (event) => {
+    if (procesando || resultado !== null) {
+      return;
+    }
+
+    solicitudActual.current++;
+
+    setTokenManual(event.target.value);
+    setVistaPrevia(null);
+    setResultado(null);
+    setMensaje(null);
+  };
+
+  const validarCodigoManual = async () => {
+    if (
+      procesando ||
+      resultado !== null ||
+      camaraAbierta
+    ) {
+      return;
+    }
+
+    if (!esEstudiante) {
+      setMensaje({
+        tipo: "error",
+        texto: "Solo los estudiantes pueden inscribirse mediante QR."
+      });
+      return;
+    }
+
+    const token = obtenerToken(tokenManual);
+
+    if (!token) {
+      setMensaje({
+        tipo: "error",
+        texto: "Ingresa un código o enlace de inscripción válido."
+      });
+      return;
+    }
+
+    await validarToken(token);
+  };
+
+  const abrirCamara = () => {
+    if (
+      procesando ||
+      resultado !== null ||
+      !esEstudiante
+    ) {
+      return;
+    }
+
+    solicitudActual.current++;
+
+    lecturaRealizada.current = false;
+
+    setVistaPrevia(null);
+    setMensaje(null);
+    setCamaraAbierta(true);
+  };
+
+  const cerrarCamara = () => {
+    setCamaraAbierta(false);
   };
 
   const confirmarInscripcion = async () => {
-    if (procesando || resultado !== null) {
+    if (
+      procesando ||
+      resultado !== null ||
+      camaraAbierta
+    ) {
       return;
     }
 
@@ -311,7 +409,11 @@ function InscripcionEstudianteQr() {
               placeholder="Pega el código proporcionado por tu docente"
               value={tokenManual}
               onChange={cambiarTokenManual}
-              disabled={resultado !== null}
+              disabled={
+                procesando ||
+                resultado !== null ||
+                camaraAbierta
+              }
             />
 
             <div className="hu12-acciones-estudiante">
@@ -323,17 +425,61 @@ function InscripcionEstudianteQr() {
                   procesando ||
                   !esEstudiante ||
                   resultado !== null ||
+                  camaraAbierta ||
                   !tokenManual.trim()
                 }
               >
                 <FiCheckCircle />
 
-                {procesando
-                  ? "Validando código..."
-                  : "Validar código QR"}
+                Validar código QR
+              </button>
+
+              <button
+                type="button"
+                className="hu12-boton-secundario"
+                onClick={abrirCamara}
+                disabled={
+                  procesando ||
+                  !esEstudiante ||
+                  resultado !== null ||
+                  camaraAbierta
+                }
+              >
+                <FiCamera /> Escanear con cámara
               </button>
             </div>
           </>
+        )}
+
+        {camaraAbierta && (
+          <div className="hu12-lector-contenedor">
+            <h3>Escanear código QR</h3>
+
+            <p className="hu12-ayuda">
+              <FiInfo />
+              Apunta la cámara hacia el código QR
+              proporcionado por el docente.
+            </p>
+
+            <div
+              id="hu12-lector-qr"
+              style={{
+                width: "100%",
+                maxWidth: "420px",
+                margin: "16px auto"
+              }}
+            />
+
+            <div className="hu12-acciones-estudiante">
+              <button
+                type="button"
+                className="hu12-boton-secundario"
+                onClick={cerrarCamara}
+              >
+                <FiX /> Cerrar cámara
+              </button>
+            </div>
+          </div>
         )}
 
         <p className="hu12-ayuda">
@@ -394,7 +540,11 @@ function InscripcionEstudianteQr() {
                 type="button"
                 className="hu12-boton-principal"
                 onClick={confirmarInscripcion}
-                disabled={procesando || !esEstudiante}
+                disabled={
+                  procesando ||
+                  !esEstudiante ||
+                  camaraAbierta
+                }
               >
                 <FiCheckCircle />
 
