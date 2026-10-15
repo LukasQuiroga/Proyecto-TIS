@@ -112,6 +112,26 @@ public class InscripcionQrControlador {
         return ResponseEntity.ok(materias);
     }
 
+  @GetMapping("/materias/{idMateria}/activo")
+    public ResponseEntity<QrInscripcionServicio.ResultadoConsultaQr>
+    consultarQrActivo(
+        @PathVariable Long idMateria,
+        Authentication authentication
+     ) {
+          Long idDocente = obtenerIdUsuario(authentication);
+
+         var resultado = qrServicio.consultarQrActivo(
+            idMateria,
+            idDocente
+       );
+
+         if (resultado == null) {
+           return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(resultado);
+  }
+
     @PostMapping("/materias/{idMateria}/generar")
     public ResponseEntity<QrInscripcionServicio.ResultadoGeneracionQr>
     generarQr(

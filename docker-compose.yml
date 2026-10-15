@@ -1,3 +1,4 @@
+
 services:
   backend:
     build:
@@ -15,6 +16,7 @@ services:
       SERVER_PORT: 8080
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       JWT_SECRET: ${JWT_SECRET}
+      QR_ENCRYPTION_KEY: ${QR_ENCRYPTION_KEY}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
 
