@@ -26,7 +26,10 @@ export const obtenerAsignaturasParaExamen = () => {
   return api.get("/usuarios/materias");
 };
 
-export const obtenerMensajeErrorExamen = (error) => {
+export const obtenerMensajeErrorExamen = (
+  error,
+  mensajePredeterminado = "No se pudieron cargar los exámenes. Intenta nuevamente.",
+) => {
   if (error?.response?.status === 401) {
     return "Tu sesión ha expirado. Inicia sesión nuevamente.";
   }
@@ -55,5 +58,5 @@ export const obtenerMensajeErrorExamen = (error) => {
     return mensajeBackend.message;
   }
 
-  return "No se pudieron cargar los exámenes. Intenta nuevamente.";
+  return mensajePredeterminado;
 };

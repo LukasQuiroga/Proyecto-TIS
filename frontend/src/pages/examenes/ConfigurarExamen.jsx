@@ -18,6 +18,14 @@ const CAMPOS_INICIALES = {
   duracionMinutos: "",
 };
 
+const obtenerMensajeErrorConfiguracion = (error, mensajePredeterminado) => {
+  if (error?.response?.status === 404) {
+    return "No se encontró el examen solicitado.";
+  }
+
+  return obtenerMensajeErrorExamen(error, mensajePredeterminado);
+};
+
 function ConfigurarExamen() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,7 +62,12 @@ function ConfigurarExamen() {
         });
       } catch (error) {
         if (activo) {
-          setErrorGeneral(obtenerMensajeErrorExamen(error));
+          setErrorGeneral(
+            obtenerMensajeErrorConfiguracion(
+              error,
+              "No se pudo cargar la información del examen. Intenta nuevamente.",
+            ),
+          );
         }
       } finally {
         if (activo) {
@@ -189,7 +202,12 @@ function ConfigurarExamen() {
 
       setExito("Configuración actualizada correctamente.");
     } catch (error) {
-      setErrorGeneral(obtenerMensajeErrorExamen(error));
+      setErrorGeneral(
+        obtenerMensajeErrorConfiguracion(
+          error,
+          "No se pudo guardar la configuración. Intenta nuevamente.",
+        ),
+      );
     } finally {
       setGuardando(false);
     }
