@@ -10,6 +10,7 @@ import {
   FiCopy,
   FiInfo,
   FiRefreshCw,
+  FiUsers,
   FiX
 } from "react-icons/fi";
 
@@ -19,6 +20,7 @@ import {
   consultarQrActivo,
   renovarQrInscripcion,
   desactivarQrInscripcion,
+  obtenerEstudiantesInscritosQr,
   obtenerMensajeErrorQr
 } from "../../services/inscripcionQrService";
 
@@ -39,6 +41,10 @@ function InscripcionQr() {
   const [desactivado, setDesactivado] = useState(false);
   const [ahora, setAhora] = useState(Date.now());
   const [versionConsulta, setVersionConsulta] = useState(0);
+  const [estudiantes, setEstudiantes] = useState([]);
+  const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
+  const [errorEstudiantes, setErrorEstudiantes] = useState("");
+  const [versionEstudiantes, setVersionEstudiantes] = useState(0);
 
   const bloqueoOperacion = useRef(false);
   const materiaActual = useRef("");
@@ -136,6 +142,67 @@ function InscripcionQr() {
       activo = false;
     };
   }, [idMateria, versionConsulta]);
+
+  useEffect(() => {
+    let activo = true;
+
+    setEstudiantes([]);
+    setErrorEstudiantes("");
+
+    if (!idMateria) {
+      setCargandoEstudiantes(false);
+      return () => {
+        activo = false;
+      };
+    }
+
+    setCargandoEstudiantes(true);
+
+    const cargarEstudiantes = async () => {
+      try {
+        const datos = await obtenerEstudiantesInscritosQr(Number(idMateria));
+
+        if (activo) {
+          setEstudiantes(datos);
+          setErrorEstudiantes("");
+        }
+      } catch (error) {
+        if (activo) {
+          setEstudiantes([]);
+          setErrorEstudiantes(
+            obtenerMensajeErrorQr(error, "listar-estudiantes")
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargandoEstudiantes(false);
+        }
+      }
+    };
+
+    cargarEstudiantes();
+
+    return () => {
+      activo = false;
+    };
+  }, [idMateria, versionEstudiantes]);
+
+  const actualizarEstudiantes = () => {
+    if (!idMateria || cargandoEstudiantes) {
+      return;
+    }
+    setVersionEstudiantes((valor) => valor + 1);
+  };
+
+  const formatearFechaInscripcion = (fecha) => {
+    if (!fecha) return "No disponible";
+    const fechaConvertida = new Date(fecha);
+    if (Number.isNaN(fechaConvertida.getTime())) return "No disponible";
+    return fechaConvertida.toLocaleString("es-BO", {
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+  };
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -620,6 +687,88 @@ function InscripcionQr() {
             El código ha vencido.
             Puedes generar uno nuevo.
           </p>
+        </section>
+      )}
+
+      {idMateria && (
+        <section className="hu12-tarjeta">
+          <div className="hu12-tarjeta-titulo">
+            <h2><FiUsers /> Estudiantes inscritos mediante QR</h2>
+            <p>
+              {materiaSeleccionada
+                ? `${materiaSeleccionada.nombreAsignatura}${materiaSeleccionada.grupo ? ` - Grupo ${materiaSeleccionada.grupo}` : ""}`
+                : "Materia seleccionada"}
+            </p>
+          </div>
+
+          <div className="hu12-acciones-estudiante" style={{ marginBottom: "16px" }}>
+            <button
+              type="button"
+              className="hu12-boton-secundario"
+              onClick={actualizarEstudiantes}
+              disabled={cargandoEstudiantes}
+            >
+              <FiRefreshCw />
+              {cargandoEstudiantes ? "Actualizando..." : "Actualizar lista"}
+            </button>
+          </div>
+
+          {cargandoEstudiantes && (
+            <p className="hu12-ayuda" role="status">
+              <FiRefreshCw /> Consultando estudiantes inscritos...
+            </p>
+          )}
+
+          {errorEstudiantes && (
+            <p className="hu12-error-materias" role="alert">
+              <FiInfo /> {errorEstudiantes}
+            </p>
+          )}
+
+          {!cargandoEstudiantes && !errorEstudiantes && (
+            estudiantes.length === 0 ? (
+              <p className="hu12-ayuda">
+                <FiInfo /> Todavía no hay estudiantes inscritos mediante QR en esta materia.
+              </p>
+            ) : (
+              <>
+                <p className="hu12-ayuda">
+                  Total de estudiantes inscritos mediante QR: <strong>{estudiantes.length}</strong>
+                </p>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                    <thead>
+                      <tr>
+                        {["Nombre completo", "Código SIS", "Correo", "Fecha de inscripción"].map((titulo) => (
+                          <th key={titulo} scope="col" style={{ padding: "12px", borderBottom: "1px solid #d1d5db" }}>
+                            {titulo}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {estudiantes.map((estudiante) => (
+                        <tr key={estudiante.idEstudiante}>
+                          <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+                            {[estudiante.nombre, estudiante.apellido].filter(Boolean).join(" ") || "Sin nombre"}
+                          </td>
+                          <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+                            {estudiante.codigoSis || "No registrado"}
+                          </td>
+                          <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+                            {estudiante.correo || "No registrado"}
+                          </td>
+                          <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+                            {formatearFechaInscripcion(estudiante.fechaInscripcion)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )
+          )}
         </section>
       )}
 

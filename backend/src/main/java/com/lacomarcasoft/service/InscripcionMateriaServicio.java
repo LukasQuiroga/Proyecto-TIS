@@ -22,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class InscripcionMateriaServicio {
@@ -63,6 +65,15 @@ public class InscripcionMateriaServicio {
             String grupo,
             OffsetDateTime fechaExpiracion,
             String estado
+    ) {}
+
+    public record EstudianteInscritoQr(
+            Long idEstudiante,
+            String nombre,
+            String apellido,
+            String correo,
+            String codigoSis,
+            OffsetDateTime fechaInscripcion
     ) {}
 
     private Usuario validarEstudiante(Long idEstudiante) {
@@ -239,5 +250,50 @@ public class InscripcionMateriaServicio {
                 materia.getGrupo(),
                 "Inscripcion realizada correctamente"
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<EstudianteInscritoQr> consultarEstudiantesInscritosQr(
+            Long idMateria,
+            Long idDocente
+    ) {
+        qrServicio.verificarAccesoDocenteMateria(
+                idMateria,
+                idDocente
+        );
+
+        return inscripcionRepositorio
+                .findByMateria_IdMateriaAndQrInscripcionIsNotNull(
+                        idMateria
+                )
+                .stream()
+                .map(inscripcion -> {
+                    Usuario estudiante = inscripcion.getEstudiante();
+
+                    return new EstudianteInscritoQr(
+                            estudiante.getIdUsuario(),
+                            estudiante.getNombre(),
+                            estudiante.getApellido(),
+                            estudiante.getCorreo(),
+                            estudiante.getCodigoSis(),
+                            inscripcion.getFechaInscripcion()
+                    );
+                })
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        EstudianteInscritoQr::apellido,
+                                        Comparator.nullsLast(
+                                                String.CASE_INSENSITIVE_ORDER
+                                        )
+                                )
+                                .thenComparing(
+                                        EstudianteInscritoQr::nombre,
+                                        Comparator.nullsLast(
+                                                String.CASE_INSENSITIVE_ORDER
+                                        )
+                                )
+                )
+                .toList();
     }
 }

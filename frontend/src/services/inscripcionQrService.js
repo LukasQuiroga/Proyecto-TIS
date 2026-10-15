@@ -67,6 +67,24 @@ export const desactivarQrInscripcion = async (idMateria) => {
   return respuesta.data;
 };
 
+export const obtenerEstudiantesInscritosQr = async (idMateria) => {
+  if (!idMateria) {
+    throw new Error("Debe seleccionar una materia");
+  }
+
+  const respuesta = await api.get(
+    `/inscripciones-qr/materias/${encodeURIComponent(idMateria)}/estudiantes`
+  );
+
+  if (!Array.isArray(respuesta.data)) {
+    throw new Error(
+      "No se pudo obtener la lista de estudiantes inscritos."
+    );
+  }
+
+  return respuesta.data;
+};
+
 export const validarQrInscripcion = async (token) => {
   if (typeof token !== "string" || !token.trim()) {
     throw new Error("El código QR es obligatorio");
@@ -105,6 +123,10 @@ export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
   }
 
   if (estado === 403) {
+    if (operacion === "listar-estudiantes") {
+      return "No tienes permiso para consultar los estudiantes de esta materia.";
+    }
+
     return "No tienes permisos para realizar esta operación.";
   }
 
@@ -145,6 +167,10 @@ export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
     mensajeBackend.message.trim()
   ) {
     return mensajeBackend.message;
+  }
+
+  if (estado === 404 && operacion === "listar-estudiantes") {
+    return "La materia seleccionada no existe.";
   }
 
   if (estado === 400) {

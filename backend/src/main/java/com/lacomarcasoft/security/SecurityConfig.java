@@ -72,6 +72,11 @@ public class SecurityConfig {
                 ).hasRole("DOCENTE")
 
                 .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/inscripciones-qr/materias/*/estudiantes"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
                     HttpMethod.POST,
                     "/api/inscripciones-qr/materias/*/renovar"
                 ).hasRole("DOCENTE")

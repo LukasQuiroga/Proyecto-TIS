@@ -156,7 +156,9 @@ public class QrInscripcionServicio {
             Long idDocente
     ) {
         Materia materia = validarMateriaDocente(
-                idMateria, idDocente, true
+                idMateria,
+                idDocente,
+                true
         );
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
@@ -177,13 +179,16 @@ public class QrInscripcionServicio {
             Long idDocente
     ) {
         Materia materia = validarMateriaDocente(
-                idMateria, idDocente, true
+                idMateria,
+                idDocente,
+                true
         );
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
         List<QrInscripcion> codigosActivos = buscarQrActivos(
-                idMateria, ahora
+                idMateria,
+                ahora
         );
 
         if (codigosActivos.isEmpty()) {
@@ -207,12 +212,17 @@ public class QrInscripcionServicio {
             Long idMateria,
             Long idDocente
     ) {
-        validarMateriaDocente(idMateria, idDocente, true);
+        validarMateriaDocente(
+                idMateria,
+                idDocente,
+                true
+        );
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
         List<QrInscripcion> codigosActivos = buscarQrActivos(
-                idMateria, ahora
+                idMateria,
+                ahora
         );
 
         if (codigosActivos.isEmpty()) {
@@ -241,12 +251,17 @@ public class QrInscripcionServicio {
             Long idMateria,
             Long idDocente
     ) {
-        validarMateriaDocente(idMateria, idDocente, false);
+        validarMateriaDocente(
+                idMateria,
+                idDocente,
+                false
+        );
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
         QrInscripcion qrActivo = buscarQrActivos(
-                idMateria, ahora
+                idMateria,
+                ahora
         ).stream().findFirst().orElse(null);
 
         if (qrActivo == null) {
@@ -279,6 +294,18 @@ public class QrInscripcionServicio {
                 token,
                 qrActivo.getFechaExpiracion(),
                 "ACTIVO"
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public void verificarAccesoDocenteMateria(
+            Long idMateria,
+            Long idDocente
+    ) {
+        validarMateriaDocente(
+                idMateria,
+                idDocente,
+                false
         );
     }
 
