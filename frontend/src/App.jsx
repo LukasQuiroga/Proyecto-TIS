@@ -33,6 +33,7 @@ import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExame
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
+import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
 
 function App() {
   return (
@@ -199,6 +200,12 @@ function App() {
                   <ConfigurarExamen />
                 </ProtectedPermission>
               }
+            />
+
+            {/* HABILITACIONES */}
+            <Route
+              path="/habilitaciones"
+              element={<Habilitaciones />}
             />
 
             {/* AUDITORIA */}

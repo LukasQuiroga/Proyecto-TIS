@@ -12,6 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.lacomarcasoft.dto.response.GrupoAsignaturaRespuesta;
+import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.repository.MateriaRepositorio;
+import com.lacomarcasoft.dto.response.DocenteRespuesta;
+import com.lacomarcasoft.repository.UsuarioRepositorio;
+import com.lacomarcasoft.modelo.Materia;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,13 +29,19 @@ public class AsignaturaServicio {
 
     private final AsignaturaRepositorio asignaturaRepositorio;
     private final AsignaturaCarreraRepositorio asignaturaCarreraRepositorio;
+    private final MateriaRepositorio materiaRepositorio;
+    private final UsuarioRepositorio usuarioRepositorio;
 
     public AsignaturaServicio(
             AsignaturaRepositorio asignaturaRepositorio,
-            AsignaturaCarreraRepositorio asignaturaCarreraRepositorio
+            AsignaturaCarreraRepositorio asignaturaCarreraRepositorio,
+            MateriaRepositorio materiaRepositorio,
+            UsuarioRepositorio usuarioRepositorio
     ) {
         this.asignaturaRepositorio = asignaturaRepositorio;
         this.asignaturaCarreraRepositorio = asignaturaCarreraRepositorio;
+        this.materiaRepositorio = materiaRepositorio;
+        this.usuarioRepositorio = usuarioRepositorio;
     }
 
     @Transactional
@@ -89,6 +101,43 @@ public class AsignaturaServicio {
                 solicitud.carreras()
         );
 
+        Long idDocente = solicitud.idDocente();
+
+        if (idDocente == null || idDocente <= 0) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Debe seleccionar un docente válido"
+        );
+        }
+
+        Usuario docente = usuarioRepositorio.findById(idDocente)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "El docente seleccionado no existe"
+                ));
+
+        if (!Boolean.TRUE.equals(docente.getActivo())
+                || docente.getRol() == null
+                || !"DOCENTE".equalsIgnoreCase(
+                        docente.getRol().getNombreRol()
+                )) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "El usuario seleccionado no es un docente activo"
+        );
+        }
+
+        String grupo = solicitud.grupo() == null
+                ? ""
+                : solicitud.grupo().trim().toUpperCase(Locale.ROOT);
+
+        if (!grupo.matches("[A-Z0-9]{1,20}")) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "El grupo debe contener entre 1 y 20 letras o números, sin espacios"
+        );
+        }
+
         if (asignaturaRepositorio.existeCodigo(codigo)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -137,6 +186,14 @@ public class AsignaturaServicio {
         }
 
         asignaturaCarreraRepositorio.saveAll(relaciones);
+
+        Materia materia = new Materia();
+
+        materia.setAsignatura(guardada);
+        materia.setDocente(docente);
+        materia.setGrupo(grupo);
+
+        materiaRepositorio.save(materia);
 
         return new AsignaturaRespuesta(
                 guardada.getIdAsignatura(),
@@ -208,6 +265,54 @@ public class AsignaturaServicio {
                 asignatura.getDescripcion(),
                 carreras
         );
+    }
+
+    @Transactional(readOnly = true)
+        public List<DocenteRespuesta> listarDocentesActivos() {
+
+        return usuarioRepositorio
+                .listarDocentesActivos()
+                .stream()
+                .map(docente -> new DocenteRespuesta(
+                        docente.getIdUsuario(),
+                        (
+                                docente.getNombre() + " " +
+                                docente.getApellido()
+                        ).trim()
+                ))
+                .toList();
+        }
+
+    @Transactional(readOnly = true)
+        public List<GrupoAsignaturaRespuesta> listarGrupos(
+                Long idAsignatura
+        ) {
+        if (!asignaturaRepositorio.existsById(idAsignatura)) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Asignatura no encontrada"
+                );
+        }
+
+        return materiaRepositorio
+                .listarPorAsignatura(idAsignatura)
+                .stream()
+                .map(materia -> {
+                        Usuario docente = materia.getDocente();
+
+                        String nombreCompleto = (
+                                docente.getNombre() + " " +
+                                docente.getApellido()
+                        ).trim();
+
+                        return new GrupoAsignaturaRespuesta(
+                                materia.getIdMateria(),
+                                materia.getGrupo(),
+                                docente.getIdUsuario(),
+                                nombreCompleto
+                        );
+                })
+                .toList();
     }
 
     private String limpiar(String valor) {
