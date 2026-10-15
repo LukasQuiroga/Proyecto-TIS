@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -39,6 +40,34 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(
+                    (request, response, authException) -> {
+                        response.setStatus(
+                            HttpStatus.UNAUTHORIZED.value()
+                        );
+                        response.setContentType(
+                            "application/json;charset=UTF-8"
+                        );
+                        response.getWriter().write(
+                            "{\"message\":\"Debe iniciar sesion o renovar su sesion\"}"
+                        );
+                    }
+                )
+                .accessDeniedHandler(
+                    (request, response, accessDeniedException) -> {
+                        response.setStatus(
+                            HttpStatus.FORBIDDEN.value()
+                        );
+                        response.setContentType(
+                            "application/json;charset=UTF-8"
+                        );
+                        response.getWriter().write(
+                            "{\"message\":\"No tiene permisos para realizar esta operacion\"}"
+                        );
+                    }
+                )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(

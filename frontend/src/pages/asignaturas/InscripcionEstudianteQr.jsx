@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 
 import {
@@ -67,6 +67,7 @@ function obtenerFechaFormateada(fecha) {
 
 function InscripcionEstudianteQr() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { usuario } = useAuth();
 
   const tokenUrl = searchParams.get("token") || "";
@@ -81,6 +82,16 @@ function InscripcionEstudianteQr() {
 
   const solicitudActual = useRef(0);
   const lecturaRealizada = useRef(false);
+
+  const abrirEnlaceInscripcion = useCallback((token) => {
+    navigate(
+      {
+        pathname: "/inscripcion-qr/inscribir",
+        search: `?token=${encodeURIComponent(token)}`
+      },
+      { replace: true }
+    );
+  }, [navigate]);
 
   const validarToken = useCallback(async (token) => {
     const numeroSolicitud = ++solicitudActual.current;
@@ -127,6 +138,10 @@ function InscripcionEstudianteQr() {
         }
       };
     }
+
+    setVistaPrevia(null);
+    setResultado(null);
+    setMensaje(null);
 
     const token = obtenerToken(tokenUrl);
 
@@ -187,7 +202,7 @@ function InscripcionEstudianteQr() {
             }
 
             setTokenManual(token);
-            validarToken(token);
+            abrirEnlaceInscripcion(token);
           },
           () => {}
         );
@@ -226,7 +241,7 @@ function InscripcionEstudianteQr() {
           });
       }
     };
-  }, [camaraAbierta, validarToken]);
+  }, [camaraAbierta, abrirEnlaceInscripcion]);
 
   useEffect(() => {
     return () => {
@@ -274,7 +289,7 @@ function InscripcionEstudianteQr() {
       return;
     }
 
-    await validarToken(token);
+    abrirEnlaceInscripcion(token);
   };
 
   const abrirCamara = () => {

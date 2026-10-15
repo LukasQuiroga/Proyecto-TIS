@@ -5,11 +5,76 @@ import {
     useLocation,
     useNavigate
 } from "react-router-dom";
+
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 import "./Login.css";
 import { login } from "../../services/authService";
 import { useAuth } from "../../context/useAuth";
+
+const CLAVE_RUTA_PENDIENTE = "hu12_ruta_pendiente";
+
+function obtenerDestinoSeguro(origen) {
+    if (
+        !origen ||
+        typeof origen.pathname !== "string" ||
+        !origen.pathname.startsWith("/") ||
+        origen.pathname.startsWith("//") ||
+        origen.pathname.startsWith("/\\") ||
+        origen.pathname === "/login"
+    ) {
+        return null;
+    }
+
+    return {
+        pathname: origen.pathname,
+        search:
+            typeof origen.search === "string" &&
+            origen.search.startsWith("?")
+                ? origen.search
+                : "",
+        hash:
+            typeof origen.hash === "string" &&
+            origen.hash.startsWith("#")
+                ? origen.hash
+                : ""
+    };
+}
+
+function obtenerRutaQrPendiente() {
+    const rutaGuardada = sessionStorage.getItem(
+        CLAVE_RUTA_PENDIENTE
+    );
+
+    if (!rutaGuardada) {
+        return null;
+    }
+
+    try {
+        const url = new URL(
+            rutaGuardada,
+            window.location.origin
+        );
+
+        if (
+            url.origin !== window.location.origin ||
+            url.pathname !== "/inscripcion-qr/inscribir" ||
+            !url.searchParams.get("token")?.trim()
+        ) {
+            sessionStorage.removeItem(CLAVE_RUTA_PENDIENTE);
+            return null;
+        }
+
+        return {
+            pathname: url.pathname,
+            search: url.search,
+            hash: url.hash
+        };
+    } catch {
+        sessionStorage.removeItem(CLAVE_RUTA_PENDIENTE);
+        return null;
+    }
+}
 
 function Login() {
     const navigate = useNavigate();
@@ -33,31 +98,17 @@ function Login() {
 
     const temporizador = useRef(null);
 
-    const origen = location.state?.from;
+    const [destino] = useState(() => {
+        const destinoProtectedRoute = obtenerDestinoSeguro(
+            location.state?.from
+        );
 
-    const destino = (() => {
-        if (
-            origen &&
-            typeof origen.pathname === "string" &&
-            origen.pathname.startsWith("/") &&
-            !origen.pathname.startsWith("//") &&
-            origen.pathname !== "/login"
-        ) {
-            return {
-                pathname: origen.pathname,
-                search:
-                    typeof origen.search === "string"
-                        ? origen.search
-                        : "",
-                hash:
-                    typeof origen.hash === "string"
-                        ? origen.hash
-                        : ""
-            };
+        if (destinoProtectedRoute) {
+            return destinoProtectedRoute;
         }
 
-        return "/";
-    })();
+        return obtenerRutaQrPendiente() || "/";
+    });
 
     useEffect(() => {
         return () => {
@@ -66,6 +117,18 @@ function Login() {
             }
         };
     }, []);
+
+    function limpiarRutaPendiente() {
+        sessionStorage.removeItem(CLAVE_RUTA_PENDIENTE);
+    }
+
+    function volverAlInicio() {
+        limpiarRutaPendiente();
+
+        navigate("/", {
+            replace: true
+        });
+    }
 
     if (usuario && token && !modal.mostrar) {
         return (
@@ -88,6 +151,7 @@ function Login() {
                 mostrar: true,
                 tipo: "error"
             });
+
             return;
         }
 
@@ -96,6 +160,7 @@ function Login() {
                 mostrar: true,
                 tipo: "conexion"
             });
+
             return;
         }
 
@@ -119,6 +184,8 @@ function Login() {
             });
 
             temporizador.current = setTimeout(() => {
+                limpiarRutaPendiente();
+
                 navigate(destino, {
                     replace: true
                 });
@@ -155,14 +222,18 @@ function Login() {
     return (
         <div className="login-page">
             <div className="login-card">
-                <h1>Acceso al sistema</h1>
+                <h1>
+                    Acceso al sistema
+                </h1>
 
                 <p className="login-description">
                     Ingresa tus credenciales para continuar.
                 </p>
 
                 <form onSubmit={manejarLogin}>
-                    <label>Correo electrónico</label>
+                    <label>
+                        Correo electrónico
+                    </label>
 
                     <div className="input-container">
                         <input
@@ -178,7 +249,9 @@ function Login() {
                         />
                     </div>
 
-                    <label>Contraseña</label>
+                    <label>
+                        Contraseña
+                    </label>
 
                     <div className="input-container">
                         <input
@@ -232,7 +305,7 @@ function Login() {
                     <button
                         type="button"
                         className="btn-volver"
-                        onClick={() => navigate("/")}
+                        onClick={volverAlInicio}
                     >
                         ← Volver al inicio
                     </button>
