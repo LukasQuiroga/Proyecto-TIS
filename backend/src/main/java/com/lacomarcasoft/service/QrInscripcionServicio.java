@@ -59,7 +59,8 @@ public class QrInscripcionServicio {
             );
         }
 
-        Materia materia = materiaRepositorio.findById(idMateria)
+        
+         Materia materia = materiaRepositorio.bloquearMateria(idMateria)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "La materia no existe"
@@ -82,6 +83,23 @@ public class QrInscripcionServicio {
                     HttpStatus.FORBIDDEN,
                     "El docente no se encuentra activo"
             );
+        }
+
+        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+
+        boolean existeQrActivo = qrRepositorio
+        .findByMateria_IdMateriaOrderByFechaCreacionDesc(idMateria)
+        .stream()
+        .anyMatch(qr ->
+                !qr.isRevocado() &&
+                qr.getFechaExpiracion().isAfter(ahora)
+         );
+
+        if (existeQrActivo) {
+                 throw new ResponseStatusException(
+                     HttpStatus.CONFLICT,
+                "La materia ya tiene un código QR activo."
+           );
         }
 
         byte[] bytesToken = new byte[TAMANO_TOKEN_BYTES];
