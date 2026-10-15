@@ -287,7 +287,7 @@ class ExamenServicioTest {
         );
 
         verifyNoInteractions(examenRepositorio);
-    }
+}
 
     @Test
     void debeActualizarConfiguracionExistente() {
@@ -329,8 +329,13 @@ class ExamenServicioTest {
                 respuesta.horaFin()
         );
 
+        assertEquals(
+                90,
+                respuesta.duracionMinutos()
+        );
+
         verify(examenRepositorio).save(examen);
-}
+    }
 
 @Test
 void debeAceptarDuracionMinimaDeUnMinuto() {
