@@ -1,63 +1,108 @@
-import {useState} from "react";
-import {Navigate,useNavigate} from "react-router-dom";
-import {FaEye,FaEyeSlash} from "react-icons/fa";
+
+import { useEffect, useRef, useState } from "react";
+import {
+    Navigate,
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
 import "./Login.css";
-import {login} from "../../services/authService";
-import {useAuth} from "../../context/useAuth";
+import { login } from "../../services/authService";
+import { useAuth } from "../../context/useAuth";
 
-function Login(){
-
-    const navigate=useNavigate();
+function Login() {
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const {
         usuario,
         token,
         iniciarSesion
-    }=useAuth();
+    } = useAuth();
 
-    const [correo,setCorreo]=useState("");
-    const [password,setPassword]=useState("");
-    const [mostrar,setMostrar]=useState(false);
-    const [cargando,setCargando]=useState(false);
+    const [correo, setCorreo] = useState("");
+    const [password, setPassword] = useState("");
+    const [mostrar, setMostrar] = useState(false);
+    const [cargando, setCargando] = useState(false);
 
-    const [modal,setModal]=useState({
-        mostrar:false,
-        tipo:""
+    const [modal, setModal] = useState({
+        mostrar: false,
+        tipo: ""
     });
 
-    if(usuario && token && !modal.mostrar){
-        return <Navigate to="/" replace/>;
+    const temporizador = useRef(null);
+
+    const origen = location.state?.from;
+
+    const destino = (() => {
+        if (
+            origen &&
+            typeof origen.pathname === "string" &&
+            origen.pathname.startsWith("/") &&
+            !origen.pathname.startsWith("//") &&
+            origen.pathname !== "/login"
+        ) {
+            return {
+                pathname: origen.pathname,
+                search:
+                    typeof origen.search === "string"
+                        ? origen.search
+                        : "",
+                hash:
+                    typeof origen.hash === "string"
+                        ? origen.hash
+                        : ""
+            };
+        }
+
+        return "/";
+    })();
+
+    useEffect(() => {
+        return () => {
+            if (temporizador.current !== null) {
+                clearTimeout(temporizador.current);
+            }
+        };
+    }, []);
+
+    if (usuario && token && !modal.mostrar) {
+        return (
+            <Navigate
+                to={destino}
+                replace
+            />
+        );
     }
 
-    async function manejarLogin(e){
-
+    async function manejarLogin(e) {
         e.preventDefault();
 
-        if(!correo || !password){
-
-            setModal({
-                mostrar:true,
-                tipo:"error"
-            });
-
+        if (cargando) {
             return;
         }
 
-        if(!navigator.onLine){
-
+        if (!correo || !password) {
             setModal({
-                mostrar:true,
-                tipo:"conexion"
+                mostrar: true,
+                tipo: "error"
             });
-
             return;
         }
 
-        try{
+        if (!navigator.onLine) {
+            setModal({
+                mostrar: true,
+                tipo: "conexion"
+            });
+            return;
+        }
 
+        try {
             setCargando(true);
 
-            const respuesta=await login(
+            const respuesta = await login(
                 correo,
                 password
             );
@@ -69,128 +114,102 @@ function Login(){
             );
 
             setModal({
-                mostrar:true,
-                tipo:"success"
+                mostrar: true,
+                tipo: "success"
             });
 
-            setTimeout(()=>{
-
-                navigate("/",{
-                    replace:true
+            temporizador.current = setTimeout(() => {
+                navigate(destino, {
+                    replace: true
                 });
+            }, 2000);
 
-            },2000);
-
-        }catch(error){
-
+        } catch (error) {
             console.error(
                 "ERROR LOGIN:",
                 error
             );
 
-            const errorConexion=
+            const errorConexion =
                 !navigator.onLine ||
-                error.code==="ERR_NETWORK" ||
-                error.code==="ECONNABORTED" ||
+                error.code === "ERR_NETWORK" ||
+                error.code === "ECONNABORTED" ||
                 !error.response;
 
             setModal({
-                mostrar:true,
-                tipo:errorConexion
-                    ?"conexion"
-                    :"error"
+                mostrar: true,
+                tipo: errorConexion
+                    ? "conexion"
+                    : "error"
             });
 
-        }finally{
-
+        } finally {
             setCargando(false);
         }
     }
 
-    const esError=
-        modal.tipo==="error";
+    const esError = modal.tipo === "error";
+    const esConexion = modal.tipo === "conexion";
+    const esExito = modal.tipo === "success";
 
-    const esConexion=
-        modal.tipo==="conexion";
-
-    const esExito=
-        modal.tipo==="success";
-
-    return(
-
+    return (
         <div className="login-page">
-
             <div className="login-card">
-
-                <h1>
-                    Acceso al sistema
-                </h1>
+                <h1>Acceso al sistema</h1>
 
                 <p className="login-description">
                     Ingresa tus credenciales para continuar.
                 </p>
 
                 <form onSubmit={manejarLogin}>
-
-                    <label>
-                        Correo electrónico
-                    </label>
+                    <label>Correo electrónico</label>
 
                     <div className="input-container">
-
                         <input
                             type="email"
                             value={correo}
                             maxLength={50}
                             placeholder="202001068@edu.est.umss"
-                            onChange={(e)=>
+                            onChange={(e) =>
                                 setCorreo(
-                                    e.target.value.slice(0,50)
+                                    e.target.value.slice(0, 50)
                                 )
                             }
                         />
-
                     </div>
 
-                    <label>
-                        Contraseña
-                    </label>
+                    <label>Contraseña</label>
 
                     <div className="input-container">
-
                         <input
-                            type={mostrar?"text":"password"}
+                            type={mostrar ? "text" : "password"}
                             value={password}
                             maxLength={20}
                             placeholder="Ingresa tu contraseña"
-                            onChange={(e)=>
+                            onChange={(e) =>
                                 setPassword(
-                                    e.target.value.slice(0,20)
+                                    e.target.value.slice(0, 20)
                                 )
                             }
                         />
 
                         <span
                             className="eye"
-                            onClick={()=>
+                            onClick={() =>
                                 setMostrar(!mostrar)
                             }
                         >
-                            {
-                                mostrar
-                                    ?<FaEyeSlash/>
-                                    :<FaEye/>
-                            }
+                            {mostrar
+                                ? <FaEyeSlash />
+                                : <FaEye />}
                         </span>
-
                     </div>
 
                     <div className="login-options">
-
                         <button
                             type="button"
                             className="forgot-password"
-                            onClick={()=>
+                            onClick={() =>
                                 navigate(
                                     "/recuperar-contrasena"
                                 )
@@ -198,7 +217,6 @@ function Login(){
                         >
                             ¿Olvidaste tu contraseña?
                         </button>
-
                     </div>
 
                     <button
@@ -206,94 +224,68 @@ function Login(){
                         className="btn-login"
                         disabled={cargando}
                     >
-                        {
-                            cargando
-                                ?"Procesando..."
-                                :"Iniciar sesión →"
-                        }
+                        {cargando
+                            ? "Procesando..."
+                            : "Iniciar sesión →"}
                     </button>
 
                     <button
                         type="button"
                         className="btn-volver"
-                        onClick={()=>
-                            navigate("/")
-                        }
+                        onClick={() => navigate("/")}
                     >
                         ← Volver al inicio
                     </button>
-
                 </form>
-
             </div>
 
-            {
-                modal.mostrar &&
-
+            {modal.mostrar && (
                 <div className="login-modal-fondo">
-
                     <div className="login-modal">
-
                         <div
                             className={
                                 esExito
-                                    ?"login-modal-icon login-modal-success"
-                                    :"login-modal-icon login-modal-error"
+                                    ? "login-modal-icon login-modal-success"
+                                    : "login-modal-icon login-modal-error"
                             }
                         >
-                            {
-                                esExito
-                                    ?"✓"
-                                    :"!"
-                            }
+                            {esExito ? "✓" : "!"}
                         </div>
 
                         <h2>
-                            {
-                                esConexion
-                                    ?"Sin conexión"
-                                    :esError
-                                        ?"Credenciales incorrectas"
-                                        :"Acceso exitoso"
-                            }
+                            {esConexion
+                                ? "Sin conexión"
+                                : esError
+                                    ? "Credenciales incorrectas"
+                                    : "Acceso exitoso"}
                         </h2>
 
                         <p>
-                            {
-                                esConexion
-                                    ?"No se pudo conectar con el sistema. Verifica tu conexión a Internet e intenta nuevamente."
-                                    :esError
-                                        ?"Verifica tu correo electrónico y contraseña e intenta nuevamente."
-                                        :"Bienvenido al sistema. Redirigiendo..."
-                            }
+                            {esConexion
+                                ? "No se pudo conectar con el sistema. Verifica tu conexión a Internet e intenta nuevamente."
+                                : esError
+                                    ? "Verifica tu correo electrónico y contraseña e intenta nuevamente."
+                                    : "Bienvenido al sistema. Redirigiendo..."}
                         </p>
 
-                        {
-                            !esExito
-                                ?
-
-                                <button
-                                    type="button"
-                                    onClick={()=>
-                                        setModal({
-                                            mostrar:false,
-                                            tipo:""
-                                        })
-                                    }
-                                >
-                                    Aceptar
-                                </button>
-
-                                :
-
-                                <div className="login-progreso"></div>
-                        }
-
+                        {!esExito ? (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setModal({
+                                        mostrar: false,
+                                        tipo: ""
+                                    })
+                                }
+                            >
+                                Aceptar
+                            </button>
+                        ) : (
+                            <div className="login-progreso" />
+                        )}
                     </div>
-
                 </div>
-            }
-
+            )}
         </div>
     );
 }
