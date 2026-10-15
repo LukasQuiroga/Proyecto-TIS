@@ -1,4 +1,3 @@
-
 package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.InscripcionQrSolicitud;
@@ -106,6 +105,18 @@ public class InscripcionQrControlador {
                                 materia.getGrupo()
                         ))
                         .toList();
+
+        return ResponseEntity.ok(materias);
+    }
+
+    @GetMapping("/materias/estudiante")
+    public ResponseEntity<List<InscripcionMateriaServicio.MateriaInscritaEstudiante>>
+    consultarMateriasInscritasEstudiante(Authentication authentication) {
+        Long idEstudiante = obtenerIdUsuario(authentication);
+
+        var materias = inscripcionServicio.consultarMateriasInscritasEstudiante(
+                idEstudiante
+        );
 
         return ResponseEntity.ok(materias);
     }

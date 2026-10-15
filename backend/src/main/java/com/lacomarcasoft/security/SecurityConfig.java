@@ -1,4 +1,3 @@
-
 package com.lacomarcasoft.security;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -89,6 +88,11 @@ public class SecurityConfig {
                     HttpMethod.GET,
                     "/api/inscripciones-qr/materias/docente"
                 ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/inscripciones-qr/materias/estudiante"
+                ).hasRole("ESTUDIANTE")
 
                 .requestMatchers(
                     HttpMethod.POST,

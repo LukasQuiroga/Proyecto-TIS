@@ -186,3 +186,18 @@ export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
 
   return error?.message || "No se pudo completar la operación.";
 };
+
+export const obtenerMateriasInscritasEstudianteQr = async () => {
+  const respuesta = await api.get(
+    "/inscripciones-qr/materias/estudiante"
+  );
+
+  if (!Array.isArray(respuesta.data)) {
+    throw new Error(
+      "No se pudo obtener la lista de materias inscritas del estudiante."
+    );
+  }
+
+  return respuesta.data;
+};
+

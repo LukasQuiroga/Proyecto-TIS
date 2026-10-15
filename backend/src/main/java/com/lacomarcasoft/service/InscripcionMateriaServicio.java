@@ -76,6 +76,13 @@ public class InscripcionMateriaServicio {
             OffsetDateTime fechaInscripcion
     ) {}
 
+    public record MateriaInscritaEstudiante(
+            Long idMateria,
+            String nombreAsignatura,
+            String grupo,
+            OffsetDateTime fechaInscripcion
+    ) {}
+
     private Usuario validarEstudiante(Long idEstudiante) {
         if (idEstudiante == null) {
             throw new ResponseStatusException(
@@ -250,6 +257,36 @@ public class InscripcionMateriaServicio {
                 materia.getGrupo(),
                 "Inscripcion realizada correctamente"
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MateriaInscritaEstudiante> consultarMateriasInscritasEstudiante(
+            Long idEstudiante
+    ) {
+        validarEstudiante(idEstudiante);
+
+        return inscripcionRepositorio.findByEstudiante_IdUsuario(idEstudiante)
+                .stream()
+                .map(inscripcion -> {
+                    Materia materia = inscripcion.getMateria();
+
+                    return new MateriaInscritaEstudiante(
+                            materia.getIdMateria(),
+                            materia.getAsignatura().getNombreAsignatura(),
+                            materia.getGrupo(),
+                            inscripcion.getFechaInscripcion()
+                    );
+                })
+                .sorted(
+                        Comparator.comparing(
+                                MateriaInscritaEstudiante::nombreAsignatura,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                        ).thenComparing(
+                                MateriaInscritaEstudiante::grupo,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                        )
+                )
+                .toList();
     }
 
     @Transactional(readOnly = true)
