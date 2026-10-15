@@ -83,6 +83,11 @@ public class SecurityConfig {
 
                 .requestMatchers(
                     HttpMethod.POST,
+                    "/api/inscripciones-qr/validar"
+                ).hasRole("ESTUDIANTE")
+
+                .requestMatchers(
+                    HttpMethod.POST,
                     "/api/inscripciones-qr/inscribir"
                 ).hasRole("ESTUDIANTE")
 

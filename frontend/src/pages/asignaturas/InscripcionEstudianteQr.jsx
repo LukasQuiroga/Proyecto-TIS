@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 
 import {
+  validarQrInscripcion,
   inscribirEstudianteConQr,
   obtenerMensajeErrorQr
 } from "../../services/inscripcionQrService";
@@ -26,33 +27,130 @@ function InscripcionEstudianteQr() {
 
   const [tokenManual, setTokenManual] = useState("");
   const [procesando, setProcesando] = useState(false);
+  const [vistaPrevia, setVistaPrevia] = useState(null);
   const [resultado, setResultado] = useState(null);
   const [mensaje, setMensaje] = useState(null);
 
-  const esEstudiante = usuario?.nombreRol === "ESTUDIANTE";
+  const solicitudActual = useRef(0);
 
-  const obtenerToken = () => {
-    const valor = tokenManual.trim() || tokenUrl.trim();
+  const esEstudiante =
+    usuario?.nombreRol === "ESTUDIANTE";
 
-    if (!valor) {
+  const obtenerToken = (valor) => {
+    if (typeof valor !== "string") {
+      return "";
+    }
+
+    const codigo = valor.trim();
+
+    if (!codigo) {
       return "";
     }
 
     try {
-      const url = new URL(valor);
+      const url = new URL(codigo);
 
-      if (url.pathname !== "/inscripcion-qr/inscribir") {
+      if (
+        !["http:", "https:"].includes(url.protocol) ||
+        url.pathname !== "/inscripcion-qr/inscribir"
+      ) {
         return "";
       }
 
       return url.searchParams.get("token")?.trim() || "";
     } catch {
-      return valor;
+      return codigo;
     }
   };
 
-  const confirmarInscripcion = async () => {
-    if (procesando) {
+  const obtenerFechaFormateada = (fecha) => {
+    if (!fecha) {
+      return "No disponible";
+    }
+
+    const valor = new Date(fecha);
+
+    if (Number.isNaN(valor.getTime())) {
+      return "No disponible";
+    }
+
+    return valor.toLocaleString("es-BO", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    });
+  };
+
+  useEffect(() => {
+    const numeroSolicitud = ++solicitudActual.current;
+
+    setVistaPrevia(null);
+    setResultado(null);
+    setMensaje(null);
+    setProcesando(false);
+
+    if (!tokenUrl || !esEstudiante) {
+      return;
+    }
+
+    const token = obtenerToken(tokenUrl);
+
+    if (!token) {
+      setMensaje({
+        tipo: "error",
+        texto: "El enlace de inscripción no contiene un código válido."
+      });
+      return;
+    }
+
+    const cargarVistaPrevia = async () => {
+      setProcesando(true);
+
+      try {
+        const datos = await validarQrInscripcion(token);
+
+        if (numeroSolicitud !== solicitudActual.current) {
+          return;
+        }
+
+        setVistaPrevia({
+          token,
+          datos
+        });
+      } catch (error) {
+        if (numeroSolicitud !== solicitudActual.current) {
+          return;
+        }
+
+        setMensaje({
+          tipo: "error",
+          texto: obtenerMensajeErrorQr(error, "validar")
+        });
+      } finally {
+        if (numeroSolicitud === solicitudActual.current) {
+          setProcesando(false);
+        }
+      }
+    };
+
+    cargarVistaPrevia();
+
+    return () => {
+      solicitudActual.current++;
+    };
+  }, [tokenUrl, esEstudiante]);
+
+  const cambiarTokenManual = (event) => {
+    solicitudActual.current++;
+
+    setTokenManual(event.target.value);
+    setVistaPrevia(null);
+    setResultado(null);
+    setMensaje(null);
+    setProcesando(false);
+  };
+
+  const validarCodigoManual = async () => {
+    if (procesando || resultado !== null) {
       return;
     }
 
@@ -64,22 +162,83 @@ function InscripcionEstudianteQr() {
       return;
     }
 
-    const token = obtenerToken();
+    const token = obtenerToken(tokenManual);
 
     if (!token) {
       setMensaje({
         tipo: "error",
-        texto: "Ingresa o escanea un código QR válido."
+        texto: "Ingresa un código o enlace de inscripción válido."
       });
       return;
     }
 
+    const numeroSolicitud = ++solicitudActual.current;
+
     setProcesando(true);
-    setResultado(null);
+    setVistaPrevia(null);
     setMensaje(null);
 
     try {
-      const datos = await inscribirEstudianteConQr(token);
+      const datos = await validarQrInscripcion(token);
+
+      if (numeroSolicitud !== solicitudActual.current) {
+        return;
+      }
+
+      setVistaPrevia({
+        token,
+        datos
+      });
+    } catch (error) {
+      if (numeroSolicitud !== solicitudActual.current) {
+        return;
+      }
+
+      setMensaje({
+        tipo: "error",
+        texto: obtenerMensajeErrorQr(error, "validar")
+      });
+    } finally {
+      if (numeroSolicitud === solicitudActual.current) {
+        setProcesando(false);
+      }
+    }
+  };
+
+  const confirmarInscripcion = async () => {
+    if (procesando || resultado !== null) {
+      return;
+    }
+
+    if (!esEstudiante) {
+      setMensaje({
+        tipo: "error",
+        texto: "Solo los estudiantes pueden inscribirse mediante QR."
+      });
+      return;
+    }
+
+    if (!vistaPrevia?.token) {
+      setMensaje({
+        tipo: "error",
+        texto: "Primero debes validar el código QR."
+      });
+      return;
+    }
+
+    const numeroSolicitud = ++solicitudActual.current;
+
+    setProcesando(true);
+    setMensaje(null);
+
+    try {
+      const datos = await inscribirEstudianteConQr(
+        vistaPrevia.token
+      );
+
+      if (numeroSolicitud !== solicitudActual.current) {
+        return;
+      }
 
       setResultado(datos || {});
 
@@ -88,12 +247,20 @@ function InscripcionEstudianteQr() {
         texto: "Te inscribiste correctamente en la materia."
       });
     } catch (error) {
+      if (numeroSolicitud !== solicitudActual.current) {
+        return;
+      }
+
+      setVistaPrevia(null);
+
       setMensaje({
         tipo: "error",
-        texto: obtenerMensajeErrorQr(error)
+        texto: obtenerMensajeErrorQr(error, "inscripcion")
       });
     } finally {
-      setProcesando(false);
+      if (numeroSolicitud === solicitudActual.current) {
+        setProcesando(false);
+      }
     }
   };
 
@@ -103,8 +270,8 @@ function InscripcionEstudianteQr() {
         <h1>Inscripción a materias mediante QR</h1>
 
         <p>
-          Confirma tu inscripción utilizando el código
-          proporcionado por tu docente.
+          Verifica los datos de la materia antes de
+          confirmar tu inscripción.
         </p>
       </header>
 
@@ -115,7 +282,7 @@ function InscripcionEstudianteQr() {
           </h2>
 
           <p>
-            Verifica tus datos antes de confirmar.
+            Consulta la información asociada al código QR.
           </p>
         </div>
 
@@ -130,7 +297,7 @@ function InscripcionEstudianteQr() {
           <p className="hu12-ayuda">
             <FiCheckCircle />
             Se detectó un enlace de inscripción.
-            Presiona el botón para continuar.
+            El sistema verificará automáticamente su validez.
           </p>
         ) : (
           <>
@@ -143,11 +310,29 @@ function InscripcionEstudianteQr() {
               type="text"
               placeholder="Pega el código proporcionado por tu docente"
               value={tokenManual}
-              onChange={(event) =>
-                setTokenManual(event.target.value)
-              }
-              disabled={procesando || resultado !== null}
+              onChange={cambiarTokenManual}
+              disabled={resultado !== null}
             />
+
+            <div className="hu12-acciones-estudiante">
+              <button
+                type="button"
+                className="hu12-boton-principal"
+                onClick={validarCodigoManual}
+                disabled={
+                  procesando ||
+                  !esEstudiante ||
+                  resultado !== null ||
+                  !tokenManual.trim()
+                }
+              >
+                <FiCheckCircle />
+
+                {procesando
+                  ? "Validando código..."
+                  : "Validar código QR"}
+              </button>
+            </div>
           </>
         )}
 
@@ -157,33 +342,87 @@ function InscripcionEstudianteQr() {
           inscribirte una vez en la misma materia.
         </p>
 
-        <div className="hu12-acciones-estudiante">
-          <button
-            type="button"
-            className="hu12-boton-principal"
-            onClick={confirmarInscripcion}
-            disabled={
-              procesando ||
-              !esEstudiante ||
-              resultado !== null
-            }
-          >
-            <FiCheckCircle />
+        {procesando && resultado === null && (
+          <p className="hu12-ayuda" role="status">
+            <FiInfo />
+            Procesando solicitud, por favor espera...
+          </p>
+        )}
 
-            {procesando
-              ? "Procesando..."
-              : resultado !== null
-                ? "Inscripción realizada"
-                : "Confirmar inscripción"}
-          </button>
+        {vistaPrevia !== null && resultado === null && (
+          <section className="hu12-tarjeta">
+            <div className="hu12-tarjeta-titulo">
+              <h2>
+                <FiBookOpen /> Datos de la materia
+              </h2>
 
-          <Link
-            to="/"
-            className="hu12-boton-secundario"
-          >
-            Cancelar
-          </Link>
-        </div>
+              <p>
+                Revisa la información antes de confirmar.
+              </p>
+            </div>
+
+            <p>
+              <strong>Materia:</strong>{" "}
+              {vistaPrevia.datos.nombreAsignatura}
+            </p>
+
+            <p>
+              <strong>Grupo:</strong>{" "}
+              {vistaPrevia.datos.grupo || "No asignado"}
+            </p>
+
+            <p>
+              <strong>Estado del QR:</strong>{" "}
+              {vistaPrevia.datos.estado}
+            </p>
+
+            <p>
+              <strong>Válido hasta:</strong>{" "}
+              {obtenerFechaFormateada(
+                vistaPrevia.datos.fechaExpiracion
+              )}
+            </p>
+
+            <p className="hu12-ayuda">
+              <FiInfo />
+              Tu inscripción solo se registrará cuando
+              presiones Confirmar inscripción.
+            </p>
+
+            <div className="hu12-acciones-estudiante">
+              <button
+                type="button"
+                className="hu12-boton-principal"
+                onClick={confirmarInscripcion}
+                disabled={procesando || !esEstudiante}
+              >
+                <FiCheckCircle />
+
+                {procesando
+                  ? "Inscribiendo..."
+                  : "Confirmar inscripción"}
+              </button>
+
+              <Link
+                to="/"
+                className="hu12-boton-secundario"
+              >
+                Cancelar
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {vistaPrevia === null && resultado === null && (
+          <div className="hu12-acciones-estudiante">
+            <Link
+              to="/"
+              className="hu12-boton-secundario"
+            >
+              Cancelar
+            </Link>
+          </div>
+        )}
       </section>
 
       {resultado !== null && (
@@ -193,14 +432,14 @@ function InscripcionEstudianteQr() {
             <h2>Inscripción registrada</h2>
           </div>
 
-          {resultado?.nombreAsignatura && (
+          {resultado.nombreAsignatura && (
             <p>
               <strong>Materia:</strong>{" "}
               {resultado.nombreAsignatura}
             </p>
           )}
 
-          {resultado?.grupo && (
+          {resultado.grupo && (
             <p>
               <strong>Grupo:</strong>{" "}
               {resultado.grupo}
@@ -210,6 +449,15 @@ function InscripcionEstudianteQr() {
           <p>
             <strong>Estado:</strong> Inscrito
           </p>
+
+          <div className="hu12-acciones-estudiante">
+            <Link
+              to="/"
+              className="hu12-boton-secundario"
+            >
+              Volver al inicio
+            </Link>
+          </div>
         </section>
       )}
 
@@ -245,7 +493,7 @@ function InscripcionEstudianteQr() {
             <h2 id="hu12-mensaje-titulo">
               {mensaje.tipo === "exito"
                 ? "Inscripción exitosa"
-                : "No se pudo inscribir"}
+                : "No se pudo completar la operación"}
             </h2>
 
             <p>{mensaje.texto}</p>

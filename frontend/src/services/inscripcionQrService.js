@@ -67,6 +67,21 @@ export const desactivarQrInscripcion = async (idMateria) => {
   return respuesta.data;
 };
 
+export const validarQrInscripcion = async (token) => {
+  if (typeof token !== "string" || !token.trim()) {
+    throw new Error("El código QR es obligatorio");
+  }
+
+  const respuesta = await api.post(
+    "/inscripciones-qr/validar",
+    {
+      token: token.trim(),
+    }
+  );
+
+  return respuesta.data;
+};
+
 export const inscribirEstudianteConQr = async (token) => {
   if (typeof token !== "string" || !token.trim()) {
     throw new Error("El código QR es obligatorio");
@@ -106,7 +121,7 @@ export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
       return "No existe un código QR activo para desactivar.";
     }
 
-    return "El estudiante ya está inscrito o existe un conflicto de inscripción.";
+    return "El estudiante ya está inscrito en esta materia o existe un conflicto de inscripción.";
   }
 
   const mensajeBackend = error?.response?.data;
@@ -133,7 +148,10 @@ export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
   }
 
   if (estado === 400) {
-    if (operacion === "inscripcion") {
+    if (
+      operacion === "inscripcion" ||
+      operacion === "validar"
+    ) {
       return "El código QR es inválido, ha expirado o fue desactivado. Solicita un código válido.";
     }
 

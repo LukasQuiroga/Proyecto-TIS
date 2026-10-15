@@ -43,7 +43,6 @@ public class InscripcionQrControlador {
 
         if (authentication == null ||
                 !authentication.isAuthenticated()) {
-
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "Debe iniciar sesion"
@@ -91,7 +90,6 @@ public class InscripcionQrControlador {
                 !"DOCENTE".equalsIgnoreCase(
                         docente.getRol().getNombreRol()
                 )) {
-
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Solo los docentes pueden consultar sus materias"
@@ -179,6 +177,22 @@ public class InscripcionQrControlador {
         var resultado = qrServicio.desactivarQr(
                 idMateria,
                 idDocente
+        );
+
+        return ResponseEntity.ok(resultado);
+    }
+
+    @PostMapping("/validar")
+    public ResponseEntity<InscripcionMateriaServicio.VistaPreviaInscripcion>
+    validarQr(
+            @Valid @RequestBody InscripcionQrSolicitud solicitud,
+            Authentication authentication
+    ) {
+        Long idEstudiante = obtenerIdUsuario(authentication);
+
+        var resultado = inscripcionServicio.consultarVistaPrevia(
+                solicitud.token(),
+                idEstudiante
         );
 
         return ResponseEntity.ok(resultado);

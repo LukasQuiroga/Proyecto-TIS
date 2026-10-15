@@ -57,19 +57,15 @@ public class InscripcionMateriaServicio {
             String mensaje
     ) {}
 
-    @Transactional
-    public ResultadoInscripcion inscribirEstudiante(
-            String token,
-            Long idEstudiante
-    ) {
+    public record VistaPreviaInscripcion(
+            Long idMateria,
+            String nombreAsignatura,
+            String grupo,
+            OffsetDateTime fechaExpiracion,
+            String estado
+    ) {}
 
-        if (token == null || token.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El codigo QR es obligatorio"
-            );
-        }
-
+    private Usuario validarEstudiante(Long idEstudiante) {
         if (idEstudiante == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -100,7 +96,21 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        String tokenHash = qrServicio.calcularHash(token);
+        return estudiante;
+    }
+
+    private QrInscripcion obtenerQr(
+            String token,
+            boolean bloquearMateria
+    ) {
+        if (token == null || token.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El codigo QR es obligatorio"
+            );
+        }
+
+        String tokenHash = qrServicio.calcularHash(token.trim());
 
         QrInscripcion qr = qrRepositorio.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -108,24 +118,25 @@ public class InscripcionMateriaServicio {
                         "El codigo QR no es valido"
                 ));
 
-        Materia materiaQr = qr.getMateria();
+        Materia materia = qr.getMateria();
 
-        if (materiaQr == null) {
+        if (materia == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "El QR no tiene una materia asociada"
             );
         }
 
-        Long idMateria = materiaQr.getIdMateria();
+        if (bloquearMateria) {
+            materiaRepositorio.bloquearMateria(
+                    materia.getIdMateria()
+            ).orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "La materia no existe"
+            ));
 
-        Materia materia = materiaRepositorio.bloquearMateria(idMateria)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "La materia no existe"
-                ));
-
-        entityManager.refresh(qr);
+            entityManager.refresh(qr);
+        }
 
         if (qr.isRevocado()) {
             throw new ResponseStatusException(
@@ -144,6 +155,13 @@ public class InscripcionMateriaServicio {
             );
         }
 
+        return qr;
+    }
+
+    private void validarInscripcionDuplicada(
+            Long idMateria,
+            Long idEstudiante
+    ) {
         if (inscripcionRepositorio
                 .existsByMateria_IdMateriaAndEstudiante_IdUsuario(
                         idMateria,
@@ -154,6 +172,45 @@ public class InscripcionMateriaServicio {
                     "El estudiante ya esta inscrito en esta materia"
             );
         }
+    }
+
+    @Transactional(readOnly = true)
+    public VistaPreviaInscripcion consultarVistaPrevia(
+            String token,
+            Long idEstudiante
+    ) {
+        validarEstudiante(idEstudiante);
+
+        QrInscripcion qr = obtenerQr(token, false);
+        Materia materia = qr.getMateria();
+
+        validarInscripcionDuplicada(
+                materia.getIdMateria(),
+                idEstudiante
+        );
+
+        return new VistaPreviaInscripcion(
+                materia.getIdMateria(),
+                materia.getAsignatura().getNombreAsignatura(),
+                materia.getGrupo(),
+                qr.getFechaExpiracion(),
+                "ACTIVO"
+        );
+    }
+
+    @Transactional
+    public ResultadoInscripcion inscribirEstudiante(
+            String token,
+            Long idEstudiante
+    ) {
+        Usuario estudiante = validarEstudiante(idEstudiante);
+
+        QrInscripcion qr = obtenerQr(token, true);
+        Materia materia = qr.getMateria();
+
+        Long idMateria = materia.getIdMateria();
+
+        validarInscripcionDuplicada(idMateria, idEstudiante);
 
         MateriaEstudiante inscripcion = new MateriaEstudiante();
 
@@ -170,8 +227,7 @@ public class InscripcionMateriaServicio {
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "No se pudo registrar la inscripcion; "
-                            + "verifique si ya existe",
+                    "No se pudo registrar la inscripcion; verifique si ya existe",
                     e
             );
         }
