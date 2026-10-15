@@ -1,0 +1,18 @@
+.examenes-configuracion {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.examenes-configuracion.programado {
+  background: #ddf7e9;
+  color: #16824a;
+}
+
+.examenes-configuracion.sin-configurar {
+  background: #fef3c7;
+  color: #b45309;
+}
