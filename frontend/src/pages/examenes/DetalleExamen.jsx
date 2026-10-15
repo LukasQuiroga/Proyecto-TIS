@@ -2,12 +2,14 @@ import { FiClipboard, FiX } from "react-icons/fi";
 
 import {
   formatearTipoEvaluacion,
+  obtenerEstadoConfiguracion,
   obtenerEstadoExamen,
   obtenerEstadoRecurso,
   obtenerNombreAsignatura,
 } from "./utilsExamen.js";
 
 import "./DetalleExamen.css";
+import "./EstadoConfiguracionExamen.css";
 
 function formatearFecha(valor) {
   if (!valor) {
@@ -41,6 +43,13 @@ function DetalleExamen({ examen, onCerrar }) {
   }
 
   const estadoVisual = obtenerEstadoExamen(examen.estado);
+
+  const configuracionVisual = obtenerEstadoConfiguracion(examen);
+
+  const duracionVisual =
+    Number.isInteger(examen.duracionMinutos) && examen.duracionMinutos > 0
+      ? `${examen.duracionMinutos} minutos`
+      : "—";
 
   const habilitaciones = obtenerEstadoRecurso(
     examen.habilitaciones ?? examen.estadoHabilitaciones,
@@ -119,6 +128,11 @@ function DetalleExamen({ examen, onCerrar }) {
             </div>
 
             <div className="detalle-examen-campo">
+              <span>Duración</span>
+              <strong>{duracionVisual}</strong>
+            </div>
+
+            <div className="detalle-examen-campo">
               <span>Aula</span>
               <strong>{examen.aula || "—"}</strong>
             </div>
@@ -126,10 +140,19 @@ function DetalleExamen({ examen, onCerrar }) {
             <div className="detalle-examen-campo">
               <span>Estado</span>
               <div>
-                <span
-                  className={`detalle-examen-badge ${estadoVisual.clase}`}
-                >
+                <span className={`detalle-examen-badge ${estadoVisual.clase}`}>
                   {estadoVisual.etiqueta}
+                </span>
+              </div>
+            </div>
+
+            <div className="detalle-examen-campo">
+              <span>Configuración</span>
+              <div>
+                <span
+                  className={`examenes-configuracion ${configuracionVisual.clase}`}
+                >
+                  {configuracionVisual.etiqueta}
                 </span>
               </div>
             </div>
@@ -137,7 +160,9 @@ function DetalleExamen({ examen, onCerrar }) {
             <div className="detalle-examen-campo">
               <span>Habilitaciones</span>
               <div>
-                <span className={`detalle-examen-badge ${habilitaciones.clase}`}>
+                <span
+                  className={`detalle-examen-badge ${habilitaciones.clase}`}
+                >
                   {habilitaciones.etiqueta}
                 </span>
               </div>
