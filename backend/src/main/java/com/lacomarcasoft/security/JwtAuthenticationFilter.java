@@ -21,142 +21,142 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class JwtAuthenticationFilter
-    extends OncePerRequestFilter{
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-
     private final TokenSesionService tokenSesionService;
-
     private final UsuarioRepositorio usuarioRepositorio;
 
     public JwtAuthenticationFilter(
-        JwtService jwtService,
-        TokenSesionService tokenSesionService,
-        UsuarioRepositorio usuarioRepositorio
-    ){
-        this.jwtService=jwtService;
-        this.tokenSesionService=tokenSesionService;
-        this.usuarioRepositorio=usuarioRepositorio;
+            JwtService jwtService,
+            TokenSesionService tokenSesionService,
+            UsuarioRepositorio usuarioRepositorio
+    ) {
+        this.jwtService = jwtService;
+        this.tokenSesionService = tokenSesionService;
+        this.usuarioRepositorio = usuarioRepositorio;
     }
 
     @Override
     protected void doFilterInternal(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        FilterChain filterChain
-    ) throws ServletException,IOException{
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        String authorization=
-            request.getHeader("Authorization");
+        String authorization = request.getHeader("Authorization");
 
-        if(
-            authorization==null ||
-            !authorization.startsWith("Bearer ")
-        ){
-
-            filterChain.doFilter(
-                request,
-                response
-            );
-
+        if (
+                authorization == null ||
+                !authorization.startsWith("Bearer ")
+        ) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        String token=
-            authorization.substring(7);
+        String token = authorization.substring(7);
 
-        try{
-
-            if(!jwtService.esValido(token)){
-
-                response.setStatus(
-                    HttpServletResponse.SC_UNAUTHORIZED
-                );
-
+        try {
+            if (!jwtService.esValido(token)) {
+                rechazarAutenticacion(response);
                 return;
             }
 
-            String tokenId=
-                jwtService.obtenerTokenId(token);
+            String tokenId = jwtService.obtenerTokenId(token);
 
-            if(!tokenSesionService.estaActiva(tokenId)){
-
-                response.setStatus(
-                    HttpServletResponse.SC_UNAUTHORIZED
-                );
-
+            if (
+                    tokenId == null ||
+                    !tokenSesionService.estaActiva(tokenId)
+            ) {
+                rechazarAutenticacion(response);
                 return;
             }
 
-            String correo=
-                jwtService.obtenerCorreo(token);
+            Long idUsuario = jwtService.obtenerIdUsuario(token);
+            String correoToken = jwtService.obtenerCorreo(token);
 
-            String rol=
-                jwtService.obtenerRol(token);
+            if (idUsuario == null || correoToken == null) {
+                rechazarAutenticacion(response);
+                return;
+            }
 
-            Long idUsuario=
-                jwtService.obtenerIdUsuario(token);
+            Usuario usuario = usuarioRepositorio
+                    .findById(idUsuario)
+                    .orElse(null);
 
-            List<GrantedAuthority> autoridades=
-                new ArrayList<>();
+            if (
+                    usuario == null ||
+                    !Boolean.TRUE.equals(usuario.getActivo()) ||
+                    usuario.getRol() == null
+            ) {
+                rechazarAutenticacion(response);
+                return;
+            }
+
+            if (!correoToken.equalsIgnoreCase(usuario.getCorreo())) {
+                rechazarAutenticacion(response);
+                return;
+            }
+
+            String nombreRol = usuario.getRol().getNombreRol();
+
+            if (nombreRol == null || nombreRol.isBlank()) {
+                rechazarAutenticacion(response);
+                return;
+            }
+
+            List<GrantedAuthority> autoridades = new ArrayList<>();
 
             autoridades.add(
-                new SimpleGrantedAuthority(
-                    "ROLE_"+rol
-                )
+                    new SimpleGrantedAuthority(
+                            "ROLE_" + nombreRol
+                    )
             );
 
-            try{
-
-                Usuario usuario=
-                    usuarioRepositorio
-                        .findById(idUsuario)
-                        .orElse(null);
-
-                if(usuario!=null){
-
-                    usuario.getRol()
-                        .getPermisos()
-                        .forEach(
-                            permiso ->
-                                autoridades.add(
-                                    new SimpleGrantedAuthority(
+            if (usuario.getRol().getPermisos() != null) {
+                usuario.getRol().getPermisos().forEach(permiso -> {
+                    if (
+                            permiso != null &&
+                            permiso.getNombrePermiso() != null
+                    ) {
+                        autoridades.add(
+                                new SimpleGrantedAuthority(
                                         permiso.getNombrePermiso()
-                                    )
                                 )
                         );
-                }
-
-            }catch(Exception e){
-
+                    }
+                });
             }
 
-            UsernamePasswordAuthenticationToken autenticacion=
-                new UsernamePasswordAuthenticationToken(
-                    correo,
-                    null,
-                    autoridades
-                );
+            UsernamePasswordAuthenticationToken autenticacion =
+                    new UsernamePasswordAuthenticationToken(
+                            usuario.getCorreo(),
+                            null,
+                            autoridades
+                    );
 
-            autenticacion.setDetails(idUsuario);
+            autenticacion.setDetails(usuario.getIdUsuario());
 
             SecurityContextHolder
-                .getContext()
-                .setAuthentication(autenticacion);
+                    .getContext()
+                    .setAuthentication(autenticacion);
 
-        }catch(Exception e){
-
-            response.setStatus(
-                HttpServletResponse.SC_UNAUTHORIZED
-            );
-
+        } catch (Exception e) {
+            rechazarAutenticacion(response);
             return;
         }
 
-        filterChain.doFilter(
-            request,
-            response
+        filterChain.doFilter(request, response);
+    }
+
+    private void rechazarAutenticacion(
+            HttpServletResponse response
+    ) throws IOException {
+        SecurityContextHolder.clearContext();
+
+        response.sendError(
+                HttpServletResponse.SC_UNAUTHORIZED,
+                "Sesion invalida o usuario no autorizado"
         );
     }
 }
