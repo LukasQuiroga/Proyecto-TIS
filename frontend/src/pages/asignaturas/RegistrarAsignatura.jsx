@@ -32,9 +32,10 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
   const [facultadSeleccionada, setFacultadSeleccionada] = useState("");
   const [cargandoFacultades, setCargandoFacultades] = useState(true);
   const [errorCatalogo, setErrorCatalogo] = useState("");
-  const [docentes, setDocentes] = useState([]);
+  const [docentesFacultad, setDocentesFacultad] = useState([]);
+  const [docentesSinFacultad, setDocentesSinFacultad] = useState([]);
   const [busquedaDocente, setBusquedaDocente] = useState("");
-  const [cargandoDocentes, setCargandoDocentes] = useState(true);
+  const [cargandoDocentes, setCargandoDocentes] = useState(false);
   const [errorDocentes, setErrorDocentes] = useState("");
 
   const carrerasFiltradas = useMemo(() => {
@@ -51,13 +52,18 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
     );
   }, [facultades, facultadSeleccionada, busquedaCarrera]);
 
-  const docentesFiltrados = useMemo(() => {
+  const filtrarDocentes = (lista) => {
     const texto = busquedaDocente.trim().toLocaleLowerCase("es");
 
-    return docentes.filter((docente) =>
+    return lista.filter((docente) =>
       docente.nombreCompleto.toLocaleLowerCase("es").includes(texto),
     );
-  }, [docentes, busquedaDocente]);
+  };
+
+  const docentesFacultadFiltrados = filtrarDocentes(docentesFacultad);
+  const docentesSinFacultadFiltrados = filtrarDocentes(docentesSinFacultad);
+
+  const docentes = [...docentesFacultad, ...docentesSinFacultad];
 
   useEffect(() => {
     let activo = true;
@@ -99,18 +105,21 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
   }, []);
 
   useEffect(() => {
+    if (!facultadSeleccionada) return;
+
     let activo = true;
 
     const cargarDocentes = async () => {
       try {
-        setCargandoDocentes(true);
-        setErrorDocentes("");
-
-        const respuesta = await obtenerDocentesActivos();
+        const respuesta = await obtenerDocentesActivos(
+          Number(facultadSeleccionada),
+        );
 
         if (!activo) return;
 
-        setDocentes(Array.isArray(respuesta.data) ? respuesta.data : []);
+        setDocentesFacultad(respuesta.data.docentesFacultad || []);
+        setDocentesSinFacultad(respuesta.data.docentesSinFacultad || []);
+        setErrorDocentes("");
       } catch (error) {
         console.error("Error cargando docentes:", error);
 
@@ -129,7 +138,7 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
     return () => {
       activo = false;
     };
-  }, []);
+  }, [facultadSeleccionada]);
 
   const actualizarCampo = (campo, valor) => {
     setDatos((anterior) => ({
@@ -183,6 +192,7 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
         semestre: Number(datos.semestre),
         activo: datos.activo,
         descripcion: datos.descripcion.trim(),
+        idFacultad: Number(facultadSeleccionada),
         carreras: datos.carreras,
         idDocente: Number(datos.idDocente),
         grupo: datos.grupo.trim().toUpperCase(),
@@ -243,7 +253,10 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
                 id="asignatura-codigo"
                 value={datos.codigoAsignatura}
                 onChange={(e) =>
-                  actualizarCampo("codigoAsignatura", e.target.value)
+                  actualizarCampo(
+                    "codigoAsignatura",
+                    e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""),
+                  )
                 }
                 placeholder="Ej. INF-101"
                 maxLength={30}
@@ -285,7 +298,10 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
               id="asignatura-nombre"
               value={datos.nombreAsignatura}
               onChange={(e) =>
-                actualizarCampo("nombreAsignatura", e.target.value)
+                actualizarCampo(
+                  "nombreAsignatura",
+                  e.target.value.replace(/[^\p{L}\p{M}\p{N}\s]/gu, ""),
+                )
               }
               placeholder="Ej. Programación I"
               minLength={3}
@@ -305,6 +321,11 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
               value={facultadSeleccionada}
               onChange={(e) => {
                 setFacultadSeleccionada(e.target.value);
+                setDocentesFacultad([]);
+                setDocentesSinFacultad([]);
+                setBusquedaDocente("");
+                setErrorDocentes("");
+                setCargandoDocentes(Boolean(e.target.value));
                 setBusquedaCarrera("");
                 setDatos((anterior) => ({
                   ...anterior,
@@ -390,26 +411,58 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
             />
 
             <div className="registro-asignatura-lista-docentes">
-              {cargandoDocentes ? (
+              {!facultadSeleccionada ? (
+                <p>Selecciona una facultad para ver los docentes.</p>
+              ) : cargandoDocentes ? (
                 <p>Cargando docentes...</p>
-              ) : docentesFiltrados.length === 0 ? (
-                <p>No se encontraron docentes.</p>
               ) : (
-                docentesFiltrados.map((docente) => (
-                  <label key={docente.idUsuario}>
-                    <input
-                      type="radio"
-                      name="docenteAsignatura"
-                      value={docente.idUsuario}
-                      checked={String(datos.idDocente) === String(docente.idUsuario)}
-                      onChange={() =>
-                        actualizarCampo("idDocente", String(docente.idUsuario))
-                      }
-                      disabled={guardando}
-                    />
-                    <span>{docente.nombreCompleto}</span>
-                  </label>
-                ))
+                <>
+                  <strong>Docentes de la facultad</strong>
+
+                  {docentesFacultadFiltrados.length === 0 ? (
+                    <p>No se encontraron docentes de esta facultad.</p>
+                  ) : (
+                    docentesFacultadFiltrados.map((docente) => (
+                      <label key={docente.idUsuario}>
+                        <input
+                          type="radio"
+                          name="docenteAsignatura"
+                          value={docente.idUsuario}
+                          checked={String(datos.idDocente) === String(docente.idUsuario)}
+                          onChange={() =>
+                            actualizarCampo("idDocente", String(docente.idUsuario))
+                          }
+                          disabled={guardando}
+                        />
+                        <span>{docente.nombreCompleto}</span>
+                      </label>
+                    ))
+                  )}
+
+                  <strong className="registro-asignatura-separador-docentes">
+                    Docentes sin facultad
+                  </strong>
+
+                  {docentesSinFacultadFiltrados.length === 0 ? (
+                    <p>No se encontraron docentes sin facultad.</p>
+                  ) : (
+                    docentesSinFacultadFiltrados.map((docente) => (
+                      <label key={docente.idUsuario}>
+                        <input
+                          type="radio"
+                          name="docenteAsignatura"
+                          value={docente.idUsuario}
+                          checked={String(datos.idDocente) === String(docente.idUsuario)}
+                          onChange={() =>
+                            actualizarCampo("idDocente", String(docente.idUsuario))
+                          }
+                          disabled={guardando}
+                        />
+                        <span>{docente.nombreCompleto}</span>
+                      </label>
+                    ))
+                  )}
+                </>
               )}
             </div>
 
@@ -429,14 +482,17 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
             <label htmlFor="asignatura-grupo">
               Grupo *
             </label>
-
+            
             <input
               id="asignatura-grupo"
               type="text"
               placeholder="Ej. 1A"
               value={datos.grupo}
               onChange={(e) =>
-                actualizarCampo("grupo", e.target.value.toUpperCase())
+                actualizarCampo(
+                  "grupo",
+                  e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+                )
               }
               maxLength={20}
               disabled={guardando}
