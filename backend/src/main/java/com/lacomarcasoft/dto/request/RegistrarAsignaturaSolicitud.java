@@ -29,6 +29,10 @@ public record RegistrarAsignaturaSolicitud(
 
     String descripcion,
 
+    @NotNull(message = "Debe seleccionar una facultad")
+    @Positive(message = "La facultad seleccionada no es válida")
+    Long idFacultad,
+
     @NotEmpty(message = "Debe seleccionar al menos una carrera")
     List<
         @NotBlank(message = "El nombre de la carrera no puede estar vacío")
