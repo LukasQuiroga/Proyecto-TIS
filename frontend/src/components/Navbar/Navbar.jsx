@@ -40,9 +40,11 @@ function Navbar() {
 
   const nombreUsuario = obtenerNombre(usuario);
   const rolUsuario = obtenerRol(usuario);
+  const idUsuario = usuario?.idUsuario;
+  const hayUsuario = Boolean(usuario);
 
   useEffect(() => {
-    if (!usuario || !token) return undefined;
+    if (!hayUsuario || !token) return undefined;
 
     let activo = true;
     let urlActual = null;
@@ -80,7 +82,7 @@ function Navbar() {
       window.removeEventListener("perfil-foto-actualizada", actualizarFoto);
       if (urlActual) URL.revokeObjectURL(urlActual);
     };
-  }, [usuario?.idUsuario, token, location.pathname]);
+  }, [hayUsuario, idUsuario, token, location.pathname]);
 
   return (
     <header className="navbar">

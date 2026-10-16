@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  FiArrowLeft, FiCamera, FiCheck, FiLock, FiPhone,
+  FiArrowLeft, FiCamera, FiCheck, FiLock,
   FiSave, FiShield, FiUser,
 } from "react-icons/fi";
 import {
@@ -19,10 +19,12 @@ const TELEFONO = /^\+?[0-9][0-9\s-]{6,28}$/;
 function EditarPerfil() {
   const navigate = useNavigate();
   const inputFoto = useRef(null);
+  const fotoPersistidaRef = useRef(null);
   const [perfil, setPerfil] = useState(null);
   const [telefono, setTelefono] = useState("");
   const [foto, setFoto] = useState("");
   const [archivo, setArchivo] = useState(null);
+  const [fotoTemporal, setFotoTemporal] = useState("");
   const [contrasenas, setContrasenas] = useState({
     contrasenaActual: "", nuevaContrasena: "", confirmarContrasena: "",
   });
@@ -33,7 +35,6 @@ function EditarPerfil() {
 
   useEffect(() => {
     let activo = true;
-    let url = "";
     const cargar = async () => {
       try {
         const respuesta = await obtenerMiPerfil();
@@ -44,7 +45,8 @@ function EditarPerfil() {
           try {
             const blob = await obtenerFotoPerfil();
             if (!activo) return;
-            url = URL.createObjectURL(blob);
+            const url = URL.createObjectURL(blob);
+            fotoPersistidaRef.current = url;
             setFoto(url);
           } catch {
             if (activo) setFoto("");
@@ -59,16 +61,17 @@ function EditarPerfil() {
     cargar();
     return () => {
       activo = false;
-      if (url) URL.revokeObjectURL(url);
+      if (fotoPersistidaRef.current) {
+        URL.revokeObjectURL(fotoPersistidaRef.current);
+        fotoPersistidaRef.current = null;
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (!archivo) return undefined;
-    const url = URL.createObjectURL(archivo);
-    setFoto(url);
-    return () => URL.revokeObjectURL(url);
-  }, [archivo]);
+    if (!fotoTemporal) return undefined;
+    return () => URL.revokeObjectURL(fotoTemporal);
+  }, [fotoTemporal]);
 
   const usuario = perfil?.usuario;
   const nombre = [usuario?.nombre, usuario?.apellido].filter(Boolean).join(" ") || "Usuario";
@@ -91,6 +94,7 @@ function EditarPerfil() {
     }
     setError("");
     setMensaje("");
+    setFotoTemporal(URL.createObjectURL(seleccionado));
     setArchivo(seleccionado);
   };
 
@@ -128,9 +132,21 @@ function EditarPerfil() {
       }
       if (archivo) {
         await actualizarFotoPerfil(archivo);
-        window.dispatchEvent(new Event("perfil-foto-actualizada"));
         completados.push("fotografía");
         setArchivo(null);
+        try {
+          const blob = await obtenerFotoPerfil();
+          const nuevaUrl = URL.createObjectURL(blob);
+          if (fotoPersistidaRef.current) {
+            URL.revokeObjectURL(fotoPersistidaRef.current);
+          }
+          fotoPersistidaRef.current = nuevaUrl;
+          setFoto(nuevaUrl);
+          setFotoTemporal("");
+        } catch {
+          // La subida se completó, aunque no se pudo actualizar la vista previa.
+        }
+        window.dispatchEvent(new Event("perfil-foto-actualizada"));
       }
       if (huboCambiosClave) {
         await cambiarContrasenaPerfil(contrasenas);
@@ -181,7 +197,7 @@ function EditarPerfil() {
                   <h3><FiUser /> Datos que puedes editar</h3>
                   <div className="hu13-foto-editar">
                     <div className="hu13-avatar">
-                      {foto ? <img src={foto} alt="Vista previa de fotografía" /> : nombre.charAt(0).toUpperCase()}
+                      {fotoTemporal || foto ? <img src={fotoTemporal || foto} alt="Vista previa de fotografía" /> : nombre.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <strong>Foto de perfil</strong>
