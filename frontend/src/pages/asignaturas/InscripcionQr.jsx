@@ -1,5 +1,4 @@
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Link } from "react-router-dom";
 
@@ -45,6 +44,8 @@ function InscripcionQr() {
   const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
   const [errorEstudiantes, setErrorEstudiantes] = useState("");
   const [versionEstudiantes, setVersionEstudiantes] = useState(0);
+  const [busquedaEstudiante, setBusquedaEstudiante] = useState("");
+  const [ordenEstudiantes, setOrdenEstudiantes] = useState("nombre");
 
   const bloqueoOperacion = useRef(false);
   const materiaActual = useRef("");
@@ -186,6 +187,45 @@ function InscripcionQr() {
       activo = false;
     };
   }, [idMateria, versionEstudiantes]);
+
+  const estudiantesFiltrados = useMemo(() => {
+    const normalizar = (valor) => String(valor ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("es")
+      .trim();
+
+    const termino = normalizar(busquedaEstudiante);
+    const lista = estudiantes.filter((estudiante) => {
+      const texto = normalizar([
+        estudiante.nombre,
+        estudiante.apellido,
+        estudiante.codigoSis,
+        estudiante.correo
+      ].filter(Boolean).join(" "));
+      return !termino || texto.includes(termino);
+    });
+
+    const porNombre = (a, b) => {
+      const nombreA = [a.apellido, a.nombre].filter(Boolean).join(" ");
+      const nombreB = [b.apellido, b.nombre].filter(Boolean).join(" ");
+      return nombreA.localeCompare(nombreB, "es", { sensitivity: "base" });
+    };
+
+    return lista.sort((a, b) => {
+      if (ordenEstudiantes === "reciente" || ordenEstudiantes === "antiguo") {
+        const fechaA = Date.parse(a.fechaInscripcion ?? "");
+        const fechaB = Date.parse(b.fechaInscripcion ?? "");
+        const validaA = Number.isFinite(fechaA);
+        const validaB = Number.isFinite(fechaB);
+        if (validaA !== validaB) return validaA ? -1 : 1;
+        if (validaA && fechaA !== fechaB) {
+          return ordenEstudiantes === "reciente" ? fechaB - fechaA : fechaA - fechaB;
+        }
+      }
+      return porNombre(a, b);
+    });
+  }, [estudiantes, busquedaEstudiante, ordenEstudiantes]);
 
   const actualizarEstudiantes = () => {
     if (!idMateria || cargandoEstudiantes) {
@@ -483,6 +523,8 @@ function InscripcionQr() {
             onChange={(event) => {
               materiaActual.current = event.target.value;
               setIdMateria(event.target.value);
+              setBusquedaEstudiante("");
+              setOrdenEstudiantes("nombre");
               setResultado(null);
               setCopiado(false);
               setMensaje(null);
@@ -713,6 +755,37 @@ function InscripcionQr() {
             </button>
           </div>
 
+          <div
+            className="hu12-filtros-estudiantes"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px", marginBottom: "18px" }}
+          >
+            <div>
+              <label htmlFor="hu12-buscar-estudiante" style={{ display: "block", marginBottom: "8px" }}>Buscar estudiante</label>
+              <input
+                id="hu12-buscar-estudiante"
+                type="search"
+                placeholder="Nombre, apellido, código SIS o correo"
+                value={busquedaEstudiante}
+                onChange={(event) => setBusquedaEstudiante(event.target.value)}
+                disabled={cargandoEstudiantes || Boolean(errorEstudiantes)}
+              />
+            </div>
+            <div>
+              <label htmlFor="hu12-orden-estudiantes" style={{ display: "block", marginBottom: "8px" }}>Ordenar estudiantes</label>
+              <select
+                id="hu12-orden-estudiantes"
+                className="hu12-selector-materia"
+                value={ordenEstudiantes}
+                onChange={(event) => setOrdenEstudiantes(event.target.value)}
+                disabled={cargandoEstudiantes || Boolean(errorEstudiantes)}
+              >
+                <option value="nombre">Apellido y nombre (A-Z)</option>
+                <option value="reciente">Inscripción más reciente</option>
+                <option value="antiguo">Inscripción más antigua</option>
+              </select>
+            </div>
+          </div>
+
           {cargandoEstudiantes && (
             <p className="hu12-ayuda" role="status">
               <FiRefreshCw /> Consultando estudiantes inscritos...
@@ -735,6 +808,14 @@ function InscripcionQr() {
                 <p className="hu12-ayuda">
                   Total de estudiantes inscritos mediante QR: <strong>{estudiantes.length}</strong>
                 </p>
+                <p className="hu12-ayuda" role="status">
+                  Resultados de búsqueda: <strong>{estudiantesFiltrados.length}</strong>
+                </p>
+                {estudiantesFiltrados.length === 0 ? (
+                  <p className="hu12-ayuda">
+                    <FiInfo /> No se encontraron estudiantes que coincidan con la búsqueda.
+                  </p>
+                ) : (
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                     <thead>
@@ -747,7 +828,7 @@ function InscripcionQr() {
                       </tr>
                     </thead>
                     <tbody>
-                      {estudiantes.map((estudiante) => (
+                      {estudiantesFiltrados.map((estudiante) => (
                         <tr key={estudiante.idEstudiante}>
                           <td style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
                             {[estudiante.nombre, estudiante.apellido].filter(Boolean).join(" ") || "Sin nombre"}
@@ -766,6 +847,7 @@ function InscripcionQr() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </>
             )
           )}
