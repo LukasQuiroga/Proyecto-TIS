@@ -24,6 +24,7 @@ import PermisosActualizadosModal from "./components/Modal/PermisosActualizadosMo
 import Asignaturas from "./pages/asignaturas/Asignaturas.jsx";
 import InscripcionQr from "./pages/asignaturas/InscripcionQr.jsx";
 import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr.jsx";
+import MisMaterias from "./pages/asignaturas/MisMaterias.jsx";
 
 import Examenes from "./pages/examenes/Examenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
@@ -150,6 +151,12 @@ function App() {
             <Route
               path="/inscripcion-qr/inscribir"
               element={<InscripcionEstudianteQr />}
+            />
+
+            {/* Materias inscritas del estudiante */}
+            <Route
+              path="/mis-materias"
+              element={<MisMaterias />}
             />
 
             {/* EXÁMENES */}

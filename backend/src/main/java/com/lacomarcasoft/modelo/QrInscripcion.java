@@ -19,6 +19,9 @@ public class QrInscripcion {
 
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
+    
+    @Column(name = "token_cifrado", columnDefinition = "TEXT")
+    private String tokenCifrado;
 
     @Column(name = "fecha_creacion", nullable = false,
             insertable = false, updatable = false)
@@ -75,4 +78,13 @@ public class QrInscripcion {
     public void setRevocado(boolean revocado) {
         this.revocado = revocado;
     }
+
+    public String getTokenCifrado() {
+         return tokenCifrado;
+    }
+
+    public void setTokenCifrado(String tokenCifrado) {
+          this.tokenCifrado = tokenCifrado;
+    }
+
 }

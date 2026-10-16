@@ -1,10 +1,10 @@
-
 package com.lacomarcasoft.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,10 +15,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*}")
@@ -29,12 +31,43 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
+
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(
+                    (request, response, authException) -> {
+                        response.setStatus(
+                            HttpStatus.UNAUTHORIZED.value()
+                        );
+                        response.setContentType(
+                            "application/json;charset=UTF-8"
+                        );
+                        response.getWriter().write(
+                            "{\"message\":\"Debe iniciar sesion o renovar su sesion\"}"
+                        );
+                    }
+                )
+                .accessDeniedHandler(
+                    (request, response, accessDeniedException) -> {
+                        response.setStatus(
+                            HttpStatus.FORBIDDEN.value()
+                        );
+                        response.setContentType(
+                            "application/json;charset=UTF-8"
+                        );
+                        response.getWriter().write(
+                            "{\"message\":\"No tiene permisos para realizar esta operacion\"}"
+                        );
+                    }
+                )
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/login",
@@ -57,9 +90,39 @@ public class SecurityConfig {
                 ).hasRole("DOCENTE")
 
                 .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/inscripciones-qr/materias/estudiante"
+                ).hasRole("ESTUDIANTE")
+
+                .requestMatchers(
                     HttpMethod.POST,
                     "/api/inscripciones-qr/materias/*/generar"
                 ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/inscripciones-qr/materias/*/activo"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/inscripciones-qr/materias/*/estudiantes"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/inscripciones-qr/materias/*/renovar"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/inscripciones-qr/materias/*/desactivar"
+                ).hasRole("DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/inscripciones-qr/validar"
+                ).hasRole("ESTUDIANTE")
 
                 .requestMatchers(
                     HttpMethod.POST,
@@ -116,7 +179,9 @@ public class SecurityConfig {
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
 
         return source;
@@ -124,7 +189,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
+            AuthenticationConfiguration configuration
+    ) throws Exception {
         return configuration.getAuthenticationManager();
     }
 }

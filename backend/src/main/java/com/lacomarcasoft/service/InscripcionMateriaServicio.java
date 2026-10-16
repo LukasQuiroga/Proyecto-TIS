@@ -1,4 +1,3 @@
-
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.modelo.Materia;
@@ -7,9 +6,12 @@ import com.lacomarcasoft.modelo.MateriaEstudianteId;
 import com.lacomarcasoft.modelo.QrInscripcion;
 import com.lacomarcasoft.modelo.Usuario;
 
+import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.MateriaEstudianteRepositorio;
 import com.lacomarcasoft.repository.QrInscripcionRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+
+import jakarta.persistence.EntityManager;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -19,25 +21,36 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class InscripcionMateriaServicio {
 
     private final QrInscripcionRepositorio qrRepositorio;
+    private final MateriaRepositorio materiaRepositorio;
     private final MateriaEstudianteRepositorio inscripcionRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
     private final QrInscripcionServicio qrServicio;
+    private final EntityManager entityManager;
+    private final AuditoriaQrServicio auditoriaQrServicio;
 
     public InscripcionMateriaServicio(
             QrInscripcionRepositorio qrRepositorio,
+            MateriaRepositorio materiaRepositorio,
             MateriaEstudianteRepositorio inscripcionRepositorio,
             UsuarioRepositorio usuarioRepositorio,
-            QrInscripcionServicio qrServicio
+            QrInscripcionServicio qrServicio,
+            EntityManager entityManager,
+            AuditoriaQrServicio auditoriaQrServicio
     ) {
         this.qrRepositorio = qrRepositorio;
+        this.materiaRepositorio = materiaRepositorio;
         this.inscripcionRepositorio = inscripcionRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
         this.qrServicio = qrServicio;
+        this.entityManager = entityManager;
+        this.auditoriaQrServicio = auditoriaQrServicio;
     }
 
     public record ResultadoInscripcion(
@@ -48,19 +61,31 @@ public class InscripcionMateriaServicio {
             String mensaje
     ) {}
 
-    @Transactional
-    public ResultadoInscripcion inscribirEstudiante(
-            String token,
-            Long idEstudiante
-    ) {
+    public record VistaPreviaInscripcion(
+            Long idMateria,
+            String nombreAsignatura,
+            String grupo,
+            OffsetDateTime fechaExpiracion,
+            String estado
+    ) {}
 
-        if (token == null || token.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El codigo QR es obligatorio"
-            );
-        }
+    public record EstudianteInscritoQr(
+            Long idEstudiante,
+            String nombre,
+            String apellido,
+            String correo,
+            String codigoSis,
+            OffsetDateTime fechaInscripcion
+    ) {}
 
+    public record MateriaInscritaEstudiante(
+            Long idMateria,
+            String nombreAsignatura,
+            String grupo,
+            OffsetDateTime fechaInscripcion
+    ) {}
+
+    private Usuario validarEstudiante(Long idEstudiante) {
         if (idEstudiante == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -91,29 +116,37 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        String tokenHash = qrServicio.calcularHash(token);
+        return estudiante;
+    }
+
+    private void validarAsignaturaDisponible(Materia materia) {
+        if (materia.getAsignatura() == null ||
+                !Boolean.TRUE.equals(materia.getAsignatura().getActivo())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La asignatura no esta disponible para inscripcion"
+            );
+        }
+    }
+
+    private QrInscripcion obtenerQr(
+            String token,
+            boolean bloquearMateria
+    ) {
+        if (token == null || token.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El codigo QR es obligatorio"
+            );
+        }
+
+        String tokenHash = qrServicio.calcularHash(token.trim());
 
         QrInscripcion qr = qrRepositorio.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "El codigo QR no es valido"
                 ));
-
-        if (qr.isRevocado()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El codigo QR fue revocado"
-            );
-        }
-
-        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
-
-        if (!qr.getFechaExpiracion().isAfter(ahora)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El codigo QR ha expirado"
-            );
-        }
 
         Materia materia = qr.getMateria();
 
@@ -124,20 +157,92 @@ public class InscripcionMateriaServicio {
             );
         }
 
-        Long idMateria = materia.getIdMateria();
+        if (bloquearMateria) {
+            materiaRepositorio.bloquearMateria(
+                    materia.getIdMateria()
+            ).orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "La materia no existe"
+            ));
 
+            entityManager.refresh(qr);
+        }
+
+        validarAsignaturaDisponible(materia);
+
+        if (qr.isRevocado()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El codigo QR fue revocado"
+            );
+        }
+
+        OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+
+        if (qr.getFechaExpiracion() == null ||
+                !qr.getFechaExpiracion().isAfter(ahora)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El codigo QR ha expirado"
+            );
+        }
+
+        return qr;
+    }
+
+    private void validarInscripcionDuplicada(
+            Long idMateria,
+            Long idEstudiante
+    ) {
         if (inscripcionRepositorio
                 .existsByMateria_IdMateriaAndEstudiante_IdUsuario(
                         idMateria,
                         idEstudiante
                 )) {
-
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "El estudiante ya esta inscrito en esta materia"
             );
         }
+    }
 
+    @Transactional(readOnly = true)
+    public VistaPreviaInscripcion consultarVistaPrevia(
+            String token,
+            Long idEstudiante
+    ) {
+        validarEstudiante(idEstudiante);
+
+        QrInscripcion qr = obtenerQr(token, false);
+        Materia materia = qr.getMateria();
+
+        validarInscripcionDuplicada(
+                materia.getIdMateria(),
+                idEstudiante
+        );
+
+        return new VistaPreviaInscripcion(
+                materia.getIdMateria(),
+                materia.getAsignatura().getNombreAsignatura(),
+                materia.getGrupo(),
+                qr.getFechaExpiracion(),
+                "ACTIVO"
+        );
+    }
+
+    @Transactional
+    public ResultadoInscripcion inscribirEstudiante(
+            String token,
+            Long idEstudiante
+    ) {
+        Usuario estudiante = validarEstudiante(idEstudiante);
+
+        QrInscripcion qr = obtenerQr(token, true);
+        Materia materia = qr.getMateria();
+
+        Long idMateria = materia.getIdMateria();
+
+        validarInscripcionDuplicada(idMateria, idEstudiante);
 
         MateriaEstudiante inscripcion = new MateriaEstudiante();
 
@@ -154,11 +259,16 @@ public class InscripcionMateriaServicio {
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "No se pudo registrar la inscripcion; "
-                            + "verifique si ya existe",
+                    "No se pudo registrar la inscripcion; verifique si ya existe",
                     e
             );
         }
+
+        auditoriaQrServicio.registrarExito(
+                idEstudiante,
+                "INSCRIPCION_MEDIANTE_QR",
+                idMateria
+        );
 
         return new ResultadoInscripcion(
                 idMateria,
@@ -167,5 +277,80 @@ public class InscripcionMateriaServicio {
                 materia.getGrupo(),
                 "Inscripcion realizada correctamente"
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MateriaInscritaEstudiante> consultarMateriasInscritasEstudiante(
+            Long idEstudiante
+    ) {
+        validarEstudiante(idEstudiante);
+
+        return inscripcionRepositorio.findByEstudiante_IdUsuario(idEstudiante)
+                .stream()
+                .map(inscripcion -> {
+                    Materia materia = inscripcion.getMateria();
+
+                    return new MateriaInscritaEstudiante(
+                            materia.getIdMateria(),
+                            materia.getAsignatura().getNombreAsignatura(),
+                            materia.getGrupo(),
+                            inscripcion.getFechaInscripcion()
+                    );
+                })
+                .sorted(
+                        Comparator.comparing(
+                                MateriaInscritaEstudiante::nombreAsignatura,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                        ).thenComparing(
+                                MateriaInscritaEstudiante::grupo,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                        )
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EstudianteInscritoQr> consultarEstudiantesInscritosQr(
+            Long idMateria,
+            Long idDocente
+    ) {
+        qrServicio.verificarAccesoDocenteMateria(
+                idMateria,
+                idDocente
+        );
+
+        return inscripcionRepositorio
+                .findByMateria_IdMateriaAndQrInscripcionIsNotNull(
+                        idMateria
+                )
+                .stream()
+                .map(inscripcion -> {
+                    Usuario estudiante = inscripcion.getEstudiante();
+
+                    return new EstudianteInscritoQr(
+                            estudiante.getIdUsuario(),
+                            estudiante.getNombre(),
+                            estudiante.getApellido(),
+                            estudiante.getCorreo(),
+                            estudiante.getCodigoSis(),
+                            inscripcion.getFechaInscripcion()
+                    );
+                })
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        EstudianteInscritoQr::apellido,
+                                        Comparator.nullsLast(
+                                                String.CASE_INSENSITIVE_ORDER
+                                        )
+                                )
+                                .thenComparing(
+                                        EstudianteInscritoQr::nombre,
+                                        Comparator.nullsLast(
+                                                String.CASE_INSENSITIVE_ORDER
+                                        )
+                                )
+                )
+                .toList();
     }
 }

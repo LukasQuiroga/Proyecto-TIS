@@ -229,6 +229,15 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                            </Opcion>
                         )}
 
+                        {usuario?.nombreRol === "ESTUDIANTE" && (
+                            <Opcion
+                                 to="/mis-materias"
+                                 icono={<FiBookOpen />}
+                            >
+                                     Mis materias
+                            </Opcion>
+                        )}
+
                         {tienePermiso("GENERAR_REPORTES")&&(
                             <div className="sidebar-opcion">
                                 <span className="sidebar-icono">
