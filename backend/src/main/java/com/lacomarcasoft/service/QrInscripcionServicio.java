@@ -1,4 +1,3 @@
-
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.modelo.Materia;
@@ -103,6 +102,16 @@ public class QrInscripcionServicio {
         return materia;
     }
 
+    private void validarAsignaturaDisponible(Materia materia) {
+        if (materia.getAsignatura() == null ||
+                !Boolean.TRUE.equals(materia.getAsignatura().getActivo())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La asignatura no esta disponible para inscripcion"
+            );
+        }
+    }
+
     private List<QrInscripcion> buscarQrActivos(
             Long idMateria,
             OffsetDateTime ahora
@@ -161,6 +170,8 @@ public class QrInscripcionServicio {
                 true
         );
 
+        validarAsignaturaDisponible(materia);
+
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 
         if (!buscarQrActivos(idMateria, ahora).isEmpty()) {
@@ -183,6 +194,8 @@ public class QrInscripcionServicio {
                 idDocente,
                 true
         );
+
+        validarAsignaturaDisponible(materia);
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
 

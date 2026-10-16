@@ -130,11 +130,22 @@ export const obtenerMensajeErrorQr = (error, operacion = "inscripcion") => {
     return "No tienes permisos para realizar esta operación.";
   }
 
-  if (estado === 409) {
-    if (operacion === "generar") {
-      return "Esta materia ya tiene un código QR activo. Utiliza el existente o espera a que venza.";
-    }
+ if (estado === 409) {
+             const mensajeConflicto =
+                error?.response?.data?.mensaje ||
+               error?.response?.data?.message ||
+             "";
 
+  if (
+    mensajeConflicto.toLowerCase().includes("no esta disponible") ||
+    mensajeConflicto.toLowerCase().includes("inactiva")
+  ) {
+    return "La asignatura no está disponible para inscripción.";
+  }
+
+  if (operacion === "generar") {
+    return "Esta materia ya tiene un código QR activo. Utiliza el existente o espera a que venza.";
+  }
     if (operacion === "renovar") {
       return "No existe un código QR activo para renovar. Genera uno nuevo.";
     }

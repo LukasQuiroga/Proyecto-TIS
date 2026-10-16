@@ -117,6 +117,16 @@ public class InscripcionMateriaServicio {
         return estudiante;
     }
 
+    private void validarAsignaturaDisponible(Materia materia) {
+        if (materia.getAsignatura() == null ||
+                !Boolean.TRUE.equals(materia.getAsignatura().getActivo())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La asignatura no esta disponible para inscripcion"
+            );
+        }
+    }
+
     private QrInscripcion obtenerQr(
             String token,
             boolean bloquearMateria
@@ -155,6 +165,8 @@ public class InscripcionMateriaServicio {
 
             entityManager.refresh(qr);
         }
+
+        validarAsignaturaDisponible(materia);
 
         if (qr.isRevocado()) {
             throw new ResponseStatusException(
