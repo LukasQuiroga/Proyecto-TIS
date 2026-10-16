@@ -128,6 +128,7 @@ function EditarPerfil() {
       }
       if (archivo) {
         await actualizarFotoPerfil(archivo);
+        window.dispatchEvent(new Event("perfil-foto-actualizada"));
         completados.push("fotografía");
         setArchivo(null);
       }
