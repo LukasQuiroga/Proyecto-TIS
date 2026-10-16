@@ -34,6 +34,7 @@ import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExame
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
+import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
 import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
 
 function App() {
@@ -73,6 +74,7 @@ function App() {
             {/* PERFIL */}
 
             <Route path="/perfil" element={<Perfil />} />
+            <Route path="/perfil/editar" element={<EditarPerfil />} />
 
             {/* USUARIOS */}
 
