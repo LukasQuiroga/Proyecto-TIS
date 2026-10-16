@@ -89,6 +89,16 @@ public class SecurityConfig {
                     HttpMethod.PUT,
                     "/api/perfil/me/contrasena"
                 ).authenticated()
+      
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/perfil/me/foto"
+                ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/perfil/me/foto"
+                ).authenticated()
 
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
