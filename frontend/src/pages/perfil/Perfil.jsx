@@ -1,128 +1,126 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-    FiMail,
-    FiShield,
-    FiUser
+  FiBookOpen, FiBriefcase, FiEdit2, FiHash, FiMail,
+  FiPhone, FiShield, FiUser, FiCheckCircle, FiRefreshCw,
 } from "react-icons/fi";
-import {useAuth} from "../../context/useAuth";
+import {
+  obtenerFotoPerfil,
+  obtenerMensajeErrorPerfil,
+  obtenerMiPerfil,
+} from "../../services/perfilService";
 import "./Perfil.css";
 
-function Perfil(){
+const valor = (dato) => (dato === null || dato === undefined || dato === "" ? "No registrado" : dato);
 
-    const {usuario}=useAuth();
+function Perfil() {
+  const [perfil, setPerfil] = useState(null);
+  const [foto, setFoto] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
 
-    const nombre=
-        usuario?.nombre||
-        usuario?.nombreCompleto||
-        "Usuario";
-
-    const apellido=
-        usuario?.apellido||
-        "No registrado";
-
-    const correo=
-        usuario?.correo||
-        "No registrado";
-
-    const obtenerRol=()=>{
-
-        if(usuario?.nombreRol){
-            return usuario.nombreRol;
+  useEffect(() => {
+    let activo = true;
+    let url = "";
+    const cargar = async () => {
+      setCargando(true);
+      setError("");
+      try {
+        const respuesta = await obtenerMiPerfil();
+        if (!activo) return;
+        setPerfil(respuesta);
+        if (respuesta.fotoPerfil) {
+          try {
+            const imagen = await obtenerFotoPerfil();
+            if (!activo) return;
+            url = URL.createObjectURL(imagen);
+            setFoto(url);
+          } catch {
+            if (activo) setFoto("");
+          }
+        } else {
+          setFoto("");
         }
-
-        if(usuario?.rol?.nombreRol){
-            return usuario.rol.nombreRol;
-        }
-
-        if(usuario?.rol?.nombre){
-            return usuario.rol.nombre;
-        }
-
-        if(typeof usuario?.rol==="string"){
-            return usuario.rol;
-        }
-
-        if(Array.isArray(usuario?.roles)&&usuario.roles.length>0){
-            return(
-                usuario.roles[0]?.nombreRol||
-                usuario.roles[0]?.nombre||
-                "Usuario"
-            );
-        }
-
-        return "Usuario";
+      } catch (err) {
+        if (activo) setError(obtenerMensajeErrorPerfil(err));
+      } finally {
+        if (activo) setCargando(false);
+      }
     };
+    cargar();
+    return () => {
+      activo = false;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [revision]);
 
-    const rol=obtenerRol();
+  const usuario = perfil?.usuario;
+  const nombre = [usuario?.nombre, usuario?.apellido].filter(Boolean).join(" ") || "Usuario";
+  const rol = usuario?.nombreRol || "Usuario";
+  const carreras = usuario?.carreras?.map((c) => c.nombre).filter(Boolean).join(", ");
+  const materias = usuario?.materias?.map((m) => m.nombre || m.nombreMateria || m.codigo).filter(Boolean).join(", ");
 
-    return(
-        <div className="perfil-container">
-            <section className="perfil-card">
-                <div className="perfil-portada"></div>
-
-                <div className="perfil-cabecera">
-                    <div className="perfil-avatar">
-                        {nombre.charAt(0).toUpperCase()}
-                    </div>
-
-                    <h1>
-                        {nombre}
-                    </h1>
-
-                    <span className="perfil-rol-principal">
-                        {rol}
-                    </span>
-                </div>
-
-                <div className="perfil-separador"></div>
-
-                <div className="perfil-datos">
-                    <div className="perfil-dato">
-                        <div className="perfil-dato-icono">
-                            <FiUser/>
-                        </div>
-
-                        <div className="perfil-dato-contenido">
-                            <label>Nombre</label>
-                            <p>{nombre}</p>
-                        </div>
-                    </div>
-
-                    <div className="perfil-dato">
-                        <div className="perfil-dato-icono">
-                            <FiUser/>
-                        </div>
-
-                        <div className="perfil-dato-contenido">
-                            <label>Apellido</label>
-                            <p>{apellido}</p>
-                        </div>
-                    </div>
-
-                    <div className="perfil-dato">
-                        <div className="perfil-dato-icono">
-                            <FiMail/>
-                        </div>
-
-                        <div className="perfil-dato-contenido">
-                            <label>Correo electrónico</label>
-                            <p>{correo}</p>
-                        </div>
-                    </div>
-
-                    <div className="perfil-dato">
-                        <div className="perfil-dato-icono">
-                            <FiShield/>
-                        </div>
-
-                        <div className="perfil-dato-contenido">
-                            <label>Rol</label>
-                            <p>{rol}</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+  return (
+    <div className="hu13-pagina">
+      <div className="hu13-contenedor">
+        <div className="hu13-encabezado">
+          <div>
+            <span className="hu13-eyebrow">CUENTA PERSONAL</span>
+            <h1>Mi perfil</h1>
+            <p>Consulta tu información personal y académica.</p>
+          </div>
+          {usuario && <Link className="hu13-boton hu13-boton-primario" to="/perfil/editar"><FiEdit2 /> Editar perfil</Link>}
         </div>
-    );
+
+        {cargando && <div className="hu13-mensaje">Cargando información del perfil…</div>}
+        {!cargando && error && (
+          <div className="hu13-mensaje hu13-error" role="alert">{error} <button type="button" onClick={() => setRevision((n) => n + 1)}><FiRefreshCw /> Reintentar</button></div>
+        )}
+        {!cargando && usuario && (
+          <>
+            <section className="hu13-tarjeta hu13-resumen">
+              <div className="hu13-portada" />
+              <div className="hu13-resumen-contenido">
+                <div className="hu13-avatar hu13-avatar-grande">
+                  {foto ? <img src={foto} alt="Fotografía de perfil" /> : nombre.charAt(0).toUpperCase()}
+                </div>
+                <div className="hu13-identidad">
+                  <h2>{nombre}</h2>
+                  <span className="hu13-etiqueta-rol">{rol}</span>
+                  <span className={`hu13-estado ${usuario.activo ? "hu13-activo" : "hu13-inactivo"}`}>
+                    <FiCheckCircle /> {usuario.activo ? "Cuenta activa" : "Cuenta inactiva"}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <div className="hu13-columnas">
+              <section className="hu13-tarjeta hu13-seccion">
+                <h3><FiUser /> Información personal</h3>
+                <div className="hu13-listado">
+                  <div><FiUser /><span>Nombre completo<strong>{nombre}</strong></span></div>
+                  <div><FiHash /><span>Documento de identidad<strong>{valor(usuario.carnetIdentidad)}</strong></span></div>
+                  <div><FiMail /><span>Correo electrónico<strong>{valor(usuario.correo)}</strong></span></div>
+                  <div><FiPhone /><span>Teléfono de contacto<strong>{valor(usuario.celular)}</strong></span></div>
+                </div>
+              </section>
+              <section className="hu13-tarjeta hu13-seccion">
+                <h3><FiShield /> Información institucional</h3>
+                <div className="hu13-listado">
+                  <div><FiShield /><span>Rol<strong>{rol}</strong></span></div>
+                  <div><FiBriefcase /><span>Carrera(s)<strong>{valor(carreras)}</strong></span></div>
+                  <div><FiBookOpen /><span>Materias asignadas o inscritas<strong>{valor(materias)}</strong></span></div>
+                  {usuario.codigoSis && <div><FiHash /><span>Código SIS<strong>{usuario.codigoSis}</strong></span></div>}
+                </div>
+              </section>
+            </div>
+            <p className="hu13-nota">Los datos institucionales solo pueden modificarse mediante la administración del sistema.</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
-export default Perfil;  
+export default Perfil;

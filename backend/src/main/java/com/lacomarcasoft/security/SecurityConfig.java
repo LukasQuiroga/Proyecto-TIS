@@ -75,6 +75,31 @@ public class SecurityConfig {
                     "/actuator/health"
                 ).permitAll()
 
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/perfil/me"
+                ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/perfil/me/telefono"
+                ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/perfil/me/contrasena"
+                ).authenticated()
+      
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/perfil/me/foto"
+                ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/perfil/me/foto"
+                ).authenticated()
+
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
 

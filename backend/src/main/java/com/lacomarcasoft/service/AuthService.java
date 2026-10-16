@@ -7,6 +7,7 @@ import com.lacomarcasoft.dto.response.UsuarioRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 import com.lacomarcasoft.security.JwtService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.stereotype.Service;
 
@@ -18,20 +19,18 @@ public class AuthService {
     private final UsuarioRepositorio usuarioRepositorio;
     private final JwtService jwtService;
     private final TokenSesionService tokenSesionService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
-        UsuarioRepositorio usuarioRepositorio,
-        JwtService jwtService,
-        TokenSesionService tokenSesionService
-    ){
-        this.usuarioRepositorio=
-            usuarioRepositorio;
-
-        this.jwtService=
-            jwtService;
-
-        this.tokenSesionService=
-            tokenSesionService;
+            UsuarioRepositorio usuarioRepositorio,
+            JwtService jwtService,
+            TokenSesionService tokenSesionService,
+            PasswordEncoder passwordEncoder
+    ) {
+        this.usuarioRepositorio = usuarioRepositorio;
+        this.jwtService = jwtService;
+        this.tokenSesionService = tokenSesionService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public LoginRespuesta login(LoginRequest request){
@@ -49,17 +48,26 @@ public class AuthService {
                 "Usuario inactivo"
             );
         }
+        
+        String contrasenaAlmacenada = usuario.getContrasena();
 
-        /*
-         * Por ahora se mantiene la comparación
-         * actual del proyecto.
-         * BCrypt lo podemos implementar después.
-         */
-        if(
-            !usuario
-                .getContrasena()
-                .equals(request.password())
-        ){
+        boolean credencialesValidas = false;
+
+        if (contrasenaAlmacenada != null && request.password() != null) {
+
+            if (contrasenaAlmacenada.matches("^\\$2[aby]\\$\\d{2}\\$.*")) {
+                credencialesValidas = passwordEncoder.matches(
+                    request.password(),
+                    contrasenaAlmacenada
+                );
+            } else {
+                credencialesValidas = contrasenaAlmacenada.equals(
+                    request.password()
+                );
+            }
+        }
+
+        if (!credencialesValidas) {
             throw new RuntimeException(
                 "Credenciales incorrectas"
             );
