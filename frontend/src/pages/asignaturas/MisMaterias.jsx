@@ -42,7 +42,6 @@ function MisMaterias() {
 
   useEffect(() => {
     if (!esEstudiante) {
-      setCargando(false);
       return;
     }
     const controller = new AbortController();

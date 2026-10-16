@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
@@ -132,30 +131,34 @@ function InscripcionEstudianteQr() {
     const numeroSolicitud = ++solicitudActual.current;
 
     if (!tokenUrl || !esEstudiante) {
+      const solicitudRef = solicitudActual;
       return () => {
-        if (numeroSolicitud === solicitudActual.current) {
-          solicitudActual.current++;
+        if (numeroSolicitud === solicitudRef.current) {
+          solicitudRef.current++;
         }
       };
     }
 
-    setVistaPrevia(null);
-    setResultado(null);
-    setMensaje(null);
-
     const token = obtenerToken(tokenUrl);
 
     if (!token) {
-      setMensaje({
-        tipo: "error",
-        texto: "El enlace no contiene un código QR válido."
+      Promise.resolve().then(() => {
+        if (numeroSolicitud !== solicitudActual.current) return;
+        setProcesando(false);
+        setVistaPrevia(null);
+        setResultado(null);
+        setMensaje({
+          tipo: "error",
+          texto: "El enlace no contiene un código QR válido."
+        });
       });
     } else {
       validarToken(token);
     }
 
+    const solicitudRef = solicitudActual;
     return () => {
-      solicitudActual.current++;
+      solicitudRef.current++;
     };
   }, [tokenUrl, esEstudiante, validarToken]);
 
@@ -244,8 +247,9 @@ function InscripcionEstudianteQr() {
   }, [camaraAbierta, abrirEnlaceInscripcion]);
 
   useEffect(() => {
+    const solicitudRef = solicitudActual;
     return () => {
-      solicitudActual.current++;
+      solicitudRef.current++;
     };
   }, []);
 

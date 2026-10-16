@@ -38,7 +38,7 @@ function InscripcionQr() {
   const [confirmacion, setConfirmacion] = useState(null);
   const [copiado, setCopiado] = useState(false);
   const [desactivado, setDesactivado] = useState(false);
-  const [ahora, setAhora] = useState(Date.now());
+  const [ahora, setAhora] = useState(0);
   const [versionConsulta, setVersionConsulta] = useState(0);
   const [estudiantes, setEstudiantes] = useState([]);
   const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
@@ -147,19 +147,14 @@ function InscripcionQr() {
   useEffect(() => {
     let activo = true;
 
-    setEstudiantes([]);
-    setErrorEstudiantes("");
-
     if (!idMateria) {
-      setCargandoEstudiantes(false);
       return () => {
         activo = false;
       };
     }
 
-    setCargandoEstudiantes(true);
-
     const cargarEstudiantes = async () => {
+      setCargandoEstudiantes(true);
       try {
         const datos = await obtenerEstudiantesInscritosQr(Number(idMateria));
 
@@ -525,6 +520,9 @@ function InscripcionQr() {
               setIdMateria(event.target.value);
               setBusquedaEstudiante("");
               setOrdenEstudiantes("nombre");
+              setEstudiantes([]);
+              setErrorEstudiantes("");
+              setCargandoEstudiantes(false);
               setResultado(null);
               setCopiado(false);
               setMensaje(null);
