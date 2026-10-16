@@ -15,7 +15,13 @@ const DATOS_INICIALES = {
   activo: true,
   descripcion: "",
   carreras: [],
+  idDocente: "",
+  grupo: "",
 };
+
+const limpiarBusqueda = (valor) =>
+  valor.replace(/[^\p{L}\p{M}\s'-]/gu, "");
+
 
 function RegistrarAsignatura({ onCerrar, onExito }) {
   const [datos, setDatos] = useState(DATOS_INICIALES);
@@ -331,7 +337,9 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
               aria-label="Buscar carrera"
               placeholder="Buscar carrera..."
               value={busquedaCarrera}
-              onChange={(e) => setBusquedaCarrera(e.target.value)}
+              onChange={(e) =>
+                setBusquedaCarrera(limpiarBusqueda(e.target.value))
+              }
               disabled={guardando}
             />
 
@@ -374,7 +382,7 @@ function RegistrarAsignatura({ onCerrar, onExito }) {
               placeholder="Buscar docente por nombre o apellido..."
               value={busquedaDocente}
               onChange={(e) => {
-                setBusquedaDocente(e.target.value);
+                setBusquedaDocente(limpiarBusqueda(e.target.value));
                 actualizarCampo("idDocente", "");
               }}
               disabled={guardando || cargandoDocentes || Boolean(errorDocentes)}
