@@ -26,8 +26,6 @@ function MisMaterias() {
   const [error, setError] = useState("");
 
   const cargarMaterias = useCallback(async (signal) => {
-    setCargando(true);
-    setError("");
     try {
       const datos = await obtenerMateriasInscritasEstudianteQr();
       if (!signal?.aborted) setMaterias(datos);
@@ -40,14 +38,35 @@ function MisMaterias() {
     }
   }, []);
 
+  const actualizarMaterias = () => {
+    setCargando(true);
+    setError("");
+    cargarMaterias();
+  };
+
   useEffect(() => {
     if (!esEstudiante) {
       return;
     }
-    const controller = new AbortController();
-    cargarMaterias(controller.signal);
-    return () => controller.abort();
-  }, [esEstudiante, cargarMaterias]);
+    let activo = true;
+
+    obtenerMateriasInscritasEstudianteQr()
+      .then((datos) => {
+        if (activo) setMaterias(datos);
+      })
+      .catch((err) => {
+        if (activo) {
+          setError(obtenerMensajeErrorQr(err, "listar-materias-estudiante"));
+        }
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [esEstudiante]);
 
   return (
     <main className="hu12-pagina">
@@ -73,7 +92,7 @@ function MisMaterias() {
                 type="button"
                 className="hu12-boton-secundario"
                 disabled={cargando}
-                onClick={() => cargarMaterias()}
+                onClick={actualizarMaterias}
               >
                 <FiRefreshCw /> {cargando ? "Actualizando..." : "Actualizar"}
               </button>

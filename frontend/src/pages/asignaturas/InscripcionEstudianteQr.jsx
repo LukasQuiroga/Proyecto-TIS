@@ -95,6 +95,9 @@ function InscripcionEstudianteQr() {
   const validarToken = useCallback(async (token) => {
     const numeroSolicitud = ++solicitudActual.current;
 
+    await Promise.resolve();
+    if (numeroSolicitud !== solicitudActual.current) return;
+
     setProcesando(true);
     setVistaPrevia(null);
     setResultado(null);
@@ -140,6 +143,7 @@ function InscripcionEstudianteQr() {
     }
 
     const token = obtenerToken(tokenUrl);
+    let temporizadorValidacion;
 
     if (!token) {
       Promise.resolve().then(() => {
@@ -153,11 +157,14 @@ function InscripcionEstudianteQr() {
         });
       });
     } else {
-      validarToken(token);
+      temporizadorValidacion = window.setTimeout(() => {
+        validarToken(token);
+      }, 0);
     }
 
     const solicitudRef = solicitudActual;
     return () => {
+      window.clearTimeout(temporizadorValidacion);
       solicitudRef.current++;
     };
   }, [tokenUrl, esEstudiante, validarToken]);
