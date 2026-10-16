@@ -1,4 +1,3 @@
-
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.modelo.Materia;
@@ -34,6 +33,7 @@ public class InscripcionMateriaServicio {
     private final UsuarioRepositorio usuarioRepositorio;
     private final QrInscripcionServicio qrServicio;
     private final EntityManager entityManager;
+    private final AuditoriaQrServicio auditoriaQrServicio;
 
     public InscripcionMateriaServicio(
             QrInscripcionRepositorio qrRepositorio,
@@ -41,7 +41,8 @@ public class InscripcionMateriaServicio {
             MateriaEstudianteRepositorio inscripcionRepositorio,
             UsuarioRepositorio usuarioRepositorio,
             QrInscripcionServicio qrServicio,
-            EntityManager entityManager
+            EntityManager entityManager,
+            AuditoriaQrServicio auditoriaQrServicio
     ) {
         this.qrRepositorio = qrRepositorio;
         this.materiaRepositorio = materiaRepositorio;
@@ -49,6 +50,7 @@ public class InscripcionMateriaServicio {
         this.usuarioRepositorio = usuarioRepositorio;
         this.qrServicio = qrServicio;
         this.entityManager = entityManager;
+        this.auditoriaQrServicio = auditoriaQrServicio;
     }
 
     public record ResultadoInscripcion(
@@ -261,6 +263,12 @@ public class InscripcionMateriaServicio {
                     e
             );
         }
+
+        auditoriaQrServicio.registrarExito(
+                idEstudiante,
+                "INSCRIPCION_MEDIANTE_QR",
+                idMateria
+        );
 
         return new ResultadoInscripcion(
                 idMateria,

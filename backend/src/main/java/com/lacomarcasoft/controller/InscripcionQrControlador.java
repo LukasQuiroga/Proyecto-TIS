@@ -4,6 +4,7 @@ import com.lacomarcasoft.dto.request.InscripcionQrSolicitud;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+import com.lacomarcasoft.service.AuditoriaQrServicio;
 import com.lacomarcasoft.service.InscripcionMateriaServicio;
 import com.lacomarcasoft.service.QrInscripcionServicio;
 
@@ -16,32 +17,39 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/api/inscripciones-qr")
 public class InscripcionQrControlador {
 
+    private static final String GENERAR_QR = "GENERAR_QR_INSCRIPCION";
+    private static final String RENOVAR_QR = "RENOVAR_QR_INSCRIPCION";
+    private static final String DESACTIVAR_QR = "DESACTIVAR_QR_INSCRIPCION";
+    private static final String INSCRIBIR_QR = "INSCRIPCION_MEDIANTE_QR";
+
     private final QrInscripcionServicio qrServicio;
     private final InscripcionMateriaServicio inscripcionServicio;
     private final MateriaRepositorio materiaRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final AuditoriaQrServicio auditoriaQrServicio;
 
     public InscripcionQrControlador(
             QrInscripcionServicio qrServicio,
             InscripcionMateriaServicio inscripcionServicio,
             MateriaRepositorio materiaRepositorio,
-            UsuarioRepositorio usuarioRepositorio
+            UsuarioRepositorio usuarioRepositorio,
+            AuditoriaQrServicio auditoriaQrServicio
     ) {
         this.qrServicio = qrServicio;
         this.inscripcionServicio = inscripcionServicio;
         this.materiaRepositorio = materiaRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.auditoriaQrServicio = auditoriaQrServicio;
     }
 
     private Long obtenerIdUsuario(Authentication authentication) {
-
-        if (authentication == null ||
-                !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "Debe iniciar sesion"
@@ -58,6 +66,24 @@ public class InscripcionQrControlador {
         }
 
         return (Long) detalles;
+    }
+
+    private <T> T ejecutarConAuditoriaDeFallo(
+            Long idUsuario,
+            String tipoAccion,
+            Long idMateria,
+            Supplier<T> operacion
+    ) {
+        try {
+            return operacion.get();
+        } catch (RuntimeException error) {
+            auditoriaQrServicio.registrarFallo(
+                    idUsuario,
+                    tipoAccion,
+                    idMateria
+            );
+            throw error;
+        }
     }
 
     public record MateriaDocenteRespuesta(
@@ -165,9 +191,11 @@ public class InscripcionQrControlador {
     ) {
         Long idDocente = obtenerIdUsuario(authentication);
 
-        var resultado = qrServicio.generarQr(
+        var resultado = ejecutarConAuditoriaDeFallo(
+                idDocente,
+                GENERAR_QR,
                 idMateria,
-                idDocente
+                () -> qrServicio.generarQr(idMateria, idDocente)
         );
 
         return ResponseEntity
@@ -183,9 +211,11 @@ public class InscripcionQrControlador {
     ) {
         Long idDocente = obtenerIdUsuario(authentication);
 
-        var resultado = qrServicio.renovarQr(
+        var resultado = ejecutarConAuditoriaDeFallo(
+                idDocente,
+                RENOVAR_QR,
                 idMateria,
-                idDocente
+                () -> qrServicio.renovarQr(idMateria, idDocente)
         );
 
         return ResponseEntity
@@ -201,9 +231,11 @@ public class InscripcionQrControlador {
     ) {
         Long idDocente = obtenerIdUsuario(authentication);
 
-        var resultado = qrServicio.desactivarQr(
+        var resultado = ejecutarConAuditoriaDeFallo(
+                idDocente,
+                DESACTIVAR_QR,
                 idMateria,
-                idDocente
+                () -> qrServicio.desactivarQr(idMateria, idDocente)
         );
 
         return ResponseEntity.ok(resultado);
@@ -233,9 +265,14 @@ public class InscripcionQrControlador {
     ) {
         Long idEstudiante = obtenerIdUsuario(authentication);
 
-        var resultado = inscripcionServicio.inscribirEstudiante(
-                solicitud.token(),
-                idEstudiante
+        var resultado = ejecutarConAuditoriaDeFallo(
+                idEstudiante,
+                INSCRIBIR_QR,
+                null,
+                () -> inscripcionServicio.inscribirEstudiante(
+                        solicitud.token(),
+                        idEstudiante
+                )
         );
 
         return ResponseEntity

@@ -31,15 +31,18 @@ public class QrInscripcionServicio {
     private final QrInscripcionRepositorio qrRepositorio;
     private final MateriaRepositorio materiaRepositorio;
     private final QrTokenCifradoServicio cifradoServicio;
+    private final AuditoriaQrServicio auditoriaQrServicio;
 
     public QrInscripcionServicio(
             QrInscripcionRepositorio qrRepositorio,
             MateriaRepositorio materiaRepositorio,
-            QrTokenCifradoServicio cifradoServicio
+            QrTokenCifradoServicio cifradoServicio,
+            AuditoriaQrServicio auditoriaQrServicio
     ) {
         this.qrRepositorio = qrRepositorio;
         this.materiaRepositorio = materiaRepositorio;
         this.cifradoServicio = cifradoServicio;
+        this.auditoriaQrServicio = auditoriaQrServicio;
     }
 
     public record ResultadoGeneracionQr(
@@ -181,7 +184,15 @@ public class QrInscripcionServicio {
             );
         }
 
-        return crearQr(materia, ahora);
+        ResultadoGeneracionQr resultado = crearQr(materia, ahora);
+
+        auditoriaQrServicio.registrarExito(
+                idDocente,
+                "GENERAR_QR_INSCRIPCION",
+                idMateria
+        );
+
+        return resultado;
     }
 
     @Transactional
@@ -217,7 +228,15 @@ public class QrInscripcionServicio {
 
         qrRepositorio.saveAllAndFlush(codigosActivos);
 
-        return crearQr(materia, ahora);
+        ResultadoGeneracionQr resultado = crearQr(materia, ahora);
+
+        auditoriaQrServicio.registrarExito(
+                idDocente,
+                "RENOVAR_QR_INSCRIPCION",
+                idMateria
+        );
+
+        return resultado;
     }
 
     @Transactional
@@ -250,6 +269,12 @@ public class QrInscripcionServicio {
         }
 
         qrRepositorio.saveAllAndFlush(codigosActivos);
+
+        auditoriaQrServicio.registrarExito(
+                idDocente,
+                "DESACTIVAR_QR_INSCRIPCION",
+                idMateria
+        );
 
         return new ResultadoEstadoQr(
                 codigosActivos.get(0).getIdQr(),
