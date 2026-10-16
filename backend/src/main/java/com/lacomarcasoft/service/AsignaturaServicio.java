@@ -18,6 +18,12 @@ import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.dto.response.DocenteRespuesta;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 import com.lacomarcasoft.modelo.Materia;
+import com.lacomarcasoft.modelo.Carrera;
+import com.lacomarcasoft.repository.CarreraRepositorio;
+import com.lacomarcasoft.repository.FacultadRepositorio;
+import com.lacomarcasoft.dto.response.DocentesPorFacultadRespuesta;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,17 +37,23 @@ public class AsignaturaServicio {
     private final AsignaturaCarreraRepositorio asignaturaCarreraRepositorio;
     private final MateriaRepositorio materiaRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final CarreraRepositorio carreraRepositorio;
+    private final FacultadRepositorio facultadRepositorio;
 
     public AsignaturaServicio(
             AsignaturaRepositorio asignaturaRepositorio,
             AsignaturaCarreraRepositorio asignaturaCarreraRepositorio,
             MateriaRepositorio materiaRepositorio,
-            UsuarioRepositorio usuarioRepositorio
+            UsuarioRepositorio usuarioRepositorio,
+            CarreraRepositorio carreraRepositorio,
+            FacultadRepositorio facultadRepositorio
     ) {
         this.asignaturaRepositorio = asignaturaRepositorio;
         this.asignaturaCarreraRepositorio = asignaturaCarreraRepositorio;
         this.materiaRepositorio = materiaRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.carreraRepositorio = carreraRepositorio;
+        this.facultadRepositorio = facultadRepositorio;
     }
 
     @Transactional
@@ -100,6 +112,7 @@ public class AsignaturaServicio {
         List<String> carreras = normalizarCarreras(
                 solicitud.carreras()
         );
+        validarCarrerasFacultad(solicitud.idFacultad(), carreras);
 
         Long idDocente = solicitud.idDocente();
 
@@ -110,7 +123,7 @@ public class AsignaturaServicio {
         );
         }
 
-        Usuario docente = usuarioRepositorio.findById(idDocente)
+        Usuario docente = usuarioRepositorio.bloquearDocente(idDocente)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "El docente seleccionado no existe"
@@ -126,6 +139,8 @@ public class AsignaturaServicio {
                 "El usuario seleccionado no es un docente activo"
         );
         }
+
+        validarFacultadDocente(idDocente, solicitud.idFacultad());
 
         String grupo = solicitud.grupo() == null
                 ? ""
@@ -284,6 +299,56 @@ public class AsignaturaServicio {
         }
 
     @Transactional(readOnly = true)
+        public DocentesPorFacultadRespuesta listarDocentesPorFacultad(Long idFacultad) {
+
+        if (idFacultad == null || !facultadRepositorio.existsById(idFacultad)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La facultad seleccionada no existe"
+                );
+        }
+
+        List<DocenteRespuesta> docentesFacultad = new ArrayList<>();
+        List<DocenteRespuesta> docentesSinFacultad = new ArrayList<>();
+
+        for (Usuario docente : usuarioRepositorio.listarDocentesActivos()) {
+                List<Materia> materias = materiaRepositorio.listarPorDocente(
+                        docente.getIdUsuario()
+                );
+
+                DocenteRespuesta respuesta = new DocenteRespuesta(
+                        docente.getIdUsuario(),
+                        (docente.getNombre() + " " + docente.getApellido()).trim()
+                );
+
+                if (materias.isEmpty()) {
+                        docentesSinFacultad.add(respuesta);
+                        continue;
+                }
+
+                Set<Long> facultadesDocente;
+
+                try {
+                        facultadesDocente = obtenerFacultadesDocente(
+                                docente.getIdUsuario()
+                        );
+                } catch (ResponseStatusException ex) {
+                        continue;
+                }
+
+                if (facultadesDocente.size() == 1
+                        && facultadesDocente.contains(idFacultad)) {
+                        docentesFacultad.add(respuesta);
+                }
+                }
+
+        return new DocentesPorFacultadRespuesta(
+                docentesFacultad,
+                docentesSinFacultad
+        );
+    }
+    
+    @Transactional(readOnly = true)
         public List<GrupoAsignaturaRespuesta> listarGrupos(
                 Long idAsignatura
         ) {
@@ -362,4 +427,105 @@ public class AsignaturaServicio {
 
         return new ArrayList<>(unicas.values());
     }
+
+    private void validarCarrerasFacultad(
+                Long idFacultad,
+                List<String> nombresCarreras
+        ) {
+        if (idFacultad == null || !facultadRepositorio.existsById(idFacultad)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La facultad seleccionada no existe"
+                );
+        }
+
+        List<Carrera> carreras = carreraRepositorio.findByNombreIn(nombresCarreras);
+
+        if (carreras.size() != nombresCarreras.size()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Una o más carreras no existen en el catálogo"
+                );
+        }
+
+        boolean facultadIncorrecta = carreras.stream()
+                .anyMatch(carrera ->
+                        !carrera.getFacultad().getIdFacultad().equals(idFacultad)
+                );
+
+        if (facultadIncorrecta) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Todas las carreras deben pertenecer a la facultad seleccionada"
+                );
+        }
+   }
+
+
+        private void validarFacultadDocente(
+                Long idDocente,
+                Long idFacultad
+        ) {
+                Set<Long> facultades = obtenerFacultadesDocente(idDocente);
+
+                if (facultades.size() > 1) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "El docente tiene asignaturas de diferentes facultades"
+                        );
+                }
+
+                if (!facultades.isEmpty() && !facultades.contains(idFacultad)) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "El docente ya tiene asignaturas asociadas a otra facultad"
+                        );
+                }
+        }
+
+        private Set<Long> obtenerFacultadesDocente(Long idDocente) {
+                Set<Long> facultades = new HashSet<>();
+
+                List<Materia> materias = materiaRepositorio.listarPorDocente(idDocente);
+
+                for (Materia materia : materias) {
+                        Long idAsignatura = materia.getAsignatura().getIdAsignatura();
+
+                        List<String> nombresCarreras = asignaturaCarreraRepositorio
+                                .findByIdAsignatura(idAsignatura)
+                                .stream()
+                                .map(AsignaturaCarrera::getCarrera)
+                                .toList();
+
+                        if (nombresCarreras.isEmpty()) {
+                        continue;
+                        }
+
+                        List<Carrera> carreras = carreraRepositorio.findByNombreIn(nombresCarreras);
+
+                        if (carreras.size() != nombresCarreras.size()) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Una asignatura del docente tiene carreras no reconocidas"
+                        );
+                        }
+
+                        Set<Long> facultadesAsignatura = new HashSet<>();
+
+                        for (Carrera carrera : carreras) {
+                        facultadesAsignatura.add(carrera.getFacultad().getIdFacultad());
+                        }
+
+                        if (facultadesAsignatura.size() != 1) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Una asignatura del docente pertenece a varias facultades"
+                        );
+                        }
+
+                        facultades.addAll(facultadesAsignatura);
+                }
+
+                return facultades;
+        }
 }
