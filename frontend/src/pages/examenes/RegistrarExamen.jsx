@@ -288,13 +288,28 @@ function RegistrarExamen() {
     } catch (error) {
       console.error("Error guardando el examen:", error);
 
+      const status = error?.response?.status;
       const mensajeBackend = error?.response?.data?.mensaje;
 
-      setAlerta(
-        typeof mensajeBackend === "string" && mensajeBackend.trim()
-          ? mensajeBackend
-          : "No se pudo guardar el examen. Intenta nuevamente.",
-      );
+      if (status === 409 && !modoEdicion) {
+        const codigoAnterior = datos.codigoExamen;
+        const codigoNuevo = generarCodigoExamen();
+
+        setDatos((anterior) => ({
+          ...anterior,
+          codigoExamen: codigoNuevo,
+        }));
+
+        setAlerta(
+          `El código ${codigoAnterior} ya está en uso. Se generó el código ${codigoNuevo}; revisa los datos y vuelve a guardar.`,
+        );
+      } else {
+        setAlerta(
+          typeof mensajeBackend === "string" && mensajeBackend.trim()
+            ? mensajeBackend
+            : "No se pudo guardar el examen. Intenta nuevamente.",
+        );
+      }
 
       setGuardando(false);
     }
