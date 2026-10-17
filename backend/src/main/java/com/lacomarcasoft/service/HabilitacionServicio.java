@@ -114,19 +114,31 @@ public class HabilitacionServicio {
         String estado = solicitud.estado();
         String titulo = solicitud.titulo() == null ? "" : solicitud.titulo().trim();
         String textoMotivo = solicitud.motivo() == null ? "" : solicitud.motivo().trim();
+        Long idMotivoSeleccionado = solicitud.idMotivo();
 
         if ("INHABILITADO".equals(estado)) {
-            if (titulo.isEmpty() || textoMotivo.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Debe escribir el titulo y el motivo de inhabilitacion");
-            }
-            if (titulo.length() > 120 || textoMotivo.length() > 500) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El titulo o motivo supera el limite permitido");
+            if (idMotivoSeleccionado != null) {
+                if (!titulo.isEmpty() || !textoMotivo.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Seleccione un motivo existente o ingrese uno personalizado");
+                }
+            } else {
+                if (titulo.isEmpty() || textoMotivo.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Debe escribir el titulo y el motivo de inhabilitacion");
+                }
+                if (titulo.length() > 120 || textoMotivo.length() > 500) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El titulo o motivo supera el limite permitido");
+                }
             }
         } else if (!"HABILITADO".equals(estado)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Estado de habilitacion invalido");
+        } else if (idMotivoSeleccionado != null
+                || !titulo.isEmpty() || !textoMotivo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Un estudiante habilitado no puede tener un motivo vigente");
         }
 
         List<Object[]> anteriores = jdbc.query("""
@@ -187,7 +199,9 @@ public class HabilitacionServicio {
 
         Long motivoId = null;
         if ("INHABILITADO".equals(estado)) {
-            motivoId = obtenerOCrearMotivo(titulo, textoMotivo);
+            motivoId = idMotivoSeleccionado != null
+                ? validarMotivoExistente(idMotivoSeleccionado)
+                : obtenerOCrearMotivo(titulo, textoMotivo);
         }
 
         if (Objects.equals(actual[0], estado)
@@ -291,6 +305,21 @@ public class HabilitacionServicio {
             + " -> " + coincidencia.group(4)
             + ". Motivo anterior: " + describirMotivo(anterior)
             + ". Motivo nuevo: " + describirMotivo(nuevo);
+    }
+
+    private Long validarMotivoExistente(Long idMotivo) {
+        List<Long> motivos = jdbc.queryForList("""
+            SELECT id_motivo
+            FROM academico.motivo_inhabilitacion
+            WHERE id_motivo = ? AND activo = TRUE
+            """, Long.class, idMotivo);
+
+        if (motivos.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Debe seleccionar un motivo valido y activo");
+        }
+
+        return motivos.get(0);
     }
 
     private Long obtenerOCrearMotivo(String titulo, String texto) {
