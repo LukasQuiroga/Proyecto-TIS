@@ -67,6 +67,17 @@ function ModalHabilitacion({
       }
     }
 
+    if (estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO") {
+      if (titulo.trim().length >= 30) {
+        setError("El título de la inhabilitación debe contener menos de 30 caracteres.");
+        return;
+      }
+      if (motivo.trim().length >= 50) {
+        setError("El motivo de inhabilitación debe contener menos de 50 caracteres.");
+        return;
+      }
+    }
+
     setError("");
 
     try {
@@ -225,11 +236,12 @@ function ModalHabilitacion({
                         value={titulo}
                         onChange={(e) => setTitulo(e.target.value)}
                         placeholder="Escribe el título"
-                        maxLength={120}
+                        maxLength={29}
                         required={editable}
                         readOnly={!editable}
                         disabled={guardando}
                       />
+                       <small>{titulo.length}/29 caracteres (máximo 29)</small>
                     </label>
                     <label className="hab-campo">
                       Motivo
@@ -238,11 +250,12 @@ function ModalHabilitacion({
                         onChange={(e) => setMotivo(e.target.value)}
                         placeholder="Escribe el motivo"
                         rows={3}
-                        maxLength={500}
+                        maxLength={49}
                         required={editable}
                         readOnly={!editable}
                         disabled={guardando}
                       />
+                       <small>{motivo.length}/49 caracteres (máximo 49)</small>
                     </label>
                   </>
                 )}

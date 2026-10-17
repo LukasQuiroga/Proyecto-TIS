@@ -18,10 +18,10 @@ public record ModificarHabilitacionSolicitud(
     )
     String estado,
 
-    @Size(max = 120, message = "El titulo no puede superar 120 caracteres")
+    @Size(max = 29, message = "El título de la inhabilitación debe contener menos de 30 caracteres.")
     String titulo,
 
-    @Size(max = 500, message = "El motivo no puede superar 500 caracteres")
+    @Size(max = 49, message = "El motivo de inhabilitación debe contener menos de 50 caracteres.")
     String motivo,
 
     @Positive(message = "El identificador del motivo debe ser positivo")
