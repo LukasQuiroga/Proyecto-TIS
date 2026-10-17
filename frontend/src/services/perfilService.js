@@ -31,14 +31,26 @@ export const obtenerFotoPerfil = async () => {
 
 export const obtenerMensajeErrorPerfil = (error) => {
   const body = error?.response?.data;
-  if (typeof body?.message === "string") return body.message;
-  if (typeof body?.detail === "string") return body.detail;
-  if (typeof body?.error === "string") return body.error;
+
+  for (const valor of [
+    body?.mensaje,
+    body?.message,
+    body?.detail,
+    body?.error,
+  ]) {
+    if (typeof valor === "string" && valor.trim()) {
+      return valor.trim();
+    }
+  }
+
   if (error?.response?.status === 413)
     return "La fotografía supera el tamaño permitido.";
+
   if (error?.response?.status === 401)
     return "Tu sesión ha expirado. Inicia sesión nuevamente.";
+
   if (error?.response?.status === 403)
     return "No tienes permisos para realizar esta operación.";
+
   return "Ocurrió un error. Inténtalo nuevamente.";
 };

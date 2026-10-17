@@ -88,7 +88,7 @@ public class PerfilServicio {
         if (!coincide(actual, usuario.getContrasena())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "La contrasena actual es incorrecta"
+                "La contraseña actual es incorrecta."
             );
         }
 
@@ -118,7 +118,7 @@ public class PerfilServicio {
         if (coincide(nueva, usuario.getContrasena())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "La nueva contrasena debe ser diferente a la actual"
+                "La nueva contraseña debe ser diferente de la contraseña actual."
             );
         }
 
