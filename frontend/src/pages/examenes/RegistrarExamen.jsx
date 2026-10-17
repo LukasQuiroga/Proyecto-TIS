@@ -53,6 +53,15 @@ const sanearGestion = (valor) => {
   return `${periodo}/${anio}`;
 };
 
+const generarCodigoExamen = () => {
+  const letras = Array.from({ length: 3 }, () =>
+    String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+  ).join("");
+  const numeros = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+
+  return `${letras}-${numeros}`;
+};
+
 function Campo({ id, etiqueta, requerido = false, error, children }) {
   return (
     <div className="registrar-examen-campo">
@@ -81,7 +90,10 @@ function RegistrarExamen() {
 
   const modoEdicion = Boolean(id);
 
-  const [datos, setDatos] = useState(DATOS_INICIALES);
+  const [datos, setDatos] = useState(() => ({
+    ...DATOS_INICIALES,
+    codigoExamen: modoEdicion ? "" : generarCodigoExamen(),
+  }));
   const [errores, setErrores] = useState({});
   const [alerta, setAlerta] = useState("");
 
@@ -340,11 +352,9 @@ function RegistrarExamen() {
                   id="examen-codigo"
                   className={claseControl("codigoExamen")}
                   value={datos.codigoExamen}
-                  onChange={(e) =>
-                    actualizarCampo("codigoExamen", e.target.value)
-                  }
-                  placeholder="Ej. EX-001"
-                  maxLength={30}
+                  placeholder="ABC-123"
+                  maxLength={7}
+                  readOnly
                   disabled={guardando}
                 />
               </Campo>
