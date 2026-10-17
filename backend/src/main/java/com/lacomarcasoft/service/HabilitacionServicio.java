@@ -132,9 +132,13 @@ public class HabilitacionServicio {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Debe escribir el titulo y el motivo de inhabilitacion");
                 }
-                if (titulo.length() > 120 || textoMotivo.length() > 500) {
+                if (titulo.length() >= 30) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "El titulo o motivo supera el limite permitido");
+                        "El título de la inhabilitación debe contener menos de 30 caracteres.");
+                }
+                if (textoMotivo.length() >= 50) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El motivo de inhabilitación debe contener menos de 50 caracteres.");
                 }
             }
         } else if (!"HABILITADO".equals(estado)) {
