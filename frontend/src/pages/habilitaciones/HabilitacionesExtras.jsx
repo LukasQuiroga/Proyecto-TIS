@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   actualizarHabilitacionesMasivas,
   consultarHistorialHabilitacion,
+  listarMotivos,
   mensajeErrorHabilitacion
 } from "../../services/habilitacionService";
 
@@ -14,6 +15,9 @@ export default function HabilitacionesExtras({
   const [estado, setEstado] = useState("INHABILITADO");
   const [titulo, setTitulo] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [tipoMotivo, setTipoMotivo] = useState("PERSONALIZADO");
+  const [idMotivo, setIdMotivo] = useState("");
+  const [motivosDisponibles, setMotivosDisponibles] = useState([]);
   const [historialId, setHistorialId] = useState("");
   const [historial, setHistorial] = useState([]);
   const [cargandoHistorial, setCargandoHistorial] = useState(false);
@@ -25,6 +29,30 @@ export default function HabilitacionesExtras({
     () => estudiantes.filter((e) => e.idEstudiante != null),
     [estudiantes]
   );
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarMotivos = async () => {
+      try {
+        const datos = await listarMotivos();
+
+        if (activo) {
+          setMotivosDisponibles(Array.isArray(datos) ? datos : []);
+        }
+      } catch (err) {
+        if (activo) {
+          setError(mensajeErrorHabilitacion(err));
+        }
+      }
+    };
+
+    cargarMotivos();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const alternar = (id) => {
     setSeleccionados((actuales) =>
@@ -46,13 +74,20 @@ export default function HabilitacionesExtras({
       setError("Selecciona al menos un estudiante.");
       return;
     }
-    if (estado === "INHABILITADO" && (!titulo.trim() || !motivo.trim())) {
-      setError("Escribe el título y el motivo.");
-      return;
+    if (estado === "INHABILITADO") {
+      if (tipoMotivo === "PREDEFINIDO" && !idMotivo) {
+        setError("Selecciona un motivo predefinido.");
+        return;
+      }
+
+      if (
+        tipoMotivo === "PERSONALIZADO" &&
+        (!titulo.trim() || !motivo.trim())
+      ) {
+        setError("Escribe el título y el motivo.");
+        return;
+      }
     }
-    if (!window.confirm(
-      `¿Deseas modificar ${seleccionados.length} estudiantes?`
-    )) return;
 
     setProcesando(true);
     setError("");
@@ -64,8 +99,18 @@ export default function HabilitacionesExtras({
         .map((e) => ({
           idEstudiante: e.idEstudiante,
           estado,
-          titulo: estado === "INHABILITADO" ? titulo.trim() : null,
-          motivo: estado === "INHABILITADO" ? motivo.trim() : null,
+          idMotivo:
+            estado === "INHABILITADO" && tipoMotivo === "PREDEFINIDO"
+              ? Number(idMotivo)
+              : null,
+          titulo:
+            estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO"
+              ? titulo.trim()
+              : null,
+          motivo:
+            estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO"
+              ? motivo.trim()
+              : null,
           numeroCambios: e.numeroCambios ?? 0
         }));
 
@@ -175,27 +220,67 @@ export default function HabilitacionesExtras({
           {estado === "INHABILITADO" && (
             <>
               <label>
-                Título de la inhabilitación
-                <input
-                  type="text"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  placeholder="Escribe el título"
-                  maxLength={120}
+                Tipo de motivo
+                <select
+                  value={tipoMotivo}
+                  onChange={(e) => {
+                    setTipoMotivo(e.target.value);
+                    setIdMotivo("");
+                    setTitulo("");
+                    setMotivo("");
+                    setError("");
+                  }}
                   disabled={procesando}
-                />
+                >
+                  <option value="PERSONALIZADO">Motivo personalizado</option>
+                  <option value="PREDEFINIDO">Motivo predefinido</option>
+                </select>
               </label>
-              <label>
-                Motivo
-                <textarea
-                  value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
-                  placeholder="Escribe el motivo"
-                  maxLength={500}
-                  rows={3}
-                  disabled={procesando}
-                />
-              </label>
+
+              {tipoMotivo === "PREDEFINIDO" && (
+                <label>
+                  Seleccionar motivo
+                  <select
+                    value={idMotivo}
+                    onChange={(e) => setIdMotivo(e.target.value)}
+                    disabled={procesando}
+                  >
+                    <option value="">Selecciona un motivo</option>
+                    {motivosDisponibles.map((item) => (
+                      <option key={item.idMotivo} value={item.idMotivo}>
+                        {item.titulo}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {tipoMotivo === "PERSONALIZADO" && (
+                <>
+                  <label>
+                    Título de la inhabilitación
+                    <input
+                      type="text"
+                      value={titulo}
+                      onChange={(e) => setTitulo(e.target.value)}
+                      placeholder="Escribe el título"
+                      maxLength={120}
+                      disabled={procesando}
+                    />
+                  </label>
+                  <label>
+                    Motivo
+                    <textarea
+                      value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)}
+                      placeholder="Escribe el motivo"
+                      maxLength={500}
+                      rows={3}
+                      disabled={procesando}
+                    />
+                  </label>
+                </>
+              )}
             </>
           )}
 
@@ -209,19 +294,7 @@ export default function HabilitacionesExtras({
           </button>
         </div>
 
-        {resultado && (
-          <div className="hab-extra-resultado">
-            <strong>{resultado.exitosos} exitosos</strong>
-            <strong>{resultado.fallidos} fallidos</strong>
-            {resultado.resultados
-              .filter((r) => !r.exitoso)
-              .map((r) => (
-                <p key={r.idEstudiante}>
-                  Estudiante #{r.idEstudiante}: {r.mensaje}
-                </p>
-              ))}
-          </div>
-        )}
+
       </div>
 
       <div className="hab-panel hab-extra-panel">
@@ -265,6 +338,59 @@ export default function HabilitacionesExtras({
       </div>
 
       {error && <p className="hab-error" role="alert">{error}</p>}
+
+      {resultado && (
+        <div className="hab-overlay">
+          <section
+            className="hab-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hab-resultado-masivo"
+          >
+            <header className="hab-modal-header">
+              <h2 id="hab-resultado-masivo">
+                {resultado.fallidos === 0
+                  ? "Operación exitosa"
+                  : resultado.exitosos > 0
+                    ? "Operación parcialmente completada"
+                    : "No se completaron las modificaciones"}
+              </h2>
+            </header>
+
+            <div className="hab-modal-body">
+              <p>El procesamiento de habilitaciones ha finalizado.</p>
+
+              <p>
+                <strong>Actualizaciones exitosas:</strong>{" "}
+                {resultado.exitosos}
+              </p>
+
+              <p>
+                <strong>Actualizaciones fallidas:</strong>{" "}
+                {resultado.fallidos}
+              </p>
+
+              {resultado.resultados
+                .filter((r) => !r.exitoso)
+                .map((r) => (
+                  <p key={r.idEstudiante} className="hab-error">
+                    Estudiante #{r.idEstudiante}: {r.mensaje}
+                  </p>
+                ))}
+            </div>
+
+            <footer className="hab-modal-footer">
+              <button
+                type="button"
+                className="hab-btn hab-btn-pri"
+                onClick={() => setResultado(null)}
+              >
+                Aceptar
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
     </section>
   );
 }

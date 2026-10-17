@@ -663,7 +663,7 @@ export default function Habilitaciones() {
         </section>
       )}
 
-      {idExamen && !cargando && !error && (
+      {idExamen && (
         <HabilitacionesExtras
           key={idExamen}
           idExamen={idExamen}
