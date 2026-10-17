@@ -354,8 +354,7 @@ function RegistrarExamen() {
                   value={datos.codigoExamen}
                   placeholder="ABC-123"
                   maxLength={7}
-                  readOnly
-                  disabled={guardando}
+                  disabled
                 />
               </Campo>
 
