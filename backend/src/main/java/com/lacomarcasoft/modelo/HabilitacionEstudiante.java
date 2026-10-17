@@ -27,6 +27,12 @@ public class HabilitacionEstudiante {
     @JoinColumn(name = "id_motivo")
     private MotivoInhabilitacion motivo;
 
+    @Column(name = "titulo_motivo_personalizado", length = 120)
+    private String tituloMotivoPersonalizado;
+
+    @Column(name = "motivo_personalizado", length = 500)
+    private String motivoPersonalizado;
+
     @Column(name = "fecha_creacion", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -62,6 +68,22 @@ public class HabilitacionEstudiante {
 
     public MotivoInhabilitacion getMotivo() { return motivo; }
     public void setMotivo(MotivoInhabilitacion motivo) { this.motivo = motivo; }
+
+    public String getTituloMotivoPersonalizado() {
+        return tituloMotivoPersonalizado;
+    }
+
+    public void setTituloMotivoPersonalizado(String tituloMotivoPersonalizado) {
+        this.tituloMotivoPersonalizado = tituloMotivoPersonalizado;
+    }
+
+    public String getMotivoPersonalizado() {
+        return motivoPersonalizado;
+    }
+
+    public void setMotivoPersonalizado(String motivoPersonalizado) {
+        this.motivoPersonalizado = motivoPersonalizado;
+    }
 
     public OffsetDateTime getFechaCreacion() { return fechaCreacion; }
     public OffsetDateTime getFechaActualizacion() { return fechaActualizacion; }
