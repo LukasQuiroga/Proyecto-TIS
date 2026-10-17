@@ -24,10 +24,11 @@ import java.util.Locale;
 public class ExamenServicio {
 
     private static final List<String> TIPOS = List.of(
-            "PARCIAL",
+            "PRIMER_PARCIAL",
+            "SEGUNDO_PARCIAL",
             "FINAL",
             "PRACTICO",
-            "RECUPERATORIO"
+            "ESTANCIA"
     );
 
     private static final List<String> ESTADOS = List.of(

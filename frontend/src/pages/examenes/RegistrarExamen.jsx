@@ -12,10 +12,11 @@ import ModalExito from "../../components/Modal/ModalExito.jsx";
 import "./RegistrarExamen.css";
 
 const TIPOS_EXAMEN = [
-  { valor: "PARCIAL", etiqueta: "Parcial" },
+  { valor: "PRIMER_PARCIAL", etiqueta: "Primer parcial" },
+  { valor: "SEGUNDO_PARCIAL", etiqueta: "Segundo Parcial" },
   { valor: "FINAL", etiqueta: "Final" },
   { valor: "PRACTICO", etiqueta: "Práctico" },
-  { valor: "RECUPERATORIO", etiqueta: "Recuperatorio" },
+  { valor: "ESTANCIA", etiqueta: "Estancia" },
 ];
 
 const ESTADOS_EXAMEN = [
