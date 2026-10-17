@@ -63,6 +63,19 @@ const generarCodigoExamen = () => {
   return `${letras}-${numeros}`;
 };
 
+const construirNombreExamen = (tipoEvaluacion, idMateria, asignaturas) => {
+  const tipo = TIPOS_EXAMEN.find((t) => t.valor === tipoEvaluacion);
+  const materia = asignaturas.find(
+    (m) => String(m.idMateria) === String(idMateria),
+  );
+
+  if (!tipo || !materia) {
+    return null;
+  }
+
+  return `${tipo.etiqueta} ${materia.nombreAsignatura}`;
+};
+
 function Campo({ id, etiqueta, requerido = false, error, children }) {
   return (
     <div className="registrar-examen-campo">
@@ -188,6 +201,20 @@ function RegistrarExamen() {
     };
   }, [id, modoEdicion]);
 
+  const nombreExamen = (() => {
+    if (!datos.tipoEvaluacion || !datos.idMateria) {
+      return "";
+    }
+
+    return (
+      construirNombreExamen(
+        datos.tipoEvaluacion,
+        datos.idMateria,
+        asignaturas,
+      ) ?? datos.nombreExamen
+    );
+  })();
+
   const actualizarCampo = (campo, valor) => {
     setDatos((anterior) => ({
       ...anterior,
@@ -220,12 +247,6 @@ function RegistrarExamen() {
     ) {
       nuevos.codigoExamen =
         "Usa solo letras, números, guion o guion bajo (máx. 30).";
-    }
-
-    if (!datos.nombreExamen.trim()) {
-      nuevos.nombreExamen = "Este campo es obligatorio.";
-    } else if (datos.nombreExamen.trim().length < 3) {
-      nuevos.nombreExamen = "El nombre debe tener al menos 3 caracteres.";
     }
 
     if (!datos.idMateria) {
@@ -270,7 +291,7 @@ function RegistrarExamen() {
 
     const cuerpo = {
       codigoExamen: datos.codigoExamen.trim(),
-      nombreExamen: datos.nombreExamen.trim(),
+      nombreExamen: nombreExamen.trim(),
       idMateria: Number(datos.idMateria),
       tipoEvaluacion: datos.tipoEvaluacion,
       gestion: datos.gestion.trim(),
@@ -383,13 +404,10 @@ function RegistrarExamen() {
                 <input
                   id="examen-nombre"
                   className={claseControl("nombreExamen")}
-                  value={datos.nombreExamen}
-                  onChange={(e) =>
-                    actualizarCampo("nombreExamen", e.target.value)
-                  }
-                  placeholder="Ej. Primer Parcial de Programación"
+                  value={nombreExamen}
+                  placeholder="Se genera al seleccionar el tipo y la asignatura"
                   maxLength={120}
-                  disabled={guardando}
+                  disabled
                 />
               </Campo>
 
