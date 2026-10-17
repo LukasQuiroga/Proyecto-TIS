@@ -145,23 +145,38 @@ export default function HabilitacionesExtras({
     }
   };
 
-  const cargarHistorial = async (id) => {
-    setHistorialId(id);
-    setHistorial([]);
-    if (!id) return;
+  useEffect(() => {
+    if (!historialId) return;
 
-    setCargandoHistorial(true);
-    setError("");
+    let activo = true;
 
-    try {
-      const datos = await consultarHistorialHabilitacion(idExamen, id);
-      setHistorial(Array.isArray(datos) ? datos : []);
-    } catch (err) {
-      setError(mensajeErrorHabilitacion(err));
-    } finally {
-      setCargandoHistorial(false);
-    }
-  };
+    const actualizarHistorial = async () => {
+      try {
+        const datos = await consultarHistorialHabilitacion(
+          idExamen,
+          historialId
+        );
+
+        if (activo) {
+          setHistorial(Array.isArray(datos) ? datos : []);
+        }
+      } catch (err) {
+        if (activo) {
+          setError(mensajeErrorHabilitacion(err));
+        }
+      } finally {
+        if (activo) {
+          setCargandoHistorial(false);
+        }
+      }
+    };
+
+    actualizarHistorial();
+
+    return () => {
+      activo = false;
+    };
+  }, [idExamen, historialId, estudiantes]);
 
   return (
     <section className="hab-extras">
@@ -305,7 +320,12 @@ export default function HabilitacionesExtras({
           Estudiante
           <select
             value={historialId}
-            onChange={(e) => cargarHistorial(e.target.value)}
+            onChange={(e) => {
+              setHistorialId(e.target.value);
+              setHistorial([]);
+              setCargandoHistorial(Boolean(e.target.value));
+              setError("");
+            }}
           >
             <option value="">Selecciona un estudiante</option>
             {estudiantesValidos.map((e) => (

@@ -329,7 +329,6 @@ export default function Habilitaciones() {
       const lista = await listarHabilitaciones(id);
       setEstudiantes(Array.isArray(lista) ? lista : []);
     } catch (err) {
-      setEstudiantes([]);
       setError(mensajeErrorHabilitacion(err));
     } finally {
       setCargando(false);
