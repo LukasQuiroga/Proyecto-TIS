@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record ModificarHabilitacionSolicitud(
@@ -22,6 +23,9 @@ public record ModificarHabilitacionSolicitud(
 
     @Size(max = 500, message = "El motivo no puede superar 500 caracteres")
     String motivo,
+
+    @Positive(message = "El identificador del motivo debe ser positivo")
+    Long idMotivo,
 
     @NotNull(message = "Debe proporcionar el numero de cambios actual")
     @Min(value = 0, message = "El numero de cambios no puede ser negativo")

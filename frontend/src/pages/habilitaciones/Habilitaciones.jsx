@@ -15,6 +15,7 @@ import {
   buscarExamenPorCodigo,
   consultarHabilitacion,
   listarHabilitaciones,
+  listarMotivos,
   mensajeErrorHabilitacion,
 } from "../../services/habilitacionService";
 import "./Habilitaciones.css";
@@ -27,6 +28,7 @@ const fecha = (valor) =>
 function ModalHabilitacion({
   estudiante,
   modo,
+  motivosDisponibles,
   onCerrar,
   onGuardar,
   guardando,
@@ -34,6 +36,8 @@ function ModalHabilitacion({
   const [estado, setEstado] = useState(estudiante.estado);
   const [titulo, setTitulo] = useState(estudiante.tituloMotivo || "");
   const [motivo, setMotivo] = useState(estudiante.motivo || "");
+  const [tipoMotivo, setTipoMotivo] = useState("PERSONALIZADO");
+  const [idMotivo, setIdMotivo] = useState("");
   const [error, setError] = useState("");
   const editable = modo === "editar";
 
@@ -47,17 +51,40 @@ function ModalHabilitacion({
 
   const guardar = async (event) => {
     event.preventDefault();
-    if (estado === "INHABILITADO" && (!titulo.trim() || !motivo.trim())) {
-      setError("Debes escribir el título y el motivo de inhabilitación.");
-      return;
+
+    if (estado === "INHABILITADO") {
+      if (tipoMotivo === "PREDEFINIDO" && !idMotivo) {
+        setError("Selecciona un motivo predefinido.");
+        return;
+      }
+
+      if (
+        tipoMotivo === "PERSONALIZADO" &&
+        (!titulo.trim() || !motivo.trim())
+      ) {
+        setError("Debes escribir el título y el motivo de inhabilitación.");
+        return;
+      }
     }
+
     setError("");
+
     try {
       await onGuardar({
         idEstudiante: estudiante.idEstudiante,
         estado,
-        titulo: estado === "INHABILITADO" ? titulo.trim() : null,
-        motivo: estado === "INHABILITADO" ? motivo.trim() : null,
+        idMotivo:
+          estado === "INHABILITADO" && tipoMotivo === "PREDEFINIDO"
+            ? Number(idMotivo)
+            : null,
+        titulo:
+          estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO"
+            ? titulo.trim()
+            : null,
+        motivo:
+          estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO"
+            ? motivo.trim()
+            : null,
         numeroCambios: estudiante.numeroCambios ?? 0,
       });
     } catch (err) {
@@ -139,32 +166,86 @@ function ModalHabilitacion({
 
             {estado === "INHABILITADO" && (
               <>
-                <label className="hab-campo">
-                  Título de la inhabilitación
-                  <input
-                    type="text"
-                    value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
-                    placeholder="Escribe el título"
-                    maxLength={120}
-                    required={editable}
-                    readOnly={!editable}
-                    disabled={guardando}
-                  />
-                </label>
-                <label className="hab-campo">
-                  Motivo
-                  <textarea
-                    value={motivo}
-                    onChange={(e) => setMotivo(e.target.value)}
-                    placeholder="Escribe el motivo"
-                    rows={3}
-                    maxLength={500}
-                    required={editable}
-                    readOnly={!editable}
-                    disabled={guardando}
-                  />
-                </label>
+                {editable && (
+                  <label className="hab-campo">
+                    Tipo de motivo
+                    <select
+                      value={tipoMotivo}
+                      disabled={guardando}
+                      onChange={(e) => {
+                        setTipoMotivo(e.target.value);
+                        setIdMotivo("");
+                        setError("");
+                      }}
+                    >
+                      <option value="PERSONALIZADO">Motivo personalizado</option>
+                      <option value="PREDEFINIDO">Motivo predefinido</option>
+                    </select>
+                  </label>
+                )}
+
+                {editable && tipoMotivo === "PREDEFINIDO" && (
+                  <label className="hab-campo">
+                    Seleccionar motivo
+                    <select
+                      value={idMotivo}
+                      disabled={guardando}
+                      required
+                      onChange={(e) => {
+                        const valor = e.target.value;
+                        setIdMotivo(valor);
+                        setError("");
+
+                        const seleccionado = motivosDisponibles.find(
+                          (item) => String(item.idMotivo) === valor
+                        );
+
+                        if (seleccionado) {
+                          setTitulo(seleccionado.titulo);
+                          setMotivo(seleccionado.motivo);
+                        }
+                      }}
+                    >
+                      <option value="">Selecciona un motivo</option>
+                      {motivosDisponibles.map((item) => (
+                        <option key={item.idMotivo} value={item.idMotivo}>
+                          {item.titulo}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {(!editable || tipoMotivo === "PERSONALIZADO") && (
+                  <>
+                    <label className="hab-campo">
+                      Título de la inhabilitación
+                      <input
+                        type="text"
+                        value={titulo}
+                        onChange={(e) => setTitulo(e.target.value)}
+                        placeholder="Escribe el título"
+                        maxLength={120}
+                        required={editable}
+                        readOnly={!editable}
+                        disabled={guardando}
+                      />
+                    </label>
+                    <label className="hab-campo">
+                      Motivo
+                      <textarea
+                        value={motivo}
+                        onChange={(e) => setMotivo(e.target.value)}
+                        placeholder="Escribe el motivo"
+                        rows={3}
+                        maxLength={500}
+                        required={editable}
+                        readOnly={!editable}
+                        disabled={guardando}
+                      />
+                    </label>
+                  </>
+                )}
               </>
             )}
 
@@ -192,8 +273,12 @@ function ModalHabilitacion({
                   guardando ||
                   (estado === estudiante.estado &&
                     (estado === "HABILITADO" ||
-                      (titulo.trim() === (estudiante.tituloMotivo || "") &&
-                        motivo.trim() === (estudiante.motivo || ""))))
+                      (tipoMotivo === "PERSONALIZADO"
+                        ? titulo.trim() === (estudiante.tituloMotivo || "") &&
+                          motivo.trim() === (estudiante.motivo || "")
+                        : Number(idMotivo) === estudiante.idMotivo &&
+                          titulo === (estudiante.tituloMotivo || "") &&
+                          motivo === (estudiante.motivo || ""))))
                 }
               >
                 {guardando ? "Guardando…" : "Guardar cambios"}
@@ -220,6 +305,17 @@ export default function Habilitaciones() {
   const [filtro, setFiltro] = useState("");
   const [pagina, setPagina] = useState(1);
   const [modal, setModal] = useState(null);
+  const [resultadoExitoso, setResultadoExitoso] = useState(null);
+  const [motivosDisponibles, setMotivosDisponibles] = useState([]);
+
+  const cargarMotivos = async () => {
+    try {
+      const motivos = await listarMotivos();
+      setMotivosDisponibles(Array.isArray(motivos) ? motivos : []);
+    } catch {
+      setMotivosDisponibles([]);
+    }
+  };
 
   const cargar = async (id) => {
     if (!id) {
@@ -233,7 +329,6 @@ export default function Habilitaciones() {
       const lista = await listarHabilitaciones(id);
       setEstudiantes(Array.isArray(lista) ? lista : []);
     } catch (err) {
-      setEstudiantes([]);
       setError(mensajeErrorHabilitacion(err));
     } finally {
       setCargando(false);
@@ -304,6 +399,11 @@ export default function Habilitaciones() {
         idExamen,
         estudiante.idEstudiante,
       );
+
+      if (modo === "editar") {
+        await cargarMotivos();
+      }
+
       setModal({ estudiante: detalle, modo });
     } catch (err) {
       setError(mensajeErrorHabilitacion(err));
@@ -312,17 +412,25 @@ export default function Habilitaciones() {
 
   const guardar = async (payload) => {
     setGuardando(true);
+
     try {
       await actualizarHabilitacion(idExamen, payload);
+
       setModal(null);
+
+      setResultadoExitoso({
+        estado: payload.estado,
+        nombre: modal.estudiante.nombreEstudiante,
+        titulo:
+          payload.estado === "INHABILITADO"
+            ? payload.titulo ||
+              motivosDisponibles.find(
+                (item) => Number(item.idMotivo) === payload.idMotivo
+              )?.titulo
+            : null,
+      });
+
       await cargar(idExamen);
-      setExito("La habilitación se actualizó correctamente.");
-    } catch (err) {
-      if (err?.response?.status === 409) {
-        setModal(null);
-        await cargar(idExamen);
-      }
-      throw err;
     } finally {
       setGuardando(false);
     }
@@ -554,7 +662,7 @@ export default function Habilitaciones() {
         </section>
       )}
 
-      {idExamen && !cargando && !error && (
+      {idExamen && (
         <HabilitacionesExtras
           key={idExamen}
           idExamen={idExamen}
@@ -577,10 +685,61 @@ export default function Habilitaciones() {
           key={`${modal.estudiante.idEstudiante}-${modal.modo}`}
           estudiante={modal.estudiante}
           modo={modal.modo}
+          motivosDisponibles={motivosDisponibles}
           guardando={guardando}
           onCerrar={() => setModal(null)}
           onGuardar={guardar}
         />
+      )}
+
+      {resultadoExitoso && (
+        <div className="hab-overlay">
+          <section
+            className="hab-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hab-exito-titulo"
+          >
+            <header className="hab-modal-header">
+              <h2 id="hab-exito-titulo">
+                <FiCheckCircle /> Operación exitosa
+              </h2>
+            </header>
+
+            <div className="hab-modal-body">
+              <p>
+                La habilitación de{" "}
+                <strong>{resultadoExitoso.nombre}</strong>{" "}
+                se actualizó correctamente.
+              </p>
+
+              <p>
+                <strong>Estado:</strong>{" "}
+                {resultadoExitoso.estado === "HABILITADO"
+                  ? "Habilitado"
+                  : "Inhabilitado"}
+              </p>
+
+              {resultadoExitoso.titulo && (
+                <p>
+                  <strong>Motivo:</strong> {resultadoExitoso.titulo}
+                </p>
+              )}
+
+              <p>El cambio quedó registrado en el historial.</p>
+            </div>
+
+            <footer className="hab-modal-footer">
+              <button
+                type="button"
+                className="hab-btn hab-btn-pri"
+                onClick={() => setResultadoExitoso(null)}
+              >
+                Aceptar
+              </button>
+            </footer>
+          </section>
+        </div>
       )}
     </main>
   );

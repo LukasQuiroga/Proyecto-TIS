@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 @Service
 public class HabilitacionServicio {
@@ -42,7 +44,10 @@ public class HabilitacionServicio {
         return jdbc.query("""
             SELECT me.id_estudiante, u.codigo_sis, u.nombre, u.apellido,
                    COALESCE(h.estado, 'HABILITADO') AS estado,
-                   h.id_motivo, mi.titulo, mi.motivo, h.fecha_creacion,
+                   h.id_motivo,
+                   COALESCE(h.titulo_motivo_personalizado, mi.titulo) AS titulo,
+                   COALESCE(h.motivo_personalizado, mi.motivo) AS motivo,
+                   h.fecha_creacion,
                    h.fecha_actualizacion, h.id_usuario_responsable,
                    COALESCE(h.numero_cambios, 0) AS numero_cambios
             FROM academico.materia_estudiante me
@@ -114,19 +119,31 @@ public class HabilitacionServicio {
         String estado = solicitud.estado();
         String titulo = solicitud.titulo() == null ? "" : solicitud.titulo().trim();
         String textoMotivo = solicitud.motivo() == null ? "" : solicitud.motivo().trim();
+        Long idMotivoSeleccionado = solicitud.idMotivo();
 
         if ("INHABILITADO".equals(estado)) {
-            if (titulo.isEmpty() || textoMotivo.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Debe escribir el titulo y el motivo de inhabilitacion");
-            }
-            if (titulo.length() > 120 || textoMotivo.length() > 500) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El titulo o motivo supera el limite permitido");
+            if (idMotivoSeleccionado != null) {
+                if (!titulo.isEmpty() || !textoMotivo.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Seleccione un motivo existente o ingrese uno personalizado");
+                }
+            } else {
+                if (titulo.isEmpty() || textoMotivo.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Debe escribir el titulo y el motivo de inhabilitacion");
+                }
+                if (titulo.length() > 120 || textoMotivo.length() > 500) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El titulo o motivo supera el limite permitido");
+                }
             }
         } else if (!"HABILITADO".equals(estado)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Estado de habilitacion invalido");
+        } else if (idMotivoSeleccionado != null
+                || !titulo.isEmpty() || !textoMotivo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Un estudiante habilitado no puede tener un motivo vigente");
         }
 
         List<Object[]> anteriores = jdbc.query("""
@@ -163,13 +180,25 @@ public class HabilitacionServicio {
             """, examenId, estudianteId);
 
         List<Object[]> actuales = jdbc.query("""
-            SELECT estado, id_motivo, numero_cambios
-            FROM academico.habilitacion_estudiante
-            WHERE id_examen = ? AND id_estudiante = ?
+            SELECT h.estado, h.id_motivo, h.numero_cambios,
+                h.titulo_motivo_personalizado,
+                h.motivo_personalizado,
+                h.observaciones,
+                COALESCE(h.titulo_motivo_personalizado, mi.titulo) AS titulo_actual,
+                COALESCE(h.motivo_personalizado, mi.motivo) AS motivo_actual
+            FROM academico.habilitacion_estudiante h
+            LEFT JOIN academico.motivo_inhabilitacion mi
+                ON mi.id_motivo = h.id_motivo
+            WHERE h.id_examen = ? AND h.id_estudiante = ?
             """, (rs, i) -> new Object[]{
                 rs.getString("estado"),
                 rs.getObject("id_motivo", Long.class),
-                rs.getLong("numero_cambios")
+                rs.getLong("numero_cambios"),
+                rs.getString("titulo_motivo_personalizado"),
+                rs.getString("motivo_personalizado"),
+                rs.getString("observaciones"),
+                rs.getString("titulo_actual"),
+                rs.getString("motivo_actual")
             }, examenId, estudianteId);
 
         if (actuales.isEmpty()) {
@@ -186,36 +215,152 @@ public class HabilitacionServicio {
         }
 
         Long motivoId = null;
+        String tituloNuevo = null;
+        String motivoNuevo = null;
+        String tituloPersonalizado = null;
+        String motivoPersonalizado = null;
+
         if ("INHABILITADO".equals(estado)) {
-            motivoId = obtenerOCrearMotivo(titulo, textoMotivo);
+            if (idMotivoSeleccionado != null) {
+                motivoId = validarMotivoExistente(idMotivoSeleccionado);
+
+                List<String[]> datos = jdbc.query("""
+                    SELECT titulo, motivo
+                    FROM academico.motivo_inhabilitacion
+                    WHERE id_motivo = ?
+                    """, (rs, i) -> new String[]{
+                        rs.getString("titulo"),
+                        rs.getString("motivo")
+                    }, motivoId);
+
+                tituloNuevo = datos.get(0)[0];
+                motivoNuevo = datos.get(0)[1];
+            } else {
+                Long motivoActualId = (Long) actual[1];
+                String estadoActual = (String) actual[0];
+
+                if ("INHABILITADO".equals(estadoActual)
+                        && motivoActualId != null) {
+                    motivoId = motivoActualId;
+                } else {
+                    List<Long> existentes = jdbc.queryForList("""
+                        SELECT id_motivo
+                        FROM academico.motivo_inhabilitacion
+                        WHERE LOWER(TRIM(titulo)) = LOWER(TRIM(?))
+                        """, Long.class, titulo);
+
+                    motivoId = existentes.isEmpty()
+                        ? obtenerOCrearMotivo(titulo, textoMotivo)
+                        : existentes.get(0);
+                }
+
+                tituloNuevo = titulo;
+                motivoNuevo = textoMotivo;
+                tituloPersonalizado = titulo;
+                motivoPersonalizado = textoMotivo;
+            }
         }
 
-        if (Objects.equals(actual[0], estado)
-                && Objects.equals(actual[1], motivoId)) {
+        String estadoAnterior = (String) actual[0];
+        Long motivoAnteriorId = (Long) actual[1];
+        String tituloAnterior = (String) actual[6];
+        String motivoAnterior = (String) actual[7];
+
+        String observacionesAnteriores = (String) actual[5];
+        String observacionesNuevas = "HABILITADO".equals(estado)
+            ? null : observacionesAnteriores;
+
+        if (Objects.equals(estadoAnterior, estado)
+                && Objects.equals(motivoAnteriorId, motivoId)
+                && Objects.equals(tituloAnterior, tituloNuevo)
+                && Objects.equals(motivoAnterior, motivoNuevo)
+                && Objects.equals(observacionesAnteriores, observacionesNuevas)) {
             return buscar(examenId, estudianteId, responsableId);
         }
 
         int actualizados = jdbc.update("""
             UPDATE academico.habilitacion_estudiante
-            SET estado = ?, id_motivo = ?, id_usuario_responsable = ?,
+            SET estado = ?,
+                id_motivo = ?,
+                titulo_motivo_personalizado = ?,
+                motivo_personalizado = ?,
+                observaciones = ?,
+                id_usuario_responsable = ?,
                 fecha_actualizacion = CURRENT_TIMESTAMP,
                 numero_cambios = numero_cambios + 1
-            WHERE id_examen = ? AND id_estudiante = ?
+            WHERE id_examen = ?
+                AND id_estudiante = ?
                 AND numero_cambios = ?
-            """, estado, motivoId, responsableId, examenId,
-            estudianteId, numeroActual);
+            """,
+            estado,
+            motivoId,
+            tituloPersonalizado,
+            motivoPersonalizado,
+            observacionesNuevas,
+            responsableId,
+            examenId,
+            estudianteId,
+            numeroActual
+        );
 
         if (actualizados != 1) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                "Otro usuario modifico esta habilitacion");
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Otro usuario modifico esta habilitacion"
+            );
         }
 
-        auditoria.registrar(responsableId, "MODIFICAR_HABILITACION",
+        String descripcionAnterior = tituloAnterior == null
+            ? "Sin motivo"
+            : "Titulo: " + tituloAnterior + "; Descripcion: " + motivoAnterior;
+
+        String descripcionNueva = tituloNuevo == null
+            ? "Sin motivo"
+            : "Titulo: " + tituloNuevo + "; Descripcion: " + motivoNuevo;
+
+        Long idLogActividad = auditoria.registrar(
+            responsableId,
+            "MODIFICAR_HABILITACION",
             "Examen " + examenId + ", estudiante " + estudianteId
-                + ": " + actual[0] + " -> " + estado
-                + ". Motivo anterior: " + describirMotivo((Long) actual[1])
-                + ". Motivo nuevo: " + describirMotivo(motivoId),
-            null, true);
+                + ": " + estadoAnterior + " -> " + estado
+                + ". Motivo anterior: "
+                + descripcionAnterior.replaceAll("[\\r\\n]+", " ")
+                + ". Motivo nuevo: "
+                + descripcionNueva.replaceAll("[\\r\\n]+", " "),
+            null,
+            true
+        );
+
+        jdbc.update("""
+            INSERT INTO academico.historial_habilitacion (
+                id_examen,
+                id_estudiante,
+                estado_anterior,
+                estado_nuevo,
+                titulo_motivo_anterior,
+                motivo_anterior,
+                titulo_motivo_nuevo,
+                motivo_nuevo,
+                observaciones_anteriores,
+                observaciones_nuevas,
+                id_usuario_responsable,
+                id_log_actividad
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            examenId,
+            estudianteId,
+            estadoAnterior,
+            estado,
+            tituloAnterior,
+            motivoAnterior,
+            tituloNuevo,
+            motivoNuevo,
+            observacionesAnteriores,
+            observacionesNuevas,
+            responsableId,
+            idLogActividad
+        );
 
         return buscar(examenId, estudianteId, responsableId);
     }
@@ -223,38 +368,111 @@ public class HabilitacionServicio {
     @Transactional(readOnly = true)
     public List<HistorialHabilitacionRespuesta> historial(
             Long examenId, Long estudianteId, Long responsableId) {
+
         autorizado(examenId, responsableId);
         buscar(examenId, estudianteId, responsableId);
+
+        List<HistorialHabilitacionRespuesta> resultados = new ArrayList<>();
+
+        resultados.addAll(jdbc.query("""
+            SELECT h.id_historial, h.id_usuario_responsable,
+                u.nombre, u.apellido,
+                h.estado_anterior, h.estado_nuevo,
+                h.titulo_motivo_anterior, h.motivo_anterior,
+                h.titulo_motivo_nuevo, h.motivo_nuevo,
+                h.observaciones_anteriores, h.observaciones_nuevas,
+                h.fecha_cambio
+            FROM academico.historial_habilitacion h
+            LEFT JOIN seguridad.usuario u
+                ON u.id_usuario = h.id_usuario_responsable
+            WHERE h.id_examen = ? AND h.id_estudiante = ?
+            ORDER BY h.fecha_cambio DESC, h.id_historial DESC
+            LIMIT 200
+            """, (rs, i) -> {
+
+                String nombre = rs.getString("nombre");
+                String apellido = rs.getString("apellido");
+
+                String responsable = nombre == null
+                    ? "Usuario desconocido"
+                    : (nombre + " " + (apellido == null ? "" : apellido)).trim();
+
+                String descripcion = rs.getString("estado_anterior")
+                    + " -> " + rs.getString("estado_nuevo")
+                    + ". Motivo anterior: "
+                    + describirTextoMotivo(
+                        rs.getString("titulo_motivo_anterior"),
+                        rs.getString("motivo_anterior")
+                    )
+                    + ". Motivo nuevo: "
+                    + describirTextoMotivo(
+                        rs.getString("titulo_motivo_nuevo"),
+                        rs.getString("motivo_nuevo")
+                    );
+
+                return new HistorialHabilitacionRespuesta(
+                    rs.getLong("id_historial"),
+                    rs.getLong("id_usuario_responsable"),
+                    responsable,
+                    descripcion,
+                    leerFecha(rs.getTimestamp("fecha_cambio"))
+                );
+            }, examenId, estudianteId));
 
         String identificador = "Examen " + examenId
             + ", estudiante " + estudianteId + ":";
 
-        return jdbc.query("""
+        resultados.addAll(jdbc.query("""
             SELECT l.id_log, l.id_usuario, u.nombre, u.apellido,
-                   l.descripcion, l.fecha
+                l.descripcion, l.fecha
             FROM seguridad.log_actividad l
             LEFT JOIN seguridad.usuario u
                 ON u.id_usuario = l.id_usuario
             WHERE l.tipo_accion = 'MODIFICAR_HABILITACION'
                 AND l.exitosa = TRUE
                 AND LEFT(l.descripcion, LENGTH(?)) = ?
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM academico.historial_habilitacion h
+                    WHERE h.id_log_actividad = l.id_log
+                )
             ORDER BY l.fecha DESC, l.id_log DESC
             LIMIT 200
             """, (rs, i) -> {
+
                 String nombre = rs.getString("nombre");
                 String apellido = rs.getString("apellido");
+
                 String responsable = nombre == null
                     ? "Usuario desconocido"
-                    : nombre + " " + (apellido == null ? "" : apellido);
+                    : (nombre + " " + (apellido == null ? "" : apellido)).trim();
 
                 return new HistorialHabilitacionRespuesta(
-                    rs.getLong("id_log"),
+                    -rs.getLong("id_log"),
                     rs.getObject("id_usuario", Long.class),
-                    responsable.trim(),
+                    responsable,
                     enriquecerDescripcionHistorial(rs.getString("descripcion")),
                     leerFecha(rs.getTimestamp("fecha"))
                 );
-            }, identificador, identificador);
+            }, identificador, identificador));
+
+        resultados.sort(
+            Comparator.comparing(
+                HistorialHabilitacionRespuesta::fecha,
+                Comparator.nullsLast(Comparator.reverseOrder())
+            )
+        );
+
+        return resultados.stream().limit(200).toList();
+    }
+
+    private String describirTextoMotivo(String titulo, String motivo) {
+        if (titulo == null && motivo == null) {
+            return "Sin motivo";
+        }
+
+        String descripcion = "Titulo: " + titulo + "; Descripcion: " + motivo;
+        return descripcion.replaceAll("[\\r\\n]+", " ");
     }
 
     private String describirMotivo(Long idMotivo) {
@@ -291,6 +509,21 @@ public class HabilitacionServicio {
             + " -> " + coincidencia.group(4)
             + ". Motivo anterior: " + describirMotivo(anterior)
             + ". Motivo nuevo: " + describirMotivo(nuevo);
+    }
+
+    private Long validarMotivoExistente(Long idMotivo) {
+        List<Long> motivos = jdbc.queryForList("""
+            SELECT id_motivo
+            FROM academico.motivo_inhabilitacion
+            WHERE id_motivo = ? AND activo = TRUE
+            """, Long.class, idMotivo);
+
+        if (motivos.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Debe seleccionar un motivo valido y activo");
+        }
+
+        return motivos.get(0);
     }
 
     private Long obtenerOCrearMotivo(String titulo, String texto) {
