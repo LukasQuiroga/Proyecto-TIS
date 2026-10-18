@@ -89,6 +89,17 @@ export default function HabilitacionesExtras({
       }
     }
 
+    if (estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO") {
+      if (titulo.trim().length >= 30) {
+        setError("El título de la inhabilitación debe contener menos de 30 caracteres.");
+        return;
+      }
+      if (motivo.trim().length >= 50) {
+        setError("El motivo de inhabilitación debe contener menos de 50 caracteres.");
+        return;
+      }
+    }
+
     setProcesando(true);
     setError("");
     setResultado(null);
@@ -279,9 +290,10 @@ export default function HabilitacionesExtras({
                       value={titulo}
                       onChange={(e) => setTitulo(e.target.value)}
                       placeholder="Escribe el título"
-                      maxLength={120}
+                      maxLength={29}
                       disabled={procesando}
                     />
+                      <small>{titulo.length}/29 caracteres (máximo 29)</small>
                   </label>
                   <label>
                     Motivo
@@ -289,10 +301,11 @@ export default function HabilitacionesExtras({
                       value={motivo}
                       onChange={(e) => setMotivo(e.target.value)}
                       placeholder="Escribe el motivo"
-                      maxLength={500}
+                      maxLength={49}
                       rows={3}
                       disabled={procesando}
                     />
+                      <small>{motivo.length}/49 caracteres (máximo 49)</small>
                   </label>
                 </>
               )}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FiAlertCircle,
@@ -40,14 +40,32 @@ function ModalHabilitacion({
   const [idMotivo, setIdMotivo] = useState("");
   const [error, setError] = useState("");
   const editable = modo === "editar";
+  const hayCambiosSinGuardar =
+    editable &&
+    (estado !== estudiante.estado ||
+      titulo !== (estudiante.tituloMotivo || "") ||
+      motivo !== (estudiante.motivo || "") ||
+      tipoMotivo !== "PERSONALIZADO" ||
+      idMotivo !== "");
+
+  const solicitarCierre = useCallback(() => {
+    if (guardando) return;
+    if (
+      hayCambiosSinGuardar &&
+      !window.confirm("Tienes cambios sin guardar. ¿Deseas descartarlos?")
+    ) {
+      return;
+    }
+    onCerrar();
+  }, [guardando, hayCambiosSinGuardar, onCerrar]);
 
   useEffect(() => {
     const cerrarConEscape = (e) => {
-      if (e.key === "Escape" && !guardando) onCerrar();
+      if (e.key === "Escape") solicitarCierre();
     };
     document.addEventListener("keydown", cerrarConEscape);
     return () => document.removeEventListener("keydown", cerrarConEscape);
-  }, [onCerrar, guardando]);
+  }, [solicitarCierre]);
 
   const guardar = async (event) => {
     event.preventDefault();
@@ -63,6 +81,17 @@ function ModalHabilitacion({
         (!titulo.trim() || !motivo.trim())
       ) {
         setError("Debes escribir el título y el motivo de inhabilitación.");
+        return;
+      }
+    }
+
+    if (estado === "INHABILITADO" && tipoMotivo === "PERSONALIZADO") {
+      if (titulo.trim().length >= 30) {
+        setError("El título de la inhabilitación debe contener menos de 30 caracteres.");
+        return;
+      }
+      if (motivo.trim().length >= 50) {
+        setError("El motivo de inhabilitación debe contener menos de 50 caracteres.");
         return;
       }
     }
@@ -96,7 +125,7 @@ function ModalHabilitacion({
     <div
       className="hab-overlay"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !guardando) onCerrar();
+        if (e.target === e.currentTarget) solicitarCierre();
       }}
     >
       <section
@@ -115,7 +144,7 @@ function ModalHabilitacion({
           <button
             type="button"
             className="hab-icono"
-            onClick={onCerrar}
+            onClick={solicitarCierre}
             disabled={guardando}
             aria-label="Cerrar"
           >
@@ -225,11 +254,12 @@ function ModalHabilitacion({
                         value={titulo}
                         onChange={(e) => setTitulo(e.target.value)}
                         placeholder="Escribe el título"
-                        maxLength={120}
+                        maxLength={29}
                         required={editable}
                         readOnly={!editable}
                         disabled={guardando}
                       />
+                       <small>{titulo.length}/29 caracteres (máximo 29)</small>
                     </label>
                     <label className="hab-campo">
                       Motivo
@@ -238,11 +268,12 @@ function ModalHabilitacion({
                         onChange={(e) => setMotivo(e.target.value)}
                         placeholder="Escribe el motivo"
                         rows={3}
-                        maxLength={500}
+                        maxLength={49}
                         required={editable}
                         readOnly={!editable}
                         disabled={guardando}
                       />
+                       <small>{motivo.length}/49 caracteres (máximo 49)</small>
                     </label>
                   </>
                 )}
@@ -260,7 +291,7 @@ function ModalHabilitacion({
             <button
               type="button"
               className="hab-btn hab-btn-sec"
-              onClick={onCerrar}
+              onClick={solicitarCierre}
               disabled={guardando}
             >
               {editable ? "Cancelar" : "Cerrar"}

@@ -14,7 +14,7 @@ import {
 } from "../../services/perfilService";
 import "./Perfil.css";
 
-const TELEFONO = /^\+?[0-9][0-9\s-]{6,28}$/;
+const TELEFONO = /^[0-9]{1,10}$/;
 
 function EditarPerfil() {
   const navigate = useNavigate();
@@ -103,8 +103,8 @@ function EditarPerfil() {
     setError("");
     setMensaje("");
     if (!hayCambios) return;
-    if (telefonoCambiado && !TELEFONO.test(telefono.trim())) {
-      setError("El teléfono debe tener al menos 7 dígitos/caracteres permitidos.");
+    if (telefonoCambiado && telefono.trim() && !TELEFONO.test(telefono.trim())) {
+      setError("El número de teléfono debe contener como máximo 10 dígitos.");
       return;
     }
     if (huboCambiosClave) {
@@ -207,7 +207,20 @@ function EditarPerfil() {
                     </div>
                   </div>
                   <div className="hu13-campos">
-                    <label>Teléfono de contacto<input autoComplete="tel" type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="70707070" maxLength={30} /></label>
+                    <label>
+                      Teléfono de contacto
+                      <input
+                        autoComplete="tel"
+                        type="tel"
+                        inputMode="numeric"
+                        value={telefono}
+                        onChange={(e) =>
+                          setTelefono(e.target.value.replace(/\D/g, "").slice(0, 10))
+                        }
+                        placeholder="70707070"
+                        maxLength={10}
+                      />
+                    </label>
                   </div>
                 </section>
                 <section className="hu13-tarjeta hu13-seccion">
