@@ -21,6 +21,7 @@ import VerUsuario from "./pages/usuarios/VerUsuario.jsx";
 import RegistroUsuario from "./pages/usuarios/RegistroUsuario.jsx";
 import ImportarUsuarios from "./pages/usuarios/ImportarUsuarios.jsx";
 import PermisosActualizadosModal from "./components/Modal/PermisosActualizadosModal";
+import ModalConexion from "./components/Modal/ModalConexion.jsx";
 import Asignaturas from "./pages/asignaturas/Asignaturas.jsx";
 import InscripcionQr from "./pages/asignaturas/InscripcionQr.jsx";
 import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr.jsx";
@@ -42,6 +43,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <PermisosActualizadosModal />
+        <ModalConexion />
         <Routes>
           {/* RUTAS PUBLICAS */}
 
