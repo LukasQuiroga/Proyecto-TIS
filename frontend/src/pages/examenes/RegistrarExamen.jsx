@@ -36,6 +36,9 @@ const DATOS_INICIALES = {
   gestion: "",
   estado: "ACTIVO",
   descripcion: "",
+  fechaExamen: "",
+  horaInicio: "",
+  horaFin: "",
 };
 
 const MENSAJE_VALIDACION =
@@ -347,6 +350,41 @@ function RegistrarExamen() {
       nuevos.estado = "Seleccione un estado.";
     }
 
+    const tieneFecha = datos.fechaExamen.trim().length > 0;
+    const tieneHoraInicio = datos.horaInicio.trim().length > 0;
+    const tieneHoraFin = datos.horaFin.trim().length > 0;
+
+    if (tieneFecha) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaSeleccionada = new Date(datos.fechaExamen);
+
+      if (Number.isNaN(fechaSeleccionada.getTime())) {
+        nuevos.fechaExamen = "Ingrese una fecha válida.";
+      } else if (fechaSeleccionada < hoy) {
+        nuevos.fechaExamen = "La fecha del examen no puede ser anterior a la fecha actual.";
+      }
+    }
+
+    if ((tieneHoraInicio && !tieneHoraFin) || (!tieneHoraInicio && tieneHoraFin)) {
+      nuevos.horaFin = "Complete la hora de inicio y la hora de fin.";
+      nuevos.horaInicio = "Complete la hora de inicio y la hora de fin.";
+    }
+
+    if (tieneHoraInicio && tieneHoraFin) {
+      const [h1, m1] = datos.horaInicio.split(":").map(Number);
+      const [h2, m2] = datos.horaFin.split(":").map(Number);
+
+      const inicioMin = h1 * 60 + m1;
+      const finMin = h2 * 60 + m2;
+
+      if (Number.isNaN(inicioMin) || Number.isNaN(finMin)) {
+        nuevos.horaFin = "Ingrese una hora válida.";
+      } else if (finMin <= inicioMin) {
+        nuevos.horaFin = "La hora de fin debe ser posterior a la hora de inicio.";
+      }
+    }
+
     return nuevos;
   };
 
@@ -380,6 +418,9 @@ function RegistrarExamen() {
       gestion: datos.gestion.trim(),
       estado: datos.estado,
       descripcion: datos.descripcion.trim() || null,
+      fechaExamen: datos.fechaExamen.trim() || null,
+      horaInicio: datos.horaInicio.trim() || null,
+      horaFin: datos.horaFin.trim() || null,
     };
 
     try {
@@ -605,6 +646,59 @@ function RegistrarExamen() {
                     </option>
                   ))}
                 </select>
+              </Campo>
+
+              <Campo
+                id="examen-fecha"
+                etiqueta="Fecha del examen"
+                error={errores.fechaExamen}
+              >
+                <input
+                  id="examen-fecha"
+                  type="date"
+                  className={claseControl("fechaExamen")}
+                  value={datos.fechaExamen}
+                  onChange={(e) =>
+                    actualizarCampo("fechaExamen", e.target.value)
+                  }
+                  disabled={guardando}
+                />
+              </Campo>
+
+              <Campo
+                id="examen-hora-inicio"
+                etiqueta="Hora de inicio"
+                error={errores.horaInicio}
+              >
+                <input
+                  id="examen-hora-inicio"
+                  type="time"
+                  className={claseControl("horaInicio")}
+                  value={datos.horaInicio}
+                  onChange={(e) =>
+                    actualizarCampo("horaInicio", e.target.value)
+                  }
+                  disabled={guardando}
+                  step={60}
+                />
+              </Campo>
+
+              <Campo
+                id="examen-hora-fin"
+                etiqueta="Hora de fin"
+                error={errores.horaFin}
+              >
+                <input
+                  id="examen-hora-fin"
+                  type="time"
+                  className={claseControl("horaFin")}
+                  value={datos.horaFin}
+                  onChange={(e) =>
+                    actualizarCampo("horaFin", e.target.value)
+                  }
+                  disabled={guardando}
+                  step={60}
+                />
               </Campo>
 
               <div className="registrar-examen-campo registrar-examen-campo-ancho">
