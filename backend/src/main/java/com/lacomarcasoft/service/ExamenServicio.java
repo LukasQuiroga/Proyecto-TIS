@@ -3,8 +3,12 @@ package com.lacomarcasoft.service;
 import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
+import com.lacomarcasoft.modelo.AsignaturaCarrera;
+import com.lacomarcasoft.modelo.Carrera;
 import com.lacomarcasoft.modelo.Examen;
 import com.lacomarcasoft.modelo.Materia;
+import com.lacomarcasoft.repository.AsignaturaCarreraRepositorio;
+import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 
@@ -38,15 +42,29 @@ public class ExamenServicio {
             "INACTIVO"
     );
 
+    private static final List<String> TIPOS_PARCIAL = List.of(
+            "PRIMER_PARCIAL",
+            "SEGUNDO_PARCIAL"
+    );
+
+    private static final String PLAN_SEMESTRAL = "SEMESTRAL";
+    private static final String PLAN_ANUAL = "ANUAL";
+
     private final ExamenRepositorio examenRepositorio;
     private final MateriaRepositorio materiaRepositorio;
+    private final AsignaturaCarreraRepositorio asignaturaCarreraRepositorio;
+    private final CarreraRepositorio carreraRepositorio;
 
     public ExamenServicio(
             ExamenRepositorio examenRepositorio,
-            MateriaRepositorio materiaRepositorio
+            MateriaRepositorio materiaRepositorio,
+            AsignaturaCarreraRepositorio asignaturaCarreraRepositorio,
+            CarreraRepositorio carreraRepositorio
     ) {
         this.examenRepositorio = examenRepositorio;
         this.materiaRepositorio = materiaRepositorio;
+        this.asignaturaCarreraRepositorio = asignaturaCarreraRepositorio;
+        this.carreraRepositorio = carreraRepositorio;
     }
 
     @Transactional
@@ -63,9 +81,13 @@ public class ExamenServicio {
             );
         }
 
+        Materia materia = obtenerMateria(solicitud.idMateria());
+
+        validarCupoParcial(materia, solicitud, null);
+
         Examen examen = new Examen();
 
-        aplicar(examen, solicitud, codigo);
+        aplicar(examen, solicitud, codigo, materia);
 
         return convertir(examenRepositorio.save(examen));
     }
@@ -94,7 +116,11 @@ public class ExamenServicio {
             );
         }
 
-        aplicar(examen, solicitud, codigo);
+        Materia materia = obtenerMateria(solicitud.idMateria());
+
+        validarCupoParcial(materia, solicitud, id);
+
+        aplicar(examen, solicitud, codigo, materia);
 
         return convertir(examenRepositorio.save(examen));
 }
@@ -261,10 +287,12 @@ public ExamenRespuesta configurar(
             );
         }
 
-        if (!gestion.matches("\\d{1,2}/\\d{4}")) {
+        String periodo = gestion.split("/")[0];
+        int p = Integer.parseInt(periodo);
+        if (p < 1 || p > 4) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "La gestión debe tener el formato periodo/año, por ejemplo 2/2026"
+                    "La gestión debe tener periodo entre 1 y 4"
             );
         }
 
@@ -290,17 +318,9 @@ public ExamenRespuesta configurar(
     private void aplicar(
             Examen examen,
             RegistrarExamenSolicitud solicitud,
-            String codigo
+            String codigo,
+            Materia materia
     ) {
-
-        Materia materia = materiaRepositorio
-                .findById(solicitud.idMateria())
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "La asignatura seleccionada no existe"
-                        )
-                );
 
         String descripcion = limpiar(solicitud.descripcion());
 
@@ -366,6 +386,116 @@ private ExamenRespuesta convertir(Examen examen) {
                 examen.getAula()
         );
 }
+
+    private Materia obtenerMateria(Long idMateria) {
+
+        return materiaRepositorio
+                .findById(idMateria)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "La asignatura seleccionada no existe"
+                        )
+                );
+    }
+
+    private void validarCupoParcial(
+            Materia materia,
+            RegistrarExamenSolicitud solicitud,
+            Long idExamen
+    ) {
+
+        String tipo = limpiar(solicitud.tipoEvaluacion())
+                .toUpperCase(Locale.ROOT);
+
+        if (!TIPOS_PARCIAL.contains(tipo)) {
+            return;
+        }
+
+        String gestion = limpiar(solicitud.gestion());
+        String nombreTipo = nombreTipo(tipo);
+        String plan = obtenerPlanEstudios(materia);
+        int p = Integer.parseInt(gestion.split("/")[0]);
+
+        if (PLAN_ANUAL.equals(plan)) {
+            if (p < 1 || p > 3) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Para plan anual la gestión debe ser 1, 2 o 3"
+                );
+            }
+            String anio = gestion.substring(gestion.indexOf('/') + 1);
+
+            if (examenRepositorio.existeParcialEnAnio(
+                    materia.getIdMateria(),
+                    tipo,
+                    anio,
+                    idExamen
+            )) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ya existe un examen de tipo " + nombreTipo
+                                + " para esta asignatura en la gestión anual "
+                                + anio
+                );
+            }
+            return;
+        } else {
+            if (p < 1 || p > 4) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Para plan semestral la gestión debe ser 1, 2, 3 o 4"
+                );
+            }
+            if (examenRepositorio.existeParcialEnGestion(
+                    materia.getIdMateria(),
+                    tipo,
+                    gestion,
+                    idExamen
+            )) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ya existe un examen de tipo " + nombreTipo
+                                + " para esta asignatura en el periodo "
+                                + gestion
+                );
+            }
+        }
+    }
+
+    private String obtenerPlanEstudios(Materia materia) {
+
+        List<String> nombresCarreras = asignaturaCarreraRepositorio
+                .findByIdAsignatura(
+                        materia.getAsignatura().getIdAsignatura()
+                )
+                .stream()
+                .map(AsignaturaCarrera::getCarrera)
+                .toList();
+
+        if (nombresCarreras.isEmpty()) {
+            return PLAN_SEMESTRAL;
+        }
+
+        for (Carrera carrera
+                : carreraRepositorio.findByNombreIn(nombresCarreras)) {
+            if (PLAN_ANUAL.equals(
+                    carrera.getFacultad().getPlanDeEstudios()
+            )) {
+                return PLAN_ANUAL;
+            }
+        }
+
+        return PLAN_SEMESTRAL;
+    }
+
+    private String nombreTipo(String tipo) {
+        return switch (tipo) {
+            case "PRIMER_PARCIAL" -> "Primer parcial";
+            case "SEGUNDO_PARCIAL" -> "Segundo parcial";
+            default -> tipo;
+        };
+    }
 
     private String limpiar(String valor) {
         return valor == null ? "" : valor.trim();
