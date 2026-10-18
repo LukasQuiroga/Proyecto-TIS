@@ -17,6 +17,9 @@ public class Facultad {
     @Column(name="nombre",nullable=false,unique=true)
     private String nombre;
 
+    @Column(name="plan_de_estudios",nullable=false,length=10)
+    private String planDeEstudios = "SEMESTRAL";
+
     public Facultad(){}
 
     public Long getIdFacultad(){
@@ -41,5 +44,13 @@ public class Facultad {
 
     public void setNombre(String nombre){
         this.nombre=nombre;
+    }
+
+    public String getPlanDeEstudios(){
+        return planDeEstudios;
+    }
+
+    public void setPlanDeEstudios(String planDeEstudios){
+        this.planDeEstudios=planDeEstudios;
     }
 }

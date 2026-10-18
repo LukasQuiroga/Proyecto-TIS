@@ -26,6 +26,10 @@ export const obtenerAsignaturasParaExamen = () => {
   return api.get("/usuarios/materias");
 };
 
+export const obtenerPlanEstudiosMateria = (idMateria) => {
+  return api.get(`/examenes/materias/${idMateria}/plan-de-estudios`);
+};
+
 export const obtenerMensajeErrorExamen = (
   error,
   mensajePredeterminado = "No se pudieron cargar los exámenes. Intenta nuevamente.",

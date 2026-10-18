@@ -4,6 +4,8 @@ package com.lacomarcasoft.service;
 import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
 import com.lacomarcasoft.modelo.Examen;
+import com.lacomarcasoft.repository.AsignaturaCarreraRepositorio;
+import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 
@@ -36,9 +38,16 @@ class ExamenServicioTest {
         MateriaRepositorio materiaRepositorio =
                 mock(MateriaRepositorio.class);
 
+        AsignaturaCarreraRepositorio asignaturaCarreraRepositorio =
+                mock(AsignaturaCarreraRepositorio.class);
+        CarreraRepositorio carreraRepositorio =
+                mock(CarreraRepositorio.class);
+
         examenServicio = new ExamenServicio(
                 examenRepositorio,
-                materiaRepositorio
+                materiaRepositorio,
+                asignaturaCarreraRepositorio,
+                carreraRepositorio
         );
     }
 

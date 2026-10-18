@@ -12,7 +12,7 @@ importers:
         specifier: ^1.20.0
         version: 1.20.0
       html5-qrcode:
-        specifier: ^2.3.8
+        specifier: 2.3.8
         version: 2.3.8
       qrcode.react:
         specifier: ^4.2.0

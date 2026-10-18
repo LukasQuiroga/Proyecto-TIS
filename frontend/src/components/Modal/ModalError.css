@@ -1,0 +1,65 @@
+.modal-error-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-error {
+  width: 100%;
+  max-width: 400px;
+  padding: 34px 30px 30px;
+  border-radius: 10px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-error-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #fdecec;
+  color: #dc2626;
+  font-size: 42px;
+}
+
+.modal-error h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  color: #081b70;
+}
+
+.modal-error p {
+  margin: 0 0 26px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #526b82;
+  overflow-wrap: anywhere;
+}
+
+.modal-error button {
+  min-width: 150px;
+  height: 46px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 6px;
+  background: #0057f5;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.modal-error button:hover {
+  background: #0046c4;
+}

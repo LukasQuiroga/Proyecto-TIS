@@ -9,10 +9,11 @@ export const formatearTipoEvaluacion = (valor) => {
   const clave = sinAcentos(valor);
 
   const mapa = {
-    PARCIAL: "Parcial",
+    PRIMER_PARCIAL: "Primer parcial",
+    SEGUNDO_PARCIAL: "Segundo Parcial",
     FINAL: "Final",
     PRACTICO: "Práctico",
-    RECUPERATORIO: "Recuperatorio",
+    ESTANCIA: "Estancia",
   };
 
   if (mapa[clave]) {
