@@ -61,4 +61,34 @@ public interface ExamenRepositorio extends JpaRepository<Examen, Long> {
             @Param("codigo") String codigo,
             @Param("id") Long id
     );
+
+    @Query("""
+        SELECT COUNT(e) > 0
+        FROM Examen e
+        WHERE e.materia.idMateria = :idMateria
+          AND e.tipoEvaluacion = :tipo
+          AND e.gestion = :gestion
+          AND (:idExamen IS NULL OR e.idExamen <> :idExamen)
+        """)
+    boolean existeParcialEnGestion(
+            @Param("idMateria") Long idMateria,
+            @Param("tipo") String tipo,
+            @Param("gestion") String gestion,
+            @Param("idExamen") Long idExamen
+    );
+
+    @Query("""
+        SELECT COUNT(e) > 0
+        FROM Examen e
+        WHERE e.materia.idMateria = :idMateria
+          AND e.tipoEvaluacion = :tipo
+          AND e.gestion LIKE CONCAT('%/', :anio)
+          AND (:idExamen IS NULL OR e.idExamen <> :idExamen)
+        """)
+    boolean existeParcialEnAnio(
+            @Param("idMateria") Long idMateria,
+            @Param("tipo") String tipo,
+            @Param("anio") String anio,
+            @Param("idExamen") Long idExamen
+    );
 }
