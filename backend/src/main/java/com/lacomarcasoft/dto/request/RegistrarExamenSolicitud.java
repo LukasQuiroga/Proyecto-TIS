@@ -1,13 +1,15 @@
 package com.lacomarcasoft.dto.request;
 
 import jakarta.validation.constraints.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record RegistrarExamenSolicitud(
 
     @NotBlank(message = "El código es obligatorio")
     @Size(max = 30, message = "El código no puede superar 30 caracteres")
     @Pattern(
-        regexp = "^$|^[A-Za-z0-9_-]+$",
+        regexp = "^[A-Za-z0-9_-]+$",
         message = "El código contiene caracteres no permitidos"
     )
     String codigoExamen,
@@ -34,6 +36,12 @@ public record RegistrarExamenSolicitud(
     String estado,
 
     @Size(max = 500, message = "La descripción no puede superar 500 caracteres")
-    String descripcion
+    String descripcion,
+
+    LocalDate fechaExamen,
+
+    LocalTime horaInicio,
+
+    LocalTime horaFin
 
 ) {}

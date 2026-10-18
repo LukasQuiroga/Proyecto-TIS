@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/examenes")
@@ -46,6 +47,19 @@ public class ExamenControlador {
 
         return ResponseEntity.ok(
                 examenServicio.listar(buscar)
+        );
+    }
+
+    @GetMapping("/materias/{idMateria}/plan-de-estudios")
+    public ResponseEntity<Map<String, String>> obtenerPlanEstudiosMateria(
+            @PathVariable Long idMateria
+    ) {
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "plan",
+                        examenServicio.obtenerPlanEstudiosPorMateria(idMateria)
+                )
         );
     }
 
