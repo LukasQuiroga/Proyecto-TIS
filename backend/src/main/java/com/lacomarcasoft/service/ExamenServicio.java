@@ -387,6 +387,12 @@ private ExamenRespuesta convertir(Examen examen) {
         );
 }
 
+    @Transactional(readOnly = true)
+    public String obtenerPlanEstudiosPorMateria(Long idMateria) {
+
+        return obtenerPlanEstudios(obtenerMateria(idMateria));
+    }
+
     private Materia obtenerMateria(Long idMateria) {
 
         return materiaRepositorio

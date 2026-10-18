@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
   actualizarExamen,
   obtenerAsignaturasParaExamen,
   obtenerExamenPorId,
+  obtenerPlanEstudiosMateria,
   registrarExamen,
 } from "../../services/examenService";
 import ModalExito from "../../components/Modal/ModalExito.jsx";
+import ModalError from "../../components/Modal/ModalError.jsx";
 
 import "./RegistrarExamen.css";
 
@@ -39,19 +41,11 @@ const DATOS_INICIALES = {
 const MENSAJE_VALIDACION =
   "Complete la información obligatoria antes de guardar.";
 
-const GESTION_PATRON = /^\d{1,2}\/\d{4}$/;
+const ANIO_ACTUAL = new Date().getFullYear();
 
-const sanearGestion = (valor) => {
-  const limpio = valor.replace(/[^0-9/]/g, "");
-  const partes = limpio.split("/");
-  const periodo = partes[0].slice(0, 2);
-  const anio = partes.slice(1).join("").slice(0, 4);
-
-  if (!limpio.includes("/") || !periodo) {
-    return periodo;
-  }
-
-  return `${periodo}/${anio}`;
+const PERIODOS_POR_PLAN = {
+  SEMESTRAL: [1, 2, 3, 4],
+  ANUAL: [1, 2, 3],
 };
 
 const generarCodigoExamen = () => {
@@ -110,6 +104,7 @@ function RegistrarExamen() {
   }));
   const [errores, setErrores] = useState({});
   const [alerta, setAlerta] = useState("");
+  const [errorModal, setErrorModal] = useState(null);
 
   const [asignaturas, setAsignaturas] = useState([]);
   const [cargandoAsignaturas, setCargandoAsignaturas] = useState(true);
@@ -118,6 +113,10 @@ function RegistrarExamen() {
   const [cargandoExamen, setCargandoExamen] = useState(modoEdicion);
   const [guardando, setGuardando] = useState(false);
   const [mostrarExito, setMostrarExito] = useState(false);
+
+  const [planCargado, setPlanCargado] = useState(null);
+  const [cargandoPlan, setCargandoPlan] = useState(false);
+  const materiaAnteriorRef = useRef(datos.idMateria);
 
   useEffect(() => {
     let activo = true;
@@ -185,7 +184,10 @@ function RegistrarExamen() {
         console.error("Error cargando el examen:", error);
 
         if (activo) {
-          setAlerta("No se pudo cargar la información del examen.");
+          setErrorModal({
+            titulo: "No se pudo cargar el examen",
+            mensaje: "No se pudo cargar la información del examen.",
+          });
         }
       } finally {
         if (activo) {
@@ -200,6 +202,86 @@ function RegistrarExamen() {
       activo = false;
     };
   }, [id, modoEdicion]);
+
+  useEffect(() => {
+    const materiaAnterior = materiaAnteriorRef.current;
+    materiaAnteriorRef.current = datos.idMateria;
+
+    if (materiaAnterior !== datos.idMateria && !cargandoExamen) {
+      setDatos((anterior) =>
+        anterior.gestion
+          ? { ...anterior, gestion: "" }
+          : anterior,
+      );
+    }
+  }, [datos.idMateria, cargandoExamen]);
+
+  useEffect(() => {
+    if (!datos.idMateria) {
+      return undefined;
+    }
+
+    let activo = true;
+
+    const cargarPlan = async () => {
+      setCargandoPlan(true);
+
+      try {
+        const respuesta = await obtenerPlanEstudiosMateria(datos.idMateria);
+
+        if (activo) {
+          setPlanCargado({
+            idMateria: datos.idMateria,
+            plan: respuesta.data?.plan ?? "SEMESTRAL",
+          });
+        }
+      } catch (error) {
+        console.error("Error cargando plan de estudios:", error);
+
+        if (activo) {
+          setPlanCargado({
+            idMateria: datos.idMateria,
+            plan: "SEMESTRAL",
+          });
+        }
+      } finally {
+        if (activo) {
+          setCargandoPlan(false);
+        }
+      }
+    };
+
+    cargarPlan();
+
+    return () => {
+      activo = false;
+    };
+  }, [datos.idMateria]);
+
+  const planEstudios =
+    planCargado?.idMateria === datos.idMateria ? planCargado.plan : null;
+
+  const opcionesGestion = (() => {
+    const periodos =
+      PERIODOS_POR_PLAN[planEstudios] ?? PERIODOS_POR_PLAN.SEMESTRAL;
+
+    const opciones = periodos.map((periodo) => ({
+      valor: `${periodo}/${ANIO_ACTUAL}`,
+      etiqueta: `${periodo}/${ANIO_ACTUAL}`,
+    }));
+
+    if (
+      datos.gestion &&
+      !opciones.some((opcion) => opcion.valor === datos.gestion)
+    ) {
+      opciones.unshift({
+        valor: datos.gestion,
+        etiqueta: datos.gestion,
+      });
+    }
+
+    return opciones;
+  })();
 
   const nombreExamen = (() => {
     if (!datos.tipoEvaluacion || !datos.idMateria) {
@@ -259,8 +341,6 @@ function RegistrarExamen() {
 
     if (!datos.gestion.trim()) {
       nuevos.gestion = "Este campo es obligatorio.";
-    } else if (!GESTION_PATRON.test(datos.gestion.trim())) {
-      nuevos.gestion = "Use el formato periodo/año. Ej. 2/2026.";
     }
 
     if (!datos.estado) {
@@ -281,7 +361,10 @@ function RegistrarExamen() {
 
     if (Object.keys(nuevosErrores).length > 0) {
       setErrores(nuevosErrores);
-      setAlerta(MENSAJE_VALIDACION);
+      setErrorModal({
+        titulo: "Falta información obligatoria",
+        mensaje: MENSAJE_VALIDACION,
+      });
       return;
     }
 
@@ -326,11 +409,15 @@ function RegistrarExamen() {
           `El código ${codigoAnterior} ya está en uso. Se generó el código ${codigoNuevo}; revisa los datos y vuelve a guardar.`,
         );
       } else {
-        setAlerta(
-          typeof mensajeBackend === "string" && mensajeBackend.trim()
-            ? mensajeBackend
-            : "No se pudo guardar el examen. Intenta nuevamente.",
-        );
+        setErrorModal({
+          titulo: modoEdicion
+            ? "No se pudo guardar el examen"
+            : "No se pudo registrar el examen",
+          mensaje:
+            typeof mensajeBackend === "string" && mensajeBackend.trim()
+              ? mensajeBackend
+              : "No se pudo guardar el examen. Intenta nuevamente.",
+        });
       }
 
       setGuardando(false);
@@ -472,17 +559,31 @@ function RegistrarExamen() {
                 requerido
                 error={errores.gestion}
               >
-                <input
+                <select
                   id="examen-gestion"
                   className={claseControl("gestion")}
                   value={datos.gestion}
                   onChange={(e) =>
-                    actualizarCampo("gestion", sanearGestion(e.target.value))
+                    actualizarCampo("gestion", e.target.value)
                   }
-                  placeholder="Ej. 2/2026"
-                  maxLength={7}
-                  disabled={guardando}
-                />
+                  disabled={
+                    guardando || !datos.idMateria || cargandoPlan
+                  }
+                >
+                  <option value="">
+                    {datos.idMateria
+                      ? cargandoPlan
+                        ? "Cargando..."
+                        : "Seleccione un periodo"
+                      : "Seleccione primero una asignatura"}
+                  </option>
+
+                  {opcionesGestion.map((opcion) => (
+                    <option key={opcion.valor} value={opcion.valor}>
+                      {opcion.etiqueta}
+                    </option>
+                  ))}
+                </select>
               </Campo>
 
               <Campo
@@ -556,6 +657,13 @@ function RegistrarExamen() {
           </form>
         )}
       </section>
+
+      <ModalError
+        abierto={Boolean(errorModal)}
+        titulo={errorModal?.titulo}
+        mensaje={errorModal?.mensaje}
+        onCerrar={() => setErrorModal(null)}
+      />
 
       <ModalExito
         abierto={mostrarExito}
