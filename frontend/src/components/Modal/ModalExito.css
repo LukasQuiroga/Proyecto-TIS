@@ -1,0 +1,64 @@
+.modal-exito-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-exito {
+  width: 100%;
+  max-width: 400px;
+  padding: 34px 30px 30px;
+  border-radius: 10px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-exito-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #e6f7ec;
+  color: #16a34a;
+  font-size: 42px;
+}
+
+.modal-exito h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  color: #081b70;
+}
+
+.modal-exito p {
+  margin: 0 0 26px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #526b82;
+}
+
+.modal-exito button {
+  min-width: 150px;
+  height: 46px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 6px;
+  background: #0057f5;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.modal-exito button:hover {
+  background: #0046c4;
+}

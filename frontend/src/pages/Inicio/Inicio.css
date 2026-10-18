@@ -1,0 +1,292 @@
+.inicio-home{
+    position:relative;
+    width:100%;
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+    background:#f7f8fb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 30px;
+    box-sizing:border-box;
+}
+
+.inicio-hero{
+    width:100%;
+    max-width:1250px;
+    height:100%;
+    min-height:0;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.inicio-centro{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    max-width:760px;
+}
+
+.inicio-logo-icono{
+    width:110px;
+    height:100px;
+    margin:0 auto 5px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#1368ff;
+    font-size:82px;
+}
+
+.inicio-logo-texto{
+    margin:0;
+    font-size:82px;
+    line-height:.95;
+    font-weight:800;
+    letter-spacing:-3px;
+}
+
+.inicio-logo-dark{
+    color:#0d255f;
+}
+
+.inicio-logo-blue{
+    color:#1a74ff;
+}
+
+.inicio-subtitulo-principal{
+    margin:15px 0 11px;
+    color:#122f6a;
+    font-size:34px;
+    line-height:1.1;
+    font-weight:800;
+}
+
+.inicio-descripcion-principal{
+    margin:0;
+    color:#6880a6;
+    font-size:16px;
+    line-height:1.5;
+    font-weight:500;
+}
+
+.inicio-personaje{
+    position:absolute;
+    bottom:5px;
+    width:250px;
+    height:235px;
+    z-index:1;
+}
+
+.inicio-personaje-izq{
+    left:10px;
+}
+
+.inicio-personaje-der{
+    right:10px;
+}
+
+.inicio-personaje-fondo{
+    position:absolute;
+    inset:auto 0 0 0;
+    height:185px;
+    border-radius:140px 140px 30px 30px;
+    background:#dcecff;
+}
+
+.inicio-personaje-izq .inicio-personaje-fondo::before,
+.inicio-personaje-der .inicio-personaje-fondo::before{
+    content:"";
+    position:absolute;
+    width:140px;
+    height:80px;
+    border:4px dashed #2d7cff;
+    border-color:#2d7cff transparent transparent transparent;
+    border-radius:100px 100px 0 0;
+    top:-16px;
+}
+
+.inicio-personaje-izq .inicio-personaje-fondo::before{
+    left:-14px;
+}
+
+.inicio-personaje-der .inicio-personaje-fondo::before{
+    right:-14px;
+}
+
+.inicio-personaje-icono{
+    position:absolute;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    width:145px;
+    height:145px;
+    border-radius:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg,#3d8cff 0%,#1a67ff 100%);
+    color:#ffffff;
+    font-size:64px;
+    box-shadow:0 14px 28px rgba(22,95,211,.18);
+}
+
+.inicio-figura{
+    position:absolute;
+    z-index:0;
+}
+
+.inicio-figura.circulo{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+}
+
+.inicio-figura.circulo.morado{
+    border:4px solid #5b3fff;
+    background:transparent;
+}
+
+.inicio-figura.circulo.celeste-suave{
+    background:#c9e3ff;
+}
+
+.inicio-figura.triangulo{
+    width:0;
+    height:0;
+    border-left:14px solid transparent;
+    border-right:14px solid transparent;
+    border-bottom:24px solid #55c7ff;
+    transform:rotate(-18deg);
+    background:transparent;
+}
+
+.inicio-figura.triangulo.celeste{
+    filter:drop-shadow(0 0 0 transparent);
+}
+
+.inicio-figura.triangulo.celeste::after{
+    content:"";
+    position:absolute;
+    left:-9px;
+    top:5px;
+    width:0;
+    height:0;
+    border-left:9px solid transparent;
+    border-right:9px solid transparent;
+    border-bottom:15px solid #f7f8fb;
+}
+
+.inicio-figura.triangulo.azul{
+    border-bottom-color:#19b2ff;
+}
+
+.inicio-figura.triangulo.azul::after{
+    display:none;
+}
+
+.inicio-figura.triangulo.naranja{
+    border-bottom-color:#ffb23c;
+}
+
+.inicio-figura.triangulo.naranja::after{
+    display:none;
+}
+
+.inicio-figura.cuadrado{
+    width:24px;
+    height:24px;
+    border-radius:6px;
+    transform:rotate(-16deg);
+}
+
+.inicio-figura.cuadrado.celeste-suave{
+    background:#d3e8ff;
+}
+
+@media(max-width:1200px){
+    .inicio-logo-texto{
+        font-size:72px;
+    }
+
+    .inicio-logo-icono{
+        width:95px;
+        height:90px;
+        font-size:70px;
+    }
+
+    .inicio-subtitulo-principal{
+        font-size:31px;
+    }
+
+    .inicio-personaje{
+        width:210px;
+        height:205px;
+    }
+
+    .inicio-personaje-fondo{
+        height:160px;
+    }
+
+    .inicio-personaje-icono{
+        width:125px;
+        height:125px;
+        font-size:54px;
+    }
+}
+
+@media(max-width:900px){
+    .inicio-logo-icono{
+        width:85px;
+        height:80px;
+        font-size:64px;
+    }
+
+    .inicio-logo-texto{
+        font-size:60px;
+    }
+
+    .inicio-subtitulo-principal{
+        font-size:28px;
+    }
+
+    .inicio-descripcion-principal{
+        font-size:15px;
+    }
+
+    .inicio-personaje{
+        display:none;
+    }
+}
+
+@media(max-width:600px){
+    .inicio-home{
+        padding:15px;
+    }
+
+    .inicio-logo-icono{
+        width:70px;
+        height:65px;
+        font-size:52px;
+    }
+
+    .inicio-logo-texto{
+        font-size:48px;
+    }
+
+    .inicio-subtitulo-principal{
+        font-size:23px;
+    }
+
+    .inicio-descripcion-principal{
+        font-size:13px;
+        line-height:1.4;
+    }
+
+    .inicio-figura{
+        opacity:.75;
+    }
+}

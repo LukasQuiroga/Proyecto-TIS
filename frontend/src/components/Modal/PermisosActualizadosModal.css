@@ -1,0 +1,60 @@
+.modal-permisos-fondo {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-permisos {
+    width: 380px;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-permisos h2 {
+    margin: 15px 0;
+    color: #183b5d;
+    font-size: 20px;
+}
+
+.modal-permisos p {
+    margin: 0 0 25px;
+    color: #526b82;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.modal-permisos-icono {
+    width: 55px;
+    height: 55px;
+    margin: auto;
+    border-radius: 50%;
+    background: #0875dc;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.modal-permisos button {
+    height: 40px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 6px;
+    background: #0875dc;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.modal-permisos button:hover {
+    background: #065fac;
+}

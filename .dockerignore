@@ -1,0 +1,30 @@
+.git
+.gitignore
+.github
+.idea
+.vscode
+*.iml
+
+# Entorno / secretos
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+target/
+**/target/
+*.class
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+node_modules/
+
+# Otros
+*.log
+image*.png
+db/
+*.csv
+README.md
+docker-compose.yml
+Dockerfile

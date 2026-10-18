@@ -1,0 +1,260 @@
+.detalle-asignatura-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.detalle-asignatura-modal {
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #183b5d;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.detalle-asignatura-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.detalle-asignatura-encabezado h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.detalle-asignatura-encabezado p {
+  margin: 0;
+  color: #526b82;
+  font-size: 13px;
+}
+
+.detalle-asignatura-cerrar {
+  border: none;
+  background: transparent;
+  color: #526b82;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.detalle-asignatura-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.detalle-asignatura-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+}
+
+.detalle-asignatura-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.detalle-asignatura-campo > span {
+  font-size: 12px;
+  color: #526b82;
+}
+
+.detalle-asignatura-campo strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.detalle-asignatura-estado {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.detalle-asignatura-estado.activa {
+  background: #ddf7e9;
+  color: #16824a;
+}
+
+.detalle-asignatura-estado.inactiva {
+  background: #fde9e9;
+  color: #b42318;
+}
+
+.detalle-asignatura-carreras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detalle-asignatura-carreras > span {
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: #edf4fb;
+  color: #315f9d;
+  font-size: 12px;
+}
+
+.detalle-asignatura-carreras p {
+  margin: 0;
+  color: #526b82;
+  font-size: 13px;
+}
+
+.detalle-asignatura-descripcion {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e8eef5;
+  border-radius: 6px;
+  background: #f8fbff;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.detalle-asignatura-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 25px;
+  padding-top: 18px;
+  border-top: 1px solid #e8eef5;
+}
+
+.detalle-asignatura-acciones button {
+  min-height: 40px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 6px;
+  background: #0875dc;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.detalle-asignatura-acciones button:hover {
+  background: #065fac;
+}
+
+/* Facultades y carreras asociadas */
+
+.detalle-asignatura-facultades {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-asignatura-facultad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.detalle-asignatura-facultad > strong {
+  color: #17365d;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.detalle-asignatura-facultad .detalle-asignatura-carreras span {
+  border: 1px solid #dce5f0;
+  background: #ffffff;
+}
+
+.detalle-asignatura-mensaje {
+  margin: 0;
+  color: #526b82;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* Grupos y docentes asignados */
+
+.detalle-asignatura-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+}
+
+.detalle-asignatura-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.detalle-asignatura-tabla thead {
+  background: #edf4fb;
+}
+
+.detalle-asignatura-tabla th,
+.detalle-asignatura-tabla td {
+  padding: 12px;
+  border-bottom: 1px solid #e8eef5;
+}
+
+.detalle-asignatura-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.detalle-asignatura-tabla th {
+  color: #17365d;
+  font-weight: 600;
+}
+
+.detalle-asignatura-tabla td {
+  color: #31506f;
+}
+
+.detalle-asignatura-grupo {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #edf4fb;
+  color: #315f9d;
+  font-weight: 600;
+}
+
+.detalle-asignatura-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #f0b4b4;
+  border-radius: 6px;
+  background: #fff0f0;
+  color: #b42318;
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .detalle-asignatura-modal {
+    padding: 18px;
+  }
+
+  .detalle-asignatura-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

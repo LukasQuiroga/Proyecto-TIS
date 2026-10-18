@@ -1,0 +1,239 @@
+.configuracion-examen-pagina {
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #183b5d;
+}
+
+.configuracion-examen-encabezado {
+  margin-bottom: 24px;
+}
+
+.configuracion-examen-encabezado h1 {
+  margin: 15px 0 6px;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.configuracion-examen-encabezado p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.configuracion-examen-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: #0057f5;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.configuracion-examen-panel {
+  padding: 26px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.configuracion-examen-panel h2 {
+  margin: 0 0 24px;
+  font-size: 17px;
+}
+
+.configuracion-examen-datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.configuracion-examen-programacion {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.configuracion-examen-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.configuracion-examen-campo label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.configuracion-examen-campo label span {
+  color: #dc2626;
+}
+
+.configuracion-examen-campo input {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #183b5d;
+  font: inherit;
+  font-size: 13px;
+}
+
+.configuracion-examen-campo input:read-only {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.configuracion-examen-campo input:focus {
+  border-color: #0057f5;
+  outline: 2px solid rgba(0, 87, 245, 0.12);
+}
+
+.configuracion-examen-campo input[aria-invalid="true"] {
+  border-color: #dc2626;
+}
+
+.configuracion-examen-campo small {
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.configuracion-examen-duracion {
+  display: flex;
+  align-items: center;
+}
+
+.configuracion-examen-duracion input {
+  border-radius: 6px 0 0 6px;
+}
+
+.configuracion-examen-duracion > span {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+}
+
+.configuracion-examen-informacion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.configuracion-examen-informacion svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.configuracion-examen-informacion p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.configuracion-examen-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.configuracion-examen-acciones button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.configuracion-examen-cancelar {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.configuracion-examen-guardar {
+  border: 1px solid #0057f5;
+  background: #0057f5;
+  color: #ffffff;
+}
+
+.configuracion-examen-guardar:hover:not(:disabled) {
+  background: #0046c4;
+}
+
+.configuracion-examen-acciones button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.configuracion-examen-error,
+.configuracion-examen-exito {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.configuracion-examen-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.configuracion-examen-exito {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+@media (max-width: 760px) {
+  .configuracion-examen-pagina {
+    padding: 16px;
+  }
+
+  .configuracion-examen-panel {
+    padding: 18px;
+  }
+
+  .configuracion-examen-datos,
+  .configuracion-examen-programacion {
+    grid-template-columns: 1fr;
+  }
+
+  .configuracion-examen-acciones {
+    flex-direction: column;
+  }
+
+  .configuracion-examen-acciones button {
+    width: 100%;
+  }
+}

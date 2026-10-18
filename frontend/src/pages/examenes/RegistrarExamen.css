@@ -1,0 +1,286 @@
+.registrar-examen-pagina {
+  min-height: 100%;
+  padding: 22px 30px 40px;
+  background: #ffffff;
+  color: #0f2a6b;
+}
+
+.registrar-examen-encabezado {
+  margin-bottom: 22px;
+}
+
+.registrar-examen-encabezado h1 {
+  margin: 0 0 8px;
+  font-size: 36px;
+  font-weight: 700;
+  color: #081b70;
+}
+
+.registrar-examen-encabezado p {
+  margin: 0;
+  font-size: 17px;
+  color: #5366c5;
+}
+
+.registrar-examen-alerta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 90px;
+  width: 100%;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 2px solid #ff4050;
+  border-radius: 5px;
+  background: #fff0f1;
+  box-sizing: border-box;
+}
+
+.registrar-examen-alerta-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #d00000;
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.registrar-examen-alerta-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.registrar-examen-alerta-texto strong {
+  font-size: 20px;
+  font-weight: 700;
+  color: #b60000;
+}
+
+.registrar-examen-alerta-texto span {
+  font-size: 16px;
+  color: #d83b45;
+}
+
+.registrar-examen-tarjeta {
+  padding: 28px;
+  border: 1px solid #dce7f7;
+  border-radius: 5px;
+  background: #ffffff;
+}
+
+.registrar-examen-seccion {
+  margin: 0 0 18px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #081b70;
+}
+
+.registrar-examen-cargando {
+  margin: 0;
+  padding: 20px 0;
+  color: #5366c5;
+}
+
+.registrar-examen-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 34px;
+  row-gap: 18px;
+}
+
+.registrar-examen-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.registrar-examen-campo-ancho {
+  grid-column: 1 / -1;
+}
+
+.registrar-examen-campo label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f2a6b;
+}
+
+.registrar-examen-asterisco {
+  color: #e0313b;
+}
+
+.registrar-examen-control {
+  width: 100%;
+  height: 45px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 1px solid #cbd9f0;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #0f2a6b;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.registrar-examen-control::placeholder {
+  color: #8a98b8;
+}
+
+.registrar-examen-control:focus {
+  border-color: #0057f5;
+}
+
+.registrar-examen-control:disabled {
+  background: #f4f7fc;
+  cursor: not-allowed;
+}
+
+.registrar-examen-control-error {
+  border-color: #ff4050;
+}
+
+.registrar-examen-textarea {
+  height: auto;
+  min-height: 88px;
+  padding: 14px 16px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+select.registrar-examen-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230f2a6b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  cursor: pointer;
+}
+
+.registrar-examen-error-campo {
+  font-size: 14px;
+  color: #ff303f;
+  margin-top: 0;
+}
+
+.registrar-examen-aviso {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: #b45309;
+}
+
+.registrar-examen-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 26px;
+}
+
+.registrar-examen-obligatorios {
+  font-size: 14px;
+  color: #6678bd;
+}
+
+.registrar-examen-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.registrar-examen-cancelar,
+.registrar-examen-guardar {
+  height: 52px;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.registrar-examen-cancelar {
+  min-width: 135px;
+  padding: 0 22px;
+  border: 1px solid #cbd9f0;
+  background: #f1f5fc;
+  color: #142a85;
+}
+
+.registrar-examen-cancelar:hover:not(:disabled) {
+  background: #e6eefa;
+}
+
+.registrar-examen-guardar {
+  min-width: 190px;
+  padding: 0 24px;
+  border: none;
+  background: #0057f5;
+  color: #ffffff;
+}
+
+.registrar-examen-guardar:hover:not(:disabled) {
+  background: #0046c4;
+}
+
+.registrar-examen-cancelar:disabled,
+.registrar-examen-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .registrar-examen-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+
+  .registrar-examen-campo-ancho {
+    grid-column: auto;
+  }
+
+  .registrar-examen-pie {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .registrar-examen-acciones {
+    flex-direction: column-reverse;
+  }
+
+  .registrar-examen-cancelar,
+  .registrar-examen-guardar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .registrar-examen-pagina {
+    padding: 16px;
+  }
+
+  .registrar-examen-encabezado h1 {
+    font-size: 28px;
+  }
+
+  .registrar-examen-encabezado p {
+    font-size: 15px;
+  }
+
+  .registrar-examen-tarjeta {
+    padding: 18px;
+  }
+
+  .registrar-examen-alerta {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}

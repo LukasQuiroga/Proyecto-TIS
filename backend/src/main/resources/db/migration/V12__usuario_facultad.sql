@@ -1,0 +1,1 @@
+ALTER TABLE seguridad.usuario ADD COLUMN facultad VARCHAR(120);

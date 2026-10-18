@@ -1,0 +1,72 @@
+.acceso-denegado{
+    min-height:calc(100vh - 140px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px 20px;
+}
+
+.acceso-denegado-tarjeta{
+    width:440px;
+    max-width:100%;
+    background:#ffffff;
+    border:1px solid #dbe8f2;
+    border-radius:16px;
+    padding:40px 34px;
+    text-align:center;
+    box-shadow:0 12px 36px rgba(10,42,74,0.12);
+}
+
+.acceso-denegado-icono{
+    width:66px;
+    height:66px;
+    margin:0 auto 18px;
+    border-radius:50%;
+    background:#fdeaea;
+    color:#d13438;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.acceso-denegado-icono svg{
+    width:30px;
+    height:30px;
+}
+
+.acceso-denegado-tarjeta h1{
+    margin:0 0 10px;
+    color:#0a2a4a;
+    font-size:22px;
+}
+
+.acceso-denegado-tarjeta p{
+    margin:0 0 24px;
+    color:#5b7289;
+    font-size:14px;
+    line-height:1.6;
+}
+
+.acceso-denegado-boton{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 26px;
+    border:1px solid transparent;
+    border-radius:10px;
+    background:#0a63c9;
+    color:#ffffff;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease;
+}
+
+.acceso-denegado-boton:hover{
+    background:#0a56ae;
+}
+
+.acceso-denegado-boton svg{
+    width:16px;
+    height:16px;
+}

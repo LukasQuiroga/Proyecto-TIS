@@ -1,0 +1,263 @@
+import {
+    useEffect,
+    useState
+} from "react";
+
+import {
+    useNavigate
+} from "react-router-dom";
+
+import {
+    restablecerContrasena
+}
+from "../../services/authService";
+
+import "./RecuperacionContrasena.css";
+
+
+function NuevaContrasena(){
+
+    const navigate = useNavigate();
+
+    const [password,setPassword] = useState("");
+    const [confirmar,setConfirmar] = useState("");
+    const [mensaje,setMensaje] = useState("");
+    const [error,setError] = useState("");
+
+
+    useEffect(()=>{
+
+        const correo =
+            localStorage.getItem(
+                "correoRecuperacion"
+            );
+
+        const token =
+            localStorage.getItem(
+                "tokenRecuperacion"
+            );
+
+
+        if(!correo || !token){
+
+            navigate(
+                "/login",
+                {
+                    replace:true
+                }
+            );
+
+        }
+
+    },[navigate]);
+
+
+    const cancelar = ()=>{
+
+        localStorage.removeItem(
+            "correoRecuperacion"
+        );
+
+        localStorage.removeItem(
+            "tokenRecuperacion"
+        );
+
+        localStorage.removeItem(
+            "codigoRecuperacion"
+        );
+
+        navigate(
+            "/login",
+            {
+                replace:true
+            }
+        );
+
+    };
+
+
+    const cambiarPassword = async(e)=>{
+
+        e.preventDefault();
+
+        setError("");
+        setMensaje("");
+
+
+        if(password.length < 8){
+
+            setError(
+                "La contraseña debe tener al menos 8 caracteres"
+            );
+
+            return;
+        }
+
+
+        if(password !== confirmar){
+
+            setError(
+                "Las contraseñas no coinciden"
+            );
+
+            return;
+        }
+
+
+        try{
+
+            await restablecerContrasena({
+
+                correo:
+                localStorage.getItem(
+                    "correoRecuperacion"
+                ),
+
+                token:
+                localStorage.getItem(
+                    "tokenRecuperacion"
+                ),
+
+                nuevaContrasena:
+                password,
+
+                confirmarContrasena:
+                confirmar
+
+            });
+
+
+            setMensaje(
+                "Contraseña actualizada correctamente"
+            );
+
+
+            localStorage.removeItem(
+                "correoRecuperacion"
+            );
+
+            localStorage.removeItem(
+                "tokenRecuperacion"
+            );
+
+            localStorage.removeItem(
+                "codigoRecuperacion"
+            );
+
+
+            setTimeout(()=>{
+
+                navigate(
+                    "/login",
+                    {
+                        replace:true
+                    }
+                );
+
+            },1500);
+
+
+        }catch(error){
+
+            console.error(
+                "ERROR AL ACTUALIZAR CONTRASEÑA:",
+                error
+            );
+
+
+            setError(
+                error.response?.data?.mensaje ||
+                error.response?.data?.message ||
+                "No se pudo actualizar la contraseña"
+            );
+
+        }
+
+    };
+
+
+    return (
+
+        <div className="recuperacion-page">
+
+            <div className="recuperacion-card">
+
+                <h2>
+                    Nueva contraseña
+                </h2>
+
+
+                <form
+                    onSubmit={
+                        cambiarPassword
+                    }
+                >
+
+                    <input
+                        type="password"
+                        minLength={8}
+                        placeholder="Nueva contraseña"
+                        value={password}
+                        onChange={
+                            e=>setPassword(
+                                e.target.value
+                            )
+                        }
+                    />
+
+
+                    <input
+                        type="password"
+                        minLength={8}
+                        placeholder="Confirmar contraseña"
+                        value={confirmar}
+                        onChange={
+                            e=>setConfirmar(
+                                e.target.value
+                            )
+                        }
+                    />
+
+
+                    {
+                        error &&
+                        <p className="error">
+                            {error}
+                        </p>
+                    }
+
+
+                    {
+                        mensaje &&
+                        <p className="success">
+                            {mensaje}
+                        </p>
+                    }
+
+
+                    <button
+                        type="submit"
+                    >
+                        Guardar contraseña
+                    </button>
+
+
+                    <button
+                        type="button"
+                        className="volver"
+                        onClick={cancelar}
+                    >
+                        Cancelar
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    );
+
+}
+
+export default NuevaContrasena;

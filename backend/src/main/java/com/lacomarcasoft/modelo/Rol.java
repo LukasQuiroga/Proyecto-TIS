@@ -1,0 +1,86 @@
+package com.lacomarcasoft.modelo;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name="rol",schema="seguridad")
+public class Rol {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="id_rol")
+    private Long idRol;
+
+    @Column(name="nombre_rol",nullable=false,unique=true)
+    private String nombreRol;
+
+    @Column(name="descripcion_rol")
+    private String descripcionRol;
+
+    @Column(name="fecha_asignacion")
+    private LocalDateTime fechaAsignacion;
+
+    @OneToMany(mappedBy="rol")
+    private List<Usuario> usuarios;
+
+    @ManyToMany(fetch=FetchType.EAGER)
+    @JoinTable(
+        name="rol_permiso",
+        schema="seguridad",
+        joinColumns=@JoinColumn(name="id_rol"),
+        inverseJoinColumns=@JoinColumn(name="id_permiso")
+    )
+    private List<Permiso> permisos;
+
+    public Rol(){}
+
+    public Long getIdRol(){
+        return idRol;
+    }
+
+    public void setIdRol(Long idRol){
+        this.idRol=idRol;
+    }
+
+    public String getNombreRol(){
+        return nombreRol;
+    }
+
+    public void setNombreRol(String nombreRol){
+        this.nombreRol=nombreRol;
+    }
+
+    public String getDescripcionRol(){
+        return descripcionRol;
+    }
+
+    public void setDescripcionRol(String descripcionRol){
+        this.descripcionRol=descripcionRol;
+    }
+
+    public LocalDateTime getFechaAsignacion(){
+        return fechaAsignacion;
+    }
+
+    public void setFechaAsignacion(LocalDateTime fechaAsignacion){
+        this.fechaAsignacion=fechaAsignacion;
+    }
+
+    public List<Usuario> getUsuarios(){
+        return usuarios;
+    }
+
+    public void setUsuarios(List<Usuario> usuarios){
+        this.usuarios=usuarios;
+    }
+
+    public List<Permiso> getPermisos(){
+        return permisos;
+    }
+
+    public void setPermisos(List<Permiso> permisos){
+        this.permisos=permisos;
+    }
+}
