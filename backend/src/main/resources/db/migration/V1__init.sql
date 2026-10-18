@@ -34,5 +34,5 @@ CREATE INDEX idx_log_usuario_fecha ON log_actividad (id_usuario, fecha);
 
 INSERT INTO rol (nombre_rol, descripcion_rol) VALUES
     ('ADMINISTRADOR', 'Acceso total al sistema'),
-    ('DOCENTE',       'Gestiona los examenes'),
-    ('ESTUDIANTE',    'Rinde los examenes');
+    ('DOCENTE',       'Gestiona los exámenes'),
+    ('ESTUDIANTE',    'Rinde los exámenes');
