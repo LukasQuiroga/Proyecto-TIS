@@ -23,8 +23,8 @@ public class MotivoInhabilitacionControlador {
     }
 
     public record MotivoSolicitud(
-        @NotBlank @Size(max = 120) String titulo,
-        @NotBlank @Size(max = 500) String motivo
+        @NotBlank @Size(max = 29, message = "El título de la inhabilitación debe contener menos de 30 caracteres.") String titulo,
+        @NotBlank @Size(max = 49, message = "El motivo de inhabilitación debe contener menos de 50 caracteres.") String motivo
     ) {}
 
     @GetMapping

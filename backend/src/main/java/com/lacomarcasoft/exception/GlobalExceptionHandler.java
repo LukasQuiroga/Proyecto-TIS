@@ -3,12 +3,24 @@ package com.lacomarcasoft.exception;
 import com.lacomarcasoft.dto.response.MensajeRespuesta;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<MensajeRespuesta> manejarEstado(ResponseStatusException ex) {
+        String mensaje = ex.getReason();
+        if (mensaje == null || mensaje.isBlank()) {
+            mensaje = "No se pudo completar la operación.";
+        }
+        return ResponseEntity
+                .status(ex.getStatusCode())
+                .body(new MensajeRespuesta(mensaje));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<MensajeRespuesta> manejarNegocio(IllegalArgumentException ex) {
@@ -31,4 +43,3 @@ public class GlobalExceptionHandler {
                 .body(new MensajeRespuesta(mensaje));
     }
 }
-
