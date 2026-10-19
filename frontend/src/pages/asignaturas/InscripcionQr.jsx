@@ -660,7 +660,7 @@ function InscripcionQr() {
           </div>
 
           <div className="hu12-token">
-            <span>Token de inscripción</span>
+            <span>Código de inscripción</span>
 
             <code>{resultado.token}</code>
 
@@ -670,7 +670,7 @@ function InscripcionQr() {
               onClick={copiarToken}
             >
               <FiCopy />
-              {copiado ? "Copiado" : "Copiar token"}
+              {copiado ? "Copiado" : "Copiar código de inscripción"}
             </button>
           </div>
 
