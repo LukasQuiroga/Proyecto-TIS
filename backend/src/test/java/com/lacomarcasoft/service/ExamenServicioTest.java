@@ -2,6 +2,7 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
+import com.lacomarcasoft.dto.request.RegistrarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
 import com.lacomarcasoft.modelo.Examen;
 import com.lacomarcasoft.repository.AsignaturaCarreraRepositorio;
@@ -449,4 +450,86 @@ void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
 
         verifyNoInteractions(examenRepositorio);
 }
+
+
+    @Test
+    void debeRechazarGestionDeOtroAnioAlRegistrar() {
+
+        int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+
+        for (int anio : new int[]{anioActual - 1, anioActual + 1}) {
+
+            RegistrarExamenSolicitud solicitud =
+                    new RegistrarExamenSolicitud(
+                            "ABC-123",
+                            "Primer parcial de prueba",
+                            1L,
+                            "PRIMER_PARCIAL",
+                            "1/" + anio,
+                            "ACTIVO",
+                            null,
+                            null,
+                            null,
+                            null
+                    );
+
+            ResponseStatusException error = assertThrows(
+                    ResponseStatusException.class,
+                    () -> examenServicio.registrar(solicitud)
+            );
+
+            assertEquals(
+                    HttpStatus.BAD_REQUEST,
+                    error.getStatusCode()
+            );
+
+            assertTrue(error.getReason().contains("año actual"));
+        }
+
+        verifyNoInteractions(examenRepositorio);
+    }
+
+    @Test
+    void debeRechazarGestionDeOtroAnioAlEditar() {
+
+        int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+
+        Examen examen = new Examen();
+        examen.setIdExamen(10L);
+
+        when(examenRepositorio.obtenerDetalle(10L))
+                .thenReturn(Optional.of(examen));
+
+        for (int anio : new int[]{anioActual - 1, anioActual + 1}) {
+
+            RegistrarExamenSolicitud solicitud =
+                    new RegistrarExamenSolicitud(
+                            "ABC-123",
+                            "Primer parcial de prueba",
+                            1L,
+                            "PRIMER_PARCIAL",
+                            "1/" + anio,
+                            "ACTIVO",
+                            null,
+                            null,
+                            null,
+                            null
+                    );
+
+            ResponseStatusException error = assertThrows(
+                    ResponseStatusException.class,
+                    () -> examenServicio.actualizar(10L, solicitud)
+            );
+
+            assertEquals(
+                    HttpStatus.BAD_REQUEST,
+                    error.getStatusCode()
+            );
+
+            assertTrue(error.getReason().contains("año actual"));
+        }
+
+        verify(examenRepositorio, never())
+                .save(any(Examen.class));
+    }
 }

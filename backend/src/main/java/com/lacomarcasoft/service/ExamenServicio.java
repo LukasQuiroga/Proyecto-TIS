@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -287,8 +288,28 @@ public ExamenRespuesta configurar(
             );
         }
 
-        String periodo = gestion.split("/")[0];
-        int p = Integer.parseInt(periodo);
+        if (!gestion.matches("\\d{1,2}/\\d{4}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La gestión debe tener el formato periodo/año"
+            );
+        }
+
+        String[] partesGestion = gestion.split("/");
+        int p = Integer.parseInt(partesGestion[0]);
+        int anioGestion = Integer.parseInt(partesGestion[1]);
+
+        int anioActual = LocalDate.now(
+                ZoneId.of("America/La_Paz")
+        ).getYear();
+
+        if (anioGestion != anioActual) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La gestión debe pertenecer al año actual: " + anioActual
+            );
+        }
+
         if (p < 1 || p > 4) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
