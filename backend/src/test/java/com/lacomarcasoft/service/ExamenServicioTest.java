@@ -5,6 +5,7 @@ import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
 import com.lacomarcasoft.modelo.Examen;
+import com.lacomarcasoft.modelo.Materia;
 import com.lacomarcasoft.repository.AsignaturaCarreraRepositorio;
 import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.ExamenRepositorio;
@@ -30,14 +31,14 @@ class ExamenServicioTest {
             ZoneId.of("America/La_Paz");
 
     private ExamenRepositorio examenRepositorio;
+    private MateriaRepositorio materiaRepositorio;
     private ExamenServicio examenServicio;
 
     @BeforeEach
     void preparar() {
         examenRepositorio = mock(ExamenRepositorio.class);
 
-        MateriaRepositorio materiaRepositorio =
-                mock(MateriaRepositorio.class);
+        materiaRepositorio = mock(MateriaRepositorio.class);
 
         AsignaturaCarreraRepositorio asignaturaCarreraRepositorio =
                 mock(AsignaturaCarreraRepositorio.class);
@@ -531,5 +532,107 @@ void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
 
         verify(examenRepositorio, never())
                 .save(any(Examen.class));
+    }
+
+    @Test
+    void debeRechazarCambioDeAsignaturaAlEditar() {
+
+        int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+
+        Materia materiaOriginal = new Materia();
+        materiaOriginal.setIdMateria(7L);
+
+        Examen examen = new Examen();
+        examen.setIdExamen(30L);
+        examen.setMateria(materiaOriginal);
+
+        when(examenRepositorio.obtenerDetalle(30L))
+                .thenReturn(Optional.of(examen));
+
+        RegistrarExamenSolicitud solicitud =
+                new RegistrarExamenSolicitud(
+                        "FIN-030",
+                        "Examen final actualizado",
+                        8L,
+                        "FINAL",
+                        "1/" + anioActual,
+                        "ACTIVO",
+                        null,
+                        null,
+                        null,
+                        null
+                );
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> examenServicio.actualizar(30L, solicitud)
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                error.getStatusCode()
+        );
+
+        assertEquals(
+                "No se puede cambiar la asignatura de un examen existente",
+                error.getReason()
+        );
+
+        assertSame(materiaOriginal, examen.getMateria());
+
+        verify(examenRepositorio, never())
+                .save(any(Examen.class));
+
+        verifyNoInteractions(materiaRepositorio);
+    }
+
+    @Test
+    void debePermitirEditarSinCambiarAsignatura() {
+
+        int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+
+        Materia materiaOriginal = new Materia();
+        materiaOriginal.setIdMateria(7L);
+
+        Examen examen = new Examen();
+        examen.setIdExamen(31L);
+        examen.setMateria(materiaOriginal);
+
+        when(examenRepositorio.obtenerDetalle(31L))
+                .thenReturn(Optional.of(examen));
+
+        when(materiaRepositorio.findById(7L))
+                .thenReturn(Optional.of(materiaOriginal));
+
+        when(examenRepositorio.save(examen))
+                .thenReturn(examen);
+
+        RegistrarExamenSolicitud solicitud =
+                new RegistrarExamenSolicitud(
+                        "FIN-031",
+                        "Examen final actualizado",
+                        7L,
+                        "FINAL",
+                        "1/" + anioActual,
+                        "ACTIVO",
+                        "Descripción actualizada",
+                        null,
+                        null,
+                        null
+                );
+
+        ExamenRespuesta respuesta =
+                examenServicio.actualizar(31L, solicitud);
+
+        assertEquals(7L, respuesta.idMateria());
+
+        assertEquals(
+                "Examen final actualizado",
+                respuesta.nombreExamen()
+        );
+
+        assertSame(materiaOriginal, examen.getMateria());
+
+        verify(examenRepositorio).save(examen);
     }
 }

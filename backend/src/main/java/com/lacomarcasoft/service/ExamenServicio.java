@@ -110,6 +110,16 @@ public class ExamenServicio {
 
         String codigo = validar(solicitud);
 
+        if (examen.getMateria() == null ||
+                !solicitud.idMateria().equals(
+                        examen.getMateria().getIdMateria()
+                )) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se puede cambiar la asignatura de un examen existente"
+            );
+        }
+
         if (examenRepositorio.existeCodigoExcepto(codigo, id)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,

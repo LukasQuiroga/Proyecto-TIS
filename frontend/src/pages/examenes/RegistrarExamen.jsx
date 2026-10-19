@@ -546,7 +546,7 @@ function RegistrarExamen() {
                   className={claseControl("idMateria")}
                   value={datos.idMateria}
                   onChange={(e) => actualizarCampo("idMateria", e.target.value)}
-                  disabled={guardando || cargandoAsignaturas}
+                  disabled={guardando || cargandoAsignaturas || modoEdicion}
                 >
                   <option value="">
                     {cargandoAsignaturas
