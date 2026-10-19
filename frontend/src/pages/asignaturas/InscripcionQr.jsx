@@ -660,7 +660,7 @@ function InscripcionQr() {
           </div>
 
           <div className="hu12-token">
-            <span>Token de inscripción</span>
+            <span>Código de inscripción</span>
 
             <code>{resultado.token}</code>
 

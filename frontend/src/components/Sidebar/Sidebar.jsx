@@ -173,14 +173,17 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                             </>
                         )}
 
-                        {tienePermiso("GESTIONAR_MATERIAS") && (
-                            <Opcion
+                        
+                       {tienePermiso("GESTIONAR_MATERIAS") && (
+                           <Opcion
                                 to="/asignaturas"
+                                exacta
                                 icono={<FiBookOpen />}
                             >
-                                Asignaturas
-                            </Opcion>
-                        )}
+                              Asignaturas
+                           </Opcion>
+                       )}
+
                         
                         {usuario?.nombreRol === "DOCENTE" && (
                             <Opcion
