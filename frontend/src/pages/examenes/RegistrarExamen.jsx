@@ -79,9 +79,7 @@ function Campo({ id, etiqueta, requerido = false, error, children }) {
       <label htmlFor={id}>
         {etiqueta}
 
-        {requerido && (
-          <span className="registrar-examen-asterisco"> *</span>
-        )}
+        {requerido && <span className="registrar-examen-asterisco"> *</span>}
       </label>
 
       {children}
@@ -181,6 +179,9 @@ function RegistrarExamen() {
             gestion: examen.gestion ?? "",
             estado: examen.estado ?? "ACTIVO",
             descripcion: examen.descripcion ?? "",
+            fechaExamen: examen.fechaExamen ?? "",
+            horaInicio: examen.horaInicio?.slice(0, 5) ?? "",
+            horaFin: examen.horaFin?.slice(0, 5) ?? "",
           });
         }
       } catch (error) {
@@ -212,9 +213,7 @@ function RegistrarExamen() {
 
     if (materiaAnterior !== datos.idMateria && !cargandoExamen) {
       setDatos((anterior) =>
-        anterior.gestion
-          ? { ...anterior, gestion: "" }
-          : anterior,
+        anterior.gestion ? { ...anterior, gestion: "" } : anterior,
       );
     }
   }, [datos.idMateria, cargandoExamen]);
@@ -268,22 +267,10 @@ function RegistrarExamen() {
     const periodos =
       PERIODOS_POR_PLAN[planEstudios] ?? PERIODOS_POR_PLAN.SEMESTRAL;
 
-    const opciones = periodos.map((periodo) => ({
+    return periodos.map((periodo) => ({
       valor: `${periodo}/${ANIO_ACTUAL}`,
       etiqueta: `${periodo}/${ANIO_ACTUAL}`,
     }));
-
-    if (
-      datos.gestion &&
-      !opciones.some((opcion) => opcion.valor === datos.gestion)
-    ) {
-      opciones.unshift({
-        valor: datos.gestion,
-        etiqueta: datos.gestion,
-      });
-    }
-
-    return opciones;
   })();
 
   const nombreExamen = (() => {
@@ -344,6 +331,10 @@ function RegistrarExamen() {
 
     if (!datos.gestion.trim()) {
       nuevos.gestion = "Este campo es obligatorio.";
+    } else if (
+      !opcionesGestion.some((opcion) => opcion.valor === datos.gestion)
+    ) {
+      nuevos.gestion = `Seleccione una gestión válida del año ${ANIO_ACTUAL}.`;
     }
 
     if (!datos.estado) {
@@ -362,11 +353,15 @@ function RegistrarExamen() {
       if (Number.isNaN(fechaSeleccionada.getTime())) {
         nuevos.fechaExamen = "Ingrese una fecha válida.";
       } else if (fechaSeleccionada < hoy) {
-        nuevos.fechaExamen = "La fecha del examen no puede ser anterior a la fecha actual.";
+        nuevos.fechaExamen =
+          "La fecha del examen no puede ser anterior a la fecha actual.";
       }
     }
 
-    if ((tieneHoraInicio && !tieneHoraFin) || (!tieneHoraInicio && tieneHoraFin)) {
+    if (
+      (tieneHoraInicio && !tieneHoraFin) ||
+      (!tieneHoraInicio && tieneHoraFin)
+    ) {
       nuevos.horaFin = "Complete la hora de inicio y la hora de fin.";
       nuevos.horaInicio = "Complete la hora de inicio y la hora de fin.";
     }
@@ -381,7 +376,8 @@ function RegistrarExamen() {
       if (Number.isNaN(inicioMin) || Number.isNaN(finMin)) {
         nuevos.horaFin = "Ingrese una hora válida.";
       } else if (finMin <= inicioMin) {
-        nuevos.horaFin = "La hora de fin debe ser posterior a la hora de inicio.";
+        nuevos.horaFin =
+          "La hora de fin debe ser posterior a la hora de inicio.";
       }
     }
 
@@ -549,10 +545,8 @@ function RegistrarExamen() {
                   id="examen-asignatura"
                   className={claseControl("idMateria")}
                   value={datos.idMateria}
-                  onChange={(e) =>
-                    actualizarCampo("idMateria", e.target.value)
-                  }
-                  disabled={guardando || cargandoAsignaturas}
+                  onChange={(e) => actualizarCampo("idMateria", e.target.value)}
+                  disabled={guardando || cargandoAsignaturas || modoEdicion}
                 >
                   <option value="">
                     {cargandoAsignaturas
@@ -604,12 +598,8 @@ function RegistrarExamen() {
                   id="examen-gestion"
                   className={claseControl("gestion")}
                   value={datos.gestion}
-                  onChange={(e) =>
-                    actualizarCampo("gestion", e.target.value)
-                  }
-                  disabled={
-                    guardando || !datos.idMateria || cargandoPlan
-                  }
+                  onChange={(e) => actualizarCampo("gestion", e.target.value)}
+                  disabled={guardando || !datos.idMateria || cargandoPlan}
                 >
                   <option value="">
                     {datos.idMateria
@@ -693,9 +683,7 @@ function RegistrarExamen() {
                   type="time"
                   className={claseControl("horaFin")}
                   value={datos.horaFin}
-                  onChange={(e) =>
-                    actualizarCampo("horaFin", e.target.value)
-                  }
+                  onChange={(e) => actualizarCampo("horaFin", e.target.value)}
                   disabled={guardando}
                   step={60}
                 />
