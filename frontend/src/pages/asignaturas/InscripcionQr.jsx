@@ -670,7 +670,7 @@ function InscripcionQr() {
               onClick={copiarToken}
             >
               <FiCopy />
-              {copiado ? "Copiado" : "Copiar token"}
+              {copiado ? "Copiado" : "Copiar código de inscripción"}
             </button>
           </div>
 
