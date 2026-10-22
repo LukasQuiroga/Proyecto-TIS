@@ -19,10 +19,12 @@ import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
+import com.lacomarcasoft.repository.MateriaEstudianteRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.stereotype.Service;
 
@@ -49,20 +51,24 @@ public class UsuarioServicio {
     private final UsuarioRepositorio usuarioRepositorio;
     private final RolRepositorio rolRepositorio;
     private final MateriaRepositorio materiaRepositorio;
+    private final MateriaEstudianteRepositorio materiaEstudianteRepositorio;
     private final CarreraRepositorio carreraRepositorio;
 
     public UsuarioServicio(
             UsuarioRepositorio usuarioRepositorio,
             RolRepositorio rolRepositorio,
             MateriaRepositorio materiaRepositorio,
+            MateriaEstudianteRepositorio materiaEstudianteRepositorio,
             CarreraRepositorio carreraRepositorio
     ){
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRepositorio = rolRepositorio;
         this.materiaRepositorio = materiaRepositorio;
+        this.materiaEstudianteRepositorio = materiaEstudianteRepositorio;
         this.carreraRepositorio = carreraRepositorio;
     }
 
+    @Transactional(readOnly = true)
     public List<UsuarioRespuesta> listar(){
 
         return usuarioRepositorio.findAll()
@@ -71,7 +77,8 @@ public class UsuarioServicio {
                 .toList();
 
     }
-
+    
+    @Transactional(readOnly = true)
     public Page<UsuarioRespuesta> listarPaginado(Pageable pageable){
         return usuarioRepositorio
                 .findAll(pageable)
@@ -1213,7 +1220,8 @@ public class UsuarioServicio {
         );
 
     }
-
+ 
+    @Transactional(readOnly = true)
     public UsuarioRespuesta buscarRespuesta(Long id){
 
         return convertirRespuesta(
@@ -1507,22 +1515,30 @@ public class UsuarioServicio {
                         )
                         .toList();
 
-        List<MateriaRespuesta> materias =
-                materiaRepositorio
-                        .listarPorDocente(
-                                usuario.getIdUsuario()
-                        )
-                        .stream()
-                        .map(
-                                materia ->
-                                        new MateriaRespuesta(
-                                                materia.getIdMateria(),
-                                                materia.getAsignatura().getNombreAsignatura(),
-                                                materia.getGrupo()
-                                        )
-                        )
-                        .toList();
+        List<MateriaRespuesta> materias;
 
+        if ("ESTUDIANTE".equalsIgnoreCase(usuario.getRol().getNombreRol())) {
+            materias = materiaEstudianteRepositorio
+                    .findByEstudiante_IdUsuario(usuario.getIdUsuario())
+                    .stream()
+                    .map(inscripcion -> inscripcion.getMateria())
+                    .map(materia -> new MateriaRespuesta(
+                            materia.getIdMateria(),
+                            materia.getAsignatura().getNombreAsignatura(),
+                            materia.getGrupo()
+                    ))
+                    .toList();
+        } else {
+            materias = materiaRepositorio
+                    .listarPorDocente(usuario.getIdUsuario())
+                    .stream()
+                    .map(materia -> new MateriaRespuesta(
+                            materia.getIdMateria(),
+                            materia.getAsignatura().getNombreAsignatura(),
+                            materia.getGrupo()
+                    ))
+                    .toList();
+        }
 
         return new UsuarioRespuesta(
 
