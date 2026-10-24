@@ -100,6 +100,9 @@ public class SecurityConfig {
                     "/api/perfil/me/foto"
                 ).authenticated()
 
+                .requestMatchers("/api/ingresos/examenes/**")
+                .hasAnyAuthority("CONTROL_INGRESO", "ROLE_ADMINISTRADOR")
+
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
 
