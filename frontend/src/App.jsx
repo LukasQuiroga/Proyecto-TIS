@@ -31,6 +31,7 @@ import Examenes from "./pages/examenes/Examenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
+import ValidarHabilitacion from "./pages/ingreso/ValidarHabilitacion.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -217,6 +218,16 @@ function App() {
             <Route
               path="/habilitaciones"
               element={<Habilitaciones />}
+            />
+
+            {/*VALIDAR HABILITACION */}
+            <Route
+              path="/ingreso/validar-habilitacion"
+              element={
+                <ProtectedPermission permiso="CONTROL_INGRESO">
+                  <ValidarHabilitacion />
+                </ProtectedPermission>
+              }
             />
 
             {/* AUDITORIA */}
