@@ -29,15 +29,25 @@ Variables principales en `.env`:
 - `BREVO_API_KEY` — envío de correos
 - `JWT_SECRET` — clave para firmar los tokens JWT
 - `BACKEND_PORT`, `FRONTEND_PORT` — puertos publicados por Docker Compose
+- `APP_CORS_ALLOWED_ORIGINS` — orígenes permitidos por CORS en el backend (en local: `http://localhost:*`)
+- `VITE_API_URL` — URL base de la API para el build del frontend (vacío = `/api`, mismo origen)
 
 > El `.env` está ignorado por git; no se suben credenciales al repositorio.
 
 ## Puesta en marcha con Docker (todo el stack)
 
-Con Docker Desktop corriendo:
+> `docker-compose.yml` corresponde al despliegue del laboratorio en Coolify (red externa `coolify` y sin puertos publicados al host). Para desarrollo local se usa `docker-compose.local.yml`, que agrega únicamente la publicación de puertos sin modificar el compose original.
+
+Con Docker Desktop corriendo, la primera vez crea la red externa que requiere el compose base:
 
 ```powershell
-docker compose up -d --build
+docker network create coolify
+```
+
+Luego levanta el stack local:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 - Frontend: http://localhost (puerto configurable con `FRONTEND_PORT`)
@@ -48,7 +58,21 @@ docker compose up -d --build
 Para detener:
 
 ```powershell
-docker compose down
+docker compose -f docker-compose.yml -f docker-compose.local.yml down
+```
+
+### Si el login devuelve 403 (CORS)
+
+El navegador envía el header `Origin` y el backend lo valida contra `APP_CORS_ALLOWED_ORIGINS`. Si esa variable llega vacía, el login responde `403 Invalid CORS request` (aunque `curl` sin `Origin` funcione). Asegúrate de que el `.env` incluya:
+
+```env
+APP_CORS_ALLOWED_ORIGINS=http://localhost:*,http://127.0.0.1:*
+```
+
+Si actualizaste el `.env`, recrea el backend para aplicar la variable:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d backend
 ```
 
 ## Puesta en marcha local (sin Docker)
