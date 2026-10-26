@@ -212,17 +212,15 @@ function Sidebar({sidebarAbierto,cambiarSidebar}){
                             </Opcion>
                         )}
 
-                        {tienePermiso("CONTROL_INGRESO")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiTarget/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Control de ingreso
-                                </span>
-                            </div>
+                        {tienePermiso("CONTROL_INGRESO") && (
+                            <Opcion
+                                to="/ingreso/validar-habilitacion"
+                                icono={<FiTarget />}
+                            >
+                                Control de ingreso
+                            </Opcion>
                         )}
+
                         {usuario?.nombreRol === "ESTUDIANTE" && (
                            <Opcion
                                 to="/inscripcion-qr/inscribir"

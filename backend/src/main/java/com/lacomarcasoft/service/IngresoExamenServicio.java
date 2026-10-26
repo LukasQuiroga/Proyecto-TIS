@@ -3,6 +3,7 @@ package com.lacomarcasoft.service;
 import com.lacomarcasoft.dto.response.EstadoIngresoRespuesta;
 import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+import com.lacomarcasoft.dto.response.ValidacionHabilitacionRespuesta;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -18,14 +19,17 @@ public class IngresoExamenServicio {
     private final JdbcTemplate jdbc;
     private final ExamenRepositorio examenes;
     private final UsuarioRepositorio usuarios;
+    private final ValidacionHabilitacionIngresoServicio validacionHabilitacion;
 
     public IngresoExamenServicio(
             JdbcTemplate jdbc,
             ExamenRepositorio examenes,
-            UsuarioRepositorio usuarios) {
+            UsuarioRepositorio usuarios,
+            ValidacionHabilitacionIngresoServicio validacionHabilitacion) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
+        this.validacionHabilitacion = validacionHabilitacion;
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +64,16 @@ public class IngresoExamenServicio {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
                 "Responsable no encontrado"
+            );
+        }
+
+        ValidacionHabilitacionRespuesta habilitacion =
+            validacionHabilitacion.validar(idExamen, idEstudiante);
+
+        if (!habilitacion.puedeContinuar()) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                habilitacion.mensaje()
             );
         }
 
