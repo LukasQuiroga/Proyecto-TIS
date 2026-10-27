@@ -10,26 +10,30 @@ import "./ValidarHabilitacion.css";
 function ValidarHabilitacion() {
   const location = useLocation();
 
-  const idExamenDesdeHU16 = location.state?.identificacionHU16?.idExamen;
+  const idExamenRecibido = location.state?.identificacionEstudiante?.idExamen;
 
-  const idEstudianteDesdeHU16 =
-    location.state?.identificacionHU16?.idEstudiante;
+  const idEstudianteRecibido =
+    location.state?.identificacionEstudiante?.idEstudiante;
 
   const [examenes, setExamenes] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
 
   const [idExamen, setIdExamen] = useState(() =>
-    idExamenDesdeHU16 ? String(idExamenDesdeHU16) : "",
+    idExamenRecibido ? String(idExamenRecibido) : "",
   );
 
   const [idEstudiante, setIdEstudiante] = useState(() =>
-    idEstudianteDesdeHU16 ? String(idEstudianteDesdeHU16) : "",
+    idEstudianteRecibido ? String(idEstudianteRecibido) : "",
   );
+
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
-  const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
+
+  const [cargandoEstudiantes, setCargandoEstudiantes] = useState(() =>
+    Boolean(idExamenRecibido && idEstudianteRecibido),
+  );
 
   const solicitudActual = useRef(0);
   const cargaEstudiantesActual = useRef(0);
@@ -58,7 +62,7 @@ function ValidarHabilitacion() {
   }, []);
 
   useEffect(() => {
-    if (!idExamenDesdeHU16 || !idEstudianteDesdeHU16) {
+    if (!idExamenRecibido || !idEstudianteRecibido) {
       return;
     }
 
@@ -67,15 +71,7 @@ function ValidarHabilitacion() {
 
     solicitudActual.current += 1;
 
-    setIdExamen(String(idExamenDesdeHU16));
-    setIdEstudiante(String(idEstudianteDesdeHU16));
-    setEstudiantes([]);
-    setResultado(null);
-    setError("");
-    setCargando(false);
-    setCargandoEstudiantes(true);
-
-    obtenerEstudiantesIngreso(idExamenDesdeHU16)
+    obtenerEstudiantesIngreso(idExamenRecibido)
       .then((datos) => {
         if (!activo || solicitud !== cargaEstudiantesActual.current) {
           return;
@@ -85,7 +81,7 @@ function ValidarHabilitacion() {
 
         const encontrado = datos.some(
           (estudiante) =>
-            String(estudiante.idEstudiante) === String(idEstudianteDesdeHU16),
+            String(estudiante.idEstudiante) === String(idEstudianteRecibido),
         );
 
         if (!encontrado) {
@@ -115,7 +111,7 @@ function ValidarHabilitacion() {
       activo = false;
       cargaEstudiantesActual.current += 1;
     };
-  }, [idExamenDesdeHU16, idEstudianteDesdeHU16]);
+  }, [idExamenRecibido, idEstudianteRecibido]);
 
   const limpiarResultado = () => {
     solicitudActual.current += 1;

@@ -70,7 +70,6 @@ function IdentificarDocumento() {
     limpiarIdentificacion();
   };
 
-  // HU16 - Buscar estudiante por documento
   const buscarEstudiante = async (evento) => {
     evento.preventDefault();
 
@@ -142,7 +141,6 @@ function IdentificarDocumento() {
     }
   };
 
-  // Continuar con el mismo estudiante y examen
   const continuarValidacion = () => {
     if (!identificado?.asociadoAlExamen) {
       return;
@@ -150,7 +148,7 @@ function IdentificarDocumento() {
 
     navigate("/ingreso/validar-habilitacion", {
       state: {
-        identificacionHU16: {
+        identificacionEstudiante: {
           idExamen: Number(idExamen),
           idEstudiante: identificado.idEstudiante,
         },

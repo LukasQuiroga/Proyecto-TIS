@@ -28,7 +28,6 @@ public class ConsultaIngresoControlador {
         return servicio.listarEstudiantes(idExamen);
     }
 
-    // HU16 - Identificar estudiante por documento de identidad
     @GetMapping("/{idExamen}/identificar-documento")
     public ConsultaIngresoServicio.EstudianteIdentificado
             identificarPorDocumento(
