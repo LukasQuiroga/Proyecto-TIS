@@ -1,3 +1,4 @@
+
 package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.service.ConsultaIngresoServicio;
@@ -37,6 +38,18 @@ public class ConsultaIngresoControlador {
         return servicio.identificarPorDocumento(
             idExamen,
             documento
+        );
+    }
+    
+    @GetMapping("/{idExamen}/identificar-codigo")
+    public ConsultaIngresoServicio.EstudianteIdentificado
+            identificarPorCodigo(
+                    @PathVariable Long idExamen,
+                    @RequestParam String codigo) {
+
+        return servicio.identificarPorCodigo(
+            idExamen,
+            codigo
         );
     }
 }

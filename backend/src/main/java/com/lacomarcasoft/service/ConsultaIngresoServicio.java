@@ -1,3 +1,4 @@
+
 package com.lacomarcasoft.service;
 
 import org.springframework.http.HttpStatus;
@@ -73,9 +74,10 @@ public class ConsultaIngresoServicio {
         );
     }
 
-
     @Transactional(readOnly = true)
-    public List<EstudianteDisponible> listarEstudiantes(Long idExamen) {
+    public List<EstudianteDisponible> listarEstudiantes(
+            Long idExamen) {
+
         if (idExamen == null || idExamen <= 0) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -83,16 +85,18 @@ public class ConsultaIngresoServicio {
             );
         }
 
-        boolean existe = Boolean.TRUE.equals(jdbc.queryForObject("""
-            SELECT EXISTS (
-                SELECT 1
-                FROM academico.examen
-                WHERE id_examen = ?
+        boolean existe = Boolean.TRUE.equals(
+            jdbc.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM academico.examen
+                    WHERE id_examen = ?
+                )
+                """,
+                Boolean.class,
+                idExamen
             )
-            """,
-            Boolean.class,
-            idExamen
-        ));
+        );
 
         if (!existe) {
             throw new ResponseStatusException(
@@ -105,7 +109,8 @@ public class ConsultaIngresoServicio {
             SELECT
                 u.id_usuario,
                 u.codigo_sis,
-                TRIM(CONCAT(u.nombre, ' ', u.apellido)) AS nombre_estudiante
+                TRIM(CONCAT(u.nombre, ' ', u.apellido))
+                    AS nombre_estudiante
             FROM academico.examen e
             JOIN academico.materia_estudiante me
                 ON me.id_materia = e.id_materia
@@ -232,4 +237,116 @@ public class ConsultaIngresoServicio {
         return resultados.get(0);
     }
 
+    private static final int LONGITUD_MAXIMA_CODIGO = 30;
+
+    private static final java.util.regex.Pattern PATRON_CODIGO =
+        java.util.regex.Pattern.compile(
+            "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$"
+        );
+
+    @Transactional(readOnly = true)
+    public EstudianteIdentificado identificarPorCodigo(
+            Long idExamen,
+            String codigo) {
+
+        if (idExamen == null || idExamen <= 0) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Identificador de examen invalido"
+            );
+        }
+
+        String limpio = codigo == null ? "" : codigo.strip();
+
+        if (limpio.isBlank()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Debe ingresar un codigo universitario"
+            );
+        }
+
+        if (limpio.length() > LONGITUD_MAXIMA_CODIGO) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "El codigo universitario no puede superar 30 caracteres"
+            );
+        }
+
+        if (!PATRON_CODIGO.matcher(limpio).matches()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Formato de codigo universitario invalido"
+            );
+        }
+
+        boolean existe = Boolean.TRUE.equals(
+            jdbc.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM academico.examen
+                    WHERE id_examen = ?
+                )
+                """,
+                Boolean.class,
+                idExamen
+            )
+        );
+
+        if (!existe) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Examen no encontrado"
+            );
+        }
+
+        List<EstudianteIdentificado> encontrados = jdbc.query("""
+            SELECT
+                u.id_usuario,
+                u.carnet_identidad,
+                u.codigo_sis,
+                TRIM(CONCAT(u.nombre, ' ', u.apellido))
+                    AS nombre_estudiante,
+                EXISTS (
+                    SELECT 1
+                    FROM academico.examen e
+                    JOIN academico.materia_estudiante me
+                        ON me.id_materia = e.id_materia
+                    WHERE e.id_examen = ?
+                        AND me.id_estudiante = u.id_usuario
+                ) AS asociado_examen
+            FROM seguridad.usuario u
+            JOIN seguridad.rol r
+                ON r.id_rol = u.id_rol
+            WHERE u.codigo_sis = ?
+                AND u.activo = TRUE
+                AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+            """,
+            (rs, fila) -> new EstudianteIdentificado(
+                idExamen,
+                rs.getLong("id_usuario"),
+                rs.getString("carnet_identidad"),
+                rs.getString("codigo_sis"),
+                rs.getString("nombre_estudiante"),
+                rs.getBoolean("asociado_examen")
+            ),
+            idExamen,
+            limpio
+        );
+
+        if (encontrados.isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "No se encontro un estudiante con ese codigo universitario"
+            );
+        }
+
+        if (encontrados.size() > 1) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Existen registros duplicados para el codigo universitario"
+            );
+        }
+
+        return encontrados.get(0);
+    }
 }

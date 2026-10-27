@@ -100,6 +100,11 @@ public class SecurityConfig {
                     "/api/perfil/me/foto"
                 ).authenticated()
 
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/ingresos/examenes/*/identificar-codigo"
+                ).hasAnyRole("DOCENTE", "AUXILIAR")
+
                 .requestMatchers("/api/ingresos/examenes/**")
                 .hasAnyAuthority("CONTROL_INGRESO", "ROLE_ADMINISTRADOR")
 
