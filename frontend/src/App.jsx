@@ -32,6 +32,7 @@ import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import ValidarHabilitacion from "./pages/ingreso/ValidarHabilitacion.jsx";
+import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
@@ -159,10 +160,7 @@ function App() {
             />
 
             {/* Materias inscritas del estudiante */}
-            <Route
-              path="/mis-materias"
-              element={<MisMaterias />}
-            />
+            <Route path="/mis-materias" element={<MisMaterias />} />
 
             {/* EXÁMENES */}
 
@@ -215,12 +213,19 @@ function App() {
             />
 
             {/* HABILITACIONES */}
+            <Route path="/habilitaciones" element={<Habilitaciones />} />
+
+            {/* Identificacion por documento de identidad */}
             <Route
-              path="/habilitaciones"
-              element={<Habilitaciones />}
+              path="/ingreso/identificar-documento"
+              element={
+                <ProtectedPermission permiso="CONTROL_INGRESO">
+                  <IdentificarDocumento />
+                </ProtectedPermission>
+              }
             />
 
-            {/*VALIDAR HABILITACION */}
+            {/* Validar habilitacion */}
             <Route
               path="/ingreso/validar-habilitacion"
               element={

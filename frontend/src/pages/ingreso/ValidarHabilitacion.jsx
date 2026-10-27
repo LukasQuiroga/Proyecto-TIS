@@ -1,21 +1,39 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   obtenerExamenesIngreso,
   obtenerEstudiantesIngreso,
-  consultarHabilitacion
+  consultarHabilitacion,
 } from "../../services/validacionHabilitacionService";
 import "./ValidarHabilitacion.css";
 
 function ValidarHabilitacion() {
+  const location = useLocation();
+
+  const idExamenRecibido = location.state?.identificacionEstudiante?.idExamen;
+
+  const idEstudianteRecibido =
+    location.state?.identificacionEstudiante?.idEstudiante;
+
   const [examenes, setExamenes] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
-  const [idExamen, setIdExamen] = useState("");
-  const [idEstudiante, setIdEstudiante] = useState("");
+
+  const [idExamen, setIdExamen] = useState(() =>
+    idExamenRecibido ? String(idExamenRecibido) : "",
+  );
+
+  const [idEstudiante, setIdEstudiante] = useState(() =>
+    idEstudianteRecibido ? String(idEstudianteRecibido) : "",
+  );
+
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
-  const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
+
+  const [cargandoEstudiantes, setCargandoEstudiantes] = useState(() =>
+    Boolean(idExamenRecibido && idEstudianteRecibido),
+  );
 
   const solicitudActual = useRef(0);
   const cargaEstudiantesActual = useRef(0);
@@ -42,6 +60,58 @@ function ValidarHabilitacion() {
       cargaEstudiantesActual.current += 1;
     };
   }, []);
+
+  useEffect(() => {
+    if (!idExamenRecibido || !idEstudianteRecibido) {
+      return;
+    }
+
+    let activo = true;
+    const solicitud = ++cargaEstudiantesActual.current;
+
+    solicitudActual.current += 1;
+
+    obtenerEstudiantesIngreso(idExamenRecibido)
+      .then((datos) => {
+        if (!activo || solicitud !== cargaEstudiantesActual.current) {
+          return;
+        }
+
+        setEstudiantes(datos);
+
+        const encontrado = datos.some(
+          (estudiante) =>
+            String(estudiante.idEstudiante) === String(idEstudianteRecibido),
+        );
+
+        if (!encontrado) {
+          setIdEstudiante("");
+          setError(
+            "El estudiante identificado no esta inscrito en la materia de este examen.",
+          );
+        }
+      })
+      .catch(() => {
+        if (!activo || solicitud !== cargaEstudiantesActual.current) {
+          return;
+        }
+
+        setIdEstudiante("");
+        setError(
+          "No se pudo recuperar el estudiante identificado. Verifique la conexion.",
+        );
+      })
+      .finally(() => {
+        if (activo && solicitud === cargaEstudiantesActual.current) {
+          setCargandoEstudiantes(false);
+        }
+      });
+
+    return () => {
+      activo = false;
+      cargaEstudiantesActual.current += 1;
+    };
+  }, [idExamenRecibido, idEstudianteRecibido]);
 
   const limpiarResultado = () => {
     solicitudActual.current += 1;
@@ -103,7 +173,7 @@ function ValidarHabilitacion() {
     try {
       const datos = await consultarHabilitacion(
         Number(idExamen),
-        Number(idEstudiante)
+        Number(idEstudiante),
       );
 
       if (solicitud !== solicitudActual.current) return;
@@ -114,8 +184,8 @@ function ValidarHabilitacion() {
 
       setError(
         err.response?.data?.mensaje ||
-        err.response?.data?.message ||
-        "No se pudo completar la validación. Verifique la conexión."
+          err.response?.data?.message ||
+          "No se pudo completar la validación. Verifique la conexión.",
       );
     } finally {
       if (solicitud === solicitudActual.current) {
@@ -125,21 +195,20 @@ function ValidarHabilitacion() {
   };
 
   const habilitado =
-    resultado?.estado === "HABILITADO" &&
-    resultado?.puedeContinuar === true;
+    resultado?.estado === "HABILITADO" && resultado?.puedeContinuar === true;
 
   const examenSeleccionado = examenes.find(
-        (examen) => String(examen.idExamen) === String(idExamen)
-    );
+    (examen) => String(examen.idExamen) === String(idExamen),
+  );
 
-    const resumirTexto = (texto, limite = 45) => {
+  const resumirTexto = (texto, limite = 45) => {
     if (!texto) return "";
 
     const valor = String(texto).trim();
 
     return valor.length > limite
-        ? `${valor.slice(0, limite).trimEnd()}...`
-        : valor;
+      ? `${valor.slice(0, limite).trimEnd()}...`
+      : valor;
   };
 
   return (
@@ -147,8 +216,8 @@ function ValidarHabilitacion() {
       <header className="validacion-encabezado">
         <h1>Validar habilitación</h1>
         <p>
-          Seleccione un examen y un estudiante para comprobar
-          si puede continuar con el ingreso.
+          Seleccione un examen y un estudiante para comprobar si puede continuar
+          con el ingreso.
         </p>
       </header>
 
@@ -174,64 +243,64 @@ function ValidarHabilitacion() {
 
               {examenes.map((examen) => (
                 <option key={examen.idExamen} value={examen.idExamen}>
-                    {examen.codigo || `Examen ${examen.idExamen}`}
-                    {" — "}
-                    {resumirTexto(examen.nombreExamen, 35)}
+                  {examen.codigo || `Examen ${examen.idExamen}`}
+                  {" — "}
+                  {resumirTexto(examen.nombreExamen, 35)}
                 </option>
-                ))}
+              ))}
             </select>
             {examenSeleccionado && (
-                <div className="validacion-info-examen">
-                    <div>
-                        <strong>Examen:</strong>
-                       <span>{examenSeleccionado.nombreExamen}</span>
-                    </div>
-                    <div>
-                        <strong>Asignatura y grupo:</strong>
-                        <span>{examenSeleccionado.materia}</span>
-                    </div>
-
-                    <div>
-                        <strong>Estado del examen:</strong>
-                        <span>{examenSeleccionado.estado || "No especificado"}</span>
-                    </div>
+              <div className="validacion-info-examen">
+                <div>
+                  <strong>Examen:</strong>
+                  <span>{examenSeleccionado.nombreExamen}</span>
                 </div>
+                <div>
+                  <strong>Asignatura y grupo:</strong>
+                  <span>{examenSeleccionado.materia}</span>
+                </div>
+
+                <div>
+                  <strong>Estado del examen:</strong>
+                  <span>{examenSeleccionado.estado || "No especificado"}</span>
+                </div>
+              </div>
             )}
           </div>
 
           <div className="validacion-campo">
-            <label htmlFor="validacion-estudiante">
-              Estudiante inscrito
-            </label>
+            <label htmlFor="validacion-estudiante">Estudiante inscrito</label>
 
             <select
               id="validacion-estudiante"
               value={idEstudiante}
               onChange={(e) => cambiarEstudiante(e.target.value)}
-              disabled={!idExamen || cargandoEstudiantes || estudiantes.length === 0}
+              disabled={
+                !idExamen || cargandoEstudiantes || estudiantes.length === 0
+              }
               required
             >
-            <option value="">
+              <option value="">
                 {cargandoEstudiantes
-                    ? "Cargando estudiantes..."
-                    : !idExamen
+                  ? "Cargando estudiantes..."
+                  : !idExamen
                     ? "Primero seleccione un examen"
                     : estudiantes.length === 0
-                        ? "No hay estudiantes inscritos"
-                        : "Seleccione un estudiante"}
-            </option>
+                      ? "No hay estudiantes inscritos"
+                      : "Seleccione un estudiante"}
+              </option>
 
               {estudiantes.map((estudiante) => (
                 <option
-                    key={estudiante.idEstudiante}
-                    value={estudiante.idEstudiante}
+                  key={estudiante.idEstudiante}
+                  value={estudiante.idEstudiante}
                 >
-                    {estudiante.codigoUniversitario
+                  {estudiante.codigoUniversitario
                     ? `${estudiante.codigoUniversitario} — `
                     : ""}
-                    {estudiante.nombreEstudiante}
+                  {estudiante.nombreEstudiante}
                 </option>
-                ))}
+              ))}
             </select>
           </div>
 
@@ -239,10 +308,7 @@ function ValidarHabilitacion() {
             type="submit"
             className="validacion-boton"
             disabled={
-              cargando ||
-              cargandoEstudiantes ||
-              !idExamen ||
-              !idEstudiante
+              cargando || cargandoEstudiantes || !idExamen || !idEstudiante
             }
           >
             {cargando ? "Validando..." : "Validar habilitación"}
@@ -277,14 +343,15 @@ function ValidarHabilitacion() {
             <p>
               <strong>Examen:</strong>{" "}
               {examenes.find(
-                (e) => String(e.idExamen) === String(resultado.idExamen)
+                (e) => String(e.idExamen) === String(resultado.idExamen),
               )?.nombreExamen || resultado.idExamen}
             </p>
 
             <p>
               <strong>Estudiante:</strong>{" "}
               {estudiantes.find(
-                (e) => String(e.idEstudiante) === String(resultado.idEstudiante)
+                (e) =>
+                  String(e.idEstudiante) === String(resultado.idEstudiante),
               )?.nombreEstudiante || resultado.idEstudiante}
             </p>
 
