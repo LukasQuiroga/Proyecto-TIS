@@ -11,6 +11,13 @@ import java.util.List;
 @Service
 public class ConsultaIngresoServicio {
 
+    private static final int LONGITUD_MAXIMA_DOCUMENTO = 30;
+
+    private static final java.util.regex.Pattern PATRON_DOCUMENTO =
+        java.util.regex.Pattern.compile(
+            "^[0-9]+(?:-[A-Za-z0-9]{1,2})?$"
+        );
+
     private final JdbcTemplate jdbc;
 
     public ConsultaIngresoServicio(JdbcTemplate jdbc) {
@@ -139,6 +146,25 @@ public class ConsultaIngresoServicio {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Debe ingresar un documento de identidad"
+            );
+        }
+
+        if (documentoLimpio.length() > LONGITUD_MAXIMA_DOCUMENTO) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "El documento de identidad no puede superar los "
+                    + LONGITUD_MAXIMA_DOCUMENTO
+                    + " caracteres"
+            );
+        }
+
+        if (!PATRON_DOCUMENTO.matcher(documentoLimpio).matches()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Formato de documento invalido. "
+                    + "Ingrese numeros o numeros con un "
+                    + "complemento alfanumerico valido, "
+                    + "por ejemplo 12345678-1A"
             );
         }
 
