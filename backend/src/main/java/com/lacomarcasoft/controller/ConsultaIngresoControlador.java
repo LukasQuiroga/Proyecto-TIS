@@ -11,19 +11,33 @@ public class ConsultaIngresoControlador {
 
     private final ConsultaIngresoServicio servicio;
 
-    public ConsultaIngresoControlador(ConsultaIngresoServicio servicio) {
+    public ConsultaIngresoControlador(
+            ConsultaIngresoServicio servicio) {
         this.servicio = servicio;
     }
 
     @GetMapping("/disponibles")
-    public List<ConsultaIngresoServicio.ExamenDisponible> listarExamenes() {
+    public List<ConsultaIngresoServicio.ExamenDisponible>
+            listarExamenes() {
         return servicio.listarExamenes();
     }
 
     @GetMapping("/{idExamen}/estudiantes")
-    public List<ConsultaIngresoServicio.EstudianteDisponible> listarEstudiantes(
-            @PathVariable Long idExamen) {
+    public List<ConsultaIngresoServicio.EstudianteDisponible>
+            listarEstudiantes(@PathVariable Long idExamen) {
         return servicio.listarEstudiantes(idExamen);
     }
-}
 
+    // HU16 - Identificar estudiante por documento de identidad
+    @GetMapping("/{idExamen}/identificar-documento")
+    public ConsultaIngresoServicio.EstudianteIdentificado
+            identificarPorDocumento(
+                    @PathVariable Long idExamen,
+                    @RequestParam String documento) {
+
+        return servicio.identificarPorDocumento(
+            idExamen,
+            documento
+        );
+    }
+}
