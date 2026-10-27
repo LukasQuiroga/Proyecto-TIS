@@ -65,7 +65,6 @@ class ConsultaIngresoCodigoServicioTest {
         )).thenReturn(resultados);
     }
 
-    // CA01: Identificar estudiante con codigo valido.
     @Test
     void debeIdentificarEstudiantePorCodigo() {
         examenExiste(1L);
@@ -83,7 +82,6 @@ class ConsultaIngresoCodigoServicioTest {
         assertEquals("Juan Perez", resultado.nombreEstudiante());
     }
 
-    // CA02: Codigo inexistente.
     @Test
     void debeInformarCodigoNoEncontrado() {
         examenExiste(1L);
@@ -97,7 +95,6 @@ class ConsultaIngresoCodigoServicioTest {
         assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
     }
 
-    // CA04: Campo obligatorio.
     @Test
     void debeRechazarCodigoVacio() {
         for (String codigo : new String[]{null, "", "   "}) {
@@ -112,7 +109,6 @@ class ConsultaIngresoCodigoServicioTest {
         verifyNoInteractions(jdbc);
     }
 
-    // CA05 y CA09: Conservar identificadores para continuar.
     @Test
     void debeMantenerEstudianteIdentificado() {
         examenExiste(1L);
@@ -130,7 +126,6 @@ class ConsultaIngresoCodigoServicioTest {
         assertTrue(resultado.asociadoAlExamen());
     }
 
-    // CA11: Eliminar espacios al inicio y al final.
     @Test
     void debeEliminarEspaciosDelCodigo() {
         examenExiste(1L);
@@ -153,7 +148,6 @@ class ConsultaIngresoCodigoServicioTest {
         );
     }
 
-    // CA12: Rechazar formato incorrecto.
     @Test
     void debeRechazarFormatoInvalido() {
         String[] codigos = {
@@ -175,7 +169,6 @@ class ConsultaIngresoCodigoServicioTest {
         verifyNoInteractions(jdbc);
     }
 
-    // CA13: Validar longitud maxima.
     @Test
     void debeRechazarCodigoDemasiadoLargo() {
         String codigo = "1".repeat(31);
@@ -189,7 +182,6 @@ class ConsultaIngresoCodigoServicioTest {
         verifyNoInteractions(jdbc);
     }
 
-    // CA16: Rechazar contenido potencialmente malicioso.
     @Test
     void debeRechazarContenidoMalicioso() {
         String[] codigos = {
@@ -210,7 +202,6 @@ class ConsultaIngresoCodigoServicioTest {
         verifyNoInteractions(jdbc);
     }
 
-    // Validacion adicional: identificador de examen invalido.
     @Test
     void debeRechazarExamenInvalido() {
         ResponseStatusException error = assertThrows(
@@ -222,7 +213,6 @@ class ConsultaIngresoCodigoServicioTest {
         verifyNoInteractions(jdbc);
     }
 
-    // Validacion adicional: examen inexistente.
     @Test
     void debeInformarExamenInexistente() {
         when(jdbc.queryForObject(
@@ -239,7 +229,6 @@ class ConsultaIngresoCodigoServicioTest {
         assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
     }
 
-    // Validacion adicional: codigo duplicado.
     @Test
     void debeRechazarCodigoDuplicado() {
         examenExiste(1L);
@@ -260,8 +249,7 @@ class ConsultaIngresoCodigoServicioTest {
 
         assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
     }
-
-    // CA17: Error de conexion.
+    
     @Test
     void debeDetectarErrorDeConexion() {
         when(jdbc.queryForObject(
