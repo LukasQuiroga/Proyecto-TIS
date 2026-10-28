@@ -211,7 +211,7 @@ public class IngresoExamenServicio {
 
         if (q != null && !q.trim().isEmpty()) {
             String filtro = "%" + q.trim().toLowerCase() + "%";
-            sql.append(" AND (LOWER(COALESCE(u.codigo_sis,'')) LIKE ? OR LOWER(TRIM(CONCAT(COALESCE(u.nombre,''), ' ', COALESCE(u.apellido,''))))) LIKE ?)");
+            sql.append(" AND (LOWER(COALESCE(u.codigo_sis,'')) LIKE ? OR LOWER(TRIM(CONCAT(COALESCE(u.nombre,''), ' ', COALESCE(u.apellido,'')))) LIKE ?)");
             params.add(filtro);
             params.add(filtro);
         }
