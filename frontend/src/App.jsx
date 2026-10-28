@@ -34,11 +34,37 @@ import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExame
 import ValidarHabilitacion from "./pages/ingreso/ValidarHabilitacion.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 
+import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
+import AccesoDenegado from "./routes/AccesoDenegado.jsx";
+import { useAuth } from "./context/useAuth";
+
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
 import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
+
+
+function AccesoHu15({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const rolAutorizado = ["DOCENTE", "AUXILIAR"].includes(
+    usuario.nombreRol?.toUpperCase(),
+  );
+
+  const permisoAutorizado =
+    usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
+
+  if (!rolAutorizado || !permisoAutorizado) {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
 
 function App() {
   return (
@@ -222,6 +248,16 @@ function App() {
                 <ProtectedPermission permiso="CONTROL_INGRESO">
                   <IdentificarDocumento />
                 </ProtectedPermission>
+              }
+            />
+
+            
+            <Route
+               path="/ingreso/identificar-codigo"
+               element={
+                <AccesoHu15>
+                <IdentificarCodigo />
+                </AccesoHu15>
               }
             />
 

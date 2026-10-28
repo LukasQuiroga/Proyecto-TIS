@@ -29,3 +29,19 @@ export async function identificarEstudiantePorDocumento(idExamen, documento) {
 
   return data;
 }
+
+export async function identificarEstudiantePorCodigo(idExamen, codigo) {
+  const { data } = await api.get(
+    `/ingresos/examenes/${idExamen}/identificar-codigo`,
+    { params: { codigo: codigo.trim() } },
+  );
+  return data;
+}
+
+export async function obtenerFotoEstudianteIdentificado(idExamen, idEstudiante) {
+  const { data } = await api.get(
+    `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}/foto`,
+    { responseType: "blob" },
+  );
+  return data;
+}

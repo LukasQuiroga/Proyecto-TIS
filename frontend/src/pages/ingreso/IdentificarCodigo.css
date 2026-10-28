@@ -1,0 +1,52 @@
+
+.hu15-perfil {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  margin-bottom: 20px;
+}
+
+.hu15-fotografia {
+  width: 170px;
+  height: 190px;
+  flex: 0 0 170px;
+  border-radius: 12px;
+  border: 1px solid #dbe5f0;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  color: #64748b;
+  padding: 8px;
+}
+
+.hu15-fotografia img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.hu15-datos {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 650px) {
+  .hu15-perfil {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hu15-fotografia {
+    width: 150px;
+    height: 165px;
+    flex-basis: auto;
+  }
+
+  .hu15-datos {
+    width: 100%;
+  }
+}
