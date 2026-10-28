@@ -40,13 +40,10 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
   const [usuariosAbierto, setUsuariosAbierto] = useState(false);
   const { usuario } = useAuth();
 
-  const tienePermiso = (permiso) => {
-    if (!usuario) {
-      return true;
-    }
-
-    return usuario?.permisos?.includes(permiso);
-  };
+  
+const tienePermiso = (permiso) => {
+  return usuario?.permisos?.includes(permiso) ?? false;
+};
 
   return (
     <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
@@ -173,24 +170,35 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
-            {/* Control de ingreso */}
+            {/* Control de ingreso */}   
             {tienePermiso("CONTROL_INGRESO") && (
-              <>
-                <Opcion
-                  to="/ingreso/identificar-documento"
-                  icono={<FiTarget />}
-                >
-                  Identificar por documento
-                </Opcion>
+             <>
+                {["DOCENTE", "AUXILIAR"].includes(
+                 usuario?.nombreRol?.toUpperCase(),
+              ) && (
+              <Opcion
+                   to="/ingreso/identificar-codigo"
+                   icono={<FiTarget />}
+              >
+                 Identificar por código universitario
+             </Opcion>
+              )}
 
-                <Opcion
-                  to="/ingreso/validar-habilitacion"
-                  icono={<FiClipboard />}
-                >
-                  Validar habilitacion
-                </Opcion>
-              </>
-            )}
+             <Opcion
+                   to="/ingreso/identificar-documento"
+                   icono={<FiTarget />}
+              >
+                  Identificar por documento
+              </Opcion>
+
+              <Opcion
+                   to="/ingreso/validar-habilitacion"
+                   icono={<FiClipboard />}
+              >
+                  Validar habilitación
+             </Opcion>
+             </>
+          )}
 
             {usuario?.nombreRol === "ESTUDIANTE" && (
               <Opcion to="/inscripcion-qr/inscribir" icono={<FiMaximize />}>
