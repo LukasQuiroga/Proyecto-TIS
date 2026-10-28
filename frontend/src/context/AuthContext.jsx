@@ -11,8 +11,9 @@ function leerSesionCompartida() {
       const datos = JSON.parse(valor);
       if (datos?.token && datos?.usuario?.idUsuario) return datos;
     }
-  } catch {
-    
+  } catch (error) {
+    console.warn("No se pudo recuperar la sesión compartida:", error);
+    localStorage.removeItem(CLAVE_SESION);
   }
   return null;
 }

@@ -143,8 +143,8 @@ function EditarPerfil() {
           fotoPersistidaRef.current = nuevaUrl;
           setFoto(nuevaUrl);
           setFotoTemporal("");
-        } catch {
-         
+        } catch (errorRecuperacion) {
+          console.warn("No se pudo actualizar la vista previa de la fotografía:", errorRecuperacion);
         }
         window.dispatchEvent(new Event("perfil-foto-actualizada"));
       }

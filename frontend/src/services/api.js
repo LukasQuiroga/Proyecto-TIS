@@ -9,7 +9,12 @@ function tokenActual() {
   try {
     const sesion = JSON.parse(localStorage.getItem(CLAVE_SESION) || "null");
     if (sesion?.token) return sesion.token;
-  } catch {}
+  } catch (error) {
+    console.warn("Sesión compartida inválida:", error);
+    localStorage.removeItem(CLAVE_SESION);
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+  }
   return localStorage.getItem("token") || sessionStorage.getItem("token");
 }
 

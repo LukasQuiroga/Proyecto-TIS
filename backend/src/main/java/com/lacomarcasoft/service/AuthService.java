@@ -139,8 +139,6 @@ public class AuthService {
 
     public void logout(String token){
 
-        plazoFotoPerfilServicio.registrarPrimerInicioYVerificar(usuario.getIdUsuario());
-
         String tokenId=
             jwtService.obtenerTokenId(token);
 

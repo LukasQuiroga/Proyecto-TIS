@@ -24,7 +24,9 @@ function useInactividad() {
       if (sesion?.token !== token) return;
       try {
         await cerrarSesionBackend();
-      } catch {}
+      } catch (error) {
+        console.warn("No se pudo cerrar la sesión en el servidor:", error);
+      }
       if (!activo) return;
       const actual = JSON.parse(
         localStorage.getItem("exampass_sesion") || "null",
