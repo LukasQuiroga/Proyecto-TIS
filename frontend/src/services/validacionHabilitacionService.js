@@ -55,3 +55,10 @@ export async function listarIngresosRegistrados(filtros = {}) {
   const { data } = await api.get('/ingresos/examenes/registrados', { params })
   return data
 }
+
+export async function registrarIngreso(idExamen, idEstudiante) {
+  const { data } = await api.post(`/ingresos/examenes/${idExamen}/ingresos`, {
+    idEstudiante,
+  })
+  return data
+}

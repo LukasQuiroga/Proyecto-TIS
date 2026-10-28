@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { consultarHabilitacion } from "../../services/validacionHabilitacionService";
+import {
+  consultarHabilitacion,
+  registrarIngreso,
+} from "../../services/validacionHabilitacionService";
 import "./ValidarHabilitacion.css";
 
 function ResultadoHabilitacion({
@@ -88,6 +91,33 @@ function ResultadoHabilitacion({
   const habilitado =
     resultado?.estado === "HABILITADO" &&
     resultado?.puedeContinuar === true;
+
+  const [registrando, setRegistrando] = useState(false);
+  const [registroOk, setRegistroOk] = useState(false);
+  const [registroError, setRegistroError] = useState("");
+
+  const confirmarIngreso = async () => {
+    if (!habilitado || registrando || registroOk) {
+      return;
+    }
+
+    setRegistrando(true);
+    setRegistroError("");
+    setRegistroOk(false);
+
+    try {
+      await registrarIngreso(Number(idExamen), Number(idEstudiante));
+      setRegistroOk(true);
+    } catch (err) {
+      setRegistroError(
+        err.response?.data?.mensaje ||
+          err.response?.data?.message ||
+          "No se pudo registrar el ingreso.",
+      );
+    } finally {
+      setRegistrando(false);
+    }
+  };
 
   return (
     <div className="validacion-integrada">
@@ -181,9 +211,34 @@ function ResultadoHabilitacion({
 
           <div className="validacion-decision">
             {habilitado
-              ? "Habilitación confirmada. Puede continuar con las demás verificaciones."
+              ? registroOk
+                ? "Ingreso registrado correctamente."
+                : "Habilitaci��n confirmada. Puede registrar el ingreso."
               : "No se permite continuar con el ingreso."}
           </div>
+
+          {habilitado && !registroOk && (
+            <button
+              type="button"
+              className="validacion-boton"
+              disabled={registrando}
+              onClick={confirmarIngreso}
+              style={{ marginTop: "12px" }}
+            >
+              {registrando ? "Registrando ingreso..." : "Registrar ingreso"}
+            </button>
+          )}
+
+          {registroError && (
+            <div
+              className="validacion-resultado validacion-error"
+              role="alert"
+              style={{ marginTop: "12px" }}
+            >
+              <h2>No se pudo registrar el ingreso</h2>
+              <p>{registroError}</p>
+            </div>
+          )}
         </section>
       )}
     </div>
