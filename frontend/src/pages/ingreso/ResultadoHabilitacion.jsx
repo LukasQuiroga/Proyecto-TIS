@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { consultarHabilitacion } from "../../services/validacionHabilitacionService";
+import {
+  consultarHabilitacion,
+  consultarIngresoRegistrado,
+  registrarIngresoExamen,
+} from "../../services/validacionHabilitacionService";
 import "./ValidarHabilitacion.css";
 
 function ResultadoHabilitacion({
@@ -10,6 +14,8 @@ function ResultadoHabilitacion({
 }) {
     const [consulta, setConsulta] = useState(null);
     const [intento, setIntento] = useState(0);
+    const [estadoIngreso, setEstadoIngreso] = useState(null);
+    const [guardandoIngreso, setGuardandoIngreso] = useState(false);
     const consultaActual =
     consulta?.intento === intento &&
     Number(consulta?.idExamen) === Number(idExamen) &&
@@ -88,6 +94,60 @@ function ResultadoHabilitacion({
   const habilitado =
     resultado?.estado === "HABILITADO" &&
     resultado?.puedeContinuar === true;
+
+  const claveIngreso = `${idExamen}:${idEstudiante}:${intento}`;
+  const ingresoActual = estadoIngreso?.clave === claveIngreso ? estadoIngreso : null;
+
+  useEffect(() => {
+    if (!habilitado) return;
+    let activo = true;
+    consultarIngresoRegistrado(Number(idExamen), Number(idEstudiante))
+      .then((datos) => {
+        if (activo) {
+          setEstadoIngreso({
+            clave: `${idExamen}:${idEstudiante}:${intento}`,
+            registrado: datos.ingresoRegistrado === true,
+            datos,
+            error: "",
+          });
+        }
+      })
+      .catch((err) => {
+        if (activo) {
+          setEstadoIngreso({
+            clave: `${idExamen}:${idEstudiante}:${intento}`,
+            registrado: false,
+            datos: null,
+            error: err.response?.data?.mensaje || err.response?.data?.message ||
+              "No se pudo verificar si el estudiante ya ingresó.",
+          });
+        }
+      });
+    return () => { activo = false; };
+  }, [habilitado, idExamen, idEstudiante, intento]);
+
+  const registrarAsistencia = async () => {
+    if (!habilitado || guardandoIngreso || !ingresoActual ||
+        ingresoActual.registrado || ingresoActual.error) return;
+    setGuardandoIngreso(true);
+    try {
+      const datos = await registrarIngresoExamen(Number(idExamen), Number(idEstudiante));
+      setEstadoIngreso({ clave: claveIngreso, registrado: true, datos, error: "" });
+    } catch (err) {
+      const duplicado = err.response?.status === 409;
+      setEstadoIngreso({
+        clave: claveIngreso,
+        registrado: duplicado,
+        datos: null,
+        error: duplicado
+          ? "Este estudiante ya tiene un ingreso registrado para este examen."
+          : err.response?.data?.mensaje || err.response?.data?.message ||
+            "No se pudo registrar el ingreso. Verifique la conexión.",
+      });
+    } finally {
+      setGuardandoIngreso(false);
+    }
+  };
 
   return (
     <div className="validacion-integrada">
@@ -184,6 +244,33 @@ function ResultadoHabilitacion({
               ? "Habilitación confirmada. Puede continuar con las demás verificaciones."
               : "No se permite continuar con el ingreso."}
           </div>
+        </section>
+      )}
+
+      {!cargando && habilitado && (
+        <section className="validacion-panel" aria-live="polite">
+          <h2>Registro de asistencia — HU22</h2>
+          {!ingresoActual ? (
+            <p>Comprobando si el estudiante ya tiene un ingreso registrado...</p>
+          ) : ingresoActual.registrado ? (
+            <div className="ingreso-ya-registrado" role="status">
+              <strong>Ingreso ya registrado.</strong>
+              <p>{ingresoActual.error || "Este estudiante ya tiene asistencia registrada para este examen. No se puede registrar otra vez."}</p>
+              {ingresoActual.datos?.fechaHoraIngreso && (
+                <p>Fecha y hora: {new Date(ingresoActual.datos.fechaHoraIngreso).toLocaleString()}</p>
+              )}
+            </div>
+          ) : (
+            <>
+              {ingresoActual.error && <p role="alert" className="ingreso-ya-registrado">{ingresoActual.error}</p>}
+              <button type="button" className="validacion-boton"
+                disabled={guardandoIngreso || Boolean(ingresoActual.error)}
+                onClick={registrarAsistencia}>
+                {guardandoIngreso ? "Registrando..." : "Registrar ingreso / asistencia"}
+              </button>
+              <p className="validacion-ayuda">La habilitación y el permiso del docente se vuelven a comprobar en el servidor.</p>
+            </>
+          )}
         </section>
       )}
     </div>

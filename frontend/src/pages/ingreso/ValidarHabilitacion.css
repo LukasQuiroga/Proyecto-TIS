@@ -197,3 +197,12 @@
     gap: 0;
   }
 }
+
+.ingreso-ya-registrado {
+  border-left: 4px solid #c2410c;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}

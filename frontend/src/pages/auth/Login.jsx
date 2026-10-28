@@ -1,8 +1,6 @@
-
 import { useEffect, useRef, useState } from "react";
 import {
     Navigate,
-    useLocation,
     useNavigate
 } from "react-router-dom";
 
@@ -13,33 +11,6 @@ import { login } from "../../services/authService";
 import { useAuth } from "../../context/useAuth";
 
 const CLAVE_RUTA_PENDIENTE = "hu12_ruta_pendiente";
-
-function obtenerDestinoSeguro(origen) {
-    if (
-        !origen ||
-        typeof origen.pathname !== "string" ||
-        !origen.pathname.startsWith("/") ||
-        origen.pathname.startsWith("//") ||
-        origen.pathname.startsWith("/\\") ||
-        origen.pathname === "/login"
-    ) {
-        return null;
-    }
-
-    return {
-        pathname: origen.pathname,
-        search:
-            typeof origen.search === "string" &&
-            origen.search.startsWith("?")
-                ? origen.search
-                : "",
-        hash:
-            typeof origen.hash === "string" &&
-            origen.hash.startsWith("#")
-                ? origen.hash
-                : ""
-    };
-}
 
 function obtenerRutaQrPendiente() {
     const rutaGuardada = sessionStorage.getItem(
@@ -78,7 +49,6 @@ function obtenerRutaQrPendiente() {
 
 function Login() {
     const navigate = useNavigate();
-    const location = useLocation();
 
     const {
         usuario,
@@ -98,17 +68,9 @@ function Login() {
 
     const temporizador = useRef(null);
 
-    const [destino] = useState(() => {
-        const destinoProtectedRoute = obtenerDestinoSeguro(
-            location.state?.from
-        );
-
-        if (destinoProtectedRoute) {
-            return destinoProtectedRoute;
-        }
-
-        return obtenerRutaQrPendiente() || "/";
-    });
+    // Al iniciar una sesión normal se abre Inicio.
+    // Se conserva únicamente un enlace QR de inscripción pendiente.
+    const [destino] = useState(() => obtenerRutaQrPendiente() || "/");
 
     useEffect(() => {
         return () => {
@@ -171,11 +133,11 @@ function Login() {
                 correo,
                 password
             );
-
+            
             iniciarSesion(
                 respuesta.usuario,
                 respuesta.token,
-                false
+                true
             );
 
             setModal({
