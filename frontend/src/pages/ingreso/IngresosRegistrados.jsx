@@ -277,7 +277,7 @@ function IngresosRegistrados() {
                   <td>{formatearFecha(ingreso.fechaHoraIngreso)}</td>
                   <td>{formatearHora(ingreso.fechaHoraIngreso)}</td>
                   <td>
-                    <span className="ingresos-registrados-estado">Registrado</span>
+                    <span className="ingresos-registrados-estado">{ingreso.estado || "REGISTRADO"}</span>
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
