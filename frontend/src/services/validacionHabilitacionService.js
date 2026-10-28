@@ -38,10 +38,14 @@ export async function identificarEstudiantePorCodigo(idExamen, codigo) {
   return data
 }
 
-export async function obtenerFotoEstudianteIdentificado(idExamen, idEstudiante) {
+export async function obtenerFotoEstudianteIdentificado(
+  idExamen,
+  idEstudiante,
+) {
   const { data } = await api.get(
     `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}/foto`,
     { responseType: "blob" },
+<<<<<<< HEAD
   )
   return data
 }
@@ -71,4 +75,22 @@ export async function obtenerIngresoRegistrado(idIngreso) {
 export async function actualizarIngresoRegistrado(idIngreso, payload) {
   const { data } = await api.put(`/ingresos/examenes/registrados/${idIngreso}`, payload)
   return data
+=======
+  );
+  return data;
+}
+
+export async function consultarIngresoRegistrado(idExamen, idEstudiante) {
+  const { data } = await api.get(
+    `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}`,
+  );
+  return data;
+}
+
+export async function registrarIngresoExamen(idExamen, idEstudiante) {
+  const { data } = await api.post(`/ingresos/examenes/${idExamen}/ingresos`, {
+    idEstudiante,
+  });
+  return data;
+>>>>>>> origin/develop
 }

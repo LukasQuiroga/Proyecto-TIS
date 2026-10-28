@@ -142,7 +142,7 @@ function Navbar() {
                       cerrarSesion();
 
                       navigate(
-                          "/login",
+                          "/",
                           {replace:true}
                       );
                   }}

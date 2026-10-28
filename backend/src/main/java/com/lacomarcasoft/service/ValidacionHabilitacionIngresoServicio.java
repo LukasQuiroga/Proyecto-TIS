@@ -60,7 +60,7 @@ public class ValidacionHabilitacionIngresoServicio {
 
         List<ValidacionHabilitacionRespuesta> resultados = jdbc.query("""
             SELECT
-                h.estado,
+                COALESCE(h.estado, 'HABILITADO') AS estado,
                 COALESCE(
                     h.titulo_motivo_personalizado,
                     mi.titulo
