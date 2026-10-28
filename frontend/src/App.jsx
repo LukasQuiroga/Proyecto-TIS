@@ -249,23 +249,8 @@ function App() {
               }
             />
 
-            
             <Route
-<<<<<<< Updated upstream
               path="/ingreso/identificar-codigo"
-=======
-               path="/ingreso/identificar-codigo"
-               element={
-                <AccesoHu15>
-                <IdentificarCodigo />
-                </AccesoHu15>
-              }
-            />
-
-            {/* Validar habilitacion */}
-            <Route
-               path="/ingreso/validar-habilitacion"
->>>>>>> Stashed changes
               element={
                 <AccesoControlIngreso>
                   <IdentificarCodigo />
