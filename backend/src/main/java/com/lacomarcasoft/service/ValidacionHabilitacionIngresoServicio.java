@@ -83,18 +83,6 @@ public class ValidacionHabilitacionIngresoServicio {
             (rs, fila) -> {
                 String estado = rs.getString("estado");
 
-                if ("HABILITADO".equals(estado)) {
-                    return new ValidacionHabilitacionRespuesta(
-                        idExamen,
-                        idEstudiante,
-                        estado,
-                        true,
-                        null,
-                        null,
-                        "Estudiante habilitado para este examen"
-                    );
-                }
-
                 if ("INHABILITADO".equals(estado)) {
                     return new ValidacionHabilitacionRespuesta(
                         idExamen,
@@ -104,6 +92,18 @@ public class ValidacionHabilitacionIngresoServicio {
                         rs.getString("titulo_motivo"),
                         rs.getString("motivo"),
                         "Estudiante inhabilitado para este examen"
+                    );
+                }
+
+                if ("HABILITADO".equals(estado) || estado == null) {
+                    return new ValidacionHabilitacionRespuesta(
+                        idExamen,
+                        idEstudiante,
+                        estado == null ? "HABILITADO" : estado,
+                        true,
+                        null,
+                        null,
+                        "Estudiante habilitado para este examen"
                     );
                 }
 
