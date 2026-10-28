@@ -118,7 +118,9 @@
 
 .detalle-examen-acciones {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   margin-top: 25px;
   padding-top: 18px;
   border-top: 1px solid #e8eef5;
@@ -135,8 +137,29 @@
   cursor: pointer;
 }
 
+.detalle-examen-acciones button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .detalle-examen-acciones button:hover {
   background: #0046c4;
+}
+
+.detalle-examen-acciones .detalle-examen-reenviar {
+  background: #e8f0ff;
+  color: #0046c4;
+}
+
+.detalle-examen-acciones .detalle-examen-reenviar:hover {
+  background: #d7e5ff;
+}
+
+.detalle-examen-qr-mensaje {
+  margin-right: auto;
+  max-width: 55%;
+  color: #526b82;
+  font-size: 12px;
 }
 
 @media (max-width: 560px) {

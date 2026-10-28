@@ -6,6 +6,7 @@ import com.lacomarcasoft.modelo.Materia;
 import com.lacomarcasoft.modelo.MateriaEstudiante;
 import com.lacomarcasoft.modelo.QrInscripcion;
 import com.lacomarcasoft.modelo.Usuario;
+import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.MateriaEstudianteRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.QrInscripcionRepositorio;
@@ -15,10 +16,12 @@ import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,6 +37,9 @@ class InscripcionMateriaServicioTest {
     private QrInscripcionServicio qrServicio;
     private AuditoriaQrServicio auditoriaQrServicio;
     private EntityManager entityManager;
+    private ExamenRepositorio examenRepositorio;
+    private QrExamenServicio qrExamenServicio;
+    private ApplicationEventPublisher eventPublisher;
 
     private InscripcionMateriaServicio inscripcionServicio;
 
@@ -52,6 +58,12 @@ class InscripcionMateriaServicioTest {
         qrServicio = mock(QrInscripcionServicio.class);
         auditoriaQrServicio = mock(AuditoriaQrServicio.class);
         entityManager = mock(EntityManager.class);
+        examenRepositorio = mock(ExamenRepositorio.class);
+        qrExamenServicio = mock(QrExamenServicio.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
+
+        when(examenRepositorio.listarProgramadosPorMateria(anyLong()))
+                .thenReturn(List.of());
 
         inscripcionServicio = new InscripcionMateriaServicio(
                 qrRepositorio,
@@ -60,7 +72,10 @@ class InscripcionMateriaServicioTest {
                 usuarioRepositorio,
                 qrServicio,
                 entityManager,
-                auditoriaQrServicio
+                auditoriaQrServicio,
+                examenRepositorio,
+                qrExamenServicio,
+                eventPublisher
         );
     }
 
