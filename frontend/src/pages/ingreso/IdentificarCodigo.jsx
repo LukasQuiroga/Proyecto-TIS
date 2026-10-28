@@ -37,7 +37,7 @@ function IdentificarCodigo() {
       })
       .catch(() => {
         if (activo) {
-          setError("No se pudo cargar la lista de examenes.");
+          setError("No se pudo cargar la lista de exámenes.");
         }
       })
       .finally(() => {
@@ -82,19 +82,19 @@ function IdentificarCodigo() {
     }
 
     if (!codigoLimpio) {
-      setError("Debe ingresar un codigo universitario.");
+      setError("Debe ingresar un código universitario.");
       return;
     }
 
     if (codigoLimpio.length > LONGITUD_MAXIMA) {
       setError(
-        `El codigo universitario no puede superar los ${LONGITUD_MAXIMA} caracteres.`,
+        `El código universitario no puede superar los ${LONGITUD_MAXIMA} caracteres.`,
       );
       return;
     }
 
     if (!PATRON_CODIGO.test(codigoLimpio)) {
-      setError("El codigo universitario tiene un formato invalido.");
+      setError("El código universitario tiene un formato inválido.");
       return;
     }
 
@@ -112,6 +112,23 @@ function IdentificarCodigo() {
         return;
       }
 
+      if (
+        !datos ||
+        !Number.isInteger(Number(datos.idEstudiante)) ||
+        Number(datos.idEstudiante) <= 0 ||
+        String(datos.codigoUniversitario ?? "")
+          .trim()
+          .toUpperCase() !== codigoLimpio.toUpperCase() ||
+        !String(datos.nombreEstudiante ?? "").trim() ||
+        Number(datos.idExamen) !== Number(idExamen) ||
+        typeof datos.asociadoAlExamen !== "boolean"
+      ) {
+        setError(
+          "El servidor devolvió información incompleta o inconsistente.",
+        );
+        return;
+      }
+
       setIdentificado(datos);
     } catch (err) {
       if (solicitud !== solicitudActual.current) {
@@ -119,13 +136,19 @@ function IdentificarCodigo() {
       }
 
       if (err.response?.status === 404) {
-        setError("No se encontro un estudiante con ese codigo universitario.");
+        setError(
+          "No se encontró un estudiante con ese código universitario.",
+        );
       } else if (err.response?.status === 403) {
         setError("No tiene permisos para identificar estudiantes.");
       } else if (err.response?.status === 409) {
-        setError("Existen registros duplicados para ese codigo universitario.");
+        setError(
+          "Existen registros duplicados para ese código universitario.",
+        );
       } else if (!err.response) {
-        setError("Error de conexion. No se pudo consultar al estudiante.");
+        setError(
+          "Error de conexión. No se pudo consultar al estudiante.",
+        );
       } else {
         setError(
           err.response?.data?.mensaje ||
@@ -142,7 +165,12 @@ function IdentificarCodigo() {
   };
 
   const continuarValidacion = () => {
-    if (!identificado?.asociadoAlExamen) {
+    if (
+      !identificado?.asociadoAlExamen ||
+      !Number.isInteger(Number(identificado.idEstudiante)) ||
+      Number(identificado.idEstudiante) <= 0 ||
+      Number(identificado.idExamen) !== Number(idExamen)
+    ) {
       return;
     }
 
@@ -168,9 +196,9 @@ function IdentificarCodigo() {
   return (
     <main className="identificacion-pagina">
       <header className="identificacion-encabezado">
-        <h1>Busqueda por codigo universitario</h1>
+        <h1>Búsqueda por código universitario</h1>
         <p>
-          Identifique a un estudiante ingresando su codigo universitario.
+          Identifique a un estudiante ingresando su código universitario.
         </p>
       </header>
 
@@ -195,7 +223,7 @@ function IdentificarCodigo() {
             >
               <option value="">
                 {cargandoExamenes
-                  ? "Cargando examenes..."
+                  ? "Cargando exámenes..."
                   : "Seleccione un examen"}
               </option>
 
@@ -214,7 +242,7 @@ function IdentificarCodigo() {
 
           <div className="identificacion-campo">
             <label htmlFor="identificacion-codigo">
-              Codigo universitario
+              Código universitario
             </label>
 
             <input
@@ -248,9 +276,11 @@ function IdentificarCodigo() {
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={() => navigate("/ingreso/validar-habilitacion")}
+              onClick={() =>
+                navigate("/ingreso/validar-habilitacion")
+              }
             >
-              Usar otro metodo
+              Usar otro método
             </button>
           </div>
         </form>
@@ -274,14 +304,14 @@ function IdentificarCodigo() {
           >
             <strong>Estudiante identificado correctamente.</strong>
             <p>
-              Se encontro un estudiante que coincide con el codigo
+              Se encontró un estudiante que coincide con el código
               universitario ingresado.
             </p>
           </div>
 
           <div className="identificacion-datos">
             <section className="identificacion-tarjeta">
-              <h2>Informacion del estudiante</h2>
+              <h2>Información del estudiante</h2>
 
               <div className="identificacion-detalle">
                 <strong>Nombre:</strong>
@@ -289,7 +319,7 @@ function IdentificarCodigo() {
               </div>
 
               <div className="identificacion-detalle">
-                <strong>Codigo universitario:</strong>
+                <strong>Código universitario:</strong>
                 <span>
                   {identificado.codigoUniversitario || "No registrado"}
                 </span>
@@ -302,7 +332,7 @@ function IdentificarCodigo() {
             </section>
 
             <section className="identificacion-tarjeta">
-              <h2>Informacion del examen</h2>
+              <h2>Información del examen</h2>
 
               <div className="identificacion-detalle">
                 <strong>Examen:</strong>
@@ -322,7 +352,7 @@ function IdentificarCodigo() {
               <div className="identificacion-detalle">
                 <strong>Estado:</strong>
                 <span className="identificacion-pendiente">
-                  Pendiente de validacion
+                  Pendiente de validación
                 </span>
               </div>
             </section>
@@ -332,17 +362,17 @@ function IdentificarCodigo() {
             <div className="identificacion-nota">
               <strong>El estudiante ha sido identificado.</strong>
               <p>
-                Puede continuar con la validacion de habilitacion.
-                La identificacion no autoriza automaticamente el ingreso.
+                Puede continuar con la validación de habilitación.
+                La identificación no autoriza automáticamente el ingreso.
               </p>
             </div>
           ) : (
             <div className="identificacion-nota identificacion-aviso">
               <strong>
-                El estudiante no esta asociado a este examen.
+                El estudiante no está asociado a este examen.
               </strong>
               <p>
-                No puede continuar con la validacion para el examen
+                No puede continuar con la validación para el examen
                 seleccionado.
               </p>
             </div>
@@ -363,7 +393,7 @@ function IdentificarCodigo() {
               onClick={continuarValidacion}
               disabled={!identificado.asociadoAlExamen}
             >
-              Continuar validacion
+              Continuar validación
             </button>
           </div>
         </>
