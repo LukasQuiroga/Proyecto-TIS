@@ -20,12 +20,18 @@ import static org.mockito.Mockito.*;
 class ConsultaIngresoCodigoServicioTest {
 
     private JdbcTemplate jdbc;
+    private AccesoExamenDocenteServicio accesoExamenDocente;
     private ConsultaIngresoServicio servicio;
 
     @BeforeEach
     void preparar() {
         jdbc = mock(JdbcTemplate.class);
-        servicio = new ConsultaIngresoServicio(jdbc);
+        accesoExamenDocente = mock(AccesoExamenDocenteServicio.class);
+
+        servicio = new ConsultaIngresoServicio(
+                jdbc,
+                accesoExamenDocente
+        );
     }
 
     private void examenExiste(Long idExamen) {
@@ -226,13 +232,14 @@ class ConsultaIngresoCodigoServicioTest {
         verifyNoInteractions(jdbc);
     }
 
-    @Test
-    void debeInformarExamenInexistente() {
-        when(jdbc.queryForObject(
-                anyString(),
-                eq(Boolean.class),
-                eq(999L)
-        )).thenReturn(false);
+        @Test
+        void debeInformarExamenInexistente() {
+        doThrow(new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Examen no encontrado"
+        ))
+        .when(accesoExamenDocente)
+        .verificarExamenActual(999L);
 
         ResponseStatusException error = assertThrows(
                 ResponseStatusException.class,
@@ -240,7 +247,10 @@ class ConsultaIngresoCodigoServicioTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
-    }
+
+        verify(accesoExamenDocente).verificarExamenActual(999L);
+        verifyNoInteractions(jdbc);
+        }
 
     @Test
     void debeRechazarCodigoDuplicado() {
@@ -279,5 +289,25 @@ class ConsultaIngresoCodigoServicioTest {
                 DataAccessResourceFailureException.class,
                 () -> servicio.identificarPorCodigo(1L, "202012345")
         );
+    }
+
+    @Test
+    void debeRechazarExamenDeOtroDocente() {
+        doThrow(new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "No eres el docente encargado de esta materia y grupo"
+        ))
+        .when(accesoExamenDocente)
+        .verificarExamenActual(2L);
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> servicio.identificarPorCodigo(2L, "202012345")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, error.getStatusCode());
+
+        verify(accesoExamenDocente).verificarExamenActual(2L);
+        verifyNoInteractions(jdbc);
     }
 }

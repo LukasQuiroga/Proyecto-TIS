@@ -19,9 +19,13 @@ public class ConsultaIngresoServicio {
         );
 
     private final JdbcTemplate jdbc;
+    private final AccesoExamenDocenteServicio accesoExamenDocente;
 
-    public ConsultaIngresoServicio(JdbcTemplate jdbc) {
+    public ConsultaIngresoServicio(
+            JdbcTemplate jdbc,
+            AccesoExamenDocenteServicio accesoExamenDocente) {
         this.jdbc = jdbc;
+        this.accesoExamenDocente = accesoExamenDocente;
     }
 
     public record ExamenDisponible(
@@ -55,6 +59,8 @@ public class ConsultaIngresoServicio {
 
     @Transactional(readOnly = true)
     public List<ExamenDisponible> listarExamenes() {
+        Long idDocente = accesoExamenDocente.obtenerDocenteAutenticado();
+
         return jdbc.query("""
             SELECT
                 e.id_examen,
@@ -67,6 +73,7 @@ public class ConsultaIngresoServicio {
                 ON m.id_materia = e.id_materia
             JOIN academico.asignatura a
                 ON a.id_asignatura = m.id_asignatura
+            WHERE m.id_docente = ?
             ORDER BY e.id_examen DESC
             """,
             (rs, fila) -> new ExamenDisponible(
@@ -75,7 +82,8 @@ public class ConsultaIngresoServicio {
                 rs.getString("nombre_examen"),
                 rs.getString("materia"),
                 rs.getString("estado")
-            )
+            ),
+            idDocente
         );
     }
 
@@ -88,6 +96,7 @@ public class ConsultaIngresoServicio {
                 "Identificador de examen invalido"
             );
         }
+        accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean existe = Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT EXISTS (
@@ -173,6 +182,7 @@ public class ConsultaIngresoServicio {
                     + "por ejemplo 12345678-1A"
             );
         }
+        accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean existeExamen = Boolean.TRUE.equals(
             jdbc.queryForObject("""
@@ -262,6 +272,7 @@ public class ConsultaIngresoServicio {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Formato de codigo universitario invalido");
         }
+        accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean existe = Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT EXISTS (SELECT 1 FROM academico.examen WHERE id_examen = ?)
@@ -314,6 +325,7 @@ public class ConsultaIngresoServicio {
         if (idExamen == null || idExamen <= 0 || idEstudiante == null || idEstudiante <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Identificadores invalidos");
         }
+        accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean permitido = Boolean.TRUE.equals(jdbc.queryForObject("""
             SELECT EXISTS (
