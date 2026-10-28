@@ -8,67 +8,82 @@ function ResultadoHabilitacion({
   nombreExamen,
   nombreEstudiante,
 }) {
-  const [resultado, setResultado] = useState(null);
-  const [error, setError] = useState("");
-  const [cargando, setCargando] = useState(true);
-  const [intento, setIntento] = useState(0);
+    const [consulta, setConsulta] = useState(null);
+    const [intento, setIntento] = useState(0);
+    const consultaActual =
+    consulta?.intento === intento &&
+    Number(consulta?.idExamen) === Number(idExamen) &&
+    Number(consulta?.idEstudiante) === Number(idEstudiante);
 
-  useEffect(() => {
+    const resultado = consultaActual ? consulta.resultado : null;
+    const error = consultaActual ? consulta.error : "";
+    const cargando = !consultaActual;
+
+    useEffect(() => {
     let activo = true;
 
-    setResultado(null);
-    setError("");
-    setCargando(true);
-
     async function validar() {
-      try {
+        try {
         const datos = await consultarHabilitacion(
-          Number(idExamen),
-          Number(idEstudiante),
+            Number(idExamen),
+            Number(idEstudiante),
         );
 
         if (!activo) return;
 
         const estadosValidos = [
-          "HABILITADO",
-          "INHABILITADO",
-          "SIN_ESTADO",
-          "NO_ASOCIADO",
+            "HABILITADO",
+            "INHABILITADO",
+            "SIN_ESTADO",
+            "NO_ASOCIADO",
         ];
 
         if (
-          Number(datos?.idExamen) !== Number(idExamen) ||
-          Number(datos?.idEstudiante) !== Number(idEstudiante) ||
-          !estadosValidos.includes(datos?.estado) ||
-          typeof datos?.puedeContinuar !== "boolean" ||
-          (datos.estado !== "HABILITADO" && datos.puedeContinuar)
+            Number(datos?.idExamen) !== Number(idExamen) ||
+            Number(datos?.idEstudiante) !== Number(idEstudiante) ||
+            !estadosValidos.includes(datos?.estado) ||
+            typeof datos?.puedeContinuar !== "boolean" ||
+            (datos.estado !== "HABILITADO" && datos.puedeContinuar)
         ) {
-          setError(
-            "El servidor devolvió una validación incompleta o inconsistente.",
-          );
-          return;
+            setConsulta({
+            intento,
+            idExamen,
+            idEstudiante,
+            resultado: null,
+            error: "El servidor devolvió una validación incompleta o inconsistente.",
+            });
+            return;
         }
 
-        setResultado(datos);
-      } catch (err) {
+        setConsulta({
+            intento,
+            idExamen,
+            idEstudiante,
+            resultado: datos,
+            error: "",
+        });
+        } catch (err) {
         if (!activo) return;
 
-        setError(
-          err.response?.data?.mensaje ||
+        setConsulta({
+            intento,
+            idExamen,
+            idEstudiante,
+            resultado: null,
+            error:
+            err.response?.data?.mensaje ||
             err.response?.data?.message ||
             "No se pudo completar la validación. Verifique la conexión.",
-        );
-      } finally {
-        if (activo) setCargando(false);
-      }
+        });
+        }
     }
 
     validar();
 
     return () => {
-      activo = false;
+        activo = false;
     };
-  }, [idExamen, idEstudiante, intento]);
+    }, [idExamen, idEstudiante, intento]);
 
   const habilitado =
     resultado?.estado === "HABILITADO" &&
