@@ -4,24 +4,23 @@ import {obtenerPermisosActuales} from "../services/authService";
 
 export function AuthProvider({children}){
 
-    const [usuario,setUsuario]=useState(()=>{
-
-        const usuarioGuardado=
-            localStorage.getItem("usuario")||
-            sessionStorage.getItem("usuario");
-
-        return usuarioGuardado
-            ?JSON.parse(usuarioGuardado)
-            :null;
+    const [sesionInicial] = useState(() => {
+        for (const almacen of [localStorage, sessionStorage]) {
+            const tokenGuardado = almacen.getItem("token");
+            const usuarioGuardado = almacen.getItem("usuario");
+            if (!tokenGuardado || !usuarioGuardado) continue;
+            try {
+                return { usuario: JSON.parse(usuarioGuardado), token: tokenGuardado };
+            } catch {
+                almacen.removeItem("usuario");
+                almacen.removeItem("token");
+            }
+        }
+        return { usuario: null, token: null };
     });
 
-    const [token,setToken]=useState(()=>{
-
-        return(
-            localStorage.getItem("token")||
-            sessionStorage.getItem("token")
-        );
-    });
+    const [usuario,setUsuario]=useState(sesionInicial.usuario);
+    const [token,setToken]=useState(sesionInicial.token);
 
     const [permisosActualizados,setPermisosActualizados]=
         useState(false);
@@ -83,6 +82,47 @@ export function AuthProvider({children}){
         };
 
     },[usuario,token]);
+
+    useEffect(() => {
+        const sincronizarSesion = (evento) => {
+            if (evento.storageArea !== localStorage ||
+                (evento.key !== "usuario" &&
+                 evento.key !== "token" &&
+                 evento.key !== null)) {
+                return;
+            }
+
+            const tokenGuardado = localStorage.getItem("token");
+            const datosGuardados = localStorage.getItem("usuario");
+            let siguienteUsuario = null;
+
+            try {
+                siguienteUsuario = datosGuardados
+                    ? JSON.parse(datosGuardados)
+                    : null;
+            } catch {
+                siguienteUsuario = null;
+            }
+
+            if (!tokenGuardado || !siguienteUsuario) {
+                setUsuario(null);
+                setToken(null);
+            } else {
+                setUsuario(siguienteUsuario);
+                setToken(tokenGuardado);
+            }
+
+            setPermisosActualizados(false);
+
+            if (window.location.pathname !== "/" &&
+                window.location.pathname !== "/login") {
+                window.location.replace("/");
+            }
+        };
+
+        window.addEventListener("storage", sincronizarSesion);
+        return () => window.removeEventListener("storage", sincronizarSesion);
+    }, []);
 
     const cargando=false;
 

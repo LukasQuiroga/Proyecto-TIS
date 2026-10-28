@@ -144,7 +144,7 @@ function EditarPerfil() {
           setFoto(nuevaUrl);
           setFotoTemporal("");
         } catch {
-          // La subida se completó, aunque no se pudo actualizar la vista previa.
+          
         }
         window.dispatchEvent(new Event("perfil-foto-actualizada"));
       }
@@ -201,7 +201,7 @@ function EditarPerfil() {
                     </div>
                     <div>
                       <strong>Foto de perfil</strong>
-                      <p>JPG o PNG · Máximo 2 MB</p>
+                      <p>Un solo rostro de frente y centrado · Cualquier dimensión o proporción · JPG/PNG · Máximo 2 MB</p>
                       <input className="hu13-oculto" ref={inputFoto} type="file" accept="image/png,image/jpeg" onChange={cambiarFoto} />
                       <button className="hu13-boton hu13-boton-secundario" type="button" onClick={() => inputFoto.current?.click()}><FiCamera /> Cambiar foto</button>
                     </div>
