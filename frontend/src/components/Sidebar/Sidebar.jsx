@@ -185,20 +185,35 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                       {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
                     </span>
                   </button>
-                  {ingresoAbierto && (
+                 
+            {ingresoAbierto && (
                     <div className="sidebar-submenu">
                       <NavLink
-                        to="/ingreso/identificar-codigo"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${isActive ? "sidebar-subopcion-activa" : ""}`
-                        }
+                       to="/ingreso/identificar-codigo"
+                       className={({ isActive }) =>
+                      `sidebar-subopcion ${
+                         isActive ? "sidebar-subopcion-activa" : ""
+                     }`
+               }
                       >
-                        Por código universitario
+                          Por código universitario
+                     </NavLink>
+
+                     <NavLink
+                           to="/ingreso/identificar-documento"
+                           className={({ isActive }) =>
+                           `sidebar-subopcion ${
+                           isActive ? "sidebar-subopcion-activa" : ""
+                       }`
+                    }
+                      >
+                              Por documento de identidad
                       </NavLink>
-                    </div>
-                  )}
-                </>
-              )}
+                   </div>
+               )}
+
+                  </>
+                 )}
 
             {usuario?.nombreRol === "ESTUDIANTE" && (
               <Opcion to="/inscripcion-qr/inscribir" icono={<FiMaximize />}>
