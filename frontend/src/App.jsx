@@ -31,7 +31,6 @@ import Examenes from "./pages/examenes/Examenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
-import ValidarHabilitacion from "./pages/ingreso/ValidarHabilitacion.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
@@ -45,21 +44,20 @@ import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
 import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
 
 
-function AccesoHu15({ children }) {
+function AccesoControlIngreso({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  const rolAutorizado = ["DOCENTE", "AUXILIAR"].includes(
-    usuario.nombreRol?.toUpperCase(),
-  );
+  const esDocente =
+    usuario.nombreRol?.toUpperCase() === "DOCENTE";
 
-  const permisoAutorizado =
+  const tienePermiso =
     usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
-  if (!rolAutorizado || !permisoAutorizado) {
+  if (!esDocente || !tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -245,29 +243,19 @@ function App() {
             <Route
               path="/ingreso/identificar-documento"
               element={
-                <ProtectedPermission permiso="CONTROL_INGRESO">
+                <AccesoControlIngreso>
                   <IdentificarDocumento />
-                </ProtectedPermission>
+                </AccesoControlIngreso>
               }
             />
 
             
             <Route
-               path="/ingreso/identificar-codigo"
-               element={
-                <AccesoHu15>
-                <IdentificarCodigo />
-                </AccesoHu15>
-              }
-            />
-
-            {/* Validar habilitacion */}
-            <Route
-              path="/ingreso/validar-habilitacion"
+              path="/ingreso/identificar-codigo"
               element={
-                <ProtectedPermission permiso="CONTROL_INGRESO">
-                  <ValidarHabilitacion />
-                </ProtectedPermission>
+                <AccesoControlIngreso>
+                  <IdentificarCodigo />
+                </AccesoControlIngreso>
               }
             />
 

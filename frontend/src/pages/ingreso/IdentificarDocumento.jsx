@@ -238,7 +238,7 @@ function IdentificarDocumento() {
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={() => navigate("/ingreso/validar-habilitacion")}
+              onClick={() => navigate("/ingreso/identificar-codigo")}
             >
               Usar otro metodo
             </button>

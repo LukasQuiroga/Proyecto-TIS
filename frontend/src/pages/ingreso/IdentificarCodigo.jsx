@@ -272,7 +272,7 @@ function IdentificarCodigo() {
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={() => navigate("/ingreso/validar-habilitacion")}
+              onClick={() => navigate("/ingreso/identificar-documento")}
             >
               Usar otro metodo
             </button>
