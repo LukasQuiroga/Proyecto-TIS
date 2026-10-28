@@ -7,6 +7,7 @@ import {
   obtenerFotoEstudianteIdentificado,
 } from "../../services/validacionHabilitacionService";
 
+import ResultadoHabilitacion from "./ResultadoHabilitacion";
 import "./IdentificarDocumento.css";
 import "./IdentificarCodigo.css";
 
@@ -21,6 +22,7 @@ function IdentificarCodigo() {
   const [codigo, setCodigo] = useState("");
   const [identificado, setIdentificado] = useState(null);
   const [error, setError] = useState("");
+  const [mostrarValidacion, setMostrarValidacion] = useState(false);
 
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
   const [buscando, setBuscando] = useState(false);
@@ -58,6 +60,7 @@ function IdentificarCodigo() {
 
   const limpiarIdentificacion = () => {
     solicitudActual.current += 1;
+    setMostrarValidacion(false);
     if (fotoUrlActual.current) {
       URL.revokeObjectURL(fotoUrlActual.current);
       fotoUrlActual.current = "";
@@ -176,24 +179,15 @@ function IdentificarCodigo() {
   };
 
   const continuarValidacion = () => {
-    if (!identificado?.asociadoAlExamen) {
+    if (!identificado?.asociadoAlExamen || !idExamen) {
       return;
     }
-
-    navigate("/ingreso/validar-habilitacion", {
-      state: {
-        identificacionEstudiante: {
-          idExamen: Number(idExamen),
-          idEstudiante: identificado.idEstudiante,
-        },
-      },
-    });
+    setMostrarValidacion(true);
   };
-
-  const buscarOtro = () => {
-    setCodigo("");
-    limpiarIdentificacion();
-  };
+    const buscarOtro = () => {
+      setCodigo("");
+      limpiarIdentificacion();
+    };
 
   return (
     <main className="identificacion-pagina">
@@ -278,7 +272,7 @@ function IdentificarCodigo() {
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={() => navigate("/ingreso/validar-habilitacion")}
+              onClick={() => navigate("/ingreso/identificar-documento")}
             >
               Usar otro metodo
             </button>
@@ -364,6 +358,18 @@ function IdentificarCodigo() {
               Continuar validacion
             </button>
           </div>
+          {mostrarValidacion && identificado.asociadoAlExamen && (
+            <ResultadoHabilitacion
+              idExamen={Number(idExamen)}
+              idEstudiante={identificado.idEstudiante}
+              nombreExamen={
+                examenes.find(
+                  (examen) => String(examen.idExamen) === String(idExamen),
+                )?.nombreExamen
+              }
+              nombreEstudiante={identificado.nombreEstudiante}
+            />
+          )}
         </>
       )}
     </main>

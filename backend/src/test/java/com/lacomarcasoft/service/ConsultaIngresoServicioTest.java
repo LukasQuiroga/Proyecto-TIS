@@ -20,12 +20,17 @@ import static org.mockito.Mockito.*;
 class ConsultaIngresoServicioTest {
 
     private JdbcTemplate jdbc;
+    private AccesoExamenDocenteServicio accesoExamenDocente;
     private ConsultaIngresoServicio servicio;
 
     @BeforeEach
     void preparar() {
         jdbc = mock(JdbcTemplate.class);
-        servicio = new ConsultaIngresoServicio(jdbc);
+        accesoExamenDocente = mock(AccesoExamenDocenteServicio.class);
+        servicio = new ConsultaIngresoServicio(
+            jdbc,
+            accesoExamenDocente
+        );
     }
 
     private void examenExiste(Long idExamen) {
@@ -260,11 +265,12 @@ class ConsultaIngresoServicioTest {
 
     @Test
     void debeInformarExamenInexistente() {
-        when(jdbc.queryForObject(
-            anyString(),
-            eq(Boolean.class),
-            eq(999L)
-        )).thenReturn(false);
+        doThrow(new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Examen no encontrado"
+        ))
+        .when(accesoExamenDocente)
+        .verificarExamenActual(999L);
 
         ResponseStatusException error = assertThrows(
             ResponseStatusException.class,
@@ -272,6 +278,8 @@ class ConsultaIngresoServicioTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
+        verify(accesoExamenDocente).verificarExamenActual(999L);
+        verifyNoInteractions(jdbc);
     }
 
     // CA18: un fallo de consulta no debe generar identificacion exitosa
@@ -289,5 +297,41 @@ class ConsultaIngresoServicioTest {
             DataAccessResourceFailureException.class,
             () -> servicio.identificarPorDocumento(1L, "12345678")
         );
+    }
+
+    @Test
+    void debeRechazarExamenDeOtroDocente() {
+        doThrow(new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "No eres el docente encargado de esta materia y grupo"
+        ))
+        .when(accesoExamenDocente)
+        .verificarExamenActual(2L);
+
+        ResponseStatusException error = assertThrows(
+            ResponseStatusException.class,
+            () -> servicio.identificarPorDocumento(2L, "12345678")
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, error.getStatusCode());
+
+        verify(accesoExamenDocente).verificarExamenActual(2L);
+        verifyNoInteractions(jdbc);
+    }
+
+    @Test
+    void debePropagarErrorDeConexionEnAutorizacion() {
+        doThrow(new DataAccessResourceFailureException(
+            "Sin conexion con la base de datos"
+        ))
+        .when(accesoExamenDocente)
+        .verificarExamenActual(1L);
+
+        assertThrows(
+            DataAccessResourceFailureException.class,
+            () -> servicio.identificarPorDocumento(1L, "12345678")
+        );
+
+        verifyNoInteractions(jdbc);
     }
 }

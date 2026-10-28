@@ -101,22 +101,10 @@ public class SecurityConfig {
                     "/api/perfil/me/foto"
                 ).authenticated()
 
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/ingresos/examenes/*/identificar-codigo"
-                ).access(new WebExpressionAuthorizationManager(
-                    "hasAnyRole('DOCENTE','AUXILIAR') and hasAuthority('CONTROL_INGRESO')"
-                ))
-
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/ingresos/examenes/*/estudiantes/*/foto"
-                ).access(new WebExpressionAuthorizationManager(
-                    "hasAnyRole('DOCENTE','AUXILIAR') and hasAuthority('CONTROL_INGRESO')"
-                ))
-
                 .requestMatchers("/api/ingresos/examenes/**")
-                .hasAnyAuthority("CONTROL_INGRESO", "ROLE_ADMINISTRADOR")
+                .access(new WebExpressionAuthorizationManager(
+                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
+                ))
 
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")

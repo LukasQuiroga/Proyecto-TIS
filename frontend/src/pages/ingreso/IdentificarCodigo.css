@@ -34,6 +34,10 @@
   min-width: 0;
 }
 
+.validacion-integrada {
+  margin-top: 24px;
+}
+
 @media (max-width: 650px) {
   .hu15-perfil {
     flex-direction: column;

@@ -6,6 +6,7 @@ import {
   obtenerExamenesIngreso,
 } from "../../services/validacionHabilitacionService";
 
+import ResultadoHabilitacion from "./ResultadoHabilitacion";
 import "./IdentificarDocumento.css";
 
 const PATRON_DOCUMENTO = /^[0-9]+(?:-[A-Za-z0-9]{1,2})?$/;
@@ -19,6 +20,7 @@ function IdentificarDocumento() {
   const [documento, setDocumento] = useState("");
   const [identificado, setIdentificado] = useState(null);
   const [error, setError] = useState("");
+  const [mostrarValidacion, setMostrarValidacion] = useState(false);
 
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
   const [buscando, setBuscando] = useState(false);
@@ -55,6 +57,7 @@ function IdentificarDocumento() {
   // Evitar mostrar identificaciones anteriores
   const limpiarIdentificacion = () => {
     solicitudActual.current += 1;
+    setMostrarValidacion(false);
     setIdentificado(null);
     setError("");
     setBuscando(false);
@@ -142,18 +145,10 @@ function IdentificarDocumento() {
   };
 
   const continuarValidacion = () => {
-    if (!identificado?.asociadoAlExamen) {
+    if (!identificado?.asociadoAlExamen || !idExamen) {
       return;
     }
-
-    navigate("/ingreso/validar-habilitacion", {
-      state: {
-        identificacionEstudiante: {
-          idExamen: Number(idExamen),
-          idEstudiante: identificado.idEstudiante,
-        },
-      },
-    });
+    setMostrarValidacion(true);
   };
 
   const buscarOtro = () => {
@@ -243,7 +238,7 @@ function IdentificarDocumento() {
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={() => navigate("/ingreso/validar-habilitacion")}
+              onClick={() => navigate("/ingreso/identificar-codigo")}
             >
               Usar otro metodo
             </button>
@@ -312,8 +307,12 @@ function IdentificarDocumento() {
               </div>
 
               <div className="identificacion-detalle">
-                <strong>Estado de validacion:</strong>
-                <span className="identificacion-pendiente">Pendiente</span>
+                <strong>Estado de validación:</strong>
+                <span className="identificacion-pendiente">
+                  {mostrarValidacion
+                    ? "Ver resultado debajo"
+                    : "Pendiente"}
+                </span>
               </div>
             </section>
           </div>
@@ -351,9 +350,17 @@ function IdentificarDocumento() {
               onClick={continuarValidacion}
               disabled={!identificado.asociadoAlExamen}
             >
-              Continuar
+              Continuar validacion
             </button>
           </div>
+          {mostrarValidacion && identificado.asociadoAlExamen && (
+            <ResultadoHabilitacion
+              idExamen={Number(idExamen)}
+              idEstudiante={identificado.idEstudiante}
+              nombreExamen={examenSeleccionado?.nombreExamen}
+              nombreEstudiante={identificado.nombreEstudiante}
+            />
+          )}
         </>
       )}
     </main>

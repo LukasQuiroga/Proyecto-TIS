@@ -20,16 +20,19 @@ public class IngresoExamenServicio {
     private final ExamenRepositorio examenes;
     private final UsuarioRepositorio usuarios;
     private final ValidacionHabilitacionIngresoServicio validacionHabilitacion;
+    private final AccesoExamenDocenteServicio accesoExamenDocente;
 
     public IngresoExamenServicio(
             JdbcTemplate jdbc,
             ExamenRepositorio examenes,
             UsuarioRepositorio usuarios,
-            ValidacionHabilitacionIngresoServicio validacionHabilitacion) {
+            ValidacionHabilitacionIngresoServicio validacionHabilitacion,
+            AccesoExamenDocenteServicio accesoExamenDocente) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
         this.validacionHabilitacion = validacionHabilitacion;
+         this.accesoExamenDocente = accesoExamenDocente;
     }
 
     @Transactional(readOnly = true)
@@ -38,6 +41,7 @@ public class IngresoExamenServicio {
             Long idEstudiante) {
 
         validarIds(idExamen, idEstudiante);
+        accesoExamenDocente.verificarExamenActual(idExamen);
         validarExistencia(idExamen, idEstudiante);
 
         return buscar(idExamen, idEstudiante);
@@ -57,6 +61,16 @@ public class IngresoExamenServicio {
                 "Debe iniciar sesion"
             );
         }
+        Long idDocenteAutenticado =
+            accesoExamenDocente.obtenerDocenteAutenticado();
+
+        if (!idDocenteAutenticado.equals(idResponsable)) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "El responsable no coincide con el docente autenticado"
+            );
+        }
+        accesoExamenDocente.verificarExamenActual(idExamen);
 
         validarExistencia(idExamen, idEstudiante);
 

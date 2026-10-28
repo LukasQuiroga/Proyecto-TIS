@@ -171,7 +171,7 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
             )}
 
             {tienePermiso("CONTROL_INGRESO") &&
-              ["DOCENTE", "AUXILIAR"].includes(usuario?.nombreRol?.toUpperCase()) && (
+              usuario?.nombreRol?.toUpperCase() === "DOCENTE" && (
                 <>
                   <button
                     type="button"

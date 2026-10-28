@@ -17,14 +17,17 @@ public class ValidacionHabilitacionIngresoServicio {
     private final JdbcTemplate jdbc;
     private final ExamenRepositorio examenes;
     private final UsuarioRepositorio usuarios;
+    private final AccesoExamenDocenteServicio accesoExamenDocente;
 
     public ValidacionHabilitacionIngresoServicio(
             JdbcTemplate jdbc,
             ExamenRepositorio examenes,
-            UsuarioRepositorio usuarios) {
+            UsuarioRepositorio usuarios,
+            AccesoExamenDocenteServicio accesoExamenDocente) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
+        this.accesoExamenDocente = accesoExamenDocente;
     }
 
     @Transactional(readOnly = true)
@@ -39,6 +42,7 @@ public class ValidacionHabilitacionIngresoServicio {
                 "Identificadores invalidos"
             );
         }
+        accesoExamenDocente.verificarExamenActual(idExamen);
 
         if (!examenes.existsById(idExamen)) {
             throw new ResponseStatusException(
