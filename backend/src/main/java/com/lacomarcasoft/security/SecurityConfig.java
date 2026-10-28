@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -103,7 +104,16 @@ public class SecurityConfig {
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/ingresos/examenes/*/identificar-codigo"
-                ).hasAnyRole("DOCENTE", "AUXILIAR")
+                ).access(new WebExpressionAuthorizationManager(
+                    "hasAnyRole('DOCENTE','AUXILIAR') and hasAuthority('CONTROL_INGRESO')"
+                ))
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/ingresos/examenes/*/estudiantes/*/foto"
+                ).access(new WebExpressionAuthorizationManager(
+                    "hasAnyRole('DOCENTE','AUXILIAR') and hasAuthority('CONTROL_INGRESO')"
+                ))
 
                 .requestMatchers("/api/ingresos/examenes/**")
                 .hasAnyAuthority("CONTROL_INGRESO", "ROLE_ADMINISTRADOR")

@@ -38,12 +38,12 @@ function Opcion({ to, icono, children, exacta = false }) {
 
 function Sidebar({ sidebarAbierto, cambiarSidebar }) {
   const [usuariosAbierto, setUsuariosAbierto] = useState(false);
+  const [ingresoAbierto, setIngresoAbierto] = useState(false);
   const { usuario } = useAuth();
 
-  
-const tienePermiso = (permiso) => {
-  return usuario?.permisos?.includes(permiso) ?? false;
-};
+  const tienePermiso = (permiso) => {
+    return usuario?.permisos?.includes(permiso) ?? false;
+  };
 
   return (
     <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
@@ -170,35 +170,35 @@ const tienePermiso = (permiso) => {
               </Opcion>
             )}
 
-            {/* Control de ingreso */}   
-            {tienePermiso("CONTROL_INGRESO") && (
-             <>
-                {["DOCENTE", "AUXILIAR"].includes(
-                 usuario?.nombreRol?.toUpperCase(),
-              ) && (
-              <Opcion
-                   to="/ingreso/identificar-codigo"
-                   icono={<FiTarget />}
-              >
-                 Identificar por código universitario
-             </Opcion>
+            {tienePermiso("CONTROL_INGRESO") &&
+              ["DOCENTE", "AUXILIAR"].includes(usuario?.nombreRol?.toUpperCase()) && (
+                <>
+                  <button
+                    type="button"
+                    className="sidebar-opcion sidebar-desplegable"
+                    onClick={() => setIngresoAbierto(!ingresoAbierto)}
+                    aria-expanded={ingresoAbierto}
+                  >
+                    <span className="sidebar-icono"><FiTarget /></span>
+                    <span className="sidebar-texto">Control de ingreso</span>
+                    <span className="sidebar-flecha">
+                      {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
+                    </span>
+                  </button>
+                  {ingresoAbierto && (
+                    <div className="sidebar-submenu">
+                      <NavLink
+                        to="/ingreso/identificar-codigo"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${isActive ? "sidebar-subopcion-activa" : ""}`
+                        }
+                      >
+                        Por código universitario
+                      </NavLink>
+                    </div>
+                  )}
+                </>
               )}
-
-             <Opcion
-                   to="/ingreso/identificar-documento"
-                   icono={<FiTarget />}
-              >
-                  Identificar por documento
-              </Opcion>
-
-              <Opcion
-                   to="/ingreso/validar-habilitacion"
-                   icono={<FiClipboard />}
-              >
-                  Validar habilitación
-             </Opcion>
-             </>
-          )}
 
             {usuario?.nombreRol === "ESTUDIANTE" && (
               <Opcion to="/inscripcion-qr/inscribir" icono={<FiMaximize />}>

@@ -1,13 +1,14 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
   identificarEstudiantePorCodigo,
   obtenerExamenesIngreso,
+  obtenerFotoEstudianteIdentificado,
 } from "../../services/validacionHabilitacionService";
 
 import "./IdentificarDocumento.css";
+import "./IdentificarCodigo.css";
 
 const PATRON_CODIGO = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/;
 const LONGITUD_MAXIMA = 30;
@@ -23,6 +24,8 @@ function IdentificarCodigo() {
 
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
   const [buscando, setBuscando] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState("");
+  const fotoUrlActual = useRef("");
 
   const solicitudActual = useRef(0);
 
@@ -37,7 +40,7 @@ function IdentificarCodigo() {
       })
       .catch(() => {
         if (activo) {
-          setError("No se pudo cargar la lista de exámenes.");
+          setError("No se pudo cargar la lista de examenes.");
         }
       })
       .finally(() => {
@@ -49,11 +52,17 @@ function IdentificarCodigo() {
     return () => {
       activo = false;
       solicitudActual.current += 1;
+      if (fotoUrlActual.current) URL.revokeObjectURL(fotoUrlActual.current);
     };
   }, []);
 
   const limpiarIdentificacion = () => {
     solicitudActual.current += 1;
+    if (fotoUrlActual.current) {
+      URL.revokeObjectURL(fotoUrlActual.current);
+      fotoUrlActual.current = "";
+    }
+    setFotoUrl("");
     setIdentificado(null);
     setError("");
     setBuscando(false);
@@ -82,19 +91,19 @@ function IdentificarCodigo() {
     }
 
     if (!codigoLimpio) {
-      setError("Debe ingresar un código universitario.");
+      setError("Debe ingresar un codigo universitario.");
       return;
     }
 
     if (codigoLimpio.length > LONGITUD_MAXIMA) {
       setError(
-        `El código universitario no puede superar los ${LONGITUD_MAXIMA} caracteres.`,
+        `El codigo universitario no puede superar los ${LONGITUD_MAXIMA} caracteres.`,
       );
       return;
     }
 
     if (!PATRON_CODIGO.test(codigoLimpio)) {
-      setError("El código universitario tiene un formato inválido.");
+      setError("El codigo universitario tiene un formato invalido.");
       return;
     }
 
@@ -116,39 +125,41 @@ function IdentificarCodigo() {
         !datos ||
         !Number.isInteger(Number(datos.idEstudiante)) ||
         Number(datos.idEstudiante) <= 0 ||
-        String(datos.codigoUniversitario ?? "")
-          .trim()
-          .toUpperCase() !== codigoLimpio.toUpperCase() ||
+        String(datos.codigoUniversitario ?? "").trim().toUpperCase() !== codigoLimpio.toUpperCase() ||
         !String(datos.nombreEstudiante ?? "").trim() ||
         Number(datos.idExamen) !== Number(idExamen) ||
         typeof datos.asociadoAlExamen !== "boolean"
       ) {
-        setError(
-          "El servidor devolvió información incompleta o inconsistente.",
-        );
+        setError("El servidor devolvió información incompleta o inconsistente.");
         return;
       }
 
       setIdentificado(datos);
+      if (datos.tieneFoto && datos.asociadoAlExamen) {
+        try {
+          const foto = await obtenerFotoEstudianteIdentificado(Number(idExamen), datos.idEstudiante);
+          if (solicitud !== solicitudActual.current) return;
+          const url = URL.createObjectURL(foto);
+          fotoUrlActual.current = url;
+          setFotoUrl(url);
+        } catch {
+          if (solicitud !== solicitudActual.current) return;
+          setFotoUrl("");
+        }
+      }
     } catch (err) {
       if (solicitud !== solicitudActual.current) {
         return;
       }
 
       if (err.response?.status === 404) {
-        setError(
-          "No se encontró un estudiante con ese código universitario.",
-        );
+        setError("No se encontro un estudiante con ese codigo universitario.");
       } else if (err.response?.status === 403) {
         setError("No tiene permisos para identificar estudiantes.");
       } else if (err.response?.status === 409) {
-        setError(
-          "Existen registros duplicados para ese código universitario.",
-        );
+        setError("Existen registros duplicados para ese codigo universitario.");
       } else if (!err.response) {
-        setError(
-          "Error de conexión. No se pudo consultar al estudiante.",
-        );
+        setError("Error de conexion. No se pudo consultar al estudiante.");
       } else {
         setError(
           err.response?.data?.mensaje ||
@@ -165,12 +176,7 @@ function IdentificarCodigo() {
   };
 
   const continuarValidacion = () => {
-    if (
-      !identificado?.asociadoAlExamen ||
-      !Number.isInteger(Number(identificado.idEstudiante)) ||
-      Number(identificado.idEstudiante) <= 0 ||
-      Number(identificado.idExamen) !== Number(idExamen)
-    ) {
+    if (!identificado?.asociadoAlExamen) {
       return;
     }
 
@@ -189,16 +195,12 @@ function IdentificarCodigo() {
     limpiarIdentificacion();
   };
 
-  const examenSeleccionado = examenes.find(
-    (examen) => String(examen.idExamen) === String(idExamen),
-  );
-
   return (
     <main className="identificacion-pagina">
       <header className="identificacion-encabezado">
-        <h1>Búsqueda por código universitario</h1>
+        <h1>Busqueda por codigo universitario</h1>
         <p>
-          Identifique a un estudiante ingresando su código universitario.
+          Identifique a un estudiante ingresando su codigo universitario.
         </p>
       </header>
 
@@ -223,7 +225,7 @@ function IdentificarCodigo() {
             >
               <option value="">
                 {cargandoExamenes
-                  ? "Cargando exámenes..."
+                  ? "Cargando examenes..."
                   : "Seleccione un examen"}
               </option>
 
@@ -242,7 +244,7 @@ function IdentificarCodigo() {
 
           <div className="identificacion-campo">
             <label htmlFor="identificacion-codigo">
-              Código universitario
+              Codigo universitario
             </label>
 
             <input
@@ -276,11 +278,9 @@ function IdentificarCodigo() {
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={() =>
-                navigate("/ingreso/validar-habilitacion")
-              }
+              onClick={() => navigate("/ingreso/validar-habilitacion")}
             >
-              Usar otro método
+              Usar otro metodo
             </button>
           </div>
         </form>
@@ -304,75 +304,43 @@ function IdentificarCodigo() {
           >
             <strong>Estudiante identificado correctamente.</strong>
             <p>
-              Se encontró un estudiante que coincide con el código
+              Se encontro un estudiante que coincide con el codigo
               universitario ingresado.
             </p>
           </div>
 
-          <div className="identificacion-datos">
-            <section className="identificacion-tarjeta">
-              <h2>Información del estudiante</h2>
-
-              <div className="identificacion-detalle">
-                <strong>Nombre:</strong>
-                <span>{identificado.nombreEstudiante}</span>
-              </div>
-
-              <div className="identificacion-detalle">
-                <strong>Código universitario:</strong>
-                <span>
-                  {identificado.codigoUniversitario || "No registrado"}
-                </span>
-              </div>
-
-              <div className="identificacion-detalle">
-                <strong>Documento de identidad:</strong>
-                <span>{identificado.documentoIdentidad}</span>
-              </div>
-            </section>
-
-            <section className="identificacion-tarjeta">
-              <h2>Información del examen</h2>
-
-              <div className="identificacion-detalle">
-                <strong>Examen:</strong>
-                <span>
-                  {examenSeleccionado?.nombreExamen ||
-                    identificado.idExamen}
-                </span>
-              </div>
-
-              <div className="identificacion-detalle">
-                <strong>Materia:</strong>
-                <span>
-                  {examenSeleccionado?.materia || "No disponible"}
-                </span>
-              </div>
-
-              <div className="identificacion-detalle">
-                <strong>Estado:</strong>
-                <span className="identificacion-pendiente">
-                  Pendiente de validación
-                </span>
-              </div>
-            </section>
-          </div>
+          <section className="identificacion-tarjeta hu15-perfil">
+            <div className="hu15-fotografia">
+              {fotoUrl ? (
+                <img src={fotoUrl} alt="Fotografía del estudiante identificado" />
+              ) : (
+                <span>{identificado.tieneFoto ? "Foto no disponible" : "Sin fotografía"}</span>
+              )}
+            </div>
+            <div className="hu15-datos">
+              <h2>Perfil del estudiante</h2>
+              <div className="identificacion-detalle"><strong>Nombre:</strong><span>{identificado.nombreEstudiante}</span></div>
+              <div className="identificacion-detalle"><strong>Carnet:</strong><span>{identificado.documentoIdentidad || "No registrado"}</span></div>
+              <div className="identificacion-detalle"><strong>Teléfono:</strong><span>{identificado.telefono || "No registrado"}</span></div>
+              <div className="identificacion-detalle"><strong>Código SIS:</strong><span>{identificado.codigoUniversitario}</span></div>
+            </div>
+          </section>
 
           {identificado.asociadoAlExamen ? (
             <div className="identificacion-nota">
               <strong>El estudiante ha sido identificado.</strong>
               <p>
-                Puede continuar con la validación de habilitación.
-                La identificación no autoriza automáticamente el ingreso.
+                Puede continuar con la validacion de habilitacion.
+                La identificacion no autoriza automaticamente el ingreso.
               </p>
             </div>
           ) : (
             <div className="identificacion-nota identificacion-aviso">
               <strong>
-                El estudiante no está asociado a este examen.
+                El estudiante no esta asociado a este examen.
               </strong>
               <p>
-                No puede continuar con la validación para el examen
+                No puede continuar con la validacion para el examen
                 seleccionado.
               </p>
             </div>
@@ -393,7 +361,7 @@ function IdentificarCodigo() {
               onClick={continuarValidacion}
               disabled={!identificado.asociadoAlExamen}
             >
-              Continuar validación
+              Continuar validacion
             </button>
           </div>
         </>
