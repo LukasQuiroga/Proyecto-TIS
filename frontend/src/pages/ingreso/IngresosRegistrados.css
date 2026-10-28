@@ -199,6 +199,11 @@
   font-size: 13px;
 }
 
+.ingresos-registrados-estado-suspendido {
+  background: #fff5f5;
+  color: #c53030;
+}
+
 .ingresos-registrados-boton-ver {
   display: inline-flex;
   align-items: center;
