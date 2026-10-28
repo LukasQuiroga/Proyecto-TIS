@@ -38,10 +38,27 @@ export async function identificarEstudiantePorCodigo(idExamen, codigo) {
   return data;
 }
 
-export async function obtenerFotoEstudianteIdentificado(idExamen, idEstudiante) {
+export async function obtenerFotoEstudianteIdentificado(
+  idExamen,
+  idEstudiante,
+) {
   const { data } = await api.get(
     `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}/foto`,
     { responseType: "blob" },
   );
+  return data;
+}
+
+export async function consultarIngresoRegistrado(idExamen, idEstudiante) {
+  const { data } = await api.get(
+    `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}`,
+  );
+  return data;
+}
+
+export async function registrarIngresoExamen(idExamen, idEstudiante) {
+  const { data } = await api.post(`/ingresos/examenes/${idExamen}/ingresos`, {
+    idEstudiante,
+  });
   return data;
 }

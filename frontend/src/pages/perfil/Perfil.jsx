@@ -59,7 +59,13 @@ function Perfil() {
   const nombre = [usuario?.nombre, usuario?.apellido].filter(Boolean).join(" ") || "Usuario";
   const rol = usuario?.nombreRol || "Usuario";
   const carreras = usuario?.carreras?.map((c) => c.nombre).filter(Boolean).join(", ");
-  const materias = usuario?.materias?.map((m) => m.nombre || m.nombreMateria || m.codigo).filter(Boolean).join(", ");
+  const materias = usuario?.materias
+    ?.map((m) => {
+      const nombre = m.nombreAsignatura || m.nombre || m.nombreMateria || m.codigo;
+      return nombre ? `${nombre}${m.grupo ? ` (grupo ${m.grupo})` : ""}` : null;
+    })
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="hu13-pagina">

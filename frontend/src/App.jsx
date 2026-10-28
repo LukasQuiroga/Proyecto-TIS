@@ -44,6 +44,16 @@ import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
 import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
 
 
+function AccesoSoloDocenteHabilitaciones({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario || usuario.nombreRol?.trim().toUpperCase() !== "DOCENTE") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 function AccesoControlIngreso({ children }) {
   const { usuario } = useAuth();
 
@@ -237,7 +247,14 @@ function App() {
             />
 
             {/* HABILITACIONES */}
-            <Route path="/habilitaciones" element={<Habilitaciones />} />
+            <Route
+              path="/habilitaciones"
+              element={
+                <AccesoSoloDocenteHabilitaciones>
+                  <Habilitaciones />
+                </AccesoSoloDocenteHabilitaciones>
+              }
+            />
 
             {/* Identificacion por documento de identidad */}
             <Route
