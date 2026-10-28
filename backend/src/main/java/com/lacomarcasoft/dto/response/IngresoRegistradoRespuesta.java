@@ -9,5 +9,8 @@ public record IngresoRegistradoRespuesta(
     String nombreExamen,
     String ambiente,
     OffsetDateTime fechaHoraIngreso,
-    String estado
+    OffsetDateTime fechaHoraSalida,
+    String estado,
+    String motivoSuspension,
+    String motivoReincorporacion
 ) {}

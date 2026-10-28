@@ -1,7 +1,9 @@
 package com.lacomarcasoft.controller;
 
+import com.lacomarcasoft.dto.request.ActualizarIngresoSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarIngresoSolicitud;
 import com.lacomarcasoft.dto.response.EstadoIngresoRespuesta;
+import com.lacomarcasoft.dto.response.IngresoRegistradoDetalleRespuesta;
 import com.lacomarcasoft.dto.response.IngresoRegistradoRespuesta;
 import com.lacomarcasoft.service.IngresoExamenServicio;
 import jakarta.validation.Valid;
@@ -39,6 +41,19 @@ public class IngresoExamenControlador {
             @RequestParam(value = "fecha", required = false) String fecha) {
 
         return servicio.listarRegistrados(q, idExamen, fecha);
+    }
+
+    @GetMapping("/registrados/{idIngreso}")
+    public IngresoRegistradoDetalleRespuesta obtenerRegistrado(@PathVariable Long idIngreso) {
+        return servicio.obtenerRegistrado(idIngreso);
+    }
+
+    @PutMapping("/registrados/{idIngreso}")
+    public IngresoRegistradoDetalleRespuesta actualizarRegistrado(
+            @PathVariable Long idIngreso,
+            @Valid @RequestBody ActualizarIngresoSolicitud solicitud) {
+
+        return servicio.actualizarRegistrado(idIngreso, solicitud);
     }
 
     @PostMapping("/{idExamen}/ingresos")

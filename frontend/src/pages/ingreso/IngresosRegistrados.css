@@ -202,9 +202,10 @@
 .ingresos-registrados-boton-ver {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   height: 38px;
-  padding: 0 14px;
+  width: 38px;
+  padding: 0;
   background: #ffffff;
   color: #1f2d3d;
   border: 1px solid #c9d4e6;
@@ -256,6 +257,107 @@
 .ingresos-registrados-paginacion-boton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.ingresos-registrados-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 31, 61, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.ingresos-registrados-modal {
+  width: min(720px, 100%);
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(15, 31, 61, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ingresos-registrados-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ingresos-registrados-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #0f1f3d;
+}
+
+.ingresos-registrados-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: #4f5d75;
+}
+
+.ingresos-registrados-modal-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ingresos-registrados-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+
+.ingresos-registrados-modal-grid label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7a99;
+  letter-spacing: 0.04em;
+}
+
+.ingresos-registrados-modal-grid p {
+  margin: 4px 0 0;
+  color: #1f2d3d;
+}
+
+.ingresos-registrados-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ingresos-registrados-modal-form textarea {
+  border: 1px solid #c9d4e6;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.ingresos-registrados-modal-form small {
+  align-self: flex-end;
+  color: #6b7a99;
+}
+
+.ingresos-registrados-modal-error {
+  color: #c53030;
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.ingresos-registrados-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 @media (max-width: 1100px) {

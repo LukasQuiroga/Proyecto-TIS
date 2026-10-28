@@ -62,3 +62,13 @@ export async function registrarIngreso(idExamen, idEstudiante) {
   })
   return data
 }
+
+export async function obtenerIngresoRegistrado(idIngreso) {
+  const { data } = await api.get(`/ingresos/examenes/registrados/${idIngreso}`)
+  return data
+}
+
+export async function actualizarIngresoRegistrado(idIngreso, payload) {
+  const { data } = await api.put(`/ingresos/examenes/registrados/${idIngreso}`, payload)
+  return data
+}
