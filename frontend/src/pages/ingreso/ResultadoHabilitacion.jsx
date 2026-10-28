@@ -213,7 +213,7 @@ function ResultadoHabilitacion({
             {habilitado
               ? registroOk
                 ? "Ingreso registrado correctamente."
-                : "Habilitaci��n confirmada. Puede registrar el ingreso."
+                : "Habilitación confirmada. Puede registrar el ingreso."
               : "No se permite continuar con el ingreso."}
           </div>
 
