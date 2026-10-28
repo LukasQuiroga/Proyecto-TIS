@@ -20,17 +20,20 @@ public class AuthService {
     private final JwtService jwtService;
     private final TokenSesionService tokenSesionService;
     private final PasswordEncoder passwordEncoder;
+    private final PlazoFotoPerfilServicio plazoFotoPerfilServicio;
 
     public AuthService(
             UsuarioRepositorio usuarioRepositorio,
             JwtService jwtService,
             TokenSesionService tokenSesionService,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            PlazoFotoPerfilServicio plazoFotoPerfilServicio
     ) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.jwtService = jwtService;
         this.tokenSesionService = tokenSesionService;
         this.passwordEncoder = passwordEncoder;
+        this.plazoFotoPerfilServicio = plazoFotoPerfilServicio;
     }
 
     public LoginRespuesta login(LoginRequest request){
@@ -72,6 +75,8 @@ public class AuthService {
                 "Credenciales incorrectas"
             );
         }
+
+        plazoFotoPerfilServicio.registrarPrimerInicioYVerificar(usuario.getIdUsuario());
 
         String tokenId=
             jwtService.generarTokenId();
@@ -133,6 +138,8 @@ public class AuthService {
     }
 
     public void logout(String token){
+
+        plazoFotoPerfilServicio.registrarPrimerInicioYVerificar(usuario.getIdUsuario());
 
         String tokenId=
             jwtService.obtenerTokenId(token);
