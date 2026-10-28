@@ -7,7 +7,6 @@ import {
   FiChevronUp,
   FiClipboard,
   FiClock,
-  FiFileText,
   FiGrid,
   FiHome,
   FiMaximize,

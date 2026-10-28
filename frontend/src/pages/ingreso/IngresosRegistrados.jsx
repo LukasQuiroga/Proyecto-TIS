@@ -60,8 +60,39 @@ function IngresosRegistrados() {
   };
 
   useEffect(() => {
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let activo = true;
+
+    const ejecutarCarga = async () => {
+      if (!activo) return;
+      setCargando(true);
+      setError("");
+      try {
+        const datos = await listarIngresosRegistrados({});
+        if (activo) {
+          setIngresos(Array.isArray(datos) ? datos : []);
+          setPagina(1);
+        }
+      } catch (err) {
+        if (activo) {
+          setError(
+            err.response?.data?.mensaje ||
+              err.response?.data?.message ||
+              "No se pudieron cargar los ingresos registrados."
+          );
+          setIngresos([]);
+        }
+      } finally {
+        if (activo) {
+          setCargando(false);
+        }
+      }
+    };
+
+    ejecutarCarga();
+
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const formatearId = (id) => {
