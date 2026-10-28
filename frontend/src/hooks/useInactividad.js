@@ -6,74 +6,68 @@ import { cerrarSesionBackend } from "../services/authService";
 const TIEMPO_INACTIVIDAD = 600000;
 
 function useInactividad() {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, token, cerrarSesion } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!usuario) {
-      return;
-    }
+    if (!usuario?.idUsuario || !token) return undefined;
+    let activo = true;
+    let cerrando = false;
+    let ultimoEvento = 0;
 
-    let temporizador = null;
-    let intervalo = null;
-
-    const finalizarSesion = async () => {
+    async function finalizarSesion() {
+      if (cerrando || !activo) return;
+      cerrando = true;
+      const sesion = JSON.parse(
+        localStorage.getItem("exampass_sesion") || "null",
+      );
+      if (sesion?.token !== token) return;
       try {
         await cerrarSesionBackend();
-      } catch {
-        // La sesión local igualmente se cerrará.
+      } catch (error) {
+        console.warn("No se pudo cerrar la sesión en el servidor:", error);
       }
-
+      if (!activo) return;
+      const actual = JSON.parse(
+        localStorage.getItem("exampass_sesion") || "null",
+      );
+      if (actual?.token !== token) return;
       cerrarSesion();
-
       navigate("/login", { replace: true });
-    };
+    }
 
-    const comprobarInactividad = () => {
-      const ultimaActividad = Number(localStorage.getItem("ultimaActividad"));
-
-      if (!ultimaActividad) {
+    function comprobarInactividad() {
+      const ultima = Number(localStorage.getItem("ultimaActividad"));
+      if (!ultima) {
         localStorage.setItem("ultimaActividad", Date.now().toString());
-
         return;
       }
-
-      const tiempoTranscurrido = Date.now() - ultimaActividad;
-
-      if (tiempoTranscurrido >= TIEMPO_INACTIVIDAD) {
-        finalizarSesion();
+      if (Date.now() - ultima >= TIEMPO_INACTIVIDAD) {
+        void finalizarSesion();
       }
-    };
+    }
 
-    const registrarActividad = () => {
-      localStorage.setItem("ultimaActividad", Date.now().toString());
-
-      clearTimeout(temporizador);
-
-      temporizador = setTimeout(finalizarSesion, TIEMPO_INACTIVIDAD);
-    };
+    function registrarActividad() {
+      if (Date.now() - ultimoEvento < 1000) return;
+      ultimoEvento = Date.now();
+      localStorage.setItem("ultimaActividad", ultimoEvento.toString());
+    }
 
     const eventos = ["mousedown", "keydown", "scroll", "touchstart"];
-
     eventos.forEach((evento) =>
       window.addEventListener(evento, registrarActividad),
     );
-
     comprobarInactividad();
-
-    temporizador = setTimeout(finalizarSesion, TIEMPO_INACTIVIDAD);
-
-    intervalo = setInterval(comprobarInactividad, 1000);
+    const intervalo = setInterval(comprobarInactividad, 1000);
 
     return () => {
-      clearTimeout(temporizador);
+      activo = false;
       clearInterval(intervalo);
-
       eventos.forEach((evento) =>
         window.removeEventListener(evento, registrarActividad),
       );
     };
-  }, [usuario, cerrarSesion, navigate]);
+  }, [usuario?.idUsuario, token, cerrarSesion, navigate]);
 }
 
 export default useInactividad;
