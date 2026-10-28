@@ -4,6 +4,7 @@ package com.lacomarcasoft.service;
 import com.lacomarcasoft.service.ConsultaIngresoServicio.EstudianteIdentificado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -51,7 +52,6 @@ class ConsultaIngresoCodigoServicioTest {
         );
     }
 
-    @SuppressWarnings("unchecked")
     private void prepararResultados(
             Long idExamen,
             String codigo,
@@ -59,7 +59,7 @@ class ConsultaIngresoCodigoServicioTest {
 
         when(jdbc.query(
                 anyString(),
-                any(RowMapper.class),
+                ArgumentMatchers.<RowMapper<EstudianteIdentificado>>any(),
                 eq(idExamen),
                 eq(codigo)
         )).thenReturn(resultados);
@@ -68,6 +68,7 @@ class ConsultaIngresoCodigoServicioTest {
     @Test
     void debeIdentificarEstudiantePorCodigo() {
         examenExiste(1L);
+
         prepararResultados(
                 1L,
                 "202012345",
@@ -85,7 +86,12 @@ class ConsultaIngresoCodigoServicioTest {
     @Test
     void debeInformarCodigoNoEncontrado() {
         examenExiste(1L);
-        prepararResultados(1L, "99999999", List.of());
+
+        prepararResultados(
+                1L,
+                "99999999",
+                List.of()
+        );
 
         ResponseStatusException error = assertThrows(
                 ResponseStatusException.class,
@@ -97,7 +103,9 @@ class ConsultaIngresoCodigoServicioTest {
 
     @Test
     void debeRechazarCodigoVacio() {
-        for (String codigo : new String[]{null, "", "   "}) {
+        String[] codigos = {null, "", "   "};
+
+        for (String codigo : codigos) {
             ResponseStatusException error = assertThrows(
                     ResponseStatusException.class,
                     () -> servicio.identificarPorCodigo(1L, codigo)
@@ -112,6 +120,7 @@ class ConsultaIngresoCodigoServicioTest {
     @Test
     void debeMantenerEstudianteIdentificado() {
         examenExiste(1L);
+
         prepararResultados(
                 1L,
                 "202012345",
@@ -129,6 +138,7 @@ class ConsultaIngresoCodigoServicioTest {
     @Test
     void debeEliminarEspaciosDelCodigo() {
         examenExiste(1L);
+
         prepararResultados(
                 1L,
                 "202012345",
@@ -136,13 +146,16 @@ class ConsultaIngresoCodigoServicioTest {
         );
 
         EstudianteIdentificado resultado =
-                servicio.identificarPorCodigo(1L, "  202012345  ");
+                servicio.identificarPorCodigo(
+                        1L,
+                        "  202012345  "
+                );
 
         assertEquals("202012345", resultado.codigoUniversitario());
 
         verify(jdbc).query(
                 anyString(),
-                any(RowMapper.class),
+                ArgumentMatchers.<RowMapper<EstudianteIdentificado>>any(),
                 eq(1L),
                 eq("202012345")
         );
@@ -249,7 +262,7 @@ class ConsultaIngresoCodigoServicioTest {
 
         assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
     }
-    
+
     @Test
     void debeDetectarErrorDeConexion() {
         when(jdbc.queryForObject(
