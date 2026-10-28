@@ -1,4 +1,4 @@
-import api from './api'
+﻿import api from './api'
 
 export async function obtenerExamenesIngreso() {
   const { data } = await api.get('/ingresos/examenes/disponibles')
