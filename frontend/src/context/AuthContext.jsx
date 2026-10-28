@@ -12,6 +12,7 @@ function leerSesionCompartida() {
       if (datos?.token && datos?.usuario?.idUsuario) return datos;
     }
   } catch {
+    
   }
   return null;
 }

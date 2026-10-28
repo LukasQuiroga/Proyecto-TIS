@@ -144,7 +144,7 @@ function EditarPerfil() {
           setFoto(nuevaUrl);
           setFotoTemporal("");
         } catch {
-          
+         
         }
         window.dispatchEvent(new Event("perfil-foto-actualizada"));
       }
