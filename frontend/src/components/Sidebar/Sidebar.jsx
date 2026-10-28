@@ -209,6 +209,17 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                       >
                               Por documento de identidad
                       </NavLink>
+
+                      <NavLink
+                        to="/ingreso/ingresos-registrados"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Ingresos registrados
+                      </NavLink>
                    </div>
                )}
 

@@ -35,6 +35,18 @@ public class IngresoExamen {
     )
     private OffsetDateTime fechaHoraIngreso;
 
+    @Column(name = "fecha_hora_salida")
+    private OffsetDateTime fechaHoraSalida;
+
+    @Column(name = "estado")
+    private String estado;
+
+    @Column(name = "motivo_suspension")
+    private String motivoSuspension;
+
+    @Column(name = "motivo_reincorporacion")
+    private String motivoReincorporacion;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_responsable", nullable = false)
     private Usuario responsable;
@@ -53,6 +65,38 @@ public class IngresoExamen {
 
     public OffsetDateTime getFechaHoraIngreso() {
         return fechaHoraIngreso;
+    }
+
+    public OffsetDateTime getFechaHoraSalida() {
+        return fechaHoraSalida;
+    }
+
+    public void setFechaHoraSalida(OffsetDateTime fechaHoraSalida) {
+        this.fechaHoraSalida = fechaHoraSalida;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public String getMotivoSuspension() {
+        return motivoSuspension;
+    }
+
+    public void setMotivoSuspension(String motivoSuspension) {
+        this.motivoSuspension = motivoSuspension;
+    }
+
+    public String getMotivoReincorporacion() {
+        return motivoReincorporacion;
+    }
+
+    public void setMotivoReincorporacion(String motivoReincorporacion) {
+        this.motivoReincorporacion = motivoReincorporacion;
     }
 
     public Usuario getResponsable() {

@@ -5,8 +5,8 @@ import {
   identificarEstudiantePorDocumento,
   obtenerExamenesIngreso,
 } from "../../services/validacionHabilitacionService";
-
 import ResultadoHabilitacion from "./ResultadoHabilitacion";
+
 import "./IdentificarDocumento.css";
 
 const PATRON_DOCUMENTO = /^[0-9]+(?:-[A-Za-z0-9]{1,2})?$/;
