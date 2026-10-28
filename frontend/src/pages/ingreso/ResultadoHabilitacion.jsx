@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { consultarHabilitacion, consultarIngresoRegistrado, registrarIngresoExamen, registrarIngreso } from '../../services/validacionHabilitacionService';
 import './ValidarHabilitacion.css';
 
@@ -7,10 +7,7 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
   const [intento, setIntento] = useState(0);
   const [estadoIngreso, setEstadoIngreso] = useState(null);
   const [guardandoIngreso, setGuardandoIngreso] = useState(false);
-  const consultaActual =
-    consulta?.intento === intento &&
-    Number(consulta?.idExamen) === Number(idExamen) &&
-    Number(consulta?.idEstudiante) === Number(idEstudiante);
+  const consultaActual = consulta?.intento === intento && Number(consulta?.idExamen) === Number(idExamen) && Number(consulta?.idEstudiante) === Number(idEstudiante);
   const resultado = consultaActual ? consulta.resultado : null;
   const error = consultaActual ? consulta.error : '';
   const cargando = !consultaActual;
@@ -22,26 +19,14 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
         const datos = await consultarHabilitacion(Number(idExamen), Number(idEstudiante));
         if (!activo) return;
         const estadosValidos = ['HABILITADO', 'INHABILITADO', 'SIN_ESTADO', 'NO_ASOCIADO'];
-        if (
-          Number(datos?.idExamen) !== Number(idExamen) ||
-          Number(datos?.idEstudiante) !== Number(idEstudiante) ||
-          !estadosValidos.includes(datos?.estado) ||
-          typeof datos?.puedeContinuar !== 'boolean' ||
-          (datos.estado !== 'HABILITADO' && datos.puedeContinuar)
-        ) {
-          setConsulta({ intento, idExamen, idEstudiante, resultado: null, error: 'El servidor devolviÃ³ una validaciÃ³n incompleta o inconsistente.' });
+        if (Number(datos?.idExamen) !== Number(idExamen) || Number(datos?.idEstudiante) !== Number(idEstudiante) || !estadosValidos.includes(datos?.estado) || typeof datos?.puedeContinuar !== 'boolean' || (datos.estado !== 'HABILITADO' && datos.puedeContinuar)) {
+          setConsulta({ intento, idExamen, idEstudiante, resultado: null, error: 'El servidor devolvió una validación incompleta o inconsistente.' });
           return;
         }
         setConsulta({ intento, idExamen, idEstudiante, resultado: datos, error: '' });
       } catch (err) {
         if (!activo) return;
-        setConsulta({
-          intento,
-          idExamen,
-          idEstudiante,
-          resultado: null,
-          error: err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo completar la validaciÃ³n. Verifique la conexiÃ³n.',
-        });
+        setConsulta({ intento, idExamen, idEstudiante, resultado: null, error: err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo completar la validación. Verifique la conexión.' });
       }
     }
     validar();
@@ -53,13 +38,16 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
   const ingresoActual = estadoIngreso?.clave === claveIngreso ? estadoIngreso : null;
 
   useEffect(() => {
-    if (!habilitado) { setEstadoIngreso(null); return; }
+    if (!habilitado) {
+      setEstadoIngreso((prev) => (prev?.clave !== claveIngreso ? prev : null));
+      return;
+    }
     let activo = true;
     consultarIngresoRegistrado(Number(idExamen), Number(idEstudiante))
       .then((datos) => {
         if (activo) {
           setEstadoIngreso({
-            clave: idExamen + ':' + idEstudiante + ':' + intento,
+            clave: claveIngreso,
             registrado: datos?.ingresoRegistrado === true,
             datos,
             error: '',
@@ -69,15 +57,15 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
       .catch((err) => {
         if (activo) {
           setEstadoIngreso({
-            clave: idExamen + ':' + idEstudiante + ':' + intento,
+            clave: claveIngreso,
             registrado: false,
             datos: null,
-            error: err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo verificar si el estudiante ya ingresÃ³.',
+            error: err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo verificar si el estudiante ya ingresó.',
           });
         }
       });
     return () => { activo = false; };
-  }, [habilitado, idExamen, idEstudiante, intento]);
+  }, [habilitado, idExamen, idEstudiante, intento, claveIngreso]);
 
   const registrarAsistencia = async () => {
     if (!habilitado || guardandoIngreso || !ingresoActual || ingresoActual.registrado || ingresoActual.error) return;
@@ -91,7 +79,7 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
         clave: claveIngreso,
         registrado: duplicado,
         datos: null,
-        error: duplicado ? 'Este estudiante ya tiene un ingreso registrado para este examen.' : (err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo registrar el ingreso. Verifique la conexiÃ³n.'),
+        error: duplicado ? 'Este estudiante ya tiene un ingreso registrado para este examen.' : (err.response?.data?.mensaje || err.response?.data?.message || 'No se pudo registrar el ingreso. Verifique la conexión.'),
       });
     } finally {
       setGuardandoIngreso(false);
@@ -120,8 +108,8 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
   return (
     <div className='validacion-integrada'>
       <section className='validacion-panel'>
-        <h2>ValidaciÃ³n de habilitaciÃ³n</h2>
-        <p>ComprobaciÃ³n de habilitaciÃ³n del estudiante identificado para el examen seleccionado.</p>
+        <h2>Validación de habilitación</h2>
+        <p>Comprobación de habilitación del estudiante identificado para el examen seleccionado.</p>
         <button type='button' className='validacion-boton' disabled={cargando} onClick={() => setIntento((actual) => actual + 1)}>
           {cargando ? 'Validando...' : 'Volver a validar'}
         </button>
@@ -129,14 +117,14 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
 
       {cargando && (
         <section className='validacion-resultado' role='status'>
-          <h2>Validando habilitaciÃ³n...</h2>
+          <h2>Validando habilitación...</h2>
           <p>Consultando el estado del estudiante.</p>
         </section>
       )}
 
       {!cargando && error && (
         <section className='validacion-resultado validacion-error' role='alert'>
-          <h2>ValidaciÃ³n no completada</h2>
+          <h2>Validación no completada</h2>
           <p>{error}</p>
           <strong>Ingreso no autorizado.</strong>
         </section>
@@ -153,13 +141,13 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
           <p>{resultado.mensaje}</p>
           {resultado.estado === 'INHABILITADO' && (
             <div className='validacion-motivo'>
-              <h3>Motivo de inhabilitaciÃ³n</h3>
-              <p><strong>{resultado.tituloMotivo || 'Sin tÃ­tulo registrado'}</strong></p>
+              <h3>Motivo de inhabilitación</h3>
+              <p><strong>{resultado.tituloMotivo || 'Sin título registrado'}</strong></p>
               <p>{resultado.motivo || 'Sin detalle registrado'}</p>
             </div>
           )}
           <div className='validacion-decision'>
-            {habilitado ? (ingresoActual?.registrado ? 'Ingreso ya registrado para este examen.' : 'HabilitaciÃ³n confirmada. Puede registrar el ingreso.') : 'No se permite continuar con el ingreso.'}
+            {habilitado ? (ingresoActual?.registrado ? 'Ingreso ya registrado para este examen.' : 'Habilitación confirmada. Puede registrar el ingreso.') : 'No se permite continuar con el ingreso.'}
           </div>
         </section>
       )}
@@ -186,7 +174,7 @@ function ResultadoHabilitacion({ idExamen, idEstudiante, nombreExamen, nombreEst
                   {guardandoIngreso ? 'Registrando...' : 'Registrar ingreso'}
                 </button>
               </div>
-              <p className='validacion-ayuda'>La habilitaciÃ³n y el permiso del docente se vuelven a comprobar en el servidor.</p>
+              <p className='validacion-ayuda'>La habilitación and the permiso del docente se vuelven a comprobar en el servidor.</p>
             </>
           )}
         </section>
