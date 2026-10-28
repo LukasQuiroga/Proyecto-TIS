@@ -2,6 +2,7 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.RegistrarIngresoSolicitud;
 import com.lacomarcasoft.dto.response.EstadoIngresoRespuesta;
+import com.lacomarcasoft.dto.response.IngresoRegistradoRespuesta;
 import com.lacomarcasoft.service.IngresoExamenServicio;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -28,6 +30,15 @@ public class IngresoExamenControlador {
             @PathVariable Long idEstudiante) {
 
         return servicio.consultar(idExamen, idEstudiante);
+    }
+
+    @GetMapping("/registrados")
+    public List<IngresoRegistradoRespuesta> listarRegistrados(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "idExamen", required = false) Long idExamen,
+            @RequestParam(value = "fecha", required = false) String fecha) {
+
+        return servicio.listarRegistrados(q, idExamen, fecha);
     }
 
     @PostMapping("/{idExamen}/ingresos")

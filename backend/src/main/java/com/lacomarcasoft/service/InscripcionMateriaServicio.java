@@ -1,18 +1,22 @@
 package com.lacomarcasoft.service;
 
+import com.lacomarcasoft.modelo.Examen;
 import com.lacomarcasoft.modelo.Materia;
 import com.lacomarcasoft.modelo.MateriaEstudiante;
 import com.lacomarcasoft.modelo.MateriaEstudianteId;
 import com.lacomarcasoft.modelo.QrInscripcion;
 import com.lacomarcasoft.modelo.Usuario;
 
+import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
 import com.lacomarcasoft.repository.MateriaEstudianteRepositorio;
 import com.lacomarcasoft.repository.QrInscripcionRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
+import com.lacomarcasoft.service.evento.QrExamenEnvioSolicitadoEvento;
 
 import jakarta.persistence.EntityManager;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,9 @@ public class InscripcionMateriaServicio {
     private final QrInscripcionServicio qrServicio;
     private final EntityManager entityManager;
     private final AuditoriaQrServicio auditoriaQrServicio;
+    private final ExamenRepositorio examenRepositorio;
+    private final QrExamenServicio qrExamenServicio;
+    private final ApplicationEventPublisher eventPublisher;
 
     public InscripcionMateriaServicio(
             QrInscripcionRepositorio qrRepositorio,
@@ -42,7 +49,10 @@ public class InscripcionMateriaServicio {
             UsuarioRepositorio usuarioRepositorio,
             QrInscripcionServicio qrServicio,
             EntityManager entityManager,
-            AuditoriaQrServicio auditoriaQrServicio
+            AuditoriaQrServicio auditoriaQrServicio,
+            ExamenRepositorio examenRepositorio,
+            QrExamenServicio qrExamenServicio,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.qrRepositorio = qrRepositorio;
         this.materiaRepositorio = materiaRepositorio;
@@ -51,6 +61,9 @@ public class InscripcionMateriaServicio {
         this.qrServicio = qrServicio;
         this.entityManager = entityManager;
         this.auditoriaQrServicio = auditoriaQrServicio;
+        this.examenRepositorio = examenRepositorio;
+        this.qrExamenServicio = qrExamenServicio;
+        this.eventPublisher = eventPublisher;
     }
 
     public record ResultadoInscripcion(
@@ -264,6 +277,8 @@ public class InscripcionMateriaServicio {
             );
         }
 
+        generarQrExamenesProgramados(materia, estudiante);
+
         auditoriaQrServicio.registrarExito(
                 idEstudiante,
                 "INSCRIPCION_MEDIANTE_QR",
@@ -277,6 +292,24 @@ public class InscripcionMateriaServicio {
                 materia.getGrupo(),
                 "Inscripcion realizada correctamente"
         );
+    }
+
+    private void generarQrExamenesProgramados(
+            Materia materia,
+            Usuario estudiante
+    ) {
+        List<Examen> examenes = examenRepositorio
+                .listarProgramadosPorMateria(materia.getIdMateria());
+
+        for (Examen examen : examenes) {
+            qrExamenServicio
+                    .generarParaEstudiante(examen, estudiante)
+                    .ifPresent(qr -> eventPublisher.publishEvent(
+                            new QrExamenEnvioSolicitadoEvento(
+                                    examen.getIdExamen()
+                            )
+                    ));
+        }
     }
 
     @Transactional(readOnly = true)

@@ -345,6 +345,18 @@ function RegistrarExamen() {
     const tieneHoraInicio = datos.horaInicio.trim().length > 0;
     const tieneHoraFin = datos.horaFin.trim().length > 0;
 
+    if (!tieneFecha) {
+      nuevos.fechaExamen = "La fecha del examen es obligatoria.";
+    }
+
+    if (!tieneHoraInicio) {
+      nuevos.horaInicio = "La hora de inicio es obligatoria.";
+    }
+
+    if (!tieneHoraFin) {
+      nuevos.horaFin = "La hora de fin es obligatoria.";
+    }
+
     if (tieneFecha) {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
@@ -641,6 +653,7 @@ function RegistrarExamen() {
               <Campo
                 id="examen-fecha"
                 etiqueta="Fecha del examen"
+                requerido
                 error={errores.fechaExamen}
               >
                 <input
@@ -658,6 +671,7 @@ function RegistrarExamen() {
               <Campo
                 id="examen-hora-inicio"
                 etiqueta="Hora de inicio"
+                requerido
                 error={errores.horaInicio}
               >
                 <input
@@ -676,6 +690,7 @@ function RegistrarExamen() {
               <Campo
                 id="examen-hora-fin"
                 etiqueta="Hora de fin"
+                requerido
                 error={errores.horaFin}
               >
                 <input

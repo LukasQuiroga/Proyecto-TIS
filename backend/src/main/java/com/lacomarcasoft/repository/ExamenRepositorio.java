@@ -63,6 +63,21 @@ public interface ExamenRepositorio extends JpaRepository<Examen, Long> {
     );
 
     @Query("""
+        SELECT e
+        FROM Examen e
+        JOIN FETCH e.materia m
+        JOIN FETCH m.asignatura
+        WHERE e.materia.idMateria = :idMateria
+          AND e.fechaExamen IS NOT NULL
+          AND e.horaInicio IS NOT NULL
+          AND e.horaFin IS NOT NULL
+        ORDER BY e.fechaExamen ASC, e.horaInicio ASC
+        """)
+    List<Examen> listarProgramadosPorMateria(
+            @Param("idMateria") Long idMateria
+    );
+
+    @Query("""
         SELECT COUNT(e) > 0
         FROM Examen e
         WHERE e.materia.idMateria = :idMateria

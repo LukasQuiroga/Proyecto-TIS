@@ -32,8 +32,8 @@ import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
-
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
+import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
 import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
 
@@ -251,11 +251,34 @@ function App() {
 
             
             <Route
+<<<<<<< Updated upstream
               path="/ingreso/identificar-codigo"
+=======
+               path="/ingreso/identificar-codigo"
+               element={
+                <AccesoHu15>
+                <IdentificarCodigo />
+                </AccesoHu15>
+              }
+            />
+
+            {/* Validar habilitacion */}
+            <Route
+               path="/ingreso/validar-habilitacion"
+>>>>>>> Stashed changes
               element={
                 <AccesoControlIngreso>
                   <IdentificarCodigo />
                 </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/ingresos-registrados"
+              element={
+                <ProtectedPermission permiso="CONTROL_INGRESO">
+                  <IngresosRegistrados />
+                </ProtectedPermission>
               }
             />
 
