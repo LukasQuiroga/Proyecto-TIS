@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  consultarHabilitacion,
+  verificarIngresoYRegistrarRechazo,
   consultarIngresoRegistrado,
   registrarIngresoExamen,
 } from "../../services/validacionHabilitacionService";
@@ -30,7 +30,7 @@ function ResultadoHabilitacion({
 
     async function validar() {
         try {
-        const datos = await consultarHabilitacion(
+        const datos = await verificarIngresoYRegistrarRechazo(
             Number(idExamen),
             Number(idEstudiante),
         );
