@@ -29,18 +29,21 @@ public class IngresoExamenServicio {
     private final UsuarioRepositorio usuarios;
     private final ValidacionHabilitacionIngresoServicio validacionHabilitacion;
     private final AccesoExamenDocenteServicio accesoExamenDocente;
+    private final IntentoIngresoNoAutorizadoServicio intentos;
 
     public IngresoExamenServicio(
             JdbcTemplate jdbc,
             ExamenRepositorio examenes,
             UsuarioRepositorio usuarios,
             ValidacionHabilitacionIngresoServicio validacionHabilitacion,
-            AccesoExamenDocenteServicio accesoExamenDocente) {
+            AccesoExamenDocenteServicio accesoExamenDocente,
+            IntentoIngresoNoAutorizadoServicio intentos) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
         this.validacionHabilitacion = validacionHabilitacion;
-         this.accesoExamenDocente = accesoExamenDocente;
+        this.accesoExamenDocente = accesoExamenDocente;
+        this.intentos = intentos;
     }
 
     @Transactional(readOnly = true)
@@ -93,6 +96,8 @@ public class IngresoExamenServicio {
             validacionHabilitacion.validar(idExamen, idEstudiante);
 
         if (!habilitacion.puedeContinuar()) {
+            intentos.registrar(idExamen, idEstudiante, idResponsable,
+                String.valueOf(idEstudiante), "SISTEMA", habilitacion.mensaje());
             throw new ResponseStatusException(
                 HttpStatus.FORBIDDEN,
                 habilitacion.mensaje()
@@ -108,6 +113,8 @@ public class IngresoExamenServicio {
             """, idExamen, idEstudiante, idResponsable);
 
         if (insertados == 0) {
+            intentos.registrar(idExamen, idEstudiante, idResponsable,
+                String.valueOf(idEstudiante), "SISTEMA", "Ingreso duplicado");
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT,
                 "Este estudiante ya tiene un ingreso registrado para este examen."
