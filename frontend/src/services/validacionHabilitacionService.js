@@ -96,3 +96,20 @@ export async function actualizarIngresoRegistrado(idIngreso, payload) {
   );
   return data;
 }
+
+export async function listarIntentosNoAutorizados(filtros = {}) {
+  const { data } = await api.get("/ingresos/examenes/intentos-no-autorizados", {
+    params: filtros,
+  });
+  return data;
+}
+
+export async function verificarIngresoYRegistrarRechazo(
+  idExamen,
+  idEstudiante,
+) {
+  const { data } = await api.post(
+    `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}/habilitacion/verificar-ingreso`,
+  );
+  return data;
+}

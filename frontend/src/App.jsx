@@ -34,6 +34,7 @@ import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExame
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
+import IntentosNoAutorizados from "./pages/ingreso/IntentosNoAutorizados.jsx";
 import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
 
@@ -281,6 +282,15 @@ function App() {
                 <ProtectedPermission permiso="CONTROL_INGRESO">
                   <IngresosRegistrados />
                 </ProtectedPermission>
+              }
+            />
+
+            <Route
+              path="/ingreso/intentos-no-autorizados"
+              element={
+                <AccesoControlIngreso>
+                  <IntentosNoAutorizados />
+                </AccesoControlIngreso>
               }
             />
 

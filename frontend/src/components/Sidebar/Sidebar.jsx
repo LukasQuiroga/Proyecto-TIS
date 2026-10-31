@@ -220,6 +220,14 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                       >
                         Ingresos registrados
                       </NavLink>
+                      <NavLink
+                        to="/ingreso/intentos-no-autorizados"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${isActive ? "sidebar-subopcion-activa" : ""}`
+                        }
+                      >
+                        Intentos no autorizados
+                      </NavLink>
                    </div>
                )}
 
