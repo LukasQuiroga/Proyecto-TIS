@@ -267,3 +267,21 @@
     grid-template-columns: 110px 1fr;
   }
 }
+
+.mis-examenes-modal-error {
+  text-align: center;
+}
+
+.mis-examenes-modal-error h2 {
+  color: #163453;
+  margin: 12px 0;
+}
+
+.mis-examenes-modal-error p {
+  color: #62758b;
+  line-height: 1.5;
+}
+
+.mis-examenes-modal-error footer {
+  justify-content: center;
+}

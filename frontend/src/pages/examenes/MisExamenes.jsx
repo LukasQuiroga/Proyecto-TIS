@@ -158,6 +158,25 @@ useEffect(() => {
     setAviso("");
   };
 
+  
+ useEffect(() => {
+   if (!seleccionado) return undefined;
+
+   const cerrarConEscape = (evento) => {
+     if (evento.key === "Escape") {
+       setSeleccionado(null);
+       setAviso("");
+     }
+   };
+
+   window.addEventListener("keydown", cerrarConEscape);
+
+   return () => {
+     window.removeEventListener("keydown", cerrarConEscape);
+   };
+ }, [seleccionado]);
+
+
   return (
     <main className="mis-examenes">
       <header className="mis-examenes-cabecera">
@@ -210,15 +229,13 @@ useEffect(() => {
           <p className="mis-examenes-estado" role="status">
             Cargando exámenes...
           </p>
+        
         ) : error ? (
-          <div className="mis-examenes-estado" role="alert">
-            <FiInfo />
-            <p>{error}</p>
-            <button type="button" onClick={actualizar}>
-              Reintentar
-            </button>
-          </div>
+             <p className="mis-examenes-estado" role="alert">
+                 No se pudo mostrar el listado de exámenes.
+             </p>
         ) : !examenes.length ? (
+
           <div className="mis-examenes-estado">
             <FiCalendar size={35} />
             <h3>Sin exámenes inscritos</h3>
@@ -283,6 +300,30 @@ useEffect(() => {
           </div>
         )}
       </section>
+      
+   {error && !cargando && (
+    <div className="mis-examenes-overlay">
+      <section
+        className="mis-examenes-modal mis-examenes-modal-error"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="error-examenes"
+      >
+        <FiInfo size={34} color="#c47e25" />
+
+        <h2 id="error-examenes">Error de consulta</h2>
+
+        <p>{error}</p>
+
+        <footer>
+          <button type="button" onClick={actualizar}>
+            Reintentar
+          </button>
+        </footer>
+      </section>
+    </div>
+  )}
+
 
       {seleccionado && (
         <div
