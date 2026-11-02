@@ -1,7 +1,6 @@
 package com.lacomarcasoft.service;
 
 import jakarta.annotation.PostConstruct;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;

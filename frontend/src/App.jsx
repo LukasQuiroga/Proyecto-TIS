@@ -28,6 +28,7 @@ import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr
 import MisMaterias from "./pages/asignaturas/MisMaterias.jsx";
 
 import Examenes from "./pages/examenes/Examenes.jsx";
+import MisExamenes from "./pages/examenes/MisExamenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
@@ -54,6 +55,21 @@ function AccesoSoloDocenteHabilitaciones({ children }) {
 
   return children;
 }
+
+function AccesoSoloEstudiante({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (usuario.nombreRol?.trim().toUpperCase() !== "ESTUDIANTE") {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
 
 function AccesoControlIngreso({ children }) {
   const { usuario } = useAuth();
@@ -198,6 +214,15 @@ function App() {
             <Route path="/mis-materias" element={<MisMaterias />} />
 
             {/* EXÁMENES */}
+
+          <Route
+               path="/mis-examenes"
+               element={
+            <AccesoSoloEstudiante>
+             <MisExamenes />
+            </AccesoSoloEstudiante>
+            }
+           />
 
             <Route
               path="/examenes"
