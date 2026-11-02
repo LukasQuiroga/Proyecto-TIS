@@ -13,6 +13,7 @@ import {
   FiMenu,
   FiTarget,
   FiUsers,
+  FiCalendar,
 } from "react-icons/fi";
 import { FaGraduationCap } from "react-icons/fa";
 import { useAuth } from "../../context/useAuth";
@@ -185,7 +186,7 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                       {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
                     </span>
                   </button>
-                 
+
             {ingresoAbierto && (
                     <div className="sidebar-submenu">
                       <NavLink
@@ -243,6 +244,12 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
             {usuario?.nombreRol === "ESTUDIANTE" && (
               <Opcion to="/mis-materias" icono={<FiBookOpen />}>
                 Mis materias
+              </Opcion>
+            )}
+
+            {usuario?.nombreRol?.trim().toUpperCase() === "ESTUDIANTE" && (
+              <Opcion to="/mis-examenes" icono={<FiCalendar />}>
+                Mis exámenes
               </Opcion>
             )}
 
