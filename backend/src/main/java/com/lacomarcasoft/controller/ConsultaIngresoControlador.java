@@ -60,10 +60,10 @@ public class ConsultaIngresoControlador {
     @PostMapping("/{idExamen}/identificar-qr")
     public ConsultaIngresoServicio.EstudianteIdentificado identificarPorQr(
             @PathVariable Long idExamen,
-            @RequestBody SolicitudIdentificacionQr solicitud) {
+            @RequestBody(required = false) SolicitudIdentificacionQr solicitud) {
         return identificacionQrServicio.identificar(
                 idExamen,
-                solicitud.token()
+                solicitud == null ? null : solicitud.token()
         );
     }
 
