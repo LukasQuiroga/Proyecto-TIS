@@ -34,6 +34,7 @@ import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
+import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
 import IntentosNoAutorizados from "./pages/ingreso/IntentosNoAutorizados.jsx";
 import AccesoDenegado from "./routes/AccesoDenegado.jsx";
@@ -44,7 +45,6 @@ import Auditoria from "./pages/auditoria/Auditoria.jsx";
 import Perfil from "./pages/perfil/Perfil.jsx";
 import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
 import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
-
 
 function AccesoSoloDocenteHabilitaciones({ children }) {
   const { usuario } = useAuth();
@@ -70,7 +70,6 @@ function AccesoSoloEstudiante({ children }) {
   return children;
 }
 
-
 function AccesoControlIngreso({ children }) {
   const { usuario } = useAuth();
 
@@ -78,11 +77,9 @@ function AccesoControlIngreso({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  const esDocente =
-    usuario.nombreRol?.toUpperCase() === "DOCENTE";
+  const esDocente = usuario.nombreRol?.toUpperCase() === "DOCENTE";
 
-  const tienePermiso =
-    usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
+  const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
   if (!esDocente || !tienePermiso) {
     return <AccesoDenegado />;
@@ -215,14 +212,14 @@ function App() {
 
             {/* EXÁMENES */}
 
-          <Route
-               path="/mis-examenes"
-               element={
-            <AccesoSoloEstudiante>
-             <MisExamenes />
-            </AccesoSoloEstudiante>
-            }
-           />
+            <Route
+              path="/mis-examenes"
+              element={
+                <AccesoSoloEstudiante>
+                  <MisExamenes />
+                </AccesoSoloEstudiante>
+              }
+            />
 
             <Route
               path="/examenes"
@@ -297,6 +294,15 @@ function App() {
               element={
                 <AccesoControlIngreso>
                   <IdentificarCodigo />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/identificar-qr"
+              element={
+                <AccesoControlIngreso>
+                  <IdentificarQr />
                 </AccesoControlIngreso>
               }
             />
