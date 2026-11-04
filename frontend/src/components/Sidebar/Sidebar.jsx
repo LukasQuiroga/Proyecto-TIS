@@ -180,35 +180,48 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                     onClick={() => setIngresoAbierto(!ingresoAbierto)}
                     aria-expanded={ingresoAbierto}
                   >
-                    <span className="sidebar-icono"><FiTarget /></span>
+                    <span className="sidebar-icono">
+                      <FiTarget />
+                    </span>
                     <span className="sidebar-texto">Control de ingreso</span>
                     <span className="sidebar-flecha">
                       {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
                     </span>
                   </button>
 
-            {ingresoAbierto && (
+                  {ingresoAbierto && (
                     <div className="sidebar-submenu">
                       <NavLink
-                       to="/ingreso/identificar-codigo"
-                       className={({ isActive }) =>
-                      `sidebar-subopcion ${
-                         isActive ? "sidebar-subopcion-activa" : ""
-                     }`
-               }
+                        to="/ingreso/identificar-qr"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
                       >
-                          Por código universitario
-                     </NavLink>
+                        Por código QR
+                      </NavLink>
 
-                     <NavLink
-                           to="/ingreso/identificar-documento"
-                           className={({ isActive }) =>
-                           `sidebar-subopcion ${
-                           isActive ? "sidebar-subopcion-activa" : ""
-                       }`
-                    }
+                      <NavLink
+                        to="/ingreso/identificar-codigo"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
                       >
-                              Por documento de identidad
+                        Por código universitario
+                      </NavLink>
+
+                      <NavLink
+                        to="/ingreso/identificar-documento"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Por documento de identidad
                       </NavLink>
 
                       <NavLink
@@ -229,11 +242,10 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                       >
                         Intentos no autorizados
                       </NavLink>
-                   </div>
-               )}
-
-                  </>
-                 )}
+                    </div>
+                  )}
+                </>
+              )}
 
             {usuario?.nombreRol === "ESTUDIANTE" && (
               <Opcion to="/inscripcion-qr/inscribir" icono={<FiMaximize />}>

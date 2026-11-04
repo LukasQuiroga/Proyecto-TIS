@@ -39,6 +39,14 @@ export async function identificarEstudiantePorCodigo(idExamen, codigo) {
   return data;
 }
 
+export async function identificarEstudiantePorQr(idExamen, token) {
+  const { data } = await api.post(
+    `/ingresos/examenes/${idExamen}/identificar-qr`,
+    { token },
+  );
+  return data;
+}
+
 export async function obtenerFotoEstudianteIdentificado(
   idExamen,
   idEstudiante,
