@@ -70,18 +70,22 @@ function AccesoSoloEstudiante({ children }) {
   return children;
 }
 
-function AccesoControlIngreso({ children }) {
+function AccesoControlIngreso({ children, permitirAdministrador = false }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  const esDocente = usuario.nombreRol?.toUpperCase() === "DOCENTE";
+  const rolActual = usuario.nombreRol?.trim().toUpperCase();
+  const esDocente = rolActual === "DOCENTE";
+  const esAdministrador = rolActual === "ADMINISTRADOR";
 
   const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
-  if (!esDocente || !tienePermiso) {
+  const rolAutorizado = esDocente || (permitirAdministrador && esAdministrador);
+
+  if (!rolAutorizado || !tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -283,7 +287,7 @@ function App() {
             <Route
               path="/ingreso/identificar-documento"
               element={
-                <AccesoControlIngreso>
+                <AccesoControlIngreso permitirAdministrador>
                   <IdentificarDocumento />
                 </AccesoControlIngreso>
               }
