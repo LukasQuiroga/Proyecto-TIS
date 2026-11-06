@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiCalendar, FiEdit, FiEye, FiFileText, FiFilter, FiSearch, FiX } from "react-icons/fi";
 import {
@@ -211,12 +211,41 @@ function IngresosRegistrados() {
     };
   }, [location.pathname, location.state?.idIngreso, navigate]);
 
-  const cerrarModal = () => {
+  const estadoInicial = ingresoSeleccionado
+    ? ingresoSeleccionado.estado === "SUSPENDIDO"
+      ? "REINCORPORADO"
+      : "SUSPENDIDO"
+    : "SUSPENDIDO";
+  const hayCambiosSinGuardar =
+    modalModo === "editar" &&
+    (motivo.trim().length > 0 || estadoSeleccionado !== estadoInicial);
+
+  const cerrarModal = useCallback(() => {
     setModalAbierto(false);
     setIngresoSeleccionado(null);
     setMotivo("");
     setErrorModal("");
-  };
+  }, []);
+
+  const solicitarCierre = useCallback(() => {
+    if (guardando) return;
+    if (
+      hayCambiosSinGuardar &&
+      !window.confirm("Tienes cambios sin guardar. ¿Deseas descartarlos?")
+    ) {
+      return;
+    }
+    cerrarModal();
+  }, [guardando, hayCambiosSinGuardar, cerrarModal]);
+
+  useEffect(() => {
+    if (!modalAbierto) return undefined;
+    const cerrarConEscape = (e) => {
+      if (e.key === "Escape") solicitarCierre();
+    };
+    document.addEventListener("keydown", cerrarConEscape);
+    return () => document.removeEventListener("keydown", cerrarConEscape);
+  }, [modalAbierto, solicitarCierre]);
 
   const guardarEdicion = async () => {
     if (!ingresoSeleccionado) return;
@@ -401,11 +430,21 @@ function IngresosRegistrados() {
           </section>
 
           {modalAbierto && (
-            <div className="ingresos-registrados-modal-overlay">
+            <div
+              className="ingresos-registrados-modal-overlay"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) solicitarCierre();
+              }}
+            >
               <div className="ingresos-registrados-modal">
                 <div className="ingresos-registrados-modal-header">
                   <h2>{modalModo === "ver" ? "Detalle de ingreso" : "Actualizar ingreso"}</h2>
-                  <button type="button" onClick={cerrarModal} className="ingresos-registrados-modal-close">
+                  <button
+                    type="button"
+                    onClick={solicitarCierre}
+                    className="ingresos-registrados-modal-close"
+                    disabled={guardando}
+                  >
                     <FiX />
                   </button>
                 </div>
@@ -486,7 +525,7 @@ function IngresosRegistrados() {
                           </div>
                           {errorModal && <div className="ingresos-registrados-modal-error">{errorModal}</div>}
                           <div className="ingresos-registrados-modal-actions">
-                            <button type="button" className="ingresos-registrados-boton-ver" style={{ width: "auto", padding: "0 16px" }} onClick={cerrarModal}>
+                            <button type="button" className="ingresos-registrados-boton-ver" style={{ width: "auto", padding: "0 16px" }} onClick={solicitarCierre}>
                               Cancelar
                             </button>
                             <button type="button" className="ingresos-registrados-boton-filtrar" style={{ marginLeft: 0 }} onClick={guardarEdicion} disabled={guardando}>
