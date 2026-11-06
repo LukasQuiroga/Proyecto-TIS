@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import EstudianteNoEncontrado from "./EstudianteNoEncontrado";
 
 import {
   FiAlertCircle,
@@ -299,18 +300,28 @@ function IdentificarCodigo() {
         </div>
       )}
 
-      {error && (
-        <div
-          className="identificacion-alerta identificacion-error"
-          role="alert"
-        >
-          <FiAlertCircle aria-hidden="true" />
-          <div>
-            <strong>No se pudo identificar al estudiante.</strong>
-            <p>{error}</p>
-          </div>
-        </div>
-      )}
+      
+     {error === "Estudiante no encontrado" ? (
+       <EstudianteNoEncontrado
+         codigoConsultado={codigo.trim()}
+         onReintentar={buscarOtro}
+       />
+     ) : (
+       error && (
+         <div
+           className="identificacion-alerta identificacion-error"
+           role="alert"
+         >
+           <FiAlertCircle aria-hidden="true" />
+
+           <div>
+             <strong>No se pudo identificar al estudiante.</strong>
+             <p>{error}</p>
+           </div>
+         </div>
+       )
+     )}
+
 
       {!identificado && !error && !buscando && (
         <section className="identificacion-inicial">
