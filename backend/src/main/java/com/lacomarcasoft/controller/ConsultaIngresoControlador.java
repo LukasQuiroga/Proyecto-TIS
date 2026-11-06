@@ -42,6 +42,12 @@ public class ConsultaIngresoControlador {
         return servicio.listarEstudiantes(idExamen);
     }
 
+    @GetMapping("/identificar-documento")
+    public ConsultaIngresoServicio.EstudianteIdentificadoDocumento
+            identificarPorDocumento(@RequestParam String documento) {
+        return servicio.identificarPorDocumento(documento);
+    }
+
     @GetMapping("/{idExamen}/identificar-documento")
     public ConsultaIngresoServicio.EstudianteIdentificado
             identificarPorDocumento(
