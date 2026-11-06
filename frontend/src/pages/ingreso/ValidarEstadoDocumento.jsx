@@ -9,6 +9,12 @@ import "./ValidarHabilitacion.css";
 function ValidarEstadoDocumento() {
   const location = useLocation();
   const navigate = useNavigate();
+  const identificadoPorCodigo =
+  location.state?.origenIdentificacion === "CODIGO";
+
+  const rutaIdentificacion = identificadoPorCodigo
+    ? "/ingreso/identificar-codigo"
+    : "/ingreso/identificar-documento";
   const estudiante = location.state?.identificacionEstudiante;
   const idEstudiante = Number(estudiante?.idEstudiante);
   const identificacionValida =
@@ -139,11 +145,14 @@ function ValidarEstadoDocumento() {
         </header>
         <section className="validacion-resultado validacion-error" role="alert">
           <h2>No hay un estudiante identificado</h2>
-          <p>Primero debe identificar al estudiante mediante su documento.</p>
+          <p>
+              Primero debe identificar correctamente a un estudiante
+              para continuar con la validación.
+         </p>
           <button
             type="button"
             className="validacion-boton"
-            onClick={() => navigate("/ingreso/identificar-documento")}
+            onClick={() => navigate(rutaIdentificacion)}
           >
             Identificar estudiante
           </button>
