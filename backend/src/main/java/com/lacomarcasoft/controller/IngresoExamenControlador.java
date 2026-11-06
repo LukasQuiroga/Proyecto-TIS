@@ -34,6 +34,25 @@ public class IngresoExamenControlador {
         return servicio.consultar(idExamen, idEstudiante);
     }
 
+    @PostMapping("/{idExamen}/estudiantes/{idEstudiante}/intentos-duplicados")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void registrarIntentoDuplicado(
+            @PathVariable Long idExamen,
+            @PathVariable Long idEstudiante,
+            Authentication auth) {
+
+        Long responsable =
+            auth != null && auth.getDetails() instanceof Long id
+                ? id
+                : null;
+
+        servicio.registrarIntentoDuplicado(
+            idExamen,
+            idEstudiante,
+            responsable
+        );
+    }
+
     @GetMapping("/registrados")
     public List<IngresoRegistradoRespuesta> listarRegistrados(
             @RequestParam(value = "q", required = false) String q,

@@ -368,6 +368,7 @@ function IdentificarCodigo() {
                 )?.nombreExamen
               }
               nombreEstudiante={identificado.nombreEstudiante}
+              codigoEstudiante={identificado.codigoUniversitario}
             />
           )}
         </>

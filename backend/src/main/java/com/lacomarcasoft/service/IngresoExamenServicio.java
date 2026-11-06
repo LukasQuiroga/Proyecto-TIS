@@ -57,6 +57,64 @@ public class IngresoExamenServicio {
     }
 
     @Transactional
+    public void registrarIntentoDuplicado(
+            Long idExamen,
+            Long idEstudiante,
+            Long idResponsable) {
+
+        validarIds(idExamen, idEstudiante);
+
+        if (idResponsable == null || idResponsable <= 0) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Debe iniciar sesion"
+            );
+        }
+
+        Long idDocenteAutenticado =
+            accesoExamenDocente.obtenerDocenteAutenticado();
+
+        if (!idDocenteAutenticado.equals(idResponsable)) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "El responsable no coincide con el docente autenticado"
+            );
+        }
+
+        accesoExamenDocente.verificarExamenActual(idExamen);
+        validarExistencia(idExamen, idEstudiante);
+
+        if (!usuarios.existsById(idResponsable)) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Responsable no encontrado"
+            );
+        }
+
+        EstadoIngresoRespuesta ingresoExistente = buscar(idExamen, idEstudiante);
+        if (!ingresoExistente.ingresoRegistrado()) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "No existe un ingreso previo que pueda considerarse duplicado"
+            );
+        }
+
+        String identificador = usuarios.findById(idEstudiante)
+            .map(usuario -> usuario.getCodigoSis())
+            .filter(codigo -> codigo != null && !codigo.isBlank())
+            .orElse(String.valueOf(idEstudiante));
+
+        intentos.registrar(
+            idExamen,
+            idEstudiante,
+            idResponsable,
+            identificador,
+            "SISTEMA",
+            "Ingreso duplicado"
+        );
+    }
+
+    @Transactional
     public EstadoIngresoRespuesta registrar(
             Long idExamen,
             Long idEstudiante,

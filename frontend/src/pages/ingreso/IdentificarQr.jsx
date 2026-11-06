@@ -532,6 +532,7 @@ function IdentificarQr() {
               idEstudiante={identificado.idEstudiante}
               nombreExamen={examenSeleccionado?.nombreExamen}
               nombreEstudiante={identificado.nombreEstudiante}
+              codigoEstudiante={identificado.codigoUniversitario}
             />
           )}
         </>

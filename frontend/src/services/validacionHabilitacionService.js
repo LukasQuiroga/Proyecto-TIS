@@ -88,6 +88,16 @@ export async function consultarIngresoRegistrado(idExamen, idEstudiante) {
   return data;
 }
 
+export async function registrarIntentoIngresoDuplicado(idExamen, idEstudiante) {
+  await api.post(
+    "/ingresos/examenes/" +
+      idExamen +
+      "/estudiantes/" +
+      idEstudiante +
+      "/intentos-duplicados",
+  );
+}
+
 export async function registrarIngresoExamen(idExamen, idEstudiante) {
   const { data } = await api.post(
     "/ingresos/examenes/" + idExamen + "/ingresos",
