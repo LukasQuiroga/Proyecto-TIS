@@ -53,15 +53,13 @@ function Inicio() {
           </h1>
 
           <h2 className="inicio-subtitulo-principal">
-            Control de ingreso a
+            Gestion de ingreso a
             <br />
             exámenes masivos
           </h2>
 
           <p className="inicio-descripcion-principal">
             Una plataforma para gestionar estudiantes, materias
-            <br />
-            y exámenes de manera simple y segura.
           </p>
         </div>
 

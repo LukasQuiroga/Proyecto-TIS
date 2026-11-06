@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FiCalendar, FiEdit, FiEye, FiFileText, FiFilter, FiSearch, FiX } from "react-icons/fi";
 import {
   actualizarIngresoRegistrado,
@@ -9,6 +10,8 @@ import { listarIngresosRegistrados } from "../../services/validacionHabilitacion
 import "./IngresosRegistrados.css";
 
 function IngresosRegistrados() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [examenes, setExamenes] = useState([]);
   const [ingresos, setIngresos] = useState([]);
   const [q, setQ] = useState("");
@@ -178,6 +181,35 @@ function IngresosRegistrados() {
       );
     }
   };
+
+  useEffect(() => {
+    const idIngreso = location.state?.idIngreso;
+    if (!idIngreso) return undefined;
+
+    let activo = true;
+    obtenerIngresoRegistrado(idIngreso)
+      .then((detalle) => {
+        if (!activo) return;
+        setIngresoSeleccionado(detalle);
+        setModalModo("ver");
+        setErrorModal("");
+        setModalAbierto(true);
+        navigate(location.pathname, { replace: true, state: null });
+      })
+      .catch((err) => {
+        if (!activo) return;
+        setError(
+          err.response?.data?.mensaje ||
+            err.response?.data?.message ||
+            "No se pudo cargar el ingreso seleccionado.",
+        );
+        navigate(location.pathname, { replace: true, state: null });
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [location.pathname, location.state?.idIngreso, navigate]);
 
   const cerrarModal = () => {
     setModalAbierto(false);

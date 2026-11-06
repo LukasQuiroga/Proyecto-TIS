@@ -300,7 +300,7 @@ function Login() {
                                 ? "No se pudo conectar con el sistema. Verifica tu conexión a Internet e intenta nuevamente."
                                 : esError
                                     ? "Verifica tu correo electrónico y contraseña e intenta nuevamente."
-                                    : "Bienvenido al sistema. Redirigiendo..."}
+                                    : "Bienvenido a ExamPass. Redirigiendo..."}
                         </p>
 
                         {!esExito ? (
