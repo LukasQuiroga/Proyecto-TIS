@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiAlertCircle, FiFileText, FiInfo, FiX } from "react-icons/fi";
+
 import {
-  verificarIngresoYRegistrarRechazo,
+  FiAlertCircle,
+  FiFileText,
+  FiInfo,
+  FiX,
+} from "react-icons/fi";
+
+import {
+  consultarHabilitacion,
   consultarIngresoRegistrado,
   obtenerIngresoRegistrado,
-  registrarIntentoIngresoDuplicado,
   registrarIngresoExamen,
 } from "../../services/validacionHabilitacionService";
+
 import "./ValidarHabilitacion.css";
 
 function ResultadoHabilitacion({
@@ -17,179 +24,255 @@ function ResultadoHabilitacion({
   nombreEstudiante,
   codigoEstudiante,
 }) {
-    const navigate = useNavigate();
-    const [consulta, setConsulta] = useState(null);
-    const [intento, setIntento] = useState(0);
-    const [estadoIngreso, setEstadoIngreso] = useState(null);
-    const [guardandoIngreso, setGuardandoIngreso] = useState(false);
-    const [modalDuplicadoAbierto, setModalDuplicadoAbierto] = useState(false);
-    const [errorRegistroIntento, setErrorRegistroIntento] = useState("");
-    const intentosDuplicadosEnviados = useRef(new Set());
+  const navigate = useNavigate();
 
-    useEffect(() => {
-      if (!modalDuplicadoAbierto) return undefined;
-      const overflowAnterior = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      const cerrarConEscape = (evento) => {
-        if (evento.key === "Escape") setModalDuplicadoAbierto(false);
-      };
-      window.addEventListener("keydown", cerrarConEscape);
-      return () => {
-        document.body.style.overflow = overflowAnterior;
-        window.removeEventListener("keydown", cerrarConEscape);
-      };
-    }, [modalDuplicadoAbierto]);
-    const consultaActual =
-    consulta?.intento === intento &&
-    Number(consulta?.idExamen) === Number(idExamen) &&
-    Number(consulta?.idEstudiante) === Number(idEstudiante);
+  const [consulta, setConsulta] = useState(null);
+  const [estadoIngreso, setEstadoIngreso] = useState(null);
+  const [guardandoIngreso, setGuardandoIngreso] = useState(false);
 
-    const resultado = consultaActual ? consulta.resultado : null;
-    const error = consultaActual ? consulta.error : "";
-    const cargando = !consultaActual;
+  const [modalDuplicadoAbierto, setModalDuplicadoAbierto] =
+    useState(false);
 
-    useEffect(() => {
-    let activo = true;
+  const registrandoActual = useRef(false);
 
-    async function validar() {
-        try {
-        const datos = await verificarIngresoYRegistrarRechazo(
-            Number(idExamen),
-            Number(idEstudiante),
-        );
+  const claveIngreso = `${idExamen}:${idEstudiante}`;
 
-        if (!activo) return;
+  const consultaActual =
+    consulta?.clave === claveIngreso ? consulta : null;
 
-        const estadosValidos = [
-            "HABILITADO",
-            "INHABILITADO",
-            "SIN_ESTADO",
-            "NO_ASOCIADO",
-        ];
-
-        if (
-            Number(datos?.idExamen) !== Number(idExamen) ||
-            Number(datos?.idEstudiante) !== Number(idEstudiante) ||
-            !estadosValidos.includes(datos?.estado) ||
-            typeof datos?.puedeContinuar !== "boolean" ||
-            (datos.estado !== "HABILITADO" && datos.puedeContinuar)
-        ) {
-            setConsulta({
-            intento,
-            idExamen,
-            idEstudiante,
-            resultado: null,
-            error: "El servidor devolvió una validación incompleta o inconsistente.",
-            });
-            return;
-        }
-
-        setConsulta({
-            intento,
-            idExamen,
-            idEstudiante,
-            resultado: datos,
-            error: "",
-        });
-        } catch (err) {
-        if (!activo) return;
-
-        setConsulta({
-            intento,
-            idExamen,
-            idEstudiante,
-            resultado: null,
-            error:
-            err.response?.data?.mensaje ||
-            err.response?.data?.message ||
-            "No se pudo completar la validación. Verifique la conexión.",
-        });
-        }
-    }
-
-    validar();
-
-    return () => {
-        activo = false;
-    };
-    }, [idExamen, idEstudiante, intento]);
+  const resultado = consultaActual?.resultado || null;
+  const error = consultaActual?.error || "";
+  const cargando = !consultaActual;
 
   const habilitado =
     resultado?.estado === "HABILITADO" &&
     resultado?.puedeContinuar === true;
 
-  const claveIngreso = `${idExamen}:${idEstudiante}:${intento}`;
-  const ingresoActual = estadoIngreso?.clave === claveIngreso ? estadoIngreso : null;
+  const ingresoActual =
+    estadoIngreso?.clave === claveIngreso
+      ? estadoIngreso
+      : null;
 
+  // Control del modal
   useEffect(() => {
-    if (!habilitado) return;
+    if (!modalDuplicadoAbierto) {
+      return undefined;
+    }
+
+    const overflowAnterior = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    const cerrarConEscape = (evento) => {
+      if (evento.key === "Escape") {
+        setModalDuplicadoAbierto(false);
+      }
+    };
+
+    window.addEventListener("keydown", cerrarConEscape);
+
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+
+      window.removeEventListener(
+        "keydown",
+        cerrarConEscape
+      );
+    };
+  }, [modalDuplicadoAbierto]);
+
+  // Consultar habilitación
+  useEffect(() => {
     let activo = true;
-    consultarIngresoRegistrado(Number(idExamen), Number(idEstudiante))
-      .then((datos) => {
-        if (activo) {
-          setEstadoIngreso({
-            clave: `${idExamen}:${idEstudiante}:${intento}`,
-            registrado: datos.ingresoRegistrado === true,
-            datos,
-            detalle: null,
-            error: "",
+
+    async function validar() {
+      try {
+        const datos = await consultarHabilitacion(
+          Number(idExamen),
+          Number(idEstudiante)
+        );
+
+        if (!activo) {
+          return;
+        }
+
+        const estadosValidos = [
+          "HABILITADO",
+          "INHABILITADO",
+          "SIN_ESTADO",
+          "NO_ASOCIADO",
+        ];
+
+        const respuestaValida =
+          Number(datos?.idExamen) === Number(idExamen) &&
+          Number(datos?.idEstudiante) ===
+            Number(idEstudiante) &&
+          estadosValidos.includes(datos?.estado) &&
+          typeof datos?.puedeContinuar === "boolean" &&
+          (
+            datos.estado === "HABILITADO" ||
+            datos.puedeContinuar === false
+          );
+
+        if (!respuestaValida) {
+          setConsulta({
+            clave: claveIngreso,
+            resultado: null,
+            error:
+              "El servidor devolvió una validación incompleta o inconsistente.",
           });
-          if (datos.ingresoRegistrado === true) {
-            setModalDuplicadoAbierto(true);
-            const claveIntento = `${idExamen}:${idEstudiante}:${intento}`;
-            if (!intentosDuplicadosEnviados.current.has(claveIntento)) {
-              intentosDuplicadosEnviados.current.add(claveIntento);
-              registrarIntentoIngresoDuplicado(Number(idExamen), Number(idEstudiante))
-                .then(() => setErrorRegistroIntento(""))
-                .catch((err) => {
-                  intentosDuplicadosEnviados.current.delete(claveIntento);
-                  if (activo) {
-                    setErrorRegistroIntento(
-                      err.response?.data?.mensaje || err.response?.data?.message ||
-                      "No se pudo guardar el intento rechazado en el historial.",
-                    );
-                  }
-                });
+
+          return;
+        }
+
+        setConsulta({
+          clave: claveIngreso,
+          resultado: datos,
+          error: "",
+        });
+      } catch (err) {
+        if (!activo) {
+          return;
+        }
+
+        setConsulta({
+          clave: claveIngreso,
+          resultado: null,
+          error:
+            err.response?.data?.mensaje ||
+            err.response?.data?.message ||
+            "No se pudo completar la validación. Verifique la conexión.",
+        });
+      }
+    }
+
+    void validar();
+
+    return () => {
+      activo = false;
+    };
+  }, [
+    idExamen,
+    idEstudiante,
+    claveIngreso,
+  ]);
+
+  // Consultar ingreso existente
+  useEffect(() => {
+    if (!habilitado) {
+      return undefined;
+    }
+
+    let activo = true;
+
+    async function consultarIngreso() {
+      try {
+        const datos = await consultarIngresoRegistrado(
+          Number(idExamen),
+          Number(idEstudiante)
+        );
+
+        if (!activo) {
+          return;
+        }
+
+        setEstadoIngreso({
+          clave: claveIngreso,
+          registrado: datos.ingresoRegistrado === true,
+          datos,
+          detalle: null,
+          error: "",
+        });
+
+        if (
+          datos.ingresoRegistrado === true &&
+          datos.idIngreso
+        ) {
+          try {
+            const detalle = await obtenerIngresoRegistrado(
+              datos.idIngreso
+            );
+
+            if (!activo) {
+              return;
             }
-            if (datos.idIngreso) {
-              obtenerIngresoRegistrado(datos.idIngreso)
-                .then((detalle) => {
-                  if (activo) {
-                    setEstadoIngreso((actual) => actual?.clave === `${idExamen}:${idEstudiante}:${intento}`
-                      ? { ...actual, detalle }
-                      : actual);
+
+            setEstadoIngreso((actual) =>
+              actual?.clave === claveIngreso
+                ? {
+                    ...actual,
+                    detalle,
                   }
-                })
-                .catch(() => null);
-            }
+                : actual
+            );
+          } catch (err) {
+            console.warn(
+              "No se pudo consultar el detalle del ingreso:",
+              err
+            );
           }
         }
-      })
-      .catch((err) => {
-        if (activo) {
-          setEstadoIngreso({
-            clave: `${idExamen}:${idEstudiante}:${intento}`,
-            registrado: false,
-            datos: null,
-            detalle: null,
-            error: err.response?.data?.mensaje || err.response?.data?.message ||
-              "No se pudo verificar si el estudiante ya ingresó.",
-          });
+      } catch (err) {
+        if (!activo) {
+          return;
         }
-      });
-    return () => { activo = false; };
-  }, [habilitado, idExamen, idEstudiante, intento]);
 
+        setEstadoIngreso({
+          clave: claveIngreso,
+          registrado: false,
+          datos: null,
+          detalle: null,
+          error:
+            err.response?.data?.mensaje ||
+            err.response?.data?.message ||
+            "No se pudo verificar si el estudiante ya ingresó.",
+        });
+      }
+    }
+
+    void consultarIngreso();
+
+    return () => {
+      activo = false;
+    };
+  }, [
+    habilitado,
+    idExamen,
+    idEstudiante,
+    claveIngreso,
+  ]);
+
+  // Registrar asistencia
   const registrarAsistencia = async () => {
-    if (!habilitado || guardandoIngreso || !ingresoActual ||
-        ingresoActual.registrado || ingresoActual.error) return;
+    if (
+      !habilitado ||
+      registrandoActual.current ||
+      !ingresoActual ||
+      ingresoActual.registrado ||
+      ingresoActual.error
+    ) {
+      return;
+    }
+
+    registrandoActual.current = true;
     setGuardandoIngreso(true);
+
     try {
-      const datos = await registrarIngresoExamen(Number(idExamen), Number(idEstudiante));
-      setEstadoIngreso({ clave: claveIngreso, registrado: true, datos, detalle: null, error: "" });
+      const datos = await registrarIngresoExamen(
+        Number(idExamen),
+        Number(idEstudiante)
+      );
+
+      setEstadoIngreso({
+        clave: claveIngreso,
+        registrado: true,
+        datos,
+        detalle: null,
+        error: "",
+      });
     } catch (err) {
       const duplicado = err.response?.status === 409;
-      setErrorRegistroIntento("");
+
       setEstadoIngreso({
         clave: claveIngreso,
         registrado: duplicado,
@@ -197,55 +280,79 @@ function ResultadoHabilitacion({
         detalle: null,
         error: duplicado
           ? "Este estudiante ya tiene un ingreso registrado para este examen."
-          : err.response?.data?.mensaje || err.response?.data?.message ||
+          : err.response?.data?.mensaje ||
+            err.response?.data?.message ||
             "No se pudo registrar el ingreso. Verifique la conexión.",
       });
+
       if (duplicado) {
         setModalDuplicadoAbierto(true);
-        consultarIngresoRegistrado(Number(idExamen), Number(idEstudiante))
-          .then((registro) => registro.idIngreso
-            ? obtenerIngresoRegistrado(registro.idIngreso)
-            : null)
-          .then((detalle) => {
-            if (detalle) {
-              setEstadoIngreso((actual) => actual?.clave === claveIngreso
-                ? { ...actual, datos: actual.datos || detalle, detalle }
-                : actual);
-            }
-          })
-          .catch(() => null);
+
+        // El backend ya registra el intento duplicado.
+        // No se envía una segunda solicitud.
+
+        try {
+          const registro =
+            await consultarIngresoRegistrado(
+              Number(idExamen),
+              Number(idEstudiante)
+            );
+
+          const detalle = registro.idIngreso
+            ? await obtenerIngresoRegistrado(
+                registro.idIngreso
+              )
+            : null;
+
+          setEstadoIngreso((actual) =>
+            actual?.clave === claveIngreso
+              ? {
+                  ...actual,
+                  datos: registro,
+                  detalle,
+                }
+              : actual
+          );
+        } catch (errorConsulta) {
+          console.warn(
+            "No se pudo recuperar el registro existente:",
+            errorConsulta
+          );
+        }
       }
     } finally {
+      registrandoActual.current = false;
       setGuardandoIngreso(false);
     }
   };
 
+  const abrirRegistroExistente = () => {
+    setModalDuplicadoAbierto(true);
+  };
+
+  const idIngresoExistente =
+    ingresoActual?.detalle?.idIngreso ||
+    ingresoActual?.datos?.idIngreso;
+
   return (
     <div className="validacion-integrada">
-      <section className="validacion-panel">
-        <h2>Validación de habilitación</h2>
 
-        <p>
-          Comprobación de habilitación del estudiante identificado
-          para el examen seleccionado.
-        </p>
-
-        <button
-          type="button"
-          className="validacion-boton"
-          disabled={cargando}
-          onClick={() => setIntento((actual) => actual + 1)}
-        >
-          {cargando ? "Validando..." : "Volver a validar"}
-        </button>
-      </section>
+      {/* Estado de carga */}
 
       {cargando && (
-        <section className="validacion-resultado" role="status">
+        <section
+          className="validacion-resultado"
+          role="status"
+        >
           <h2>Validando habilitación...</h2>
-          <p>Consultando el estado del estudiante.</p>
+
+          <p>
+            Consultando el estado del estudiante.
+          </p>
         </section>
       )}
+
+      {/* Error de validación */}
 
       {!cargando && error && (
         <section
@@ -253,10 +360,14 @@ function ResultadoHabilitacion({
           role="alert"
         >
           <h2>Validación no completada</h2>
+
           <p>{error}</p>
+
           <strong>Ingreso no autorizado.</strong>
         </section>
       )}
+
+      {/* Resultado de habilitación */}
 
       {!cargando && resultado && (
         <section
@@ -277,7 +388,8 @@ function ResultadoHabilitacion({
 
           <div className="validacion-detalles">
             <p>
-              <strong>Examen:</strong> {nombreExamen || idExamen}
+              <strong>Examen:</strong>{" "}
+              {nombreExamen || idExamen}
             </p>
 
             <p>
@@ -286,11 +398,14 @@ function ResultadoHabilitacion({
             </p>
 
             <p>
-              <strong>Estado:</strong> {resultado.estado}
+              <strong>Estado:</strong>{" "}
+              {resultado.estado}
             </p>
           </div>
 
           <p>{resultado.mensaje}</p>
+
+          {/* Motivo de inhabilitación */}
 
           {resultado.estado === "INHABILITADO" && (
             <div className="validacion-motivo">
@@ -318,107 +433,208 @@ function ResultadoHabilitacion({
         </section>
       )}
 
+      {/* Registro de asistencia */}
+
       {!cargando && habilitado && (
-        <section className="validacion-panel" aria-live="polite">
-          <h2>Registro de asistencia — HU22</h2>
+        <section
+          className="validacion-panel"
+          aria-live="polite"
+        >
+          <h2>Registro de asistencia</h2>
+
           {!ingresoActual ? (
-            <p>Comprobando si el estudiante ya tiene un ingreso registrado...</p>
+            <p>
+              Comprobando si el estudiante ya tiene
+              un ingreso registrado...
+            </p>
           ) : ingresoActual.registrado ? (
-            <p className="validacion-ayuda">Este estudiante ya tiene un ingreso registrado para este examen.</p>
+            <>
+              <p className="validacion-ayuda">
+                Este estudiante ya tiene un ingreso
+                registrado para este examen.
+              </p>
+
+              <button
+                type="button"
+                className="validacion-boton"
+                onClick={abrirRegistroExistente}
+              >
+                Ver registro existente
+              </button>
+            </>
           ) : (
             <>
-              {ingresoActual.error && <p role="alert" className="ingreso-ya-registrado">{ingresoActual.error}</p>}
-              <button type="button" className="validacion-boton"
-                disabled={guardandoIngreso || Boolean(ingresoActual.error)}
-                onClick={registrarAsistencia}>
-                {guardandoIngreso ? "Registrando..." : "Registrar ingreso / asistencia"}
+              {ingresoActual.error && (
+                <p
+                  role="alert"
+                  className="ingreso-ya-registrado"
+                >
+                  {ingresoActual.error}
+                </p>
+              )}
+
+              <button
+                type="button"
+                className="validacion-boton"
+                disabled={
+                  guardandoIngreso ||
+                  Boolean(ingresoActual.error)
+                }
+                onClick={registrarAsistencia}
+              >
+                {guardandoIngreso
+                  ? "Registrando..."
+                  : "Registrar ingreso / asistencia"}
               </button>
-              <p className="validacion-ayuda">La habilitación y el permiso del docente se vuelven a comprobar en el servidor.</p>
+
+              <p className="validacion-ayuda">
+                La habilitación y los permisos del
+                docente se comprueban nuevamente
+                en el servidor.
+              </p>
             </>
           )}
         </section>
       )}
 
-      {habilitado && ingresoActual?.registrado && modalDuplicadoAbierto && (
-        <div
-          className="duplicado-modal-overlay"
-          onMouseDown={(evento) => {
-            if (evento.target === evento.currentTarget) setModalDuplicadoAbierto(false);
-          }}
-        >
-          <section
-            className="duplicado-modal"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="duplicado-titulo"
-            aria-describedby="duplicado-descripcion"
+      {/* Modal de ingreso existente */}
+
+      {habilitado &&
+        ingresoActual?.registrado &&
+        modalDuplicadoAbierto && (
+          <div
+            className="duplicado-modal-overlay"
+            onMouseDown={(evento) => {
+              if (
+                evento.target === evento.currentTarget
+              ) {
+                setModalDuplicadoAbierto(false);
+              }
+            }}
           >
-            <button
-              type="button"
-              className="duplicado-modal-cerrar-icono"
-              onClick={() => setModalDuplicadoAbierto(false)}
-              aria-label="Cerrar aviso"
+            <section
+              className="duplicado-modal"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="duplicado-titulo"
+              aria-describedby="duplicado-descripcion"
             >
-              <FiX aria-hidden="true" />
-            </button>
-
-            <div className="duplicado-modal-icono" aria-hidden="true">
-              <FiAlertCircle />
-            </div>
-            <h2 id="duplicado-titulo">Registro no permitido</h2>
-            <p className="duplicado-modal-subtitulo">Se detectó un intento de ingreso duplicado.</p>
-            <p id="duplicado-descripcion" className="duplicado-modal-descripcion">
-              {nombreEstudiante || `El estudiante ${idEstudiante}`} ya registró su ingreso
-              {nombreExamen ? ` en el examen ${nombreExamen}` : " para este examen"}.
-              {ingresoActual.detalle?.fechaHoraIngreso || ingresoActual.datos?.fechaHoraIngreso
-                ? ` El registro original se realizó el ${new Date(ingresoActual.detalle?.fechaHoraIngreso || ingresoActual.datos?.fechaHoraIngreso).toLocaleString()}.`
-                : " El registro original se conserva en el sistema."}
-            </p>
-
-            <div className="duplicado-modal-datos">
-              <div>
-                <span>Código</span>
-                <strong>{ingresoActual.detalle?.codigoUniversitario || codigoEstudiante || "—"}</strong>
-              </div>
-              <div>
-                <span>Examen</span>
-                <strong>{ingresoActual.detalle?.nombreExamen || nombreExamen || `Examen ${idExamen}`}</strong>
-              </div>
-              <div>
-                <span>Estado del ingreso existente</span>
-                <strong className="duplicado-modal-estado">{ingresoActual.detalle?.estado || "Registrado"}</strong>
-              </div>
-            </div>
-
-            <div className="duplicado-modal-nota">
-              <FiInfo aria-hidden="true" />
-              <p>Este intento de ingreso fue rechazado.</p>
-            </div>
-            {errorRegistroIntento && (
-              <p className="duplicado-modal-error-historial" role="alert">
-                {errorRegistroIntento}
-              </p>
-            )}
-
-            <div className="duplicado-modal-acciones">
-              <button type="button" className="duplicado-modal-boton-secundario" onClick={() => setModalDuplicadoAbierto(false)}>
-                Cerrar
-              </button>
               <button
                 type="button"
-                className="duplicado-modal-boton-principal"
-                onClick={() => navigate("/ingreso/ingresos-registrados", {
-                  state: { idIngreso: ingresoActual.detalle?.idIngreso || ingresoActual.datos?.idIngreso },
-                })}
-                disabled={!(ingresoActual.detalle?.idIngreso || ingresoActual.datos?.idIngreso)}
+                className="duplicado-modal-cerrar-icono"
+                onClick={() =>
+                  setModalDuplicadoAbierto(false)
+                }
+                aria-label="Cerrar aviso"
               >
-                <FiFileText aria-hidden="true" />
-                Ver registro existente
+                <FiX aria-hidden="true" />
               </button>
-            </div>
-          </section>
-        </div>
-      )}
+
+              <div
+                className="duplicado-modal-icono"
+                aria-hidden="true"
+              >
+                <FiAlertCircle />
+              </div>
+
+              <h2 id="duplicado-titulo">
+                Registro existente
+              </h2>
+
+              <p className="duplicado-modal-subtitulo">
+                Este estudiante ya tiene un ingreso
+                registrado.
+              </p>
+
+              <p
+                id="duplicado-descripcion"
+                className="duplicado-modal-descripcion"
+              >
+                {nombreEstudiante ||
+                  `El estudiante ${idEstudiante}`}{" "}
+                ya registró su ingreso
+                {nombreExamen
+                  ? ` en el examen ${nombreExamen}`
+                  : " para este examen"}.
+              </p>
+
+              <div className="duplicado-modal-datos">
+                <div>
+                  <span>Código</span>
+
+                  <strong>
+                    {ingresoActual.detalle
+                      ?.codigoUniversitario ||
+                      codigoEstudiante ||
+                      "—"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Examen</span>
+
+                  <strong>
+                    {ingresoActual.detalle
+                      ?.nombreExamen ||
+                      nombreExamen ||
+                      `Examen ${idExamen}`}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Estado del ingreso</span>
+
+                  <strong className="duplicado-modal-estado">
+                    {ingresoActual.detalle?.estado ||
+                      "Registrado"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="duplicado-modal-nota">
+                <FiInfo aria-hidden="true" />
+
+                <p>
+                  El registro original se conserva
+                  en el sistema.
+                </p>
+              </div>
+
+              <div className="duplicado-modal-acciones">
+                <button
+                  type="button"
+                  className="duplicado-modal-boton-secundario"
+                  onClick={() =>
+                    setModalDuplicadoAbierto(false)
+                  }
+                >
+                  Cerrar
+                </button>
+
+                <button
+                  type="button"
+                  className="duplicado-modal-boton-principal"
+                  onClick={() =>
+                    navigate(
+                      "/ingreso/ingresos-registrados",
+                      {
+                        state: {
+                          idIngreso:
+                            idIngresoExistente,
+                        },
+                      }
+                    )
+                  }
+                  disabled={!idIngresoExistente}
+                >
+                  <FiFileText aria-hidden="true" />
+
+                  Ver registro existente
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
     </div>
   );
 }
