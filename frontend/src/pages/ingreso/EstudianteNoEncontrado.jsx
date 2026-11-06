@@ -1,5 +1,4 @@
 
-
 import {
   FiInfo,
   FiRefreshCw,
@@ -15,14 +14,17 @@ function EstudianteNoEncontrado({
 }) {
   return (
     <section
-      className="hu15-no-encontrado"
-      aria-labelledby="hu15-error-titulo"
+      className="estudiante-no-encontrado"
+      aria-labelledby="estudiante-error-titulo"
     >
-      <div className="hu15-no-encontrado-alerta" role="alert">
+      <div
+        className="estudiante-no-encontrado-alerta"
+        role="alert"
+      >
         <FiXCircle aria-hidden="true" />
 
         <div>
-          <h2 id="hu15-error-titulo">
+          <h2 id="estudiante-error-titulo">
             Estudiante no encontrado
           </h2>
 
@@ -32,29 +34,29 @@ function EstudianteNoEncontrado({
         </div>
       </div>
 
-      <div className="hu15-no-encontrado-contenido">
+      <div className="estudiante-no-encontrado-contenido">
 
-        <div className="hu15-no-encontrado-foto">
-          <div className="hu15-no-encontrado-avatar">
+        <div className="estudiante-no-encontrado-foto">
+          <div className="estudiante-no-encontrado-avatar">
             <FiUser aria-hidden="true" />
           </div>
 
           <span>Foto no disponible</span>
         </div>
 
-        <div className="hu15-no-encontrado-informacion">
-          <div className="hu15-no-encontrado-codigo">
+        <div className="estudiante-no-encontrado-informacion">
+          <div className="estudiante-no-encontrado-codigo">
             <span>Código consultado:</span>
             <strong>{codigoConsultado}</strong>
           </div>
 
           <h3>
-            No se encontró ningún estudiante con el
-            código ingresado.
+            No se encontró ningún estudiante con el código
+            ingresado.
           </h3>
 
-          <div className="hu15-no-encontrado-recomendaciones">
-            <div className="hu15-no-encontrado-subtitulo">
+          <div className="estudiante-no-encontrado-recomendaciones">
+            <div className="estudiante-no-encontrado-subtitulo">
               <FiInfo aria-hidden="true" />
               <h4>Recomendaciones</h4>
             </div>
@@ -69,18 +71,18 @@ function EstudianteNoEncontrado({
               </li>
 
               <li>
-                Si el problema persiste, comuníquese
-                con el administrador.
+                Si el problema persiste, comuníquese con el
+                administrador.
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      <div className="hu15-no-encontrado-acciones">
+      <div className="estudiante-no-encontrado-acciones">
         <button
           type="button"
-          className="hu15-no-encontrado-reintentar"
+          className="estudiante-no-encontrado-reintentar"
           onClick={onReintentar}
         >
           <FiRefreshCw aria-hidden="true" />

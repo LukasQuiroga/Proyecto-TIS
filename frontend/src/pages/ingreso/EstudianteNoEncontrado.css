@@ -1,6 +1,9 @@
 
-.hu15-no-encontrado {
+/* Contenedor principal */
+
+.estudiante-no-encontrado {
   width: 100%;
+  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #dbe5f0;
   border-radius: 12px;
@@ -10,7 +13,7 @@
 
 /* Alerta principal */
 
-.hu15-no-encontrado-alerta {
+.estudiante-no-encontrado-alerta {
   display: flex;
   align-items: center;
   gap: 18px;
@@ -20,20 +23,20 @@
   color: #b91c1c;
 }
 
-.hu15-no-encontrado-alerta > svg {
+.estudiante-no-encontrado-alerta > svg {
   width: 38px;
   height: 38px;
   flex-shrink: 0;
   color: #dc2626;
 }
 
-.hu15-no-encontrado-alerta h2 {
+.estudiante-no-encontrado-alerta h2 {
   margin: 0 0 5px;
   font-size: 23px;
   font-weight: 700;
 }
 
-.hu15-no-encontrado-alerta p {
+.estudiante-no-encontrado-alerta p {
   margin: 0;
   font-size: 15px;
   color: #17345c;
@@ -41,7 +44,7 @@
 
 /* Contenido del resultado */
 
-.hu15-no-encontrado-contenido {
+.estudiante-no-encontrado-contenido {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);
   gap: 32px;
@@ -50,13 +53,13 @@
 
 /* Fotografía predeterminada */
 
-.hu15-no-encontrado-foto {
+.estudiante-no-encontrado-foto {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.hu15-no-encontrado-avatar {
+.estudiante-no-encontrado-avatar {
   width: 100%;
   height: 210px;
   display: flex;
@@ -66,14 +69,15 @@
   background: #e2e8f0;
 }
 
-.hu15-no-encontrado-avatar svg {
+.estudiante-no-encontrado-avatar svg {
   width: 110px;
   height: 110px;
   color: #94a3b8;
 }
 
-.hu15-no-encontrado-foto span {
+.estudiante-no-encontrado-foto span {
   width: 100%;
+  box-sizing: border-box;
   padding: 8px;
   text-align: center;
   font-size: 14px;
@@ -82,13 +86,13 @@
   background: #edf2f7;
 }
 
-/* Información del código */
+/* Información del código consultado */
 
-.hu15-no-encontrado-informacion {
+.estudiante-no-encontrado-informacion {
   min-width: 0;
 }
 
-.hu15-no-encontrado-codigo {
+.estudiante-no-encontrado-codigo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -97,12 +101,12 @@
   font-size: 16px;
 }
 
-.hu15-no-encontrado-codigo strong {
+.estudiante-no-encontrado-codigo strong {
   font-size: 18px;
   overflow-wrap: anywhere;
 }
 
-.hu15-no-encontrado-informacion h3 {
+.estudiante-no-encontrado-informacion h3 {
   margin: 0 0 22px;
   font-size: 20px;
   font-weight: 700;
@@ -111,51 +115,52 @@
 
 /* Recomendaciones */
 
-.hu15-no-encontrado-recomendaciones {
+.estudiante-no-encontrado-recomendaciones {
   padding: 18px 22px;
   border-radius: 10px;
   background: #eaf3ff;
 }
 
-.hu15-no-encontrado-subtitulo {
+.estudiante-no-encontrado-subtitulo {
   display: flex;
   align-items: center;
   gap: 10px;
   color: #1358cb;
 }
 
-.hu15-no-encontrado-subtitulo svg {
+.estudiante-no-encontrado-subtitulo svg {
   width: 25px;
   height: 25px;
+  flex-shrink: 0;
 }
 
-.hu15-no-encontrado-subtitulo h4 {
+.estudiante-no-encontrado-subtitulo h4 {
   margin: 0;
   font-size: 19px;
 }
 
-.hu15-no-encontrado-recomendaciones ul {
+.estudiante-no-encontrado-recomendaciones ul {
   margin: 14px 0 0;
   padding-left: 24px;
 }
 
-.hu15-no-encontrado-recomendaciones li {
+.estudiante-no-encontrado-recomendaciones li {
   margin-bottom: 8px;
   line-height: 1.5;
 }
 
-.hu15-no-encontrado-recomendaciones li:last-child {
+.estudiante-no-encontrado-recomendaciones li:last-child {
   margin-bottom: 0;
 }
 
 /* Botón para intentar nuevamente */
 
-.hu15-no-encontrado-acciones {
+.estudiante-no-encontrado-acciones {
   padding-top: 20px;
   border-top: 1px solid #dbe5f0;
 }
 
-.hu15-no-encontrado-reintentar {
+.estudiante-no-encontrado-reintentar {
   width: 100%;
   min-height: 50px;
   display: flex;
@@ -173,43 +178,103 @@
   transition: background 0.2s ease;
 }
 
-.hu15-no-encontrado-reintentar:hover {
+.estudiante-no-encontrado-reintentar:hover {
   background: #cbd5e1;
 }
 
-.hu15-no-encontrado-reintentar:focus-visible {
+.estudiante-no-encontrado-reintentar:focus-visible {
   outline: 3px solid #93c5fd;
   outline-offset: 2px;
 }
 
-.hu15-no-encontrado-reintentar svg {
+.estudiante-no-encontrado-reintentar svg {
   width: 20px;
   height: 20px;
 }
 
-/* Diseño adaptable */
+/* Diseño adaptable para tablets */
 
 @media (max-width: 750px) {
-  .hu15-no-encontrado {
+  .estudiante-no-encontrado {
     padding: 16px;
   }
 
-  .hu15-no-encontrado-contenido {
+  .estudiante-no-encontrado-contenido {
     grid-template-columns: 1fr;
     gap: 20px;
+    padding: 20px 8px;
   }
 
-  .hu15-no-encontrado-foto {
+  .estudiante-no-encontrado-foto {
     max-width: 230px;
     width: 100%;
     margin: 0 auto;
   }
 
-  .hu15-no-encontrado-alerta h2 {
+  .estudiante-no-encontrado-alerta {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .estudiante-no-encontrado-alerta h2 {
     font-size: 19px;
   }
 
-  .hu15-no-encontrado-informacion h3 {
+  .estudiante-no-encontrado-informacion h3 {
     font-size: 18px;
+  }
+}
+
+/* Diseño adaptable para celulares pequeños */
+
+@media (max-width: 480px) {
+  .estudiante-no-encontrado {
+    padding: 12px;
+  }
+
+  .estudiante-no-encontrado-alerta {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .estudiante-no-encontrado-alerta > svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .estudiante-no-encontrado-alerta h2 {
+    font-size: 17px;
+  }
+
+  .estudiante-no-encontrado-alerta p {
+    font-size: 13px;
+  }
+
+  .estudiante-no-encontrado-contenido {
+    padding: 16px 0;
+  }
+
+  .estudiante-no-encontrado-codigo {
+    font-size: 14px;
+  }
+
+  .estudiante-no-encontrado-codigo strong {
+    font-size: 16px;
+  }
+
+  .estudiante-no-encontrado-recomendaciones {
+    padding: 14px;
+  }
+
+  .estudiante-no-encontrado-subtitulo h4 {
+    font-size: 17px;
+  }
+
+  .estudiante-no-encontrado-recomendaciones li {
+    font-size: 14px;
+  }
+
+  .estudiante-no-encontrado-reintentar {
+    font-size: 14px;
   }
 }

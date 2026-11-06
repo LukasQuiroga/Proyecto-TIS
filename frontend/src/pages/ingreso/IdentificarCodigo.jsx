@@ -211,7 +211,7 @@ function IdentificarCodigo() {
       return;
     }
 
-    navigate("/ingreso/validar-estado-documento", {
+      navigate("/ingreso/validar-estado-documento", {
       state: {
         origenIdentificacion: "CODIGO",
         identificacionEstudiante: {
@@ -219,9 +219,9 @@ function IdentificarCodigo() {
           nombreEstudiante: identificado.nombreEstudiante,
           documentoIdentidad: identificado.documentoIdentidad,
           codigoUniversitario: identificado.codigoUniversitario,
-        },
       },
-    });
+    },
+  });
   };
 
 
