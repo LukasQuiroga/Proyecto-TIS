@@ -171,3 +171,33 @@ export async function consultarHabilitacionPorDocumento(
   );
   return data;
 }
+
+export async function identificarEstudiantePorCodigoSinExamen(codigo) {
+  const { data } = await api.get(
+    "/ingresos/examenes/identificar-codigo",
+    {
+      params: {
+        codigo: codigo.trim(),
+      },
+    }
+  );
+
+  return data;
+}
+
+export async function obtenerFotoEstudiantePorCodigo(
+  idEstudiante,
+  codigo
+) {
+  const { data } = await api.get(
+    `/ingresos/examenes/identificar-codigo/${idEstudiante}/foto`,
+    {
+      params: {
+        codigo: codigo.trim(),
+      },
+      responseType: "blob",
+    }
+  );
+
+  return data;
+}
