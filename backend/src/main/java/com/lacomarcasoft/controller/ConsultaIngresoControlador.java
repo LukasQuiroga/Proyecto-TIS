@@ -73,6 +73,27 @@ public class ConsultaIngresoControlador {
         );
     }
 
+    @GetMapping("/identificar-documento/{idEstudiante}/foto")
+    public ResponseEntity<Resource> fotoEstudianteIdentificado(
+            @PathVariable Long idEstudiante,
+            @RequestParam String documento) {
+
+        servicio.comprobarAccesoFotoIdentificacion(
+            idEstudiante,
+            documento
+        );
+
+        PerfilFotoServicio.FotoPerfil foto =
+            fotoServicio.consultar(idEstudiante);
+
+        return ResponseEntity.ok()
+            .contentType(
+                MediaType.parseMediaType(foto.tipoContenido())
+            )
+            .cacheControl(CacheControl.noStore())
+            .body(foto.recurso());
+    }
+
     @GetMapping("/{idExamen}/estudiantes/{idEstudiante}/foto")
     public ResponseEntity<Resource> fotoEstudiante(
             @PathVariable Long idExamen,

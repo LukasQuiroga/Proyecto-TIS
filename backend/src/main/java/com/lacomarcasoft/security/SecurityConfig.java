@@ -104,7 +104,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/ingresos/examenes/*/identificar-documento",
-                    "/api/ingresos/examenes/identificar-documento"
+                    "/api/ingresos/examenes/identificar-documento",
+                    "/api/ingresos/examenes/identificar-documento/*/foto"
                 )
                 .access(new WebExpressionAuthorizationManager(
                     "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"

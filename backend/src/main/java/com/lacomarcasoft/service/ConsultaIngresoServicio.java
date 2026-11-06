@@ -424,6 +424,45 @@ public class ConsultaIngresoServicio {
     }
 
     @Transactional(readOnly = true)
+    public void comprobarAccesoFotoIdentificacion(
+            Long idEstudiante,
+            String documento) {
+
+        if (idEstudiante == null || idEstudiante <= 0) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Identificador de estudiante invalido"
+            );
+        }
+
+        String documentoLimpio = validarDocumento(documento);
+
+        boolean permitido = Boolean.TRUE.equals(jdbc.queryForObject("""
+            SELECT EXISTS (
+                SELECT 1
+                FROM seguridad.usuario u
+                JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
+                WHERE u.id_usuario = ?
+                    AND u.carnet_identidad = ?
+                    AND u.activo = TRUE
+                    AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+            )
+            """,
+            Boolean.class,
+            idEstudiante,
+            documentoLimpio
+        ));
+
+        if (!permitido) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Estudiante no encontrado para el documento proporcionado"
+            );
+        }
+    }
+
+    @Transactional(readOnly = true)
     public void comprobarAccesoFoto(Long idExamen, Long idEstudiante) {
         if (idExamen == null || idExamen <= 0 || idEstudiante == null || idEstudiante <= 0) {
             throw new ResponseStatusException(
@@ -442,7 +481,7 @@ public class ConsultaIngresoServicio {
                     JOIN seguridad.usuario u ON u.id_usuario = me.id_estudiante
                     JOIN seguridad.rol r ON r.id_rol = u.id_rol
                     WHERE e.id_examen = ? AND u.id_usuario = ?
-                      AND u.activo = TRUE AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                    AND u.activo = TRUE AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
                 )
                 """, Boolean.class, idExamen, idEstudiante));
 
