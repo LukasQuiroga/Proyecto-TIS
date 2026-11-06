@@ -516,7 +516,10 @@ function IngresosRegistrados() {
                             </label>
                             <textarea
                               value={motivo}
-                              onChange={(e) => setMotivo(e.target.value)}
+                              onChange={(e) => {
+                                setMotivo(e.target.value);
+                                if (errorModal) setErrorModal("");
+                              }}
                               maxLength={200}
                               rows={3}
                               placeholder="Ingrese el motivo..."
