@@ -345,8 +345,18 @@ function IdentificarDocumento() {
             <button
               type="button"
               className="identificacion-boton identificacion-primario"
-              disabled
-              title="La continuidad hacia validación se implementará en el siguiente paso"
+              onClick={() =>
+                navigate("/ingreso/validar-estado-documento", {
+                  state: {
+                    identificacionEstudiante: {
+                      idEstudiante: identificado.idEstudiante,
+                      nombreEstudiante: identificado.nombreEstudiante,
+                      documentoIdentidad: identificado.documentoIdentidad,
+                      codigoUniversitario: identificado.codigoUniversitario,
+                    },
+                  },
+                })
+              }
             >
               Validar estado
             </button>

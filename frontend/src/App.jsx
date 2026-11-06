@@ -33,6 +33,7 @@ import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
+import ValidarEstadoDocumento from "./pages/ingreso/ValidarEstadoDocumento";
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
 import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
@@ -289,6 +290,15 @@ function App() {
               element={
                 <AccesoControlIngreso permitirAdministrador>
                   <IdentificarDocumento />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/validar-estado-documento"
+              element={
+                <AccesoControlIngreso permitirAdministrador>
+                  <ValidarEstadoDocumento />
                 </AccesoControlIngreso>
               }
             />

@@ -144,3 +144,20 @@ export async function verificarIngresoYRegistrarRechazo(
   );
   return data;
 }
+
+export async function obtenerExamenesIdentificacionDocumento() {
+  const { data } = await api.get(
+    "/ingresos/examenes/identificar-documento/examenes",
+  );
+  return data;
+}
+
+export async function consultarHabilitacionPorDocumento(
+  idExamen,
+  idEstudiante,
+) {
+  const { data } = await api.get(
+    `/ingresos/examenes/identificar-documento/${idExamen}/estudiantes/${idEstudiante}/habilitacion`,
+  );
+  return data;
+}

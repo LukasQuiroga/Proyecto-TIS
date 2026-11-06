@@ -34,6 +34,15 @@ public class ValidacionHabilitacionIngresoControlador {
 
         return servicio.validar(idExamen, idEstudiante);
     }
+
+    @GetMapping("/identificar-documento/{idExamen}/estudiantes/{idEstudiante}/habilitacion")
+    public ValidacionHabilitacionRespuesta validarPorDocumento(
+            @PathVariable Long idExamen,
+            @PathVariable Long idEstudiante) {
+
+        return servicio.validarPorDocumento(idExamen, idEstudiante);
+    }
+
     @PostMapping("/{idExamen}/estudiantes/{idEstudiante}/habilitacion/verificar-ingreso")
     public ValidacionHabilitacionRespuesta verificarIngreso(
             @PathVariable Long idExamen,

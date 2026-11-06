@@ -105,7 +105,9 @@ public class SecurityConfig {
                     HttpMethod.GET,
                     "/api/ingresos/examenes/*/identificar-documento",
                     "/api/ingresos/examenes/identificar-documento",
-                    "/api/ingresos/examenes/identificar-documento/*/foto"
+                    "/api/ingresos/examenes/identificar-documento/*/foto",
+                    "/api/ingresos/examenes/identificar-documento/*/estudiantes/*/habilitacion",
+                    "/api/ingresos/examenes/identificar-documento/examenes"
                 )
                 .access(new WebExpressionAuthorizationManager(
                     "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"

@@ -36,6 +36,12 @@ public class ConsultaIngresoControlador {
         return servicio.listarExamenes();
     }
 
+    @GetMapping("/identificar-documento/examenes")
+    public List<ConsultaIngresoServicio.ExamenDisponible>
+            listarExamenesIdentificacionDocumento() {
+        return servicio.listarExamenesIdentificacionDocumento();
+    }
+
     @GetMapping("/{idExamen}/estudiantes")
     public List<ConsultaIngresoServicio.EstudianteDisponible>
             listarEstudiantes(@PathVariable Long idExamen) {
