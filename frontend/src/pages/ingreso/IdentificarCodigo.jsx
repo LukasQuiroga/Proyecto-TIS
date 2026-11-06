@@ -1,15 +1,21 @@
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  identificarEstudiantePorCodigo,
-  obtenerExamenesIngreso,
-  obtenerFotoEstudianteIdentificado,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiSearch,
+  FiUser,
+  FiX,
+} from "react-icons/fi";
+
+import {
+  identificarEstudiantePorCodigoSinExamen,
+  obtenerFotoEstudiantePorCodigo,
 } from "../../services/validacionHabilitacionService";
 
-import ResultadoHabilitacion from "./ResultadoHabilitacion";
 import "./IdentificarDocumento.css";
-import "./IdentificarCodigo.css";
 
 const PATRON_CODIGO = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/;
 const LONGITUD_MAXIMA = 30;
@@ -17,63 +23,42 @@ const LONGITUD_MAXIMA = 30;
 function IdentificarCodigo() {
   const navigate = useNavigate();
 
-  const [examenes, setExamenes] = useState([]);
-  const [idExamen, setIdExamen] = useState("");
   const [codigo, setCodigo] = useState("");
   const [identificado, setIdentificado] = useState(null);
   const [error, setError] = useState("");
-  const [mostrarValidacion, setMostrarValidacion] = useState(false);
-
-  const [cargandoExamenes, setCargandoExamenes] = useState(true);
   const [buscando, setBuscando] = useState(false);
-  const [fotoUrl, setFotoUrl] = useState("");
-  const fotoUrlActual = useRef("");
+  const [cargandoFoto, setCargandoFoto] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState(null);
 
   const solicitudActual = useRef(0);
+  const buscandoActual = useRef(false);
+  const fotoUrlActual = useRef(null);
 
   useEffect(() => {
-    let activo = true;
-
-    obtenerExamenesIngreso()
-      .then((datos) => {
-        if (activo) {
-          setExamenes(datos);
-        }
-      })
-      .catch(() => {
-        if (activo) {
-          setError("No se pudo cargar la lista de examenes.");
-        }
-      })
-      .finally(() => {
-        if (activo) {
-          setCargandoExamenes(false);
-        }
-      });
-
     return () => {
-      activo = false;
       solicitudActual.current += 1;
-      if (fotoUrlActual.current) URL.revokeObjectURL(fotoUrlActual.current);
+
+      if (fotoUrlActual.current) {
+        URL.revokeObjectURL(fotoUrlActual.current);
+        fotoUrlActual.current = null;
+      }
     };
   }, []);
 
   const limpiarIdentificacion = () => {
     solicitudActual.current += 1;
-    setMostrarValidacion(false);
+    buscandoActual.current = false;
+
     if (fotoUrlActual.current) {
       URL.revokeObjectURL(fotoUrlActual.current);
-      fotoUrlActual.current = "";
+      fotoUrlActual.current = null;
     }
-    setFotoUrl("");
+
     setIdentificado(null);
+    setFotoUrl(null);
     setError("");
     setBuscando(false);
-  };
-
-  const cambiarExamen = (valor) => {
-    setIdExamen(valor);
-    limpiarIdentificacion();
+    setCargandoFoto(false);
   };
 
   const cambiarCodigo = (valor) => {
@@ -81,213 +66,260 @@ function IdentificarCodigo() {
     limpiarIdentificacion();
   };
 
+  const buscarOtro = () => {
+    setCodigo("");
+    limpiarIdentificacion();
+  };
+
+  const cargarFotografia = async (
+    datos,
+    codigoConsultado,
+    solicitud
+  ) => {
+    setCargandoFoto(true);
+
+    try {
+      const imagen = await obtenerFotoEstudiantePorCodigo(
+        datos.idEstudiante,
+        codigoConsultado
+      );
+
+      if (solicitud !== solicitudActual.current) return;
+
+      if (!imagen.type.startsWith("image/")) return;
+
+      const nuevaUrl = URL.createObjectURL(imagen);
+
+      fotoUrlActual.current = nuevaUrl;
+      setFotoUrl(nuevaUrl);
+    } catch {
+      if (solicitud === solicitudActual.current) {
+        setFotoUrl(null);
+      }
+    } finally {
+      if (solicitud === solicitudActual.current) {
+        setCargandoFoto(false);
+      }
+    }
+  };
+
   const buscarEstudiante = async (evento) => {
     evento.preventDefault();
+
+    if (buscandoActual.current) return;
 
     limpiarIdentificacion();
 
     const codigoLimpio = codigo.trim();
 
-    if (!idExamen) {
-      setError("Debe seleccionar un examen.");
-      return;
-    }
-
     if (!codigoLimpio) {
-      setError("Debe ingresar un codigo universitario.");
+      setError("Debe ingresar un código universitario.");
       return;
     }
 
     if (codigoLimpio.length > LONGITUD_MAXIMA) {
       setError(
-        `El codigo universitario no puede superar los ${LONGITUD_MAXIMA} caracteres.`,
+        `El código universitario no puede superar los ${LONGITUD_MAXIMA} caracteres.`
       );
       return;
     }
 
     if (!PATRON_CODIGO.test(codigoLimpio)) {
-      setError("El codigo universitario tiene un formato invalido.");
+      setError("El código universitario tiene un formato inválido.");
       return;
     }
 
     const solicitud = ++solicitudActual.current;
 
+    buscandoActual.current = true;
     setBuscando(true);
 
     try {
-      const datos = await identificarEstudiantePorCodigo(
-        Number(idExamen),
-        codigoLimpio,
-      );
+      const datos =
+        await identificarEstudiantePorCodigoSinExamen(
+          codigoLimpio
+        );
 
-      if (solicitud !== solicitudActual.current) {
-        return;
-      }
+      if (solicitud !== solicitudActual.current) return;
 
       if (
         !datos ||
-        !Number.isInteger(Number(datos.idEstudiante)) ||
+        !Number.isSafeInteger(Number(datos.idEstudiante)) ||
         Number(datos.idEstudiante) <= 0 ||
-        String(datos.codigoUniversitario ?? "").trim().toUpperCase() !== codigoLimpio.toUpperCase() ||
-        !String(datos.nombreEstudiante ?? "").trim() ||
-        Number(datos.idExamen) !== Number(idExamen) ||
-        typeof datos.asociadoAlExamen !== "boolean"
+        String(datos.codigoUniversitario ?? "") !== codigoLimpio ||
+        !String(datos.nombreEstudiante ?? "").trim()
       ) {
-        setError("El servidor devolvió información incompleta o inconsistente.");
+        setError(
+          "El servidor devolvió información incompleta o inconsistente."
+        );
         return;
       }
 
       setIdentificado(datos);
-      if (datos.tieneFoto && datos.asociadoAlExamen) {
-        try {
-          const foto = await obtenerFotoEstudianteIdentificado(Number(idExamen), datos.idEstudiante);
-          if (solicitud !== solicitudActual.current) return;
-          const url = URL.createObjectURL(foto);
-          fotoUrlActual.current = url;
-          setFotoUrl(url);
-        } catch {
-          if (solicitud !== solicitudActual.current) return;
-          setFotoUrl("");
-        }
+
+      if (datos.tieneFoto) {
+        void cargarFotografia(
+          datos,
+          codigoLimpio,
+          solicitud
+        );
       }
     } catch (err) {
-      if (solicitud !== solicitudActual.current) {
-        return;
-      }
+      if (solicitud !== solicitudActual.current) return;
 
       if (err.response?.status === 404) {
-        setError("No se encontro un estudiante con ese codigo universitario.");
-      } else if (err.response?.status === 403) {
-        setError("No tiene permisos para identificar estudiantes.");
+        setError("Estudiante no encontrado");
       } else if (err.response?.status === 409) {
-        setError("Existen registros duplicados para ese codigo universitario.");
+        setError(
+          "Existen registros duplicados para ese código universitario."
+        );
+      } else if (err.response?.status === 403) {
+        setError(
+          "No tiene permisos para identificar estudiantes."
+        );
+      } else if (err.response?.status === 401) {
+        setError(
+          "Su sesión ha expirado. Vuelva a iniciar sesión."
+        );
       } else if (!err.response) {
-        setError("Error de conexion. No se pudo consultar al estudiante.");
+        setError(
+          "Error de conexión. No se pudo consultar al estudiante."
+        );
       } else {
         setError(
           err.response?.data?.mensaje ||
-            err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "No se pudo identificar al estudiante.",
+          err.response?.data?.message ||
+          "No se pudo identificar al estudiante."
         );
       }
     } finally {
       if (solicitud === solicitudActual.current) {
+        buscandoActual.current = false;
         setBuscando(false);
       }
     }
   };
 
-  const continuarValidacion = () => {
-    if (!identificado?.asociadoAlExamen || !idExamen) {
-      return;
-    }
-    setMostrarValidacion(true);
+  const validarEstado = () => {
+    if (!identificado) return;
+
+    navigate("/ingreso/validar-estado-documento", {
+      state: {
+        identificacionEstudiante: {
+          idEstudiante: identificado.idEstudiante,
+          nombreEstudiante: identificado.nombreEstudiante,
+          documentoIdentidad: identificado.documentoIdentidad,
+          codigoUniversitario: identificado.codigoUniversitario,
+        },
+      },
+    });
   };
-    const buscarOtro = () => {
-      setCodigo("");
-      limpiarIdentificacion();
-    };
 
   return (
     <main className="identificacion-pagina">
+
       <header className="identificacion-encabezado">
-        <h1>Busqueda por codigo universitario</h1>
+        <h1>Búsqueda por código universitario</h1>
         <p>
-          Identifique a un estudiante ingresando su codigo universitario.
+          Identifique al estudiante mediante su código universitario.
         </p>
       </header>
 
-      <section className="identificacion-panel">
-        <h2>Identificar estudiante</h2>
-
+      <section
+        className="identificacion-panel"
+        aria-label="Buscar estudiante"
+      >
         <form
           className="identificacion-formulario"
           onSubmit={buscarEstudiante}
           noValidate
         >
           <div className="identificacion-campo">
-            <label htmlFor="identificacion-codigo-examen">
-              Examen
-            </label>
-
-            <select
-              id="identificacion-codigo-examen"
-              value={idExamen}
-              onChange={(e) => cambiarExamen(e.target.value)}
-              disabled={cargandoExamenes}
-            >
-              <option value="">
-                {cargandoExamenes
-                  ? "Cargando examenes..."
-                  : "Seleccione un examen"}
-              </option>
-
-              {examenes.map((examen) => (
-                <option
-                  key={examen.idExamen}
-                  value={examen.idExamen}
-                >
-                  {examen.codigo || `Examen ${examen.idExamen}`}
-                  {" - "}
-                  {examen.nombreExamen}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="identificacion-campo">
             <label htmlFor="identificacion-codigo">
-              Codigo universitario
+              Código universitario
             </label>
 
-            <input
-              id="identificacion-codigo"
-              type="text"
-              value={codigo}
-              onChange={(e) => cambiarCodigo(e.target.value)}
-              placeholder="Ej. 202012345"
-              autoComplete="off"
-              maxLength={LONGITUD_MAXIMA + 1}
-            />
+            <div className="identificacion-entrada">
+              <FiSearch aria-hidden="true" />
+
+              <input
+                id="identificacion-codigo"
+                type="text"
+                value={codigo}
+                onChange={(e) => cambiarCodigo(e.target.value)}
+                placeholder="Ej. 202012345"
+                autoComplete="off"
+                maxLength={31}
+                aria-invalid={Boolean(error)}
+              />
+
+              {codigo && (
+                <button
+                  type="button"
+                  className="identificacion-limpiar-entrada"
+                  onClick={buscarOtro}
+                  aria-label="Limpiar código"
+                >
+                  <FiX aria-hidden="true" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="identificacion-botones">
             <button
               type="submit"
               className="identificacion-boton identificacion-primario"
-              disabled={buscando || cargandoExamenes}
+              disabled={buscando}
             >
+              <FiSearch aria-hidden="true" />
               {buscando ? "Buscando..." : "Buscar estudiante"}
             </button>
 
             <button
               type="button"
               className="identificacion-boton identificacion-secundario"
-              onClick={buscarOtro}
+              onClick={() =>
+                navigate("/ingreso/identificar-documento")
+              }
             >
-              Limpiar
-            </button>
-
-            <button
-              type="button"
-              className="identificacion-boton identificacion-secundario"
-              onClick={() => navigate("/ingreso/identificar-documento")}
-            >
-              Usar otro metodo
+              Usar otro método
             </button>
           </div>
         </form>
       </section>
+
+      {buscando && (
+        <div className="identificacion-cargando" role="status">
+          <span
+            className="identificacion-indicador"
+            aria-hidden="true"
+          />
+          Buscando al estudiante...
+        </div>
+      )}
 
       {error && (
         <div
           className="identificacion-alerta identificacion-error"
           role="alert"
         >
-          <strong>No se pudo identificar al estudiante.</strong>
-          <p>{error}</p>
+          <FiAlertCircle aria-hidden="true" />
+          <div>
+            <strong>No se pudo identificar al estudiante.</strong>
+            <p>{error}</p>
+          </div>
         </div>
+      )}
+
+      {!identificado && !error && !buscando && (
+        <section className="identificacion-inicial">
+          <FiSearch aria-hidden="true" />
+          <p>
+            Ingrese el código universitario y seleccione
+            «Buscar estudiante» para visualizar su perfil.
+          </p>
+        </section>
       )}
 
       {identificado && (
@@ -296,49 +328,69 @@ function IdentificarCodigo() {
             className="identificacion-alerta identificacion-exito"
             role="status"
           >
-            <strong>Estudiante identificado correctamente.</strong>
-            <p>
-              Se encontro un estudiante que coincide con el codigo
-              universitario ingresado.
-            </p>
-          </div>
-
-          <section className="identificacion-tarjeta hu15-perfil">
-            <div className="hu15-fotografia">
-              {fotoUrl ? (
-                <img src={fotoUrl} alt="Fotografía del estudiante identificado" />
-              ) : (
-                <span>{identificado.tieneFoto ? "Foto no disponible" : "Sin fotografía"}</span>
-              )}
-            </div>
-            <div className="hu15-datos">
-              <h2>Perfil del estudiante</h2>
-              <div className="identificacion-detalle"><strong>Nombre:</strong><span>{identificado.nombreEstudiante}</span></div>
-              <div className="identificacion-detalle"><strong>Carnet:</strong><span>{identificado.documentoIdentidad || "No registrado"}</span></div>
-              <div className="identificacion-detalle"><strong>Teléfono:</strong><span>{identificado.telefono || "No registrado"}</span></div>
-              <div className="identificacion-detalle"><strong>Código SIS:</strong><span>{identificado.codigoUniversitario}</span></div>
-            </div>
-          </section>
-
-          {identificado.asociadoAlExamen ? (
-            <div className="identificacion-nota">
-              <strong>El estudiante ha sido identificado.</strong>
-              <p>
-                Puede continuar con la validacion de habilitacion.
-                La identificacion no autoriza automaticamente el ingreso.
-              </p>
-            </div>
-          ) : (
-            <div className="identificacion-nota identificacion-aviso">
+            <FiCheckCircle aria-hidden="true" />
+            <div>
               <strong>
-                El estudiante no esta asociado a este examen.
+                Estudiante identificado correctamente.
               </strong>
               <p>
-                No puede continuar con la validacion para el examen
-                seleccionado.
+                Se encontró un estudiante que coincide con el
+                código universitario ingresado.
               </p>
             </div>
-          )}
+          </div>
+
+          <section className="identificacion-perfil">
+            <h2>Perfil del estudiante</h2>
+
+            <div className="identificacion-perfil-contenido">
+              <div className="identificacion-fotografia">
+                {fotoUrl ? (
+                  <img
+                    src={fotoUrl}
+                    alt={`Fotografía de ${identificado.nombreEstudiante}`}
+                  />
+                ) : (
+                  <FiUser aria-hidden="true" />
+                )}
+
+                {cargandoFoto && (
+                  <span className="identificacion-foto-cargando">
+                    Cargando fotografía...
+                  </span>
+                )}
+              </div>
+
+              <dl className="identificacion-perfil-datos">
+
+                <div className="identificacion-detalle">
+                  <dt>Nombre:</dt>
+                  <dd>{identificado.nombreEstudiante}</dd>
+                </div>
+
+                <div className="identificacion-detalle">
+                  <dt>Carnet:</dt>
+                  <dd>
+                    {identificado.documentoIdentidad ||
+                      "No registrado"}
+                  </dd>
+                </div>
+
+                <div className="identificacion-detalle">
+                  <dt>Teléfono:</dt>
+                  <dd>
+                    {identificado.telefono || "No registrado"}
+                  </dd>
+                </div>
+
+                <div className="identificacion-detalle">
+                  <dt>Código SIS:</dt>
+                  <dd>{identificado.codigoUniversitario}</dd>
+                </div>
+
+              </dl>
+            </div>
+          </section>
 
           <div className="identificacion-acciones">
             <button
@@ -352,25 +404,11 @@ function IdentificarCodigo() {
             <button
               type="button"
               className="identificacion-boton identificacion-primario"
-              onClick={continuarValidacion}
-              disabled={!identificado.asociadoAlExamen}
+              onClick={validarEstado}
             >
-              Continuar validacion
+              Validar estado
             </button>
           </div>
-          {mostrarValidacion && identificado.asociadoAlExamen && (
-            <ResultadoHabilitacion
-              idExamen={Number(idExamen)}
-              idEstudiante={identificado.idEstudiante}
-              nombreExamen={
-                examenes.find(
-                  (examen) => String(examen.idExamen) === String(idExamen),
-                )?.nombreExamen
-              }
-              nombreEstudiante={identificado.nombreEstudiante}
-              codigoEstudiante={identificado.codigoUniversitario}
-            />
-          )}
         </>
       )}
     </main>
