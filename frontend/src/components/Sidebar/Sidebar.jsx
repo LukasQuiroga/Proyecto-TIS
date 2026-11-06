@@ -70,9 +70,9 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
             </div>
 
             <div className="sidebar-logo-texto">
-              <strong>Sistema de Control</strong>
+              <strong>ExamPass</strong>
 
-              <span>de Ingreso a Exámenes</span>
+              <span>Gestion de ingreso a examenes</span>
             </div>
           </NavLink>
 
