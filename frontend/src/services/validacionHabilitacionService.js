@@ -31,6 +31,14 @@ export async function identificarEstudiantePorDocumento(idExamen, documento) {
   return data;
 }
 
+export async function identificarEstudiantePorDocumentoSinExamen(documento) {
+  const { data } = await api.get("/ingresos/examenes/identificar-documento", {
+    params: { documento: documento.trim() },
+  });
+
+  return data;
+}
+
 export async function identificarEstudiantePorCodigo(idExamen, codigo) {
   const { data } = await api.get(
     "/ingresos/examenes/" + idExamen + "/identificar-codigo",
@@ -55,6 +63,21 @@ export async function obtenerFotoEstudianteIdentificado(
     "/ingresos/examenes/" + idExamen + "/estudiantes/" + idEstudiante + "/foto",
     { responseType: "blob" },
   );
+  return data;
+}
+
+export async function obtenerFotoEstudiantePorDocumento(
+  idEstudiante,
+  documento,
+) {
+  const { data } = await api.get(
+    `/ingresos/examenes/identificar-documento/${idEstudiante}/foto`,
+    {
+      params: { documento: documento.trim() },
+      responseType: "blob",
+    },
+  );
+
   return data;
 }
 
@@ -118,6 +141,23 @@ export async function verificarIngresoYRegistrarRechazo(
 ) {
   const { data } = await api.post(
     `/ingresos/examenes/${idExamen}/estudiantes/${idEstudiante}/habilitacion/verificar-ingreso`,
+  );
+  return data;
+}
+
+export async function obtenerExamenesIdentificacionDocumento() {
+  const { data } = await api.get(
+    "/ingresos/examenes/identificar-documento/examenes",
+  );
+  return data;
+}
+
+export async function consultarHabilitacionPorDocumento(
+  idExamen,
+  idEstudiante,
+) {
+  const { data } = await api.get(
+    `/ingresos/examenes/identificar-documento/${idExamen}/estudiantes/${idEstudiante}/habilitacion`,
   );
   return data;
 }

@@ -5,6 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -14,9 +16,7 @@ public class ConsultaIngresoServicio {
     private static final int LONGITUD_MAXIMA_DOCUMENTO = 30;
 
     private static final java.util.regex.Pattern PATRON_DOCUMENTO =
-        java.util.regex.Pattern.compile(
-            "^[0-9]+(?:-[A-Za-z0-9]{1,2})?$"
-        );
+            java.util.regex.Pattern.compile("^[0-9]+(?:-[A-Za-z0-9]{1,2})?$");
 
     private final JdbcTemplate jdbc;
     private final AccesoExamenDocenteServicio accesoExamenDocente;
@@ -29,163 +29,158 @@ public class ConsultaIngresoServicio {
     }
 
     public record ExamenDisponible(
-        Long idExamen,
-        String codigo,
-        String nombreExamen,
-        String materia,
-        String estado
+            Long idExamen,
+            String codigo,
+            String nombreExamen,
+            String materia,
+            String estado
     ) {}
 
     public record EstudianteDisponible(
-        Long idEstudiante,
-        String codigoUniversitario,
-        String nombreEstudiante
+            Long idEstudiante,
+            String codigoUniversitario,
+            String nombreEstudiante
     ) {}
 
     public record EstudianteIdentificado(
-        Long idExamen,
-        Long idEstudiante,
-        String documentoIdentidad,
-        String codigoUniversitario,
-        String nombreEstudiante,
-        boolean asociadoAlExamen,
-        String telefono,
-        boolean tieneFoto
+            Long idExamen,
+            Long idEstudiante,
+            String documentoIdentidad,
+            String codigoUniversitario,
+            String nombreEstudiante,
+            boolean asociadoAlExamen,
+            String telefono,
+            boolean tieneFoto
     ) {
-        public EstudianteIdentificado(Long idExamen, Long idEstudiante, String documentoIdentidad, String codigoUniversitario, String nombreEstudiante, boolean asociadoAlExamen) {
-            this(idExamen, idEstudiante, documentoIdentidad, codigoUniversitario, nombreEstudiante, asociadoAlExamen, null, false);
+        public EstudianteIdentificado(
+                Long idExamen,
+                Long idEstudiante,
+                String documentoIdentidad,
+                String codigoUniversitario,
+                String nombreEstudiante,
+                boolean asociadoAlExamen) {
+            this(
+                    idExamen,
+                    idEstudiante,
+                    documentoIdentidad,
+                    codigoUniversitario,
+                    nombreEstudiante,
+                    asociadoAlExamen,
+                    null,
+                    false
+            );
         }
     }
+    public record EstudianteIdentificadoDocumento(
+            Long idEstudiante,
+            String documentoIdentidad,
+            String codigoUniversitario,
+            String nombreEstudiante,
+            String telefono,
+            boolean tieneFoto
+    ) {}
 
     @Transactional(readOnly = true)
     public List<ExamenDisponible> listarExamenes() {
         Long idDocente = accesoExamenDocente.obtenerDocenteAutenticado();
 
         return jdbc.query("""
-            SELECT
-                e.id_examen,
-                e.codigo,
-                e.nombre_examen,
-                e.estado,
-                CONCAT(a.nombre_asignatura, ' - Grupo ', m.grupo) AS materia
-            FROM academico.examen e
-            JOIN academico.materia m
-                ON m.id_materia = e.id_materia
-            JOIN academico.asignatura a
-                ON a.id_asignatura = m.id_asignatura
-            WHERE m.id_docente = ?
-            ORDER BY e.id_examen DESC
-            """,
-            (rs, fila) -> new ExamenDisponible(
-                rs.getLong("id_examen"),
-                rs.getString("codigo"),
-                rs.getString("nombre_examen"),
-                rs.getString("materia"),
-                rs.getString("estado")
-            ),
-            idDocente
+                SELECT
+                    e.id_examen,
+                    e.codigo,
+                    e.nombre_examen,
+                    e.estado,
+                    CONCAT(a.nombre_asignatura, ' - Grupo ', m.grupo) AS materia
+                FROM academico.examen e
+                JOIN academico.materia m
+                    ON m.id_materia = e.id_materia
+                JOIN academico.asignatura a
+                    ON a.id_asignatura = m.id_asignatura
+                WHERE m.id_docente = ?
+                ORDER BY e.id_examen DESC
+                """,
+                (rs, fila) -> new ExamenDisponible(
+                        rs.getLong("id_examen"),
+                        rs.getString("codigo"),
+                        rs.getString("nombre_examen"),
+                        rs.getString("materia"),
+                        rs.getString("estado")
+                ),
+                idDocente
         );
     }
 
+    @Transactional(readOnly = true)
+    public List<ExamenDisponible> listarExamenesIdentificacionDocumento() {
+        Authentication autenticacion = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        if (autenticacion == null
+                || !autenticacion.isAuthenticated()
+                || !(autenticacion.getDetails() instanceof Long)) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Debe iniciar sesion"
+            );
+        }
+
+        boolean esDocente = autenticacion.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_DOCENTE".equals(a.getAuthority()));
+
+        boolean esAdministrador = autenticacion.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMINISTRADOR".equals(a.getAuthority()));
+
+        boolean tienePermiso = autenticacion.getAuthorities().stream()
+                .anyMatch(a -> "CONTROL_INGRESO".equals(a.getAuthority()));
+
+        if (!tienePermiso || (!esDocente && !esAdministrador)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "No tiene permisos para consultar los examenes"
+            );
+        }
+
+        if (esDocente) {
+            return listarExamenes();
+        }
+
+        return jdbc.query("""
+                SELECT
+                    e.id_examen,
+                    e.codigo,
+                    e.nombre_examen,
+                    e.estado,
+                    CONCAT(a.nombre_asignatura, ' - Grupo ', m.grupo) AS materia
+                FROM academico.examen e
+                JOIN academico.materia m
+                    ON m.id_materia = e.id_materia
+                JOIN academico.asignatura a
+                    ON a.id_asignatura = m.id_asignatura
+                ORDER BY e.id_examen DESC
+                """,
+                (rs, fila) -> new ExamenDisponible(
+                        rs.getLong("id_examen"),
+                        rs.getString("codigo"),
+                        rs.getString("nombre_examen"),
+                        rs.getString("materia"),
+                        rs.getString("estado")
+                )
+        );
+    }
 
     @Transactional(readOnly = true)
     public List<EstudianteDisponible> listarEstudiantes(Long idExamen) {
         if (idExamen == null || idExamen <= 0) {
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Identificador de examen invalido"
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de examen invalido"
             );
         }
+
         accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean existe = Boolean.TRUE.equals(jdbc.queryForObject("""
-            SELECT EXISTS (
-                SELECT 1
-                FROM academico.examen
-                WHERE id_examen = ?
-            )
-            """,
-            Boolean.class,
-            idExamen
-        ));
-
-        if (!existe) {
-            throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Examen no encontrado"
-            );
-        }
-
-        return jdbc.query("""
-            SELECT
-                u.id_usuario,
-                u.codigo_sis,
-                TRIM(CONCAT(u.nombre, ' ', u.apellido)) AS nombre_estudiante
-            FROM academico.examen e
-            JOIN academico.materia_estudiante me
-                ON me.id_materia = e.id_materia
-            JOIN seguridad.usuario u
-                ON u.id_usuario = me.id_estudiante
-            JOIN seguridad.rol r
-                ON r.id_rol = u.id_rol
-            WHERE e.id_examen = ?
-                AND u.activo = TRUE
-                AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
-            ORDER BY u.nombre, u.apellido
-            """,
-            (rs, fila) -> new EstudianteDisponible(
-                rs.getLong("id_usuario"),
-                rs.getString("codigo_sis"),
-                rs.getString("nombre_estudiante")
-            ),
-            idExamen
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public EstudianteIdentificado identificarPorDocumento(
-            Long idExamen,
-            String documento) {
-
-        if (idExamen == null || idExamen <= 0) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Identificador de examen invalido"
-            );
-        }
-
-        String documentoLimpio =
-            documento == null ? "" : documento.strip();
-
-        if (documentoLimpio.isEmpty()) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Debe ingresar un documento de identidad"
-            );
-        }
-
-        if (documentoLimpio.length() > LONGITUD_MAXIMA_DOCUMENTO) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "El documento de identidad no puede superar los "
-                    + LONGITUD_MAXIMA_DOCUMENTO
-                    + " caracteres"
-            );
-        }
-
-        if (!PATRON_DOCUMENTO.matcher(documentoLimpio).matches()) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Formato de documento invalido. "
-                    + "Ingrese numeros o numeros con un "
-                    + "complemento alfanumerico valido, "
-                    + "por ejemplo 12345678-1A"
-            );
-        }
-        accesoExamenDocente.verificarExamenActual(idExamen);
-
-        boolean existeExamen = Boolean.TRUE.equals(
-            jdbc.queryForObject("""
                 SELECT EXISTS (
                     SELECT 1
                     FROM academico.examen
@@ -194,153 +189,368 @@ public class ConsultaIngresoServicio {
                 """,
                 Boolean.class,
                 idExamen
-            )
+        ));
+
+        if (!existe) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Examen no encontrado"
+            );
+        }
+
+        return jdbc.query("""
+                SELECT
+                    u.id_usuario,
+                    u.codigo_sis,
+                    TRIM(CONCAT(u.nombre, ' ', u.apellido)) AS nombre_estudiante
+                FROM academico.examen e
+                JOIN academico.materia_estudiante me
+                    ON me.id_materia = e.id_materia
+                JOIN seguridad.usuario u
+                    ON u.id_usuario = me.id_estudiante
+                JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
+                WHERE e.id_examen = ?
+                    AND u.activo = TRUE
+                    AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                ORDER BY u.nombre, u.apellido
+                """,
+                (rs, fila) -> new EstudianteDisponible(
+                        rs.getLong("id_usuario"),
+                        rs.getString("codigo_sis"),
+                        rs.getString("nombre_estudiante")
+                ),
+                idExamen
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public EstudianteIdentificado identificarPorDocumento(
+            Long idExamen,
+            String documento) {
+        if (idExamen == null || idExamen <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de examen invalido"
+            );
+        }
+
+        String documentoLimpio = validarDocumento(documento);
+
+        accesoExamenDocente.verificarExamenActual(idExamen);
+
+        boolean existeExamen = Boolean.TRUE.equals(
+                jdbc.queryForObject("""
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM academico.examen
+                            WHERE id_examen = ?
+                        )
+                        """,
+                        Boolean.class,
+                        idExamen
+                )
         );
 
         if (!existeExamen) {
             throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Examen no encontrado"
+                    HttpStatus.NOT_FOUND,
+                    "Examen no encontrado"
             );
         }
 
         List<EstudianteIdentificado> resultados = jdbc.query("""
-            SELECT
-                u.id_usuario,
-                u.carnet_identidad,
-                u.codigo_sis,
-                TRIM(CONCAT(u.nombre, ' ', u.apellido))
-                    AS nombre_estudiante,
-                EXISTS (
-                    SELECT 1
-                    FROM academico.examen e
-                    JOIN academico.materia_estudiante me
-                        ON me.id_materia = e.id_materia
-                    WHERE e.id_examen = ?
-                    AND me.id_estudiante = u.id_usuario
-                ) AS asociado_examen
-            FROM seguridad.usuario u
-            JOIN seguridad.rol r
-                ON r.id_rol = u.id_rol
-            WHERE u.carnet_identidad = ?
-            AND u.activo = TRUE
-            AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
-            """,
-            (rs, fila) -> new EstudianteIdentificado(
+                SELECT
+                    u.id_usuario,
+                    u.carnet_identidad,
+                    u.codigo_sis,
+                    TRIM(CONCAT(u.nombre, ' ', u.apellido))
+                        AS nombre_estudiante,
+                    EXISTS (
+                        SELECT 1
+                        FROM academico.examen e
+                        JOIN academico.materia_estudiante me
+                            ON me.id_materia = e.id_materia
+                        WHERE e.id_examen = ?
+                        AND me.id_estudiante = u.id_usuario
+                    ) AS asociado_examen
+                FROM seguridad.usuario u
+                JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
+                WHERE u.carnet_identidad = ?
+                AND u.activo = TRUE
+                AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                """,
+                (rs, fila) -> new EstudianteIdentificado(
+                        idExamen,
+                        rs.getLong("id_usuario"),
+                        rs.getString("carnet_identidad"),
+                        rs.getString("codigo_sis"),
+                        rs.getString("nombre_estudiante"),
+                        rs.getBoolean("asociado_examen")
+                ),
                 idExamen,
-                rs.getLong("id_usuario"),
-                rs.getString("carnet_identidad"),
-                rs.getString("codigo_sis"),
-                rs.getString("nombre_estudiante"),
-                rs.getBoolean("asociado_examen")
-            ),
-            idExamen,
-            documentoLimpio
+                documentoLimpio
         );
 
         if (resultados.isEmpty()) {
             throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "No se encontro un estudiante con ese documento"
+                    HttpStatus.NOT_FOUND,
+                    "No se encontro un estudiante con ese documento"
             );
         }
 
         return resultados.get(0);
     }
 
+    @Transactional(readOnly = true)
+    public EstudianteIdentificadoDocumento identificarPorDocumento(String documento) {
+        String documentoLimpio = validarDocumento(documento);
+
+        List<EstudianteIdentificadoDocumento> resultados = jdbc.query("""
+                SELECT
+                    u.id_usuario,
+                    u.carnet_identidad,
+                    u.codigo_sis,
+                    TRIM(CONCAT(u.nombre, ' ', u.apellido)) AS nombre_estudiante,
+                    u.celular,
+                    u.foto_perfil
+                FROM seguridad.usuario u
+                JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
+                WHERE u.carnet_identidad = ?
+                    AND u.activo = TRUE
+                    AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                LIMIT 2
+                """,
+                (rs, fila) -> {
+                    String fotoPerfil = rs.getString("foto_perfil");
+
+                    return new EstudianteIdentificadoDocumento(
+                            rs.getLong("id_usuario"),
+                            rs.getString("carnet_identidad"),
+                            rs.getString("codigo_sis"),
+                            rs.getString("nombre_estudiante"),
+                            rs.getString("celular"),
+                            fotoPerfil != null && !fotoPerfil.isBlank()
+                    );
+                },
+                documentoLimpio
+        );
+
+        if (resultados.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No se encontro un estudiante con ese documento"
+            );
+        }
+
+        if (resultados.size() > 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Existen registros duplicados para ese documento"
+            );
+        }
+
+        return resultados.get(0);
+    }
+
+    private String validarDocumento(String documento) {
+        String documentoLimpio = documento == null ? "" : documento.strip();
+
+        if (documentoLimpio.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debe ingresar un documento de identidad"
+            );
+        }
+
+        if (documentoLimpio.length() > LONGITUD_MAXIMA_DOCUMENTO) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El documento de identidad no puede superar los "
+                            + LONGITUD_MAXIMA_DOCUMENTO
+                            + " caracteres"
+            );
+        }
+
+        if (!PATRON_DOCUMENTO.matcher(documentoLimpio).matches()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Formato de documento invalido. "
+                            + "Ingrese numeros o numeros con un "
+                            + "complemento alfanumerico valido, "
+                            + "por ejemplo 12345678-1A"
+            );
+        }
+
+        return documentoLimpio;
+    }
+
     private static final int LONGITUD_MAXIMA_CODIGO = 30;
+
     private static final java.util.regex.Pattern PATRON_CODIGO =
-        java.util.regex.Pattern.compile("^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$");
+            java.util.regex.Pattern.compile("^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$");
 
     @Transactional(readOnly = true)
     public EstudianteIdentificado identificarPorCodigo(Long idExamen, String codigo) {
         if (idExamen == null || idExamen <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Identificador de examen invalido");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de examen invalido"
+            );
         }
 
         String limpio = codigo == null ? "" : codigo.strip();
+
         if (limpio.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Debe ingresar un codigo universitario");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debe ingresar un codigo universitario"
+            );
         }
+
         if (limpio.length() > LONGITUD_MAXIMA_CODIGO) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "El codigo universitario no puede superar 30 caracteres");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El codigo universitario no puede superar 30 caracteres"
+            );
         }
+
         if (!PATRON_CODIGO.matcher(limpio).matches()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Formato de codigo universitario invalido");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Formato de codigo universitario invalido"
+            );
         }
+
         accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean existe = Boolean.TRUE.equals(jdbc.queryForObject("""
-            SELECT EXISTS (SELECT 1 FROM academico.examen WHERE id_examen = ?)
-            """, Boolean.class, idExamen));
+                SELECT EXISTS (SELECT 1 FROM academico.examen WHERE id_examen = ?)
+                """, Boolean.class, idExamen));
+
         if (!existe) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Examen no encontrado");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Examen no encontrado"
+            );
         }
 
         List<EstudianteIdentificado> encontrados = jdbc.query("""
-            SELECT u.id_usuario, u.carnet_identidad, u.codigo_sis,
-                   u.celular, u.foto_perfil,
-                   TRIM(CONCAT(u.nombre, ' ', u.apellido)) AS nombre_estudiante,
-                   EXISTS (
-                       SELECT 1 FROM academico.examen e
-                       JOIN academico.materia_estudiante me
-                         ON me.id_materia = e.id_materia
-                       WHERE e.id_examen = ?
-                         AND me.id_estudiante = u.id_usuario
-                   ) AS asociado_examen
-            FROM seguridad.usuario u
-            JOIN seguridad.rol r ON r.id_rol = u.id_rol
-            WHERE u.codigo_sis = ? AND u.activo = TRUE
-              AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
-            """,
-            (rs, fila) -> new EstudianteIdentificado(
+                SELECT u.id_usuario, u.carnet_identidad, u.codigo_sis,
+                       u.celular, u.foto_perfil,
+                       TRIM(CONCAT(u.nombre, ' ', u.apellido)) AS nombre_estudiante,
+                       EXISTS (
+                           SELECT 1 FROM academico.examen e
+                           JOIN academico.materia_estudiante me
+                             ON me.id_materia = e.id_materia
+                           WHERE e.id_examen = ?
+                             AND me.id_estudiante = u.id_usuario
+                       ) AS asociado_examen
+                FROM seguridad.usuario u
+                JOIN seguridad.rol r ON r.id_rol = u.id_rol
+                WHERE u.codigo_sis = ? AND u.activo = TRUE
+                  AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                """,
+                (rs, fila) -> new EstudianteIdentificado(
+                        idExamen,
+                        rs.getLong("id_usuario"),
+                        rs.getString("carnet_identidad"),
+                        rs.getString("codigo_sis"),
+                        rs.getString("nombre_estudiante"),
+                        rs.getBoolean("asociado_examen"),
+                        rs.getString("celular"),
+                        rs.getString("foto_perfil") != null && !rs.getString("foto_perfil").isBlank()
+                ),
                 idExamen,
-                rs.getLong("id_usuario"),
-                rs.getString("carnet_identidad"),
-                rs.getString("codigo_sis"),
-                rs.getString("nombre_estudiante"),
-                rs.getBoolean("asociado_examen"),
-                rs.getString("celular"),
-                rs.getString("foto_perfil") != null && !rs.getString("foto_perfil").isBlank()
-            ), idExamen, limpio);
+                limpio
+        );
 
         if (encontrados.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "No se encontro un estudiante con ese codigo universitario");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No se encontro un estudiante con ese codigo universitario"
+            );
         }
+
         if (encontrados.size() > 1) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                "Existen registros duplicados para el codigo universitario");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Existen registros duplicados para el codigo universitario"
+            );
         }
+
         return encontrados.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public void comprobarAccesoFotoIdentificacion(
+            Long idEstudiante,
+            String documento) {
+
+        if (idEstudiante == null || idEstudiante <= 0) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Identificador de estudiante invalido"
+            );
+        }
+
+        String documentoLimpio = validarDocumento(documento);
+
+        boolean permitido = Boolean.TRUE.equals(jdbc.queryForObject("""
+            SELECT EXISTS (
+                SELECT 1
+                FROM seguridad.usuario u
+                JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
+                WHERE u.id_usuario = ?
+                    AND u.carnet_identidad = ?
+                    AND u.activo = TRUE
+                    AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+            )
+            """,
+            Boolean.class,
+            idEstudiante,
+            documentoLimpio
+        ));
+
+        if (!permitido) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Estudiante no encontrado para el documento proporcionado"
+            );
+        }
     }
 
     @Transactional(readOnly = true)
     public void comprobarAccesoFoto(Long idExamen, Long idEstudiante) {
         if (idExamen == null || idExamen <= 0 || idEstudiante == null || idEstudiante <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Identificadores invalidos");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificadores invalidos"
+            );
         }
+
         accesoExamenDocente.verificarExamenActual(idExamen);
 
         boolean permitido = Boolean.TRUE.equals(jdbc.queryForObject("""
-            SELECT EXISTS (
-                SELECT 1
-                FROM academico.examen e
-                JOIN academico.materia_estudiante me ON me.id_materia = e.id_materia
-                JOIN seguridad.usuario u ON u.id_usuario = me.id_estudiante
-                JOIN seguridad.rol r ON r.id_rol = u.id_rol
-                WHERE e.id_examen = ? AND u.id_usuario = ?
-                  AND u.activo = TRUE AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
-            )
-            """, Boolean.class, idExamen, idEstudiante));
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM academico.examen e
+                    JOIN academico.materia_estudiante me ON me.id_materia = e.id_materia
+                    JOIN seguridad.usuario u ON u.id_usuario = me.id_estudiante
+                    JOIN seguridad.rol r ON r.id_rol = u.id_rol
+                    WHERE e.id_examen = ? AND u.id_usuario = ?
+                    AND u.activo = TRUE AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                )
+                """, Boolean.class, idExamen, idEstudiante));
+
         if (!permitido) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fotografia no disponible para este examen");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Fotografia no disponible para este examen"
+            );
         }
     }
-
 }

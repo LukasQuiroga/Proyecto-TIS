@@ -33,6 +33,7 @@ import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
+import ValidarEstadoDocumento from "./pages/ingreso/ValidarEstadoDocumento";
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
 import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
@@ -70,18 +71,22 @@ function AccesoSoloEstudiante({ children }) {
   return children;
 }
 
-function AccesoControlIngreso({ children }) {
+function AccesoControlIngreso({ children, permitirAdministrador = false }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  const esDocente = usuario.nombreRol?.toUpperCase() === "DOCENTE";
+  const rolActual = usuario.nombreRol?.trim().toUpperCase();
+  const esDocente = rolActual === "DOCENTE";
+  const esAdministrador = rolActual === "ADMINISTRADOR";
 
   const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
-  if (!esDocente || !tienePermiso) {
+  const rolAutorizado = esDocente || (permitirAdministrador && esAdministrador);
+
+  if (!rolAutorizado || !tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -283,8 +288,17 @@ function App() {
             <Route
               path="/ingreso/identificar-documento"
               element={
-                <AccesoControlIngreso>
+                <AccesoControlIngreso permitirAdministrador>
                   <IdentificarDocumento />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/validar-estado-documento"
+              element={
+                <AccesoControlIngreso permitirAdministrador>
+                  <ValidarEstadoDocumento />
                 </AccesoControlIngreso>
               }
             />

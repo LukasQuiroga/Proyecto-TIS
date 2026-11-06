@@ -36,10 +36,22 @@ public class ConsultaIngresoControlador {
         return servicio.listarExamenes();
     }
 
+    @GetMapping("/identificar-documento/examenes")
+    public List<ConsultaIngresoServicio.ExamenDisponible>
+            listarExamenesIdentificacionDocumento() {
+        return servicio.listarExamenesIdentificacionDocumento();
+    }
+
     @GetMapping("/{idExamen}/estudiantes")
     public List<ConsultaIngresoServicio.EstudianteDisponible>
             listarEstudiantes(@PathVariable Long idExamen) {
         return servicio.listarEstudiantes(idExamen);
+    }
+
+    @GetMapping("/identificar-documento")
+    public ConsultaIngresoServicio.EstudianteIdentificadoDocumento
+            identificarPorDocumento(@RequestParam String documento) {
+        return servicio.identificarPorDocumento(documento);
     }
 
     @GetMapping("/{idExamen}/identificar-documento")
@@ -65,6 +77,27 @@ public class ConsultaIngresoControlador {
                 idExamen,
                 solicitud == null ? null : solicitud.token()
         );
+    }
+
+    @GetMapping("/identificar-documento/{idEstudiante}/foto")
+    public ResponseEntity<Resource> fotoEstudianteIdentificado(
+            @PathVariable Long idEstudiante,
+            @RequestParam String documento) {
+
+        servicio.comprobarAccesoFotoIdentificacion(
+            idEstudiante,
+            documento
+        );
+
+        PerfilFotoServicio.FotoPerfil foto =
+            fotoServicio.consultar(idEstudiante);
+
+        return ResponseEntity.ok()
+            .contentType(
+                MediaType.parseMediaType(foto.tipoContenido())
+            )
+            .cacheControl(CacheControl.noStore())
+            .body(foto.recurso());
     }
 
     @GetMapping("/{idExamen}/estudiantes/{idEstudiante}/foto")

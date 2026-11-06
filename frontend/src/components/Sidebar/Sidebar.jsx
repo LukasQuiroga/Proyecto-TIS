@@ -46,6 +46,12 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
     return usuario?.permisos?.includes(permiso) ?? false;
   };
 
+  const rolActual = usuario?.nombreRol?.trim().toUpperCase();
+
+  const puedeIdentificarDocumento =
+    tienePermiso("CONTROL_INGRESO") &&
+    (rolActual === "DOCENTE" || rolActual === "ADMINISTRADOR");
+
   return (
     <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
       <button
@@ -171,81 +177,91 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
-            {tienePermiso("CONTROL_INGRESO") &&
-              usuario?.nombreRol?.toUpperCase() === "DOCENTE" && (
-                <>
-                  <button
-                    type="button"
-                    className="sidebar-opcion sidebar-desplegable"
-                    onClick={() => setIngresoAbierto(!ingresoAbierto)}
-                    aria-expanded={ingresoAbierto}
-                  >
-                    <span className="sidebar-icono">
-                      <FiTarget />
-                    </span>
-                    <span className="sidebar-texto">Control de ingreso</span>
-                    <span className="sidebar-flecha">
-                      {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
-                    </span>
-                  </button>
+            {puedeIdentificarDocumento && (
+              <>
+                <button
+                  type="button"
+                  className="sidebar-opcion sidebar-desplegable"
+                  onClick={() => setIngresoAbierto(!ingresoAbierto)}
+                  aria-expanded={ingresoAbierto}
+                >
+                  <span className="sidebar-icono">
+                    <FiTarget />
+                  </span>
+                  <span className="sidebar-texto">Control de ingreso</span>
+                  <span className="sidebar-flecha">
+                    {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
+                  </span>
+                </button>
 
-                  {ingresoAbierto && (
-                    <div className="sidebar-submenu">
-                      <NavLink
-                        to="/ingreso/identificar-qr"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${
-                            isActive ? "sidebar-subopcion-activa" : ""
-                          }`
-                        }
-                      >
-                        Por código QR
-                      </NavLink>
+                {ingresoAbierto && (
+                  <div className="sidebar-submenu">
+                    {rolActual === "DOCENTE" && (
+                      <>
+                        <NavLink
+                          to="/ingreso/identificar-qr"
+                          className={({ isActive }) =>
+                            `sidebar-subopcion ${
+                              isActive ? "sidebar-subopcion-activa" : ""
+                            }`
+                          }
+                        >
+                          Por código QR
+                        </NavLink>
 
-                      <NavLink
-                        to="/ingreso/identificar-codigo"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${
-                            isActive ? "sidebar-subopcion-activa" : ""
-                          }`
-                        }
-                      >
-                        Por código universitario
-                      </NavLink>
+                        <NavLink
+                          to="/ingreso/identificar-codigo"
+                          className={({ isActive }) =>
+                            `sidebar-subopcion ${
+                              isActive ? "sidebar-subopcion-activa" : ""
+                            }`
+                          }
+                        >
+                          Por código universitario
+                        </NavLink>
+                      </>
+                    )}
 
-                      <NavLink
-                        to="/ingreso/identificar-documento"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${
-                            isActive ? "sidebar-subopcion-activa" : ""
-                          }`
-                        }
-                      >
-                        Por documento de identidad
-                      </NavLink>
+                    <NavLink
+                      to="/ingreso/identificar-documento"
+                      className={({ isActive }) =>
+                        `sidebar-subopcion ${
+                          isActive ? "sidebar-subopcion-activa" : ""
+                        }`
+                      }
+                    >
+                      Por documento de identidad
+                    </NavLink>
 
-                      <NavLink
-                        to="/ingreso/ingresos-registrados"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${
-                            isActive ? "sidebar-subopcion-activa" : ""
-                          }`
-                        }
-                      >
-                        Ingresos registrados
-                      </NavLink>
-                      <NavLink
-                        to="/ingreso/intentos-no-autorizados"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${isActive ? "sidebar-subopcion-activa" : ""}`
-                        }
-                      >
-                        Intentos no autorizados
-                      </NavLink>
-                    </div>
-                  )}
-                </>
-              )}
+                    {rolActual === "DOCENTE" && (
+                      <>
+                        <NavLink
+                          to="/ingreso/ingresos-registrados"
+                          className={({ isActive }) =>
+                            `sidebar-subopcion ${
+                              isActive ? "sidebar-subopcion-activa" : ""
+                            }`
+                          }
+                        >
+                          Ingresos registrados
+                        </NavLink>
+
+                        <NavLink
+                          to="/ingreso/intentos-no-autorizados"
+                          className={({ isActive }) =>
+                            `sidebar-subopcion ${
+                              isActive ? "sidebar-subopcion-activa" : ""
+                            }`
+                          }
+                        >
+                          Intentos no autorizados
+                        </NavLink>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             {usuario?.nombreRol === "ESTUDIANTE" && (
               <Opcion to="/inscripcion-qr/inscribir" icono={<FiMaximize />}>

@@ -8,6 +8,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -30,19 +32,76 @@ public class ValidacionHabilitacionIngresoServicio {
         this.accesoExamenDocente = accesoExamenDocente;
     }
 
-    @Transactional(readOnly = true)
-    public ValidacionHabilitacionRespuesta validar(
-            Long idExamen,
-            Long idEstudiante) {
+@Transactional(readOnly = true)
+public ValidacionHabilitacionRespuesta validar(
+        Long idExamen,
+        Long idEstudiante) {
 
-        if (idExamen == null || idExamen <= 0
-                || idEstudiante == null || idEstudiante <= 0) {
-            throw new ResponseStatusException(
+    validarIdentificadores(idExamen, idEstudiante);
+    accesoExamenDocente.verificarExamenActual(idExamen);
+
+    return consultarEstado(idExamen, idEstudiante);
+}
+
+@Transactional(readOnly = true)
+public ValidacionHabilitacionRespuesta validarPorDocumento(
+        Long idExamen,
+        Long idEstudiante) {
+
+    validarIdentificadores(idExamen, idEstudiante);
+
+    Authentication autenticacion = SecurityContextHolder
+            .getContext()
+            .getAuthentication();
+
+    if (autenticacion == null
+            || !autenticacion.isAuthenticated()
+            || !(autenticacion.getDetails() instanceof Long)) {
+        throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Debe iniciar sesion"
+        );
+    }
+
+    boolean esDocente = autenticacion.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_DOCENTE".equals(a.getAuthority()));
+
+    boolean esAdministrador = autenticacion.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_ADMINISTRADOR".equals(a.getAuthority()));
+
+    boolean tienePermiso = autenticacion.getAuthorities().stream()
+            .anyMatch(a -> "CONTROL_INGRESO".equals(a.getAuthority()));
+
+    if (!tienePermiso || (!esDocente && !esAdministrador)) {
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "No tiene permisos para validar la habilitacion"
+        );
+    }
+
+    if (esDocente) {
+        accesoExamenDocente.verificarExamenActual(idExamen);
+    }
+
+    return consultarEstado(idExamen, idEstudiante);
+}
+
+private void validarIdentificadores(
+        Long idExamen,
+        Long idEstudiante) {
+
+    if (idExamen == null || idExamen <= 0
+            || idEstudiante == null || idEstudiante <= 0) {
+        throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Identificadores invalidos"
-            );
-        }
-        accesoExamenDocente.verificarExamenActual(idExamen);
+        );
+    }
+}
+
+private ValidacionHabilitacionRespuesta consultarEstado(
+        Long idExamen,
+        Long idEstudiante) {
 
         if (!examenes.existsById(idExamen)) {
             throw new ResponseStatusException(

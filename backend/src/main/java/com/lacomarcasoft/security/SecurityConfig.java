@@ -90,7 +90,7 @@ public class SecurityConfig {
                     HttpMethod.PUT,
                     "/api/perfil/me/contrasena"
                 ).authenticated()
-      
+
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/perfil/me/foto"
@@ -100,6 +100,18 @@ public class SecurityConfig {
                     HttpMethod.PUT,
                     "/api/perfil/me/foto"
                 ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/ingresos/examenes/*/identificar-documento",
+                    "/api/ingresos/examenes/identificar-documento",
+                    "/api/ingresos/examenes/identificar-documento/*/foto",
+                    "/api/ingresos/examenes/identificar-documento/*/estudiantes/*/habilitacion",
+                    "/api/ingresos/examenes/identificar-documento/examenes"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"
+                ))
 
                 .requestMatchers("/api/ingresos/examenes/**")
                 .access(new WebExpressionAuthorizationManager(
