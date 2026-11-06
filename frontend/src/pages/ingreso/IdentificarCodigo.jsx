@@ -201,11 +201,19 @@ function IdentificarCodigo() {
     }
   };
 
+  
   const validarEstado = () => {
-    if (!identificado) return;
+    if (
+      !identificado ||
+      !Number.isSafeInteger(Number(identificado.idEstudiante)) ||
+      Number(identificado.idEstudiante) <= 0
+    ) {
+      return;
+    }
 
     navigate("/ingreso/validar-estado-documento", {
       state: {
+        origenIdentificacion: "CODIGO",
         identificacionEstudiante: {
           idEstudiante: identificado.idEstudiante,
           nombreEstudiante: identificado.nombreEstudiante,
@@ -215,6 +223,7 @@ function IdentificarCodigo() {
       },
     });
   };
+
 
   return (
     <main className="identificacion-pagina">
