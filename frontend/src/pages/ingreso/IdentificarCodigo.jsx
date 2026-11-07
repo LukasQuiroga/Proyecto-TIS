@@ -202,7 +202,7 @@ function IdentificarCodigo() {
   };
 
   
-  const validarEstado = () => {
+  const comprobarExamen = () => {
     if (
       !identificado ||
       !Number.isSafeInteger(Number(identificado.idEstudiante)) ||
@@ -211,7 +211,7 @@ function IdentificarCodigo() {
       return;
     }
 
-      navigate("/ingreso/validar-estado-documento", {
+    navigate("/ingreso/comprobar-examen", {
       state: {
         origenIdentificacion: "CODIGO",
         identificacionEstudiante: {
@@ -219,9 +219,9 @@ function IdentificarCodigo() {
           nombreEstudiante: identificado.nombreEstudiante,
           documentoIdentidad: identificado.documentoIdentidad,
           codigoUniversitario: identificado.codigoUniversitario,
+        },
       },
-    },
-  });
+    });
   };
 
 
@@ -424,9 +424,9 @@ function IdentificarCodigo() {
             <button
               type="button"
               className="identificacion-boton identificacion-primario"
-              onClick={validarEstado}
+              onClick={comprobarExamen}
             >
-              Validar estado
+              Comprobar examen
             </button>
           </div>
         </>

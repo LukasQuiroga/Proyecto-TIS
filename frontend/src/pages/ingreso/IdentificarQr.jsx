@@ -8,7 +8,6 @@ import {
   obtenerFotoEstudianteIdentificado,
 } from "../../services/validacionHabilitacionService";
 
-import ResultadoHabilitacion from "./ResultadoHabilitacion";
 
 import "./IdentificarDocumento.css";
 import "./IdentificarQr.css";
@@ -55,7 +54,6 @@ function IdentificarQr() {
   const [camaraAbierta, setCamaraAbierta] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [identificado, setIdentificado] = useState(null);
-  const [mostrarValidacion, setMostrarValidacion] = useState(false);
   const [error, setError] = useState("");
   const [fotoUrl, setFotoUrl] = useState("");
 
@@ -105,7 +103,6 @@ function IdentificarQr() {
 
     setFotoUrl("");
     setIdentificado(null);
-    setMostrarValidacion(false);
     setError("");
     setBuscando(false);
   };
@@ -127,7 +124,6 @@ function IdentificarQr() {
       const solicitud = ++solicitudActual.current;
 
       setIdentificado(null);
-      setMostrarValidacion(false);
       setError("");
       setFotoUrl("");
 
@@ -290,16 +286,34 @@ function IdentificarQr() {
   };
 
   const continuarValidacion = () => {
+    const idEstudiante = Number(identificado?.idEstudiante);
+    const examen = Number(idExamen);
+
     if (
-      !identificado?.asociadoAlExamen ||
-      !idExamen ||
+      !identificado ||
+      !Number.isSafeInteger(idEstudiante) ||
+      idEstudiante <= 0 ||
+      !Number.isSafeInteger(examen) ||
+      examen <= 0 ||
+      Number(identificado.idExamen) !== examen ||
       buscando ||
       camaraAbierta
     ) {
       return;
     }
 
-    setMostrarValidacion(true);
+    navigate("/ingreso/comprobar-examen", {
+      state: {
+        origenIdentificacion: "QR",
+        idExamenInicial: examen,
+        identificacionEstudiante: {
+          idEstudiante,
+          nombreEstudiante: identificado.nombreEstudiante,
+          documentoIdentidad: identificado.documentoIdentidad,
+          codigoUniversitario: identificado.codigoUniversitario,
+        },
+      },
+    });
   };
 
   const examenSeleccionado = examenes.find(
@@ -486,24 +500,13 @@ function IdentificarQr() {
             </div>
           </section>
 
-          {identificado.asociadoAlExamen ? (
-            <div className="identificacion-nota">
-              <strong>El estudiante ha sido identificado.</strong>
-              <p>
-                Puede continuar con la validación de habilitación. La
-                identificación mediante QR no autoriza automáticamente su
-                ingreso.
-              </p>
-            </div>
-          ) : (
-            <div className="identificacion-nota identificacion-aviso">
-              <strong>El estudiante no está asociado a este examen.</strong>
-              <p>
-                No puede continuar con la validación para el examen
-                seleccionado.
-              </p>
-            </div>
-          )}
+          <div className="identificacion-nota">
+            <strong>El estudiante ha sido identificado.</strong>
+            <p>
+              Continúe para comprobar si corresponde al examen seleccionado.
+              La identificación mediante QR no autoriza automáticamente su ingreso.
+            </p>
+          </div>
 
           <div className="identificacion-acciones">
             <button
@@ -519,22 +522,11 @@ function IdentificarQr() {
               type="button"
               className="identificacion-boton identificacion-primario"
               onClick={continuarValidacion}
-              disabled={!identificado.asociadoAlExamen || buscando}
+              disabled={buscando || camaraAbierta}
             >
-              Continuar validación
+              Comprobar examen
             </button>
           </div>
-
-          {mostrarValidacion && identificado.asociadoAlExamen && (
-            <ResultadoHabilitacion
-              key={`${idExamen}-${identificado.idEstudiante}`}
-              idExamen={Number(idExamen)}
-              idEstudiante={identificado.idEstudiante}
-              nombreExamen={examenSeleccionado?.nombreExamen}
-              nombreEstudiante={identificado.nombreEstudiante}
-              codigoEstudiante={identificado.codigoUniversitario}
-            />
-          )}
         </>
       )}
     </main>

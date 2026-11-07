@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -27,6 +28,7 @@ public class IngresoExamenServicio {
     private final UsuarioRepositorio usuarios;
     private final ValidacionHabilitacionIngresoServicio validacionHabilitacion;
     private final AccesoExamenDocenteServicio accesoExamenDocente;
+    private final ComprobacionCorrespondenciaServicio correspondencia;
     private final IntentoIngresoNoAutorizadoServicio intentos;
 
     public IngresoExamenServicio(
@@ -35,13 +37,15 @@ public class IngresoExamenServicio {
             UsuarioRepositorio usuarios,
             ValidacionHabilitacionIngresoServicio validacionHabilitacion,
             AccesoExamenDocenteServicio accesoExamenDocente,
-            IntentoIngresoNoAutorizadoServicio intentos) {
+            IntentoIngresoNoAutorizadoServicio intentos,
+            ComprobacionCorrespondenciaServicio correspondencia) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
         this.validacionHabilitacion = validacionHabilitacion;
         this.accesoExamenDocente = accesoExamenDocente;
         this.intentos = intentos;
+        this.correspondencia = correspondencia;
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +149,16 @@ public class IngresoExamenServicio {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
                 "Responsable no encontrado"
+            );
+        }
+
+        var resultadoCorrespondencia =
+            correspondencia.comprobar(idExamen, idEstudiante);
+
+        if (!resultadoCorrespondencia.puedeContinuar()) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "El estudiante no corresponde al examen seleccionado"
             );
         }
 

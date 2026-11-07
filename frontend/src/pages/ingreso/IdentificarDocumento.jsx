@@ -346,7 +346,7 @@ function IdentificarDocumento() {
               type="button"
               className="identificacion-boton identificacion-primario"
               onClick={() =>
-                navigate("/ingreso/validar-estado-documento", {
+                navigate("/ingreso/comprobar-examen", {
                   state: {
                     identificacionEstudiante: {
                       idEstudiante: identificado.idEstudiante,
@@ -358,7 +358,7 @@ function IdentificarDocumento() {
                 })
               }
             >
-              Validar estado
+              Comprobar examen
             </button>
           </div>
         </>
