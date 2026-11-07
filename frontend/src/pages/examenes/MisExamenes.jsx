@@ -11,6 +11,12 @@ import {
 import { obtenerMisExamenes } from "../../services/examenesEstudianteService";
 import "./MisExamenes.css";
 
+const normalizarTexto = (valor) =>
+  String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es");
+
 const presente = (valor) =>
   valor !== null &&
   valor !== undefined &&
@@ -114,19 +120,19 @@ useEffect(() => {
     cargar();
   };
 
-  const visibles = useMemo(
+   const visibles = useMemo(
     () =>
       examenes.filter((examen) => {
-        const filtro = busqueda.trim().toLocaleLowerCase("es");
+        const filtro = normalizarTexto(busqueda.trim());
 
         const coincide = [
-          examen.nombreExamen,
-          examen.asignatura,
-          examen.codigo,
-          examen.docente,
-        ].some((campo) =>
-          (campo || "").toLocaleLowerCase("es").includes(filtro)
-        );
+         examen.nombreExamen,
+         examen.asignatura,
+         examen.codigo,
+         examen.docente,
+       ].some((campo) =>
+         normalizarTexto(campo).includes(filtro)
+       );
 
         if (!coincide) return false;
 
