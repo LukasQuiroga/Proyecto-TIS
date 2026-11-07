@@ -18,7 +18,7 @@ import {
 
 import "./IdentificarDocumento.css";
 
-const PATRON_CODIGO = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/;
+const PATRON_CODIGO = /^[0-9]+$/;
 const LONGITUD_MAXIMA = 30;
 
 function IdentificarCodigo() {
@@ -62,8 +62,9 @@ function IdentificarCodigo() {
     setCargandoFoto(false);
   };
 
-  const cambiarCodigo = (valor) => {
-    setCodigo(valor);
+    const cambiarCodigo = (valor) => {
+    const codigoNumerico = valor.replace(/\D/g, "").slice(0, LONGITUD_MAXIMA);
+    setCodigo(codigoNumerico);
     limpiarIdentificacion();
   };
 
@@ -253,14 +254,15 @@ function IdentificarCodigo() {
               <FiSearch aria-hidden="true" />
 
               <input
-                id="identificacion-codigo"
-                type="text"
-                value={codigo}
-                onChange={(e) => cambiarCodigo(e.target.value)}
-                placeholder="Ej. 202012345"
-                autoComplete="off"
-                maxLength={31}
-                aria-invalid={Boolean(error)}
+                   id="identificacion-codigo"
+                   type="text"
+                   inputMode="numeric"
+                   value={codigo}
+                   onChange={(e) => cambiarCodigo(e.target.value)}
+                   placeholder="Ej. 202012345"
+                   autoComplete="off"
+                   maxLength={30}
+                   aria-invalid={Boolean(error)}
               />
 
               {codigo && (
