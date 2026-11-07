@@ -1,17 +1,14 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import ResultadoHabilitacion from "./ResultadoHabilitacion";
-
 import {
-  consultarHabilitacionPorDocumento,
+  comprobarCorrespondencia,
   obtenerExamenesIdentificacionDocumento,
 } from "../../services/validacionHabilitacionService";
 
 import "./ValidarHabilitacion.css";
 
-function ValidarEstadoDocumento() {
+function ComprobarExamenCorrespondiente() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -23,7 +20,6 @@ function ValidarEstadoDocumento() {
     : "/ingreso/identificar-documento";
 
   const estudiante = location.state?.identificacionEstudiante;
-
   const idEstudiante = Number(estudiante?.idEstudiante);
 
   const identificacionValida =
@@ -54,7 +50,7 @@ function ValidarEstadoDocumento() {
     obtenerExamenesIdentificacionDocumento()
       .then((datos) => {
         if (activo) {
-          setExamenes(datos);
+          setExamenes(Array.isArray(datos) ? datos : []);
         }
       })
       .catch((err) => {
@@ -87,18 +83,17 @@ function ValidarEstadoDocumento() {
     setCargando(false);
   };
 
-  const validar = async (evento) => {
+  const comprobar = async (evento) => {
     evento.preventDefault();
 
     if (!identificacionValida || cargando) return;
 
     if (!idExamen) {
-      setError(
-        "Seleccione un examen para validar al estudiante identificado."
-      );
+      setError("Debe seleccionar un examen para comprobar la correspondencia.");
       return;
     }
 
+    const examenConsultado = Number(idExamen);
     const solicitud = ++solicitudActual.current;
 
     setResultado(null);
@@ -106,29 +101,22 @@ function ValidarEstadoDocumento() {
     setCargando(true);
 
     try {
-      const datos = await consultarHabilitacionPorDocumento(
-        Number(idExamen),
+      const datos = await comprobarCorrespondencia(
+        examenConsultado,
         idEstudiante
       );
 
       if (solicitud !== solicitudActual.current) return;
 
-      const estadosValidos = [
-        "HABILITADO",
-        "INHABILITADO",
-        "SIN_ESTADO",
-        "NO_ASOCIADO",
-      ];
-
       if (
-        Number(datos?.idExamen) !== Number(idExamen) ||
+        Number(datos?.idExamen) !== examenConsultado ||
         Number(datos?.idEstudiante) !== idEstudiante ||
-        !estadosValidos.includes(datos?.estado) ||
+        typeof datos?.corresponde !== "boolean" ||
         typeof datos?.puedeContinuar !== "boolean" ||
-        (datos.estado !== "HABILITADO" && datos.puedeContinuar)
+        datos.corresponde !== datos.puedeContinuar
       ) {
         setError(
-          "El servidor devolvió una validación incompleta o inconsistente."
+          "El servidor devolvió una comprobación incompleta o inconsistente."
         );
         return;
       }
@@ -140,7 +128,7 @@ function ValidarEstadoDocumento() {
       setError(
         err.response?.data?.mensaje ||
           err.response?.data?.message ||
-          "No se pudo validar la habilitación del estudiante."
+          "No se pudo completar la comprobación de correspondencia."
       );
     } finally {
       if (solicitud === solicitudActual.current) {
@@ -153,15 +141,17 @@ function ValidarEstadoDocumento() {
     (examen) => String(examen.idExamen) === idExamen
   );
 
-  const habilitado =
-    resultado?.estado === "HABILITADO" &&
-    resultado?.puedeContinuar === true;
+  const correspondenciaConfirmada =
+    resultado?.corresponde === true &&
+    resultado?.puedeContinuar === true &&
+    Number(resultado?.idExamen) === Number(idExamen) &&
+    Number(resultado?.idEstudiante) === idEstudiante;
 
   if (!identificacionValida) {
     return (
       <main className="validacion-pagina">
         <header className="validacion-encabezado">
-          <h1>Validar estado</h1>
+          <h1>Comprobar examen correspondiente</h1>
         </header>
 
         <section
@@ -169,10 +159,9 @@ function ValidarEstadoDocumento() {
           role="alert"
         >
           <h2>No hay un estudiante identificado</h2>
-
           <p>
             Primero debe identificar correctamente a un estudiante
-            para continuar con la validación.
+            para comprobar su correspondencia con un examen.
           </p>
 
           <button
@@ -180,7 +169,7 @@ function ValidarEstadoDocumento() {
             className="validacion-boton"
             onClick={() => navigate(rutaIdentificacion)}
           >
-            Buscar otro estudiante
+            Identificar estudiante
           </button>
         </section>
       </main>
@@ -189,13 +178,11 @@ function ValidarEstadoDocumento() {
 
   return (
     <main className="validacion-pagina">
-
       <header className="validacion-encabezado">
-        <h1>Validar estado</h1>
-
+        <h1>Comprobar examen correspondiente</h1>
         <p>
-          Seleccione un examen para comprobar la habilitación
-          del estudiante identificado.
+          Seleccione un examen para comprobar si el estudiante
+          identificado está inscrito en él.
         </p>
       </header>
 
@@ -203,8 +190,7 @@ function ValidarEstadoDocumento() {
         <h2>Estudiante identificado</h2>
 
         <p>
-          <strong>Nombre:</strong>{" "}
-          {estudiante.nombreEstudiante}
+          <strong>Nombre:</strong> {estudiante.nombreEstudiante}
         </p>
 
         <p>
@@ -229,19 +215,19 @@ function ValidarEstadoDocumento() {
       </section>
 
       <section className="validacion-panel">
-        <h2>Datos de la validación</h2>
+        <h2>Datos de la comprobación</h2>
 
         <form
           className="validacion-formulario"
-          onSubmit={validar}
+          onSubmit={comprobar}
         >
           <div className="validacion-campo">
-            <label htmlFor="validacion-documento-examen">
+            <label htmlFor="correspondencia-examen">
               Examen
             </label>
 
             <select
-              id="validacion-documento-examen"
+              id="correspondencia-examen"
               value={idExamen}
               onChange={(evento) =>
                 cambiarExamen(evento.target.value)
@@ -277,7 +263,6 @@ function ValidarEstadoDocumento() {
                 <strong>Asignatura y grupo:</strong>{" "}
                 {examenSeleccionado.materia}
               </p>
-
               <p>
                 <strong>Estado del examen:</strong>{" "}
                 {examenSeleccionado.estado ||
@@ -297,8 +282,8 @@ function ValidarEstadoDocumento() {
             }
           >
             {cargando
-              ? "Validando..."
-              : "Validar habilitación"}
+              ? "Comprobando..."
+              : "Comprobar correspondencia"}
           </button>
         </form>
       </section>
@@ -318,98 +303,60 @@ function ValidarEstadoDocumento() {
           className="validacion-resultado validacion-error"
           role="alert"
         >
-          <h2>Validación no completada</h2>
+          <h2>Comprobación no completada</h2>
           <p>{error}</p>
         </section>
       )}
 
-      {resultado && !identificadoPorCodigo && (
+      {resultado && (
         <section
           className={`validacion-resultado ${
-            habilitado
+            correspondenciaConfirmada
               ? "validacion-habilitado"
               : "validacion-bloqueado"
           }`}
           aria-live="polite"
         >
           <h2>
-            {habilitado
-              ? "Estudiante habilitado"
-              : resultado.estado === "INHABILITADO"
-                ? "Estudiante inhabilitado"
-                : "Ingreso no autorizado"}
+            {correspondenciaConfirmada
+              ? "Correspondencia confirmada"
+              : "Correspondencia no confirmada"}
           </h2>
 
           <div className="validacion-detalles">
-            <p>
-              <strong>Examen:</strong>{" "}
-              {examenSeleccionado?.nombreExamen ||
-                resultado.idExamen}
-            </p>
-
             <p>
               <strong>Estudiante:</strong>{" "}
               {estudiante.nombreEstudiante}
             </p>
 
             <p>
-              <strong>Estado:</strong>{" "}
-              {resultado.estado}
+              <strong>Examen:</strong>{" "}
+              {examenSeleccionado?.nombreExamen ||
+                resultado.idExamen}
             </p>
           </div>
 
           <p>{resultado.mensaje}</p>
 
-          {resultado.estado === "INHABILITADO" && (
-            <div className="validacion-motivo">
-              <h3>Motivo de inhabilitación</h3>
-
-              <p>
-                <strong>
-                  {resultado.tituloMotivo ||
-                    "Sin título registrado"}
-                </strong>
-              </p>
-
-              <p>
-                {resultado.motivo ||
-                  "Sin detalle registrado"}
-              </p>
-            </div>
-          )}
-
           <div className="validacion-decision">
-            {habilitado
-              ? "Habilitación confirmada. Puede continuar con las demás verificaciones."
-              : "No se permite continuar con el ingreso."}
+            {correspondenciaConfirmada
+              ? "El estudiante corresponde al examen seleccionado. Puede continuar con la validación de habilitación."
+              : "El estudiante no corresponde al examen seleccionado. No puede continuar."}
           </div>
+
+          {correspondenciaConfirmada && (
+            <button
+              type="button"
+              className="validacion-boton"
+              disabled
+            >
+              Continuar validación
+            </button>
+          )}
         </section>
       )}
-
-      {/* Registro de ingreso y asistencia */}
-
-      {habilitado &&
-        identificadoPorCodigo &&
-        idExamen &&
-        identificacionValida && (
-          <ResultadoHabilitacion
-            key={`${idExamen}-${idEstudiante}`}
-            idExamen={Number(idExamen)}
-            idEstudiante={idEstudiante}
-            nombreExamen={
-              examenSeleccionado?.nombreExamen || ""
-            }
-            nombreEstudiante={
-              estudiante.nombreEstudiante
-            }
-            codigoEstudiante={
-              estudiante.codigoUniversitario
-            }
-          />
-        )}
-
     </main>
   );
 }
 
-export default ValidarEstadoDocumento;
+export default ComprobarExamenCorrespondiente;
