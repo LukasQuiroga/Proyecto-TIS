@@ -13,12 +13,16 @@ function ComprobarExamenCorrespondiente() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const identificadoPorCodigo =
-    location.state?.origenIdentificacion === "CODIGO";
+  const origenIdentificacion = location.state?.origenIdentificacion;
 
-  const rutaIdentificacion = identificadoPorCodigo
-    ? "/ingreso/identificar-codigo"
-    : "/ingreso/identificar-documento";
+  const identificadoPorCodigo = origenIdentificacion === "CODIGO";
+  const identificadoPorQr = origenIdentificacion === "QR";
+
+  const rutaIdentificacion = identificadoPorQr
+    ? "/ingreso/identificar-qr"
+    : identificadoPorCodigo
+      ? "/ingreso/identificar-codigo"
+      : "/ingreso/identificar-documento";
 
   const estudiante = location.state?.identificacionEstudiante;
   const idEstudiante = Number(estudiante?.idEstudiante);
@@ -26,12 +30,22 @@ function ComprobarExamenCorrespondiente() {
   const identificacionValida =
     Number.isSafeInteger(idEstudiante) &&
     idEstudiante > 0 &&
-    (identificadoPorCodigo
-      ? Boolean(estudiante?.codigoUniversitario)
-      : Boolean(estudiante?.documentoIdentidad));
+    Boolean(estudiante?.nombreEstudiante) &&
+    (identificadoPorQr ||
+      (identificadoPorCodigo
+        ? Boolean(estudiante?.codigoUniversitario)
+        : Boolean(estudiante?.documentoIdentidad)));
 
   const [examenes, setExamenes] = useState([]);
-  const [idExamen, setIdExamen] = useState("");
+  const [idExamen, setIdExamen] = useState(() => {
+    const examenInicial = Number(location.state?.idExamenInicial);
+
+    return identificadoPorQr &&
+      Number.isSafeInteger(examenInicial) &&
+      examenInicial > 0
+      ? String(examenInicial)
+      : "";
+  });
 
   const [cargandoExamenes, setCargandoExamenes] =
     useState(identificacionValida);

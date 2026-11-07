@@ -295,7 +295,7 @@ function App() {
             />
 
             <Route
-              path="/ingreso/validar-estado-documento"
+              path="/ingreso/comprobar-examen"
               element={
                 <AccesoControlIngreso permitirAdministrador>
                   <ComprobarExamenCorrespondiente />
