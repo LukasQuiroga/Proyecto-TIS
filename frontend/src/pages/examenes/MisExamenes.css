@@ -68,6 +68,7 @@
 
 .mis-examenes-filtros {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin: 24px 0 18px;
 }
@@ -285,4 +286,48 @@
 
 .mis-examenes-modal-error footer {
   justify-content: center;
+}
+
+.mis-examenes-filtro-fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 190px;
+}
+
+.mis-examenes-filtro-fecha label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #40556b;
+}
+
+.mis-examenes-fecha-controles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mis-examenes-fecha-controles input {
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: white;
+  color: #40556b;
+  font: inherit;
+  min-width: 0;
+}
+
+.mis-examenes-fecha-controles button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: white;
+  color: #0b63ce;
+  cursor: pointer;
+}
+
+.mis-examenes-fecha-controles button:hover {
+  background: #f4f7fc;
 }

@@ -11,6 +11,12 @@ import {
 import { obtenerMisExamenes } from "../../services/examenesEstudianteService";
 import "./MisExamenes.css";
 
+const normalizarTexto = (valor) =>
+  String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es");
+
 const presente = (valor) =>
   valor !== null &&
   valor !== undefined &&
@@ -53,6 +59,7 @@ export default function MisExamenes() {
   const [examenes, setExamenes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [estado, setEstado] = useState("todos");
+  const [fechaFiltro, setFechaFiltro] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
@@ -114,10 +121,10 @@ useEffect(() => {
     cargar();
   };
 
-  const visibles = useMemo(
+    const visibles = useMemo(
     () =>
       examenes.filter((examen) => {
-        const filtro = busqueda.trim().toLocaleLowerCase("es");
+        const filtro = normalizarTexto(busqueda.trim());
 
         const coincide = [
           examen.nombreExamen,
@@ -125,22 +132,26 @@ useEffect(() => {
           examen.codigo,
           examen.docente,
         ].some((campo) =>
-          (campo || "").toLocaleLowerCase("es").includes(filtro)
+          normalizarTexto(campo).includes(filtro)
         );
 
         if (!coincide) return false;
 
-        if (estado === "pendientes") {
-          return incompleto(examen);
+        if (estado === "pendientes" && !incompleto(examen)) {
+          return false;
         }
 
-        if (estado === "programados") {
-          return !incompleto(examen);
+        if (estado === "programados" && incompleto(examen)) {
+          return false;
+        }
+
+        if (fechaFiltro && examen.fechaExamen !== fechaFiltro) {
+          return false;
         }
 
         return true;
       }),
-    [examenes, busqueda, estado]
+    [examenes, busqueda, estado, fechaFiltro]
   );
 
   const abrirDetalle = (examen) => {
@@ -223,8 +234,40 @@ useEffect(() => {
             <option value="programados">Con datos completos</option>
             <option value="pendientes">Información pendiente</option>
           </select>
-        </div>
 
+  <div className="mis-examenes-filtro-fecha">
+    <label htmlFor="fecha-examen-filtro">
+      Fecha del examen
+    </label>
+
+    <div className="mis-examenes-fecha-controles">
+      <input
+        id="fecha-examen-filtro"
+        type="date"
+        min="0001-01-01"
+        max="9999-12-31"
+        value={fechaFiltro}
+        onChange={(e) => {
+          const fecha = e.target.value;
+
+          if (!fecha || /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            setFechaFiltro(fecha);
+          }
+        }}
+      />
+
+      {fechaFiltro && (
+        <button
+          type="button"
+          onClick={() => setFechaFiltro("")}
+          aria-label="Quitar filtro de fecha"
+        >
+          Limpiar
+        </button>
+      )}
+    </div>
+  </div>
+</div>
         {cargando ? (
           <p className="mis-examenes-estado" role="status">
             Cargando exámenes...

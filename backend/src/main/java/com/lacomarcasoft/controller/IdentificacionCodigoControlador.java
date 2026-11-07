@@ -23,7 +23,7 @@ public class IdentificacionCodigoControlador {
     private static final int LONGITUD_MAXIMA = 30;
 
     private static final Pattern FORMATO =
-            Pattern.compile("^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$");
+        Pattern.compile("^[0-9]+$");
 
     private final JdbcTemplate jdbc;
     private final AccesoExamenDocenteServicio accesoDocente;
