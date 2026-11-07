@@ -1,0 +1,130 @@
+.selector-examen {
+  position: relative;
+  width: 100%;
+}
+
+.selector-examen-boton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid #cbd7e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #102d50;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.selector-examen-boton:hover {
+  border-color: #0b63ce;
+}
+
+.selector-examen-boton:focus-visible,
+.selector-examen-busqueda:focus-visible {
+  outline: 2px solid #0b63ce;
+  outline-offset: 2px;
+}
+
+.selector-examen-boton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.selector-examen-flecha {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+.selector-examen-desplegable {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd7e5;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgb(16 45 80 / 12%);
+}
+
+.selector-examen-busqueda {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid #cbd7e5;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.selector-examen-lista {
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.selector-examen-opcion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #102d50;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  overflow-wrap: anywhere;
+}
+
+.selector-examen-opcion span:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.selector-examen-opcion:hover,
+.selector-examen-activo {
+  background: #edf4ff;
+}
+
+.selector-examen-seleccionado {
+  background: #dceaff;
+  font-weight: 600;
+}
+
+.selector-examen-codigo {
+  flex-shrink: 0;
+  color: #0758ba;
+  font-weight: 600;
+}
+
+.selector-examen-vacio {
+  padding: 12px;
+  margin: 0;
+  color: #64748b;
+  text-align: center;
+}
+
+.validacion-panel .identificacion-perfil-contenido + .validacion-boton {
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .selector-examen-opcion {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .selector-examen-lista {
+    max-height: 200px;
+  }
+}
