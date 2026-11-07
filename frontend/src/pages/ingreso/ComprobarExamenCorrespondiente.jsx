@@ -7,6 +7,7 @@ import {
 } from "../../services/validacionHabilitacionService";
 
 import "./ValidarHabilitacion.css";
+import ResultadoHabilitacion from "./ResultadoHabilitacion";
 
 function ComprobarExamenCorrespondiente() {
   const location = useLocation();
@@ -39,6 +40,7 @@ function ComprobarExamenCorrespondiente() {
   const [errorExamenes, setErrorExamenes] = useState("");
   const [error, setError] = useState("");
   const [resultado, setResultado] = useState(null);
+  const [mostrarHabilitacion, setMostrarHabilitacion] = useState(false);
 
   const solicitudActual = useRef(0);
 
@@ -79,6 +81,7 @@ function ComprobarExamenCorrespondiente() {
 
     setIdExamen(valor);
     setResultado(null);
+    setMostrarHabilitacion(false);
     setError("");
     setCargando(false);
   };
@@ -97,6 +100,7 @@ function ComprobarExamenCorrespondiente() {
     const solicitud = ++solicitudActual.current;
 
     setResultado(null);
+    setMostrarHabilitacion(false);
     setError("");
     setCargando(true);
 
@@ -344,17 +348,34 @@ function ComprobarExamenCorrespondiente() {
               : "El estudiante no corresponde al examen seleccionado. No puede continuar."}
           </div>
 
-          {correspondenciaConfirmada && (
+          {correspondenciaConfirmada && !mostrarHabilitacion && (
             <button
               type="button"
               className="validacion-boton"
-              disabled
+              onClick={() => setMostrarHabilitacion(true)}
             >
               Continuar validación
             </button>
           )}
         </section>
       )}
+
+      {correspondenciaConfirmada &&
+        mostrarHabilitacion &&
+        examenSeleccionado && (
+          <div className="validacion-integrada">
+            <ResultadoHabilitacion
+              key={`${idExamen}-${idEstudiante}`}
+              idExamen={Number(idExamen)}
+              idEstudiante={idEstudiante}
+              nombreExamen={examenSeleccionado.nombreExamen}
+              nombreEstudiante={estudiante.nombreEstudiante}
+              codigoEstudiante={
+                estudiante.codigoUniversitario || ""
+              }
+            />
+          </div>
+        )}
     </main>
   );
 }
