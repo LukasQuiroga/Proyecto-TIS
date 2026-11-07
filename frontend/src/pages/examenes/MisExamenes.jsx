@@ -54,6 +54,37 @@ const incompleto = (examen) =>
   !examen.horaInicio ||
   !examen.aula?.trim() ||
   !examen.docente?.trim();
+  
+const obtenerEstadoTemporal = (examen) => {
+  const { fechaExamen, horaInicio, horaFin } = examen;
+
+  if (!fechaExamen || !horaInicio || !horaFin) {
+    return "Por confirmar";
+  }
+
+  const inicio = new Date(`${fechaExamen}T${horaInicio}`);
+  const fin = new Date(`${fechaExamen}T${horaFin}`);
+
+  if (
+    Number.isNaN(inicio.getTime()) ||
+    Number.isNaN(fin.getTime()) ||
+    fin <= inicio
+  ) {
+    return "Por confirmar";
+  }
+
+  const ahora = new Date();
+
+  if (ahora >= fin) {
+    return "Finalizado";
+  }
+
+  if (ahora >= inicio) {
+    return "En curso";
+  }
+
+  return "Próximo";
+};
 
 export default function MisExamenes() {
   const [examenes, setExamenes] = useState([]);
@@ -298,6 +329,7 @@ useEffect(() => {
                   <th>Horario</th>
                   <th>Aula</th>
                   <th>Docente</th>
+                  <th>Estado</th>
                   <th>Acción</th>
                 </tr>
               </thead>
@@ -325,17 +357,27 @@ useEffect(() => {
                       <FiMapPin /> {texto(examen.aula)}
                     </td>
 
-                    <td>{texto(examen.docente)}</td>
+                   <td>{texto(examen.docente)}</td>
 
-                    <td>
-                      <button
+                   <td>
+                     <span
+                           className={`mis-examenes-estado-temporal estado-${obtenerEstadoTemporal(examen)
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")}`}
+                          >
+                          {obtenerEstadoTemporal(examen)}
+                    </span>
+                   </td>
+
+                   <td>
+                     <button
                         type="button"
                         className="mis-examenes-ver"
                         onClick={() => abrirDetalle(examen)}
                       >
-                        Ver detalle
+                            Ver detalle
                       </button>
-                    </td>
+                   </td>
                   </tr>
                 ))}
               </tbody>
@@ -397,9 +439,22 @@ useEffect(() => {
               </button>
             </div>
 
+            
             <h3>{texto(seleccionado.nombreExamen)}</h3>
 
-            <dl className="mis-examenes-detalles">
+             <div className="mis-examenes-detalle-estado">
+              <strong>Estado del examen:</strong>
+              <span
+                   className={`mis-examenes-estado-temporal estado-${obtenerEstadoTemporal(seleccionado)
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`}
+               >
+                {obtenerEstadoTemporal(seleccionado)}
+              </span>
+            </div>
+
+           <dl className="mis-examenes-detalles">
+
               <dt>Asignatura</dt>
               <dd>{texto(seleccionado.asignatura)}</dd>
 

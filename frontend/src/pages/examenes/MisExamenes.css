@@ -331,3 +331,54 @@
 .mis-examenes-fecha-controles button:hover {
   background: #f4f7fc;
 }
+
+/* Estilo general del estado temporal */
+
+.mis-examenes-estado-temporal {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Examen finalizado */
+.mis-examenes-estado-temporal.estado-finalizado {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Examen próximo */
+.mis-examenes-estado-temporal.estado-próximo {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Examen en curso */
+.mis-examenes-estado-temporal.estado-en-curso {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* Examen pendiente de programación */
+.mis-examenes-estado-temporal.estado-por-confirmar {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+
+/* Estado temporal en el detalle */
+
+.mis-examenes-detalle-estado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.mis-examenes-detalle-estado strong {
+  color: #243b53;
+  font-size: 14px;
+}
