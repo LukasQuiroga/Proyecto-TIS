@@ -15,6 +15,7 @@ import {
 import "./IdentificarDocumento.css";
 
 const PATRON_DOCUMENTO = /^[0-9]+(?:-[A-Za-z0-9]{1,2})?$/;
+const PATRON_DOCUMENTO_PARCIAL = /^[0-9]*(?:-[A-Za-z0-9]{0,2})?$/;
 const LONGITUD_MAXIMA = 30;
 
 function IdentificarDocumento() {
@@ -60,7 +61,13 @@ function IdentificarDocumento() {
   };
 
   const cambiarDocumento = (valor) => {
-    setDocumento(valor);
+    const documentoIngresado = valor.trim().slice(0, LONGITUD_MAXIMA);
+
+    if (!PATRON_DOCUMENTO_PARCIAL.test(documentoIngresado)) {
+      return;
+    }
+
+    setDocumento(documentoIngresado);
     limpiarIdentificacion();
   };
 
@@ -199,6 +206,7 @@ function IdentificarDocumento() {
               <FiSearch aria-hidden="true" />
               <input
                 id="identificacion-documento"
+                maxLength={LONGITUD_MAXIMA}
                 type="text"
                 value={documento}
                 onChange={(evento) => cambiarDocumento(evento.target.value)}
