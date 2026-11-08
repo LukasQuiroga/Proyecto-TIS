@@ -207,6 +207,91 @@
   margin-bottom: 12px;
 }
 
+.ingreso-existente-panel {
+  border-top: 1px solid #dbe5f0;
+}
+
+.ingreso-existente-aviso {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #fff7f7, #fff 75%);
+}
+
+.ingreso-existente-icono {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #c81e1e;
+  font-size: 21px;
+}
+
+.ingreso-existente-contenido { flex: 1; min-width: 0; }
+.ingreso-existente-contenido strong { color: #9f1d1d; font-size: 16px; }
+.ingreso-existente-contenido p { margin: 4px 0 0; color: #5b6473; line-height: 1.5; }
+
+.ingreso-existente-etiqueta {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.ingreso-existente-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1769e0, #0756b6);
+  box-shadow: 0 5px 12px rgb(8 102 217 / 20%);
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.ingreso-existente-boton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #0f5ecc, #064a9d);
+  box-shadow: 0 8px 17px rgb(8 102 217 / 27%);
+}
+
+.ingreso-existente-boton span {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.ingreso-existente-boton:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .ingreso-existente-aviso {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .ingreso-existente-etiqueta {
+    margin-left: 56px;
+  }
+
+  .ingreso-existente-boton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .duplicado-modal-overlay {
   position: fixed;
   z-index: 1200;

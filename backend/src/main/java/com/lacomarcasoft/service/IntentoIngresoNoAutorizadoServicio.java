@@ -33,6 +33,7 @@ public class IntentoIngresoNoAutorizadoServicio {
     public record Intento(Long idIntento, Long idExamen, Long idEstudiante,
                           String identificadorIntentado, String nombreEstudiante,
                           String nombreExamen, String metodoIdentificacion, String motivoRechazo,
+                          String tituloMotivo, String descripcionMotivo,
                           String responsable, OffsetDateTime fechaHora) {}
 
     @Transactional(readOnly = true)
@@ -42,12 +43,17 @@ public class IntentoIngresoNoAutorizadoServicio {
             SELECT i.id_intento, i.id_examen, i.id_estudiante, i.identificador_intentado,
                    TRIM(CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, ''))) AS estudiante,
                    e.nombre_examen, i.metodo_identificacion, i.motivo_rechazo,
+                   COALESCE(h.titulo_motivo_personalizado, mi.titulo) AS titulo_motivo,
+                   COALESCE(h.motivo_personalizado, mi.motivo) AS descripcion_motivo,
                    TRIM(CONCAT(COALESCE(r.nombre, ''), ' ', COALESCE(r.apellido, ''))) AS responsable,
                    i.fecha_hora
             FROM academico.intento_ingreso_no_autorizado i
             JOIN academico.examen e ON e.id_examen = i.id_examen
             JOIN academico.materia m ON m.id_materia = e.id_materia
             LEFT JOIN seguridad.usuario u ON u.id_usuario = i.id_estudiante
+            LEFT JOIN academico.habilitacion_estudiante h
+                ON h.id_examen = i.id_examen AND h.id_estudiante = i.id_estudiante
+            LEFT JOIN academico.motivo_inhabilitacion mi ON mi.id_motivo = h.id_motivo
             JOIN seguridad.usuario r ON r.id_usuario = i.id_responsable
             WHERE m.id_docente = ?
             """);
@@ -70,6 +76,7 @@ public class IntentoIngresoNoAutorizadoServicio {
             rs.getObject("id_estudiante", Long.class), rs.getString("identificador_intentado"),
             rs.getString("estudiante"), rs.getString("nombre_examen"),
             rs.getString("metodo_identificacion"), rs.getString("motivo_rechazo"),
+            rs.getString("titulo_motivo"), rs.getString("descripcion_motivo"),
             rs.getString("responsable"), rs.getObject("fecha_hora", OffsetDateTime.class)
         ), args.toArray());
     }

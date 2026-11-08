@@ -9,10 +9,11 @@ import {
 } from "react-icons/fi";
 
 import {
-  consultarHabilitacion,
   consultarIngresoRegistrado,
   obtenerIngresoRegistrado,
+  registrarIntentoIngresoDuplicado,
   registrarIngresoExamen,
+  verificarIngresoYRegistrarRechazo,
 } from "../../services/validacionHabilitacionService";
 
 import "./ValidarHabilitacion.css";
@@ -32,8 +33,11 @@ function ResultadoHabilitacion({
 
   const [modalDuplicadoAbierto, setModalDuplicadoAbierto] =
     useState(false);
+  const [errorRegistroIntento, setErrorRegistroIntento] = useState("");
 
   const registrandoActual = useRef(false);
+  const intentosDuplicadosEnviados = useRef(new Set());
+  const verificacionesEnCurso = useRef(new Map());
 
   const claveIngreso = `${idExamen}:${idEstudiante}`;
 
@@ -87,10 +91,15 @@ function ResultadoHabilitacion({
 
     async function validar() {
       try {
-        const datos = await consultarHabilitacion(
-          Number(idExamen),
-          Number(idEstudiante)
-        );
+        let solicitud = verificacionesEnCurso.current.get(claveIngreso);
+        if (!solicitud) {
+          solicitud = verificarIngresoYRegistrarRechazo(
+            Number(idExamen),
+            Number(idEstudiante)
+          );
+          verificacionesEnCurso.current.set(claveIngreso, solicitud);
+        }
+        const datos = await solicitud;
 
         if (!activo) {
           return;
@@ -131,6 +140,7 @@ function ResultadoHabilitacion({
           error: "",
         });
       } catch (err) {
+        verificacionesEnCurso.current.delete(claveIngreso);
         if (!activo) {
           return;
         }
@@ -159,7 +169,7 @@ function ResultadoHabilitacion({
 
   // Consultar ingreso existente
   useEffect(() => {
-    if (!habilitado) {
+    if (!resultado || error) {
       return undefined;
     }
 
@@ -183,6 +193,25 @@ function ResultadoHabilitacion({
           detalle: null,
           error: "",
         });
+
+        if (datos.ingresoRegistrado === true) {
+          setModalDuplicadoAbierto(true);
+          setErrorRegistroIntento("");
+          if (!intentosDuplicadosEnviados.current.has(claveIngreso)) {
+            intentosDuplicadosEnviados.current.add(claveIngreso);
+            void registrarIntentoIngresoDuplicado(
+              Number(idExamen),
+              Number(idEstudiante)
+            ).catch((errRegistro) => {
+              intentosDuplicadosEnviados.current.delete(claveIngreso);
+              setErrorRegistroIntento(
+                errRegistro.response?.data?.mensaje ||
+                  errRegistro.response?.data?.message ||
+                  "No se pudo guardar este rechazo en el historial."
+              );
+            });
+          }
+        }
 
         if (
           datos.ingresoRegistrado === true &&
@@ -236,7 +265,8 @@ function ResultadoHabilitacion({
       activo = false;
     };
   }, [
-    habilitado,
+    resultado,
+    error,
     idExamen,
     idEstudiante,
     claveIngreso,
@@ -287,6 +317,7 @@ function ResultadoHabilitacion({
 
       if (duplicado) {
         setModalDuplicadoAbierto(true);
+        setErrorRegistroIntento("");
 
         // El backend ya registra el intento duplicado.
         // No se envía una segunda solicitud.
@@ -435,7 +466,7 @@ function ResultadoHabilitacion({
 
       {/* Registro de asistencia */}
 
-      {!cargando && habilitado && (
+      {!cargando && habilitado && !ingresoActual?.registrado && (
         <section
           className="validacion-panel"
           aria-live="polite"
@@ -447,21 +478,6 @@ function ResultadoHabilitacion({
               Comprobando si el estudiante ya tiene
               un ingreso registrado...
             </p>
-          ) : ingresoActual.registrado ? (
-            <>
-              <p className="validacion-ayuda">
-                Este estudiante ya tiene un ingreso
-                registrado para este examen.
-              </p>
-
-              <button
-                type="button"
-                className="validacion-boton"
-                onClick={abrirRegistroExistente}
-              >
-                Ver registro existente
-              </button>
-            </>
           ) : (
             <>
               {ingresoActual.error && (
@@ -497,10 +513,28 @@ function ResultadoHabilitacion({
         </section>
       )}
 
+      {!cargando && ingresoActual?.registrado && (
+        <section className="validacion-panel ingreso-existente-panel" aria-live="polite">
+          <div className="ingreso-existente-aviso" role="status">
+            <span className="ingreso-existente-icono" aria-hidden="true"><FiAlertCircle /></span>
+            <div className="ingreso-existente-contenido">
+              <strong>Asistencia ya registrada</strong>
+              <p>{nombreEstudiante || `El estudiante ${idEstudiante}`} ya tiene asistencia para {nombreExamen || "este examen"}. El nuevo intento fue rechazado.</p>
+            </div>
+            <span className="ingreso-existente-etiqueta">DUPLICADO</span>
+          </div>
+          {errorRegistroIntento && <p className="duplicado-modal-error-historial" role="alert">{errorRegistroIntento}</p>}
+          <button type="button" className="validacion-boton ingreso-existente-boton" onClick={abrirRegistroExistente}>
+            <FiFileText aria-hidden="true" />
+            Ver asistencia registrada
+            <span aria-hidden="true">→</span>
+          </button>
+        </section>
+      )}
+
       {/* Modal de ingreso existente */}
 
-      {habilitado &&
-        ingresoActual?.registrado &&
+      {ingresoActual?.registrado &&
         modalDuplicadoAbierto && (
           <div
             className="duplicado-modal-overlay"
@@ -595,10 +629,15 @@ function ResultadoHabilitacion({
                 <FiInfo aria-hidden="true" />
 
                 <p>
-                  El registro original se conserva
-                  en el sistema.
+                  El intento actual fue rechazado y la asistencia original se conserva.
                 </p>
               </div>
+
+              {errorRegistroIntento && (
+                <p className="duplicado-modal-error-historial" role="alert">
+                  {errorRegistroIntento}
+                </p>
+              )}
 
               <div className="duplicado-modal-acciones">
                 <button
