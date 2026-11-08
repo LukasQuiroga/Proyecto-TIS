@@ -204,3 +204,89 @@
     grid-template-columns:1fr}
 
 }
+
+.hu23-resumen-tarjetas {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    padding:15px 15px 0}
+
+.hu23-resumen {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-height:66px;
+    padding:10px 14px;
+    border:1px solid #dfe8f5;
+    border-radius:6px;
+    background:#f8fbff}
+
+.hu23-resumen>span {
+    display:grid;
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    place-items:center;
+    border-radius:50%;
+    font-size:20px}
+
+.hu23-resumen div {display:grid;gap:3px}
+.hu23-resumen small {color:#526b94;font-size:12px}
+.hu23-resumen strong {font-size:24px;line-height:1}
+.hu23-resumen-rojo>span {color:#d91d38;background:#ffe4e9}
+.hu23-resumen-rojo strong {color:#c71932}
+.hu23-resumen-azul>span {color:#1268dc;background:#dcecff}
+.hu23-resumen-azul strong {color:#145bd0}
+.hu23-resumen-violeta>span {color:#652bd4;background:#eee5ff}
+.hu23-resumen-violeta strong {color:#652bd4}
+
+.hu23-filtro-fecha,.hu23-filtro-examen {
+    display:grid;
+    gap:4px;
+    color:#526b94;
+    font-size:11px}
+
+.hu23-filtro-fecha>span:last-child {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    height:39px;
+    padding:0 8px;
+    border:1px solid #d5dfeb;
+    border-radius:5px;
+    background:#fff}
+
+.hu23-filtro-fecha svg {flex:0 0 auto;color:#617ba5}
+.hu23-filtro-fecha input {width:130px;min-width:0;border:0;outline:0;color:#273e5c;font:inherit}
+.hu23-filtro-examen select {height:39px;min-width:150px;padding:0 9px;border:1px solid #d5dfeb;border-radius:5px;color:#273e5c;background:#fff}
+
+.hu23-aviso-reporte {
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin:0 15px 12px;
+    padding:10px 12px;
+    border:1px solid #d0e2ff;
+    border-radius:5px;
+    color:#1754a3;
+    background:#eaf3ff;
+    font-size:12px}
+
+.hu23-aviso-reporte svg {flex:0 0 auto;font-size:17px}
+.hu23-seccion-reporte,.hu23-seccion-detalle {padding:0 15px}
+.hu23-seccion-reporte h2,.hu23-seccion-detalle h2 {margin:12px 0 8px;color:#24436e;font-size:16px}
+.hu23-tabla-resumen {min-width:680px}
+.hu23-seccion-detalle {margin-top:12px}
+
+@media (max-width: 900px) {
+    .hu23-filtros {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .hu23-busqueda {min-width:0}
+    .hu23-filtro-fecha input {width:100%}
+}
+
+@media (max-width: 600px) {
+    .hu23-resumen-tarjetas {grid-template-columns:1fr}
+    .hu23-filtros {grid-template-columns:1fr}
+    .hu23-filtro-examen select {width:100%}
+    .hu23-aviso-reporte {align-items:flex-start}
+}
