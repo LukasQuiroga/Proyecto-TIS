@@ -18,10 +18,6 @@ export const actualizarExamen = (id, datos) => {
   return api.put(`${API}/${id}`, datos);
 };
 
-export const configurarExamen = (id, datos) => {
-  return api.put(`${API}/${id}/configuracion`, datos);
-};
-
 export const obtenerQrExamen = (id) => {
   return api.get(`${API}/${id}/qr`);
 };
