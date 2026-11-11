@@ -108,7 +108,13 @@ function Login() {
             return;
         }
 
-        if (!correo || !password) {
+        const correoLimpio = correo.trim();
+        const passwordLimpia = password.trimEnd();
+
+        setCorreo(correoLimpio);
+        setPassword(passwordLimpia);
+
+        if (!correoLimpio || !passwordLimpia) {
             setModal({
                 mostrar: true,
                 tipo: "error"
@@ -130,8 +136,8 @@ function Login() {
             setCargando(true);
 
             const respuesta = await login(
-                correo,
-                password
+                correoLimpio,
+                passwordLimpia
             );
             
             iniciarSesion(
@@ -205,7 +211,7 @@ function Login() {
                             placeholder="202001068@edu.est.umss"
                             onChange={(e) =>
                                 setCorreo(
-                                    e.target.value.slice(0, 50)
+                                    e.target.value.trim().slice(0, 50)
                                 )
                             }
                         />
