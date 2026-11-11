@@ -209,13 +209,15 @@ function RegistrarExamen() {
 
   useEffect(() => {
     const materiaAnterior = materiaAnteriorRef.current;
-    materiaAnteriorRef.current = datos.idMateria;
+    const materiaActual = datos.idMateria;
 
-    if (materiaAnterior !== datos.idMateria && !cargandoExamen) {
+    if (materiaAnterior !== materiaActual && !cargandoExamen) {
       setDatos((anterior) =>
         anterior.gestion ? { ...anterior, gestion: "" } : anterior,
       );
     }
+
+    materiaAnteriorRef.current = materiaActual;
   }, [datos.idMateria, cargandoExamen]);
 
   useEffect(() => {

@@ -30,7 +30,6 @@ import MisMaterias from "./pages/asignaturas/MisMaterias.jsx";
 import Examenes from "./pages/examenes/Examenes.jsx";
 import MisExamenes from "./pages/examenes/MisExamenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
-import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 import ComprobarExamenCorrespondiente from "./pages/ingreso/ComprobarExamenCorrespondiente";
@@ -258,18 +257,6 @@ function App() {
                   accesoDenegado={<AccesoNoAutorizadoExamenes />}
                 >
                   <RegistrarExamen />
-                </ProtectedPermission>
-              }
-            />
-
-            <Route
-              path="/examenes/:id/configuracion"
-              element={
-                <ProtectedPermission
-                  permiso="GESTIONAR_EXAMENES"
-                  accesoDenegado={<AccesoNoAutorizadoExamenes />}
-                >
-                  <ConfigurarExamen />
                 </ProtectedPermission>
               }
             />
