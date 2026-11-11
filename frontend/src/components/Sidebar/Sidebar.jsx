@@ -12,6 +12,7 @@ import {
   FiMaximize,
   FiMenu,
   FiTarget,
+  FiAlertTriangle,
   FiUsers,
   FiCalendar,
 } from "react-icons/fi";
@@ -234,33 +235,26 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                     </NavLink>
 
                     {rolActual === "DOCENTE" && (
-                      <>
-                        <NavLink
-                          to="/ingreso/ingresos-registrados"
-                          className={({ isActive }) =>
-                            `sidebar-subopcion ${
-                              isActive ? "sidebar-subopcion-activa" : ""
-                            }`
-                          }
-                        >
-                          Ingresos registrados
-                        </NavLink>
-
-                        <NavLink
-                          to="/ingreso/intentos-no-autorizados"
-                          className={({ isActive }) =>
-                            `sidebar-subopcion ${
-                              isActive ? "sidebar-subopcion-activa" : ""
-                            }`
-                          }
-                        >
-                          Intentos no autorizados
-                        </NavLink>
-                      </>
+                      <NavLink
+                        to="/ingreso/ingresos-registrados"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Ingresos registrados
+                      </NavLink>
                     )}
                   </div>
                 )}
               </>
+            )}
+
+            {rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO") && (
+              <Opcion to="/ingreso/intentos-no-autorizados" icono={<FiAlertTriangle />}>
+                Incidencias
+              </Opcion>
             )}
 
             {usuario?.nombreRol === "ESTUDIANTE" && (

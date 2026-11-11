@@ -319,9 +319,6 @@ function ResultadoHabilitacion({
         setModalDuplicadoAbierto(true);
         setErrorRegistroIntento("");
 
-        // El backend ya registra el intento duplicado.
-        // No se envía una segunda solicitud.
-
         try {
           const registro =
             await consultarIngresoRegistrado(
