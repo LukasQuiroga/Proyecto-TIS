@@ -258,6 +258,9 @@ function ComprobarExamenCorrespondiente() {
       }
 
       setResultado(datos);
+      if (datos.corresponde && datos.puedeContinuar) {
+        setMostrarHabilitacion(true);
+      }
     } catch (err) {
       if (solicitud !== solicitudActual.current) return;
 
@@ -579,8 +582,8 @@ function ComprobarExamenCorrespondiente() {
             }
           >
             {cargando
-              ? "Comprobando..."
-              : "Comprobar correspondencia"}
+              ? "Validando..."
+              : "Validar estudiante"}
           </button>
         </form>
       </section>
@@ -622,19 +625,9 @@ function ComprobarExamenCorrespondiente() {
 
           <div className="validacion-decision">
             {correspondenciaConfirmada
-              ? "El estudiante está inscrito en el examen seleccionado. Puede continuar con la validación de habilitación."
-              : "El estudiante no está inscrito en el examen seleccionado. No puede continuar con la validación de habilitación."}
+              ? "El estudiante está inscrito en el examen seleccionado."
+              : "El estudiante no está inscrito en el examen seleccionado. No se permite continuar con el ingreso."}
           </div>
-
-          {correspondenciaConfirmada && !mostrarHabilitacion && (
-            <button
-              type="button"
-              className="validacion-boton"
-              onClick={() => setMostrarHabilitacion(true)}
-            >
-              Continuar validación
-            </button>
-          )}
         </section>
       )}
 
