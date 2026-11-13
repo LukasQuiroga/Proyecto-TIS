@@ -8,8 +8,10 @@ import com.lacomarcasoft.dto.response.IngresoRegistradoRespuesta;
 import com.lacomarcasoft.service.IngresoExamenServicio;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -34,11 +36,15 @@ public class IngresoExamenControlador {
         return servicio.consultar(idExamen, idEstudiante);
     }
 
-    @PostMapping("/{idExamen}/estudiantes/{idEstudiante}/intentos-duplicados")
+    @PostMapping(
+            value = "/{idExamen}/estudiantes/{idEstudiante}/intentos-duplicados",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void registrarIntentoDuplicado(
             @PathVariable Long idExamen,
             @PathVariable Long idEstudiante,
+            @RequestParam("foto") MultipartFile archivo,
             Authentication auth) {
 
         Long responsable =
@@ -49,7 +55,8 @@ public class IngresoExamenControlador {
         servicio.registrarIntentoDuplicado(
             idExamen,
             idEstudiante,
-            responsable
+            responsable,
+            archivo
         );
     }
 
