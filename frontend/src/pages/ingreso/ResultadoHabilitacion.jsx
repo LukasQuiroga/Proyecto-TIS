@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import {
   FiAlertCircle,
+  FiCheckCircle,
   FiFileText,
   FiInfo,
   FiX,
@@ -189,6 +190,7 @@ function ResultadoHabilitacion({
         setEstadoIngreso({
           clave: claveIngreso,
           registrado: datos.ingresoRegistrado === true,
+          duplicado: datos.ingresoRegistrado === true,
           datos,
           detalle: null,
           error: "",
@@ -249,6 +251,7 @@ function ResultadoHabilitacion({
         setEstadoIngreso({
           clave: claveIngreso,
           registrado: false,
+          duplicado: false,
           datos: null,
           detalle: null,
           error:
@@ -296,6 +299,7 @@ function ResultadoHabilitacion({
       setEstadoIngreso({
         clave: claveIngreso,
         registrado: true,
+        duplicado: false,
         datos,
         detalle: null,
         error: "",
@@ -306,6 +310,7 @@ function ResultadoHabilitacion({
       setEstadoIngreso({
         clave: claveIngreso,
         registrado: duplicado,
+        duplicado,
         datos: null,
         detalle: null,
         error: duplicado
@@ -510,7 +515,7 @@ function ResultadoHabilitacion({
         </section>
       )}
 
-      {!cargando && ingresoActual?.registrado && (
+      {!cargando && ingresoActual?.registrado && ingresoActual?.duplicado && (
         <section className="validacion-panel ingreso-existente-panel" aria-live="polite">
           <div className="ingreso-existente-aviso" role="status">
             <span className="ingreso-existente-icono" aria-hidden="true"><FiAlertCircle /></span>
@@ -529,9 +534,27 @@ function ResultadoHabilitacion({
         </section>
       )}
 
+      {!cargando && ingresoActual?.registrado && !ingresoActual?.duplicado && (
+        <section className="validacion-panel ingreso-existente-panel ingreso-registro-confirmado" aria-live="polite">
+          <div className="ingreso-existente-aviso ingreso-registro-confirmado-aviso" role="status">
+            <span className="ingreso-existente-icono ingreso-registro-confirmado-icono" aria-hidden="true"><FiCheckCircle /></span>
+            <div className="ingreso-existente-contenido">
+              <strong>Asistencia registrada</strong>
+              <p>El ingreso de {nombreEstudiante || `el estudiante ${idEstudiante}`} se registró correctamente para {nombreExamen || "este examen"}.</p>
+            </div>
+            <span className="ingreso-existente-etiqueta ingreso-registro-confirmado-etiqueta">REGISTRADO</span>
+          </div>
+          <button type="button" className="validacion-boton ingreso-existente-boton" onClick={() => navigate("/ingreso/ingresos-registrados", { state: { idIngreso: idIngresoExistente } })}>
+            <FiFileText aria-hidden="true" />
+            Ver asistencia registrada
+            <span aria-hidden="true">→</span>
+          </button>
+        </section>
+      )}
+
       {/* Modal de ingreso existente */}
 
-      {ingresoActual?.registrado &&
+      {ingresoActual?.registrado && ingresoActual?.duplicado &&
         modalDuplicadoAbierto && (
           <div
             className="duplicado-modal-overlay"

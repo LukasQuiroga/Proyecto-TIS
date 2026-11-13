@@ -41,6 +41,7 @@ import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
+import ReportesAsistencia from "./pages/reportes/ReportesAsistencia.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
@@ -64,6 +65,18 @@ function AccesoSoloEstudiante({ children }) {
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ESTUDIANTE") {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
+function AccesoReportes({ children }) {
+  const { usuario } = useAuth();
+  const esAdministrador = usuario?.nombreRol?.trim().toUpperCase() === "ADMINISTRADOR";
+  const tienePermiso = usuario?.permisos?.includes("GENERAR_REPORTES") ?? false;
+
+  if (!esAdministrador || !tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -327,6 +340,15 @@ function App() {
             />
 
             {/* AUDITORIA */}
+
+            <Route
+              path="/reportes"
+              element={
+                <AccesoReportes>
+                  <ReportesAsistencia />
+                </AccesoReportes>
+              }
+            />
 
             <Route
               path="/auditoria"

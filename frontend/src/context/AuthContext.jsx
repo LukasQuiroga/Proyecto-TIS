@@ -1,99 +1,160 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthContext } from "./authContext";
 import { obtenerPermisosActuales } from "../services/authService";
 
 const CLAVE_SESION = "exampass_sesion";
+const CLAVE_SALIDA = "exampass_ultima_salida";
 
-function leerSesionCompartida() {
+function limpiarSesionPersistenteAnterior() {
+  localStorage.removeItem(CLAVE_SESION);
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+  localStorage.removeItem("ultimaActividad");
+}
+
+function leerSesionDePestana() {
   try {
-    const valor = localStorage.getItem(CLAVE_SESION);
+    const valor = sessionStorage.getItem(CLAVE_SESION);
     if (valor) {
       const datos = JSON.parse(valor);
       if (datos?.token && datos?.usuario?.idUsuario) return datos;
     }
   } catch (error) {
-    console.warn("No se pudo recuperar la sesión compartida:", error);
-    localStorage.removeItem(CLAVE_SESION);
+    console.warn("No se pudo recuperar la sesión de esta pestaña:", error);
+    sessionStorage.removeItem(CLAVE_SESION);
   }
   return null;
 }
 
 function leerSesionInicial() {
-  const compartida = leerSesionCompartida();
-  if (compartida) return compartida;
+  limpiarSesionPersistenteAnterior();
+  const ultimaSalida = Number(sessionStorage.getItem(CLAVE_SALIDA));
+  const tipoNavegacion = performance.getEntriesByType("navigation")[0]?.type;
+  if (ultimaSalida && tipoNavegacion !== "reload") {
+    sessionStorage.removeItem("usuario");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("ultimaActividad");
+    sessionStorage.removeItem(CLAVE_SESION);
+  }
+  sessionStorage.removeItem(CLAVE_SALIDA);
 
-  for (const almacen of [localStorage, sessionStorage]) {
-    try {
-      const token = almacen.getItem("token");
-      const dato = almacen.getItem("usuario");
-      const usuario = dato ? JSON.parse(dato) : null;
-      if (token && usuario?.idUsuario) {
-        const sesion = { usuario, token };
-        localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
-        localStorage.setItem("token", token);
-        localStorage.setItem("usuario", JSON.stringify(usuario));
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("usuario");
-        return sesion;
-      }
-    } catch {
-      almacen.removeItem("token");
-      almacen.removeItem("usuario");
+  const sesionDePestana = leerSesionDePestana();
+  if (sesionDePestana) return sesionDePestana;
+
+  try {
+    const token = sessionStorage.getItem("token");
+    const dato = sessionStorage.getItem("usuario");
+    const usuario = dato ? JSON.parse(dato) : null;
+    if (token && usuario?.idUsuario) {
+      const sesion = { usuario, token };
+      sessionStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
+      return sesion;
     }
+  } catch {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("usuario");
   }
   return { usuario: null, token: null };
 }
 
 export function AuthProvider({ children }) {
   const [sesion, setSesion] = useState(leerSesionInicial);
+  const [cargando, setCargando] = useState(() => !sessionStorage.getItem(CLAVE_SESION));
   const [permisosActualizados, setPermisosActualizados] = useState(false);
+  const canalRef = useRef(null);
+  const sesionRef = useRef(sesion);
   const { usuario, token } = sesion;
+  sesionRef.current = sesion;
+
+  const guardarSesionEnPestana = useCallback((nuevaSesion) => {
+    sessionStorage.setItem("usuario", JSON.stringify(nuevaSesion.usuario));
+    sessionStorage.setItem("token", nuevaSesion.token);
+    sessionStorage.setItem(CLAVE_SESION, JSON.stringify(nuevaSesion));
+    sessionStorage.setItem("ultimaActividad", Date.now().toString());
+    sesionRef.current = nuevaSesion;
+    setSesion(nuevaSesion);
+    setCargando(false);
+  }, []);
+
+  const limpiarSesionEnPestana = useCallback(() => {
+    sessionStorage.removeItem("usuario");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("ultimaActividad");
+    sessionStorage.removeItem(CLAVE_SESION);
+    sesionRef.current = { usuario: null, token: null };
+    setSesion(sesionRef.current);
+    setCargando(false);
+  }, []);
 
   const iniciarSesion = useCallback((datosUsuario, tokenJwt, recordar = false) => {
     const siguiente = { usuario: datosUsuario, token: tokenJwt };
-    sessionStorage.removeItem("usuario");
-    sessionStorage.removeItem("token");
-
-    localStorage.setItem("usuario", JSON.stringify(datosUsuario));
-    localStorage.setItem("token", tokenJwt);
-    localStorage.setItem(CLAVE_SESION, JSON.stringify(siguiente));
-    localStorage.setItem("ultimaActividad", Date.now().toString());
-    setSesion(siguiente);
+    guardarSesionEnPestana(siguiente);
+    canalRef.current?.postMessage({ tipo: "SESION_ACTUALIZADA", sesion: siguiente });
     setPermisosActualizados(false);
     void recordar;
-  }, []);
+  }, [guardarSesionEnPestana]);
 
   const cerrarSesion = useCallback(() => {
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("usuario");
-    sessionStorage.removeItem("token");
-    localStorage.removeItem("ultimaActividad");
-    localStorage.removeItem(CLAVE_SESION);
-    setSesion({ usuario: null, token: null });
+    limpiarSesionEnPestana();
+    canalRef.current?.postMessage({ tipo: "CERRAR_SESION" });
     setPermisosActualizados(false);
-  }, []);
+  }, [limpiarSesionEnPestana]);
 
   useEffect(() => {
-    function sincronizar(evento) {
-      if (evento.storageArea !== localStorage ||
-          (evento.key !== CLAVE_SESION && evento.key !== null)) return;
-
-      const nueva = leerSesionCompartida() || { usuario: null, token: null };
-      setSesion((anterior) => {
-        if (anterior.token === nueva.token &&
-            anterior.usuario?.idUsuario === nueva.usuario?.idUsuario) return anterior;
-        return nueva;
-      });
-      setPermisosActualizados(false);
-
-      if (window.location.pathname !== "/" &&
-          window.location.pathname !== "/login") {
-        window.location.replace("/");
-      }
+    if (typeof BroadcastChannel === "undefined") {
+      setCargando(false);
+      return undefined;
     }
-    window.addEventListener("storage", sincronizar);
-    return () => window.removeEventListener("storage", sincronizar);
+
+    const canal = new BroadcastChannel("exampass_sesion");
+    canalRef.current = canal;
+    canal.onmessage = (evento) => {
+      const { tipo, sesion: sesionRecibida } = evento.data || {};
+
+      if (tipo === "SOLICITAR_SESION" && sesionRef.current.token) {
+        canal.postMessage({ tipo: "RESPUESTA_SESION", sesion: sesionRef.current });
+      } else if (
+        (tipo === "RESPUESTA_SESION" || tipo === "SESION_ACTUALIZADA") &&
+        sesionRecibida?.token && sesionRecibida?.usuario?.idUsuario &&
+        (tipo === "SESION_ACTUALIZADA" || !sesionRef.current.token)
+      ) {
+        guardarSesionEnPestana(sesionRecibida);
+        setPermisosActualizados(false);
+      } else if (tipo === "CERRAR_SESION" && sesionRef.current.token) {
+        limpiarSesionEnPestana();
+        setPermisosActualizados(false);
+        if (window.location.pathname !== "/login") {
+          window.location.replace("/login");
+        }
+      }
+    };
+
+    if (!sesionRef.current.token) {
+      canal.postMessage({ tipo: "SOLICITAR_SESION" });
+    }
+    const tiempoEspera = setTimeout(() => setCargando(false), 600);
+
+    return () => {
+      clearTimeout(tiempoEspera);
+      canal.close();
+      if (canalRef.current === canal) canalRef.current = null;
+    };
+  }, [guardarSesionEnPestana, limpiarSesionEnPestana]);
+
+  useEffect(() => {
+    const marcarSalida = () => {
+      sessionStorage.setItem(CLAVE_SALIDA, Date.now().toString());
+    };
+    const cancelarSalidaAlRestaurar = (evento) => {
+      if (evento.persisted) sessionStorage.removeItem(CLAVE_SALIDA);
+    };
+
+    window.addEventListener("pagehide", marcarSalida);
+    window.addEventListener("pageshow", cancelarSalidaAlRestaurar);
+    return () => {
+      window.removeEventListener("pagehide", marcarSalida);
+      window.removeEventListener("pageshow", cancelarSalidaAlRestaurar);
+    };
   }, []);
 
   useEffect(() => {
@@ -123,7 +184,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      usuario, token, cargando: false, iniciarSesion, cerrarSesion,
+      usuario, token, cargando, iniciarSesion, cerrarSesion,
       permisosActualizados, setPermisosActualizados
     }}>
       {children}
