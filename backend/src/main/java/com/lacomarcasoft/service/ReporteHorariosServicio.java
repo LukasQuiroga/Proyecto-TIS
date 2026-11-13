@@ -17,6 +17,7 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -34,6 +35,9 @@ public class ReporteHorariosServicio {
     public ReporteHorariosServicio(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
+
+    private static final ZoneId ZONA_BOLIVIA =
+        ZoneId.of("America/La_Paz");
 
     @Transactional
     public ReporteHorariosRespuesta generar(
@@ -243,6 +247,7 @@ public class ReporteHorariosServicio {
                 .append(celda(reporte.nombreGenerador()))
                 .append("\r\nFecha de generación;")
                 .append(celda(reporte.fechaGeneracion()
+                        .atZoneSameInstant(ZONA_BOLIVIA)
                         .format(FORMATO_FECHA_HORA)))
                 .append("\r\n\r\n")
                 .append("Código;Nombre completo;Fecha y hora de ingreso\r\n");
@@ -255,7 +260,8 @@ public class ReporteHorariosServicio {
                     .append(celda(estudiante.nombreCompleto()))
                     .append(';')
                     .append(celda(estudiante.fechaHoraIngreso()
-                            .format(FORMATO_FECHA_HORA)))
+                        .atZoneSameInstant(ZONA_BOLIVIA)
+                        .format(FORMATO_FECHA_HORA)))
                     .append("\r\n");
         }
 
