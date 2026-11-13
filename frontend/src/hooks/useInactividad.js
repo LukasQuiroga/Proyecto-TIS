@@ -19,7 +19,7 @@ function useInactividad() {
       if (cerrando || !activo) return;
       cerrando = true;
       const sesion = JSON.parse(
-        localStorage.getItem("exampass_sesion") || "null",
+        sessionStorage.getItem("exampass_sesion") || "null",
       );
       if (sesion?.token !== token) return;
       try {
@@ -29,7 +29,7 @@ function useInactividad() {
       }
       if (!activo) return;
       const actual = JSON.parse(
-        localStorage.getItem("exampass_sesion") || "null",
+        sessionStorage.getItem("exampass_sesion") || "null",
       );
       if (actual?.token !== token) return;
       cerrarSesion();
@@ -37,9 +37,9 @@ function useInactividad() {
     }
 
     function comprobarInactividad() {
-      const ultima = Number(localStorage.getItem("ultimaActividad"));
+      const ultima = Number(sessionStorage.getItem("ultimaActividad"));
       if (!ultima) {
-        localStorage.setItem("ultimaActividad", Date.now().toString());
+        sessionStorage.setItem("ultimaActividad", Date.now().toString());
         return;
       }
       if (Date.now() - ultima >= TIEMPO_INACTIVIDAD) {
@@ -50,7 +50,7 @@ function useInactividad() {
     function registrarActividad() {
       if (Date.now() - ultimoEvento < 1000) return;
       ultimoEvento = Date.now();
-      localStorage.setItem("ultimaActividad", ultimoEvento.toString());
+      sessionStorage.setItem("ultimaActividad", ultimoEvento.toString());
     }
 
     const eventos = ["mousedown", "keydown", "scroll", "touchstart"];

@@ -276,13 +276,9 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
             )}
 
             {tienePermiso("GENERAR_REPORTES") && (
-              <div className="sidebar-opcion">
-                <span className="sidebar-icono">
-                  <FiBarChart2 />
-                </span>
-
-                <span className="sidebar-texto">Reportes</span>
-              </div>
+              <Opcion to="/reportes" icono={<FiBarChart2 />}>
+                Reportes
+              </Opcion>
             )}
 
             {tienePermiso("VER_AUDITORIA") && (

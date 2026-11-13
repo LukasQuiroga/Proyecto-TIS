@@ -219,7 +219,9 @@ function Examenes() {
                     <FiClipboard size={26} />
 
                     <span>
-                      {examenes.length === 0
+                      {error
+                        ? "No se pudo consultar la lista de exámenes."
+                        : examenes.length === 0
                         ? "No hay exámenes registrados."
                         : "No se encontraron exámenes con los filtros aplicados."}
                     </span>
