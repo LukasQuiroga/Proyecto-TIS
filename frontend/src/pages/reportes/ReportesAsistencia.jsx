@@ -17,6 +17,7 @@ import {
   listarHistorialReportes,
   obtenerReporteAsistencia
 } from '../../services/reporteAsistenciaService'
+import { generarReporteHorarios } from '../../services/reporteHorariosService'
 import './ReportesAsistencia.css'
 
 function fechaLegible(fecha) {
@@ -48,6 +49,25 @@ function descargarBlob(blob, nombre) {
   URL.revokeObjectURL(url)
 }
 
+function fechaHoraIngresoLegible(valor) {
+  if (!valor) return '—'
+
+  const fecha = new Date(valor)
+
+  if (Number.isNaN(fecha.getTime())) return '—'
+
+  return new Intl.DateTimeFormat('es-BO', {
+    timeZone: 'America/La_Paz',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  }).format(fecha)
+}
+
 export default function ReportesAsistencia() {
   const [pestana, setPestana] = useState('generar')
   const [examenes, setExamenes] = useState([])
@@ -73,6 +93,8 @@ export default function ReportesAsistencia() {
   })
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
   const [descargando, setDescargando] = useState(false)
+  const [tipoReporte, setTipoReporte] = useState('ASISTENCIA')
+  const [tipoReporteVisualizado, setTipoReporteVisualizado] = useState('ASISTENCIA')
 
   useEffect(() => {
     let vigente = true
@@ -156,23 +178,36 @@ export default function ReportesAsistencia() {
   }
 
   const generar = async (idExamen) => {
+    if (generandoId !== null) return
+    const tipoSeleccionado = tipoReporte
     setGenerandoId(idExamen)
     setError('')
     setMensaje('')
     setReporte(null)
+
     try {
-      const data = await generarReporteAsistencia(idExamen)
+      const data =
+        tipoSeleccionado === 'ASISTENCIA'
+          ? await generarReporteAsistencia(idExamen)
+          : await generarReporteHorarios(idExamen)
+
+      setTipoReporteVisualizado(tipoSeleccionado)
       setReporte(data)
+
       setMensaje(
         `La generación del reporte de “${data.nombreExamen}” quedó registrada en el historial.`
       )
+
       setFiltroEstudiantes('')
       setEstadoEstudiantes('TODOS')
-      requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
         document
           .getElementById('reporte-asistencia-vista-previa')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      )
+          ?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          })
+      })
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
@@ -243,7 +278,7 @@ export default function ReportesAsistencia() {
         <div>
           <span className="ra-etiqueta">SEGUIMIENTO Y CONTROL</span>
           <h1>Reportes</h1>
-          <p>Genera y consulta reportes de asistencia de los exámenes.</p>
+          <p>Genera y consulta reportes de los exámenes</p>
         </div>
       </header>
 
@@ -283,8 +318,33 @@ export default function ReportesAsistencia() {
           <div className="ra-panel-cabecera">
             <div>
               <h2>Seleccionar examen</h2>
-              <p>Elige un examen para generar su reporte de asistencia.</p>
+              <p>Elige el tipo de reporte y el examen que deseas consultar</p>
             </div>
+          </div>
+
+          <div className="ra-tipo-reporte">
+            <label htmlFor="tipo-reporte">Tipo de reporte</label>
+
+            <select
+              id="tipo-reporte"
+              value={tipoReporte}
+              onChange={(event) => setTipoReporte(event.target.value)}
+              disabled={generandoId !== null}
+            >
+              <option value="ASISTENCIA">
+                Reporte de asistencia
+              </option>
+
+              <option value="HORARIOS_INGRESO">
+                Reporte de horarios de ingreso
+              </option>
+            </select>
+
+            <p>
+              {tipoReporte === 'ASISTENCIA'
+                ? 'Consulta los estudiantes que asistieron y los ausentes.'
+                : 'Consulta las fechas y horas de ingreso de los estudiantes.'}
+            </p>
           </div>
           <form
             className="ra-filtros"
@@ -453,7 +513,7 @@ export default function ReportesAsistencia() {
         </section>
       )}
 
-      {reporte && (
+      {reporte && tipoReporteVisualizado === 'ASISTENCIA' && (
         <section className="ra-panel ra-reporte" id="reporte-asistencia-vista-previa">
           <div className="ra-reporte-encabezado">
             <div>
@@ -594,6 +654,118 @@ export default function ReportesAsistencia() {
           <p className="ra-conteo">
             Mostrando {estudiantesVisibles.length} de {reporte.totalPadron} estudiantes ·{' '}
             {reporte.totalAusentes} ausentes
+          </p>
+        </section>
+      )}
+
+      {reporte && tipoReporteVisualizado === 'HORARIOS_INGRESO' && (
+        <section
+          className="ra-panel ra-reporte"
+          id="reporte-asistencia-vista-previa"
+        >
+          <div className="ra-reporte-encabezado">
+            <div>
+              <span className="ra-etiqueta">
+                VISTA PREVIA · RPT-
+                {String(reporte.idReporte).padStart(3, '0')}
+              </span>
+
+              <h2>Reporte de horarios de ingreso</h2>
+
+              <p>
+                Generado el {fechaHoraLegible(reporte.fechaGeneracion)}
+                {' '}por {reporte.nombreGenerador}.
+              </p>
+            </div>
+          </div>
+
+          <div className="ra-resumen ra-resumen-horarios">
+            <div>
+              <span>Examen</span>
+              <strong>{reporte.nombreExamen}</strong>
+            </div>
+
+            <div>
+              <span>Asignatura</span>
+              <strong>{reporte.asignatura}</strong>
+            </div>
+
+            <div>
+              <span>Fecha del examen</span>
+              <strong>{fechaLegible(reporte.fechaExamen)}</strong>
+            </div>
+
+            <div>
+              <span>Hora de inicio</span>
+              <strong>{horaLegible(reporte.horaInicio)}</strong>
+            </div>
+
+            <div className="ra-resumen-contador">
+              <span>
+                <FiClock /> Total ingresos
+              </span>
+              <strong>{reporte.totalIngresos}</strong>
+            </div>
+          </div>
+
+          <div className="ra-lista-cabecera">
+            <div>
+              <h3>Horarios registrados</h3>
+              <p>
+                Estudiantes ordenados por fecha y hora de ingreso.
+              </p>
+            </div>
+          </div>
+
+          {reporte.estudiantes?.length === 0 ? (
+            <div className="ra-vacio-grande">
+              <FiClock />
+              <h3>No hay ingresos registrados</h3>
+              <p>
+                Este examen todavía no tiene horarios de ingreso disponibles.
+              </p>
+            </div>
+          ) : (
+            <div className="ra-tabla-contenedor">
+              <table className="ra-tabla">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Código SIS</th>
+                    <th>Nombre completo</th>
+                    <th>Fecha y hora de ingreso</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {(reporte.estudiantes || []).map(
+                    (estudiante, indice) => (
+                      <tr key={estudiante.idEstudiante}>
+                        <td>{indice + 1}</td>
+
+                        <td>
+                          {estudiante.codigoEstudiante || '—'}
+                        </td>
+
+                        <td className="ra-texto-fuerte">
+                          {estudiante.nombreCompleto}
+                        </td>
+
+                        <td>
+                          {fechaHoraIngresoLegible(
+                            estudiante.fechaHoraIngreso
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <p className="ra-conteo">
+            Total de ingresos registrados: {reporte.totalIngresos}
           </p>
         </section>
       )}
