@@ -121,6 +121,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
 
+                .requestMatchers("/api/reportes/**")
+                .access(new WebExpressionAuthorizationManager(
+                    "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
+
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/asignaturas",
