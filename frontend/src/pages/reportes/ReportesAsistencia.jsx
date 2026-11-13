@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   FiAlertCircle,
   FiCalendar,
@@ -53,6 +53,11 @@ export default function ReportesAsistencia() {
   const [examenes, setExamenes] = useState([])
   const [busquedaExamen, setBusquedaExamen] = useState('')
   const [fechaExamen, setFechaExamen] = useState('')
+  const [solicitudExamenes, setSolicitudExamenes] = useState({
+    buscar: '',
+    fecha: '',
+    numero: 0
+  })
   const [cargandoExamenes, setCargandoExamenes] = useState(true)
   const [generandoId, setGenerandoId] = useState(null)
   const [error, setError] = useState('')
@@ -62,52 +67,93 @@ export default function ReportesAsistencia() {
   const [estadoEstudiantes, setEstadoEstudiantes] = useState('TODOS')
   const [busquedaHistorial, setBusquedaHistorial] = useState('')
   const [historial, setHistorial] = useState([])
+  const [solicitudHistorial, setSolicitudHistorial] = useState({
+    buscar: '',
+    numero: 0
+  })
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
   const [descargando, setDescargando] = useState(false)
 
-  const cargarExamenes = useCallback(async () => {
+  useEffect(() => {
+    let vigente = true
+
+    async function cargar() {
+      try {
+        const data = await listarExamenesParaReporte({
+          buscar: solicitudExamenes.buscar,
+          fecha: solicitudExamenes.fecha
+        })
+        if (vigente) {
+          setExamenes(Array.isArray(data) ? data : [])
+          setError('')
+        }
+      } catch (err) {
+        if (vigente) {
+          setError(
+            err.response?.data?.mensaje ||
+              err.response?.data?.message ||
+              'No se pudieron cargar los exámenes.'
+          )
+          setExamenes([])
+        }
+      } finally {
+        if (vigente) setCargandoExamenes(false)
+      }
+    }
+
+    void cargar()
+    return () => {
+      vigente = false
+    }
+  }, [solicitudExamenes])
+
+  useEffect(() => {
+    if (pestana !== 'historial') return undefined
+    let vigente = true
+
+    async function cargar() {
+      try {
+        const data = await listarHistorialReportes(solicitudHistorial.buscar)
+        if (vigente) setHistorial(Array.isArray(data) ? data : [])
+      } catch (err) {
+        if (vigente) {
+          setError(
+            err.response?.data?.mensaje ||
+              err.response?.data?.message ||
+              'No se pudo cargar el historial de reportes.'
+          )
+          setHistorial([])
+        }
+      } finally {
+        if (vigente) setCargandoHistorial(false)
+      }
+    }
+
+    void cargar()
+    return () => {
+      vigente = false
+    }
+  }, [pestana, solicitudHistorial])
+
+  const solicitarExamenes = () => {
     setCargandoExamenes(true)
     setError('')
-    try {
-      const data = await listarExamenesParaReporte({ buscar: busquedaExamen, fecha: fechaExamen })
-      setExamenes(Array.isArray(data) ? data : [])
-    } catch (err) {
-      setError(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          'No se pudieron cargar los exámenes.'
-      )
-      setExamenes([])
-    } finally {
-      setCargandoExamenes(false)
-    }
-  }, [busquedaExamen, fechaExamen])
+    setSolicitudExamenes((anterior) => ({
+      buscar: busquedaExamen,
+      fecha: fechaExamen,
+      numero: anterior.numero + 1
+    }))
+  }
 
-  useEffect(() => {
-    cargarExamenes()
-  }, [cargarExamenes])
-
-  const cargarHistorial = useCallback(async () => {
+  const solicitarHistorial = () => {
     setCargandoHistorial(true)
     setError('')
-    try {
-      const data = await listarHistorialReportes(busquedaHistorial)
-      setHistorial(Array.isArray(data) ? data : [])
-    } catch (err) {
-      setError(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          'No se pudo cargar el historial de reportes.'
-      )
-      setHistorial([])
-    } finally {
-      setCargandoHistorial(false)
-    }
-  }, [busquedaHistorial])
-
-  useEffect(() => {
-    if (pestana === 'historial') cargarHistorial()
-  }, [pestana, cargarHistorial])
+    setPestana('historial')
+    setSolicitudHistorial((anterior) => ({
+      buscar: busquedaHistorial,
+      numero: anterior.numero + 1
+    }))
+  }
 
   const generar = async (idExamen) => {
     setGenerandoId(idExamen)
@@ -208,10 +254,7 @@ export default function ReportesAsistencia() {
         >
           <FiFileText /> Generar reporte
         </button>
-        <button
-          className={pestana === 'historial' ? 'activa' : ''}
-          onClick={() => setPestana('historial')}
-        >
+        <button className={pestana === 'historial' ? 'activa' : ''} onClick={solicitarHistorial}>
           <FiClock /> Historial de reportes
         </button>
       </nav>
@@ -247,7 +290,7 @@ export default function ReportesAsistencia() {
             className="ra-filtros"
             onSubmit={(event) => {
               event.preventDefault()
-              cargarExamenes()
+              solicitarExamenes()
             }}
           >
             <label className="ra-busqueda">
@@ -338,7 +381,7 @@ export default function ReportesAsistencia() {
             className="ra-filtros ra-filtros-historial"
             onSubmit={(event) => {
               event.preventDefault()
-              cargarHistorial()
+              solicitarHistorial()
             }}
           >
             <label className="ra-busqueda">
