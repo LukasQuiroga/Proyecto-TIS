@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { FiClipboard, FiX } from "react-icons/fi";
 
+import { reenviarQrExamen } from "../../services/examenService";
 import {
   formatearTipoEvaluacion,
   obtenerEstadoConfiguracion,
@@ -38,9 +40,35 @@ function formatearHora(valor) {
 }
 
 function DetalleExamen({ examen, onCerrar }) {
+  const [reenviandoQr, setReenviandoQr] = useState(false);
+  const [mensajeQr, setMensajeQr] = useState("");
+
   if (!examen) {
     return null;
   }
+
+  const manejarReenvioQr = async () => {
+    if (reenviandoQr) {
+      return;
+    }
+
+    setReenviandoQr(true);
+    setMensajeQr("");
+
+    try {
+      const { data } = await reenviarQrExamen(examen.idExamen);
+      setMensajeQr(data?.mensaje || "Codigos QR procesados.");
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.mensaje ||
+        error?.response?.data?.message ||
+        "No se pudieron reenviar los codigos QR.";
+
+      setMensajeQr(mensaje);
+    } finally {
+      setReenviandoQr(false);
+    }
+  };
 
   const estadoVisual = obtenerEstadoExamen(examen.estado);
 
@@ -180,6 +208,21 @@ function DetalleExamen({ examen, onCerrar }) {
         </section>
 
         <footer className="detalle-examen-acciones">
+          {mensajeQr && (
+            <span className="detalle-examen-qr-mensaje" role="status">
+              {mensajeQr}
+            </span>
+          )}
+
+          <button
+            type="button"
+            className="detalle-examen-reenviar"
+            onClick={manejarReenvioQr}
+            disabled={reenviandoQr}
+          >
+            {reenviandoQr ? "Reenviando..." : "Reenviar QR"}
+          </button>
+
           <button type="button" onClick={onCerrar}>
             Cerrar
           </button>

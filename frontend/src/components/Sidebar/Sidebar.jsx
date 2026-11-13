@@ -1,271 +1,300 @@
-import {useState} from "react";
-import {NavLink} from "react-router-dom";
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
-    FiBarChart2,
-    FiBookOpen,
-    FiChevronDown,
-    FiChevronUp,
-    FiClipboard,
-    FiClock,
-    FiGrid,
-    FiHome,
-    FiMaximize,
-    FiMenu,
-    FiTarget,
-    FiUsers
+  FiBarChart2,
+  FiBookOpen,
+  FiChevronDown,
+  FiChevronUp,
+  FiClipboard,
+  FiClock,
+  FiGrid,
+  FiHome,
+  FiMaximize,
+  FiMenu,
+  FiTarget,
+  FiAlertTriangle,
+  FiUsers,
+  FiCalendar,
 } from "react-icons/fi";
-import {FaGraduationCap} from "react-icons/fa";
-import {useAuth} from "../../context/useAuth";
+import { FaGraduationCap } from "react-icons/fa";
+import { useAuth } from "../../context/useAuth";
 import "./Sidebar.css";
 
-function Opcion({to,icono,children,exacta=false}){
-    return(
-        <NavLink
-            to={to}
-            end={exacta}
-            className={({isActive})=>
-                `sidebar-opcion sidebar-opcion-enlace ${
-                    isActive?"sidebar-activa":""
-                }`
-            }
-        >
-            <span className="sidebar-icono">
-                {icono}
-            </span>
+function Opcion({ to, icono, children, exacta = false }) {
+  return (
+    <NavLink
+      to={to}
+      end={exacta}
+      className={({ isActive }) =>
+        `sidebar-opcion sidebar-opcion-enlace ${
+          isActive ? "sidebar-activa" : ""
+        }`
+      }
+    >
+      <span className="sidebar-icono">{icono}</span>
 
-            <span className="sidebar-texto">
-                {children}
-            </span>
-        </NavLink>
-    );
+      <span className="sidebar-texto">{children}</span>
+    </NavLink>
+  );
 }
 
-function Sidebar({sidebarAbierto,cambiarSidebar}){
-    const [usuariosAbierto,setUsuariosAbierto]=useState(false);
-    const {usuario}=useAuth();
+function Sidebar({ sidebarAbierto, cambiarSidebar }) {
+  const [usuariosAbierto, setUsuariosAbierto] = useState(false);
+  const [ingresoAbierto, setIngresoAbierto] = useState(false);
+  const { usuario } = useAuth();
 
-    const tienePermiso=(permiso)=>{
-        if(!usuario){
-            return true;
-        }
+  const tienePermiso = (permiso) => {
+    return usuario?.permisos?.includes(permiso) ?? false;
+  };
 
-        return usuario?.permisos?.includes(permiso);
-    };
+  const rolActual = usuario?.nombreRol?.trim().toUpperCase();
 
-    return(
-        <aside className={sidebarAbierto?"sidebar abierto":"sidebar cerrado"}>
-            <button
-                type="button"
-                className="sidebar-boton-menu"
-                onClick={cambiarSidebar}
-            >
-                <FiMenu/>
-            </button>
+  const puedeIdentificarDocumento =
+    tienePermiso("CONTROL_INGRESO") &&
+    (rolActual === "DOCENTE" || rolActual === "ADMINISTRADOR");
 
-            {sidebarAbierto&&(
-                <>
+  return (
+    <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
+      <button
+        type="button"
+        className="sidebar-boton-menu"
+        onClick={cambiarSidebar}
+      >
+        <FiMenu />
+      </button>
+
+      {sidebarAbierto && (
+        <>
+          <NavLink to="/" className="sidebar-logo">
+            <div className="sidebar-logo-icono">
+              <FaGraduationCap />
+            </div>
+
+            <div className="sidebar-logo-texto">
+              <strong>ExamPass</strong>
+
+              <span>Gestion de ingreso a examenes</span>
+            </div>
+          </NavLink>
+
+          <nav className="sidebar-menu">
+            <Opcion to="/" exacta icono={<FiHome />}>
+              Inicio
+            </Opcion>
+
+            {(tienePermiso("GESTIONAR_USUARIOS") ||
+              tienePermiso("IMPORTAR_USUARIOS") ||
+              tienePermiso("GESTIONAR_ROLES") ||
+              tienePermiso("REGISTRAR_USUARIOS")) && (
+              <>
+                <button
+                  type="button"
+                  className="sidebar-opcion sidebar-desplegable"
+                  onClick={() => setUsuariosAbierto(!usuariosAbierto)}
+                >
+                  <span className="sidebar-icono">
+                    <FiUsers />
+                  </span>
+
+                  <span className="sidebar-texto">Usuarios</span>
+
+                  <span className="sidebar-flecha">
+                    {usuariosAbierto ? <FiChevronUp /> : <FiChevronDown />}
+                  </span>
+                </button>
+
+                {usuariosAbierto && (
+                  <div className="sidebar-submenu">
+                    {tienePermiso("GESTIONAR_USUARIOS") && (
+                      <NavLink
+                        to="/usuarios"
+                        end
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subactiva" : ""
+                          }`
+                        }
+                      >
+                        Listado de usuarios
+                      </NavLink>
+                    )}
+
+                    {tienePermiso("IMPORTAR_USUARIOS") && (
+                      <NavLink
+                        to="/usuarios/importar"
+                        className="sidebar-subopcion"
+                      >
+                        Importar usuarios
+                      </NavLink>
+                    )}
+
+                    {tienePermiso("GESTIONAR_ROLES") && (
+                      <NavLink
+                        to="/usuarios/roles-permisos"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Roles y permisos
+                      </NavLink>
+                    )}
+
+                    {tienePermiso("REGISTRAR_USUARIOS") && (
+                      <NavLink
+                        to="/usuarios/registro"
+                        className="sidebar-subopcion"
+                      >
+                        Registro manual
+                      </NavLink>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {tienePermiso("GESTIONAR_MATERIAS") && (
+              <Opcion to="/asignaturas" exacta icono={<FiBookOpen />}>
+                Asignaturas
+              </Opcion>
+            )}
+
+            {usuario?.nombreRol === "DOCENTE" && (
+              <Opcion to="/asignaturas/inscripcion-qr" icono={<FiMaximize />}>
+                Inscripción QR
+              </Opcion>
+            )}
+
+            {tienePermiso("GESTIONAR_EXAMENES") && (
+              <Opcion to="/examenes" icono={<FiClipboard />}>
+                Exámenes
+              </Opcion>
+            )}
+
+            {usuario?.nombreRol === "DOCENTE" && (
+              <Opcion to="/habilitaciones" icono={<FiGrid />}>
+                Habilitaciones
+              </Opcion>
+            )}
+
+            {puedeIdentificarDocumento && (
+              <>
+                <button
+                  type="button"
+                  className="sidebar-opcion sidebar-desplegable"
+                  onClick={() => setIngresoAbierto(!ingresoAbierto)}
+                  aria-expanded={ingresoAbierto}
+                >
+                  <span className="sidebar-icono">
+                    <FiTarget />
+                  </span>
+                  <span className="sidebar-texto">Control de ingreso</span>
+                  <span className="sidebar-flecha">
+                    {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
+                  </span>
+                </button>
+
+                {ingresoAbierto && (
+                  <div className="sidebar-submenu">
+                    {rolActual === "DOCENTE" && (
+                      <>
+                        <NavLink
+                          to="/ingreso/identificar-qr"
+                          className={({ isActive }) =>
+                            `sidebar-subopcion ${
+                              isActive ? "sidebar-subopcion-activa" : ""
+                            }`
+                          }
+                        >
+                          Por código QR
+                        </NavLink>
+
+                        <NavLink
+                          to="/ingreso/identificar-codigo"
+                          className={({ isActive }) =>
+                            `sidebar-subopcion ${
+                              isActive ? "sidebar-subopcion-activa" : ""
+                            }`
+                          }
+                        >
+                          Por código universitario
+                        </NavLink>
+                      </>
+                    )}
+
                     <NavLink
-                        to="/"
-                        className="sidebar-logo"
+                      to="/ingreso/identificar-documento"
+                      className={({ isActive }) =>
+                        `sidebar-subopcion ${
+                          isActive ? "sidebar-subopcion-activa" : ""
+                        }`
+                      }
                     >
-                        <div className="sidebar-logo-icono">
-                            <FaGraduationCap/>
-                        </div>
-
-                        <div className="sidebar-logo-texto">
-                            <strong>
-                                Sistema de Control
-                            </strong>
-
-                            <span>
-                                de Ingreso a Exámenes
-                            </span>
-                        </div>
+                      Por documento de identidad
                     </NavLink>
 
-                    <nav className="sidebar-menu">
-                        <Opcion
-                            to="/"
-                            exacta
-                            icono={<FiHome/>}
-                        >
-                            Inicio
-                        </Opcion>
-
-                        {(tienePermiso("GESTIONAR_USUARIOS")||
-                            tienePermiso("IMPORTAR_USUARIOS")||
-                            tienePermiso("GESTIONAR_ROLES")||
-                            tienePermiso("REGISTRAR_USUARIOS"))&&(
-                            <>
-                                <button
-                                    type="button"
-                                    className="sidebar-opcion sidebar-desplegable"
-                                    onClick={()=>
-                                        setUsuariosAbierto(!usuariosAbierto)
-                                    }
-                                >
-                                    <span className="sidebar-icono">
-                                        <FiUsers/>
-                                    </span>
-
-                                    <span className="sidebar-texto">
-                                        Usuarios
-                                    </span>
-
-                                    <span className="sidebar-flecha">
-                                        {usuariosAbierto
-                                            ?<FiChevronUp/>
-                                            :<FiChevronDown/>
-                                        }
-                                    </span>
-                                </button>
-
-                                {usuariosAbierto&&(
-                                    <div className="sidebar-submenu">
-                                        {tienePermiso("GESTIONAR_USUARIOS")&&(
-                                            <NavLink
-                                                to="/usuarios"
-                                                end
-                                                className={({isActive})=>
-                                                    `sidebar-subopcion ${
-                                                        isActive?"sidebar-subactiva":""
-                                                    }`
-                                                }
-                                            >
-                                                Listado de usuarios
-                                            </NavLink>
-                                        )}
-
-                                        {tienePermiso("IMPORTAR_USUARIOS")&&(
-                                            <NavLink
-                                                to="/usuarios/importar"
-                                                className="sidebar-subopcion"
-                                            >
-                                                Importar usuarios
-                                            </NavLink>
-                                        )}
-
-                                        {tienePermiso("GESTIONAR_ROLES")&&(
-                                            <NavLink
-                                                to="/usuarios/roles-permisos"
-                                                className={({isActive})=>
-                                                    `sidebar-subopcion ${
-                                                        isActive
-                                                            ?"sidebar-subopcion-activa"
-                                                            :""
-                                                    }`
-                                                }
-                                            >
-                                                Roles y permisos
-                                            </NavLink>
-                                        )}
-
-                                        {tienePermiso("REGISTRAR_USUARIOS")&&(
-                                            <NavLink
-                                                to="/usuarios/registro"
-                                                className="sidebar-subopcion"
-                                            >
-                                                Registro manual
-                                            </NavLink>
-                                        )}
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        
-                       {tienePermiso("GESTIONAR_MATERIAS") && (
-                           <Opcion
-                                to="/asignaturas"
-                                exacta
-                                icono={<FiBookOpen />}
-                            >
-                              Asignaturas
-                           </Opcion>
-                       )}
-
-                        
-                        {usuario?.nombreRol === "DOCENTE" && (
-                            <Opcion
-                                to="/asignaturas/inscripcion-qr"
-                                icono={<FiMaximize />}
-                            >
-                               Inscripción QR
-                          </Opcion>
-                        )}
-
-                        {tienePermiso("GESTIONAR_EXAMENES")&&(
-                            <Opcion
-                                to="/examenes"
-                                icono={<FiClipboard/>}
-                            >
-                                Exámenes
-                            </Opcion>
-                        )}
-
-                        {usuario?.nombreRol === "DOCENTE" && (
-                            <Opcion
-                                to="/habilitaciones"
-                                icono={<FiGrid />}
-                            >
-                                Habilitaciones
-                            </Opcion>
-                        )}
-
-                        {tienePermiso("CONTROL_INGRESO")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiTarget/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Control de ingreso
-                                </span>
-                            </div>
-                        )}
-                        {usuario?.nombreRol === "ESTUDIANTE" && (
-                           <Opcion
-                                to="/inscripcion-qr/inscribir"
-                                icono={<FiMaximize />}
-                            >
-                                   Inscripción QR
-                           </Opcion>
-                        )}
-
-                        {usuario?.nombreRol === "ESTUDIANTE" && (
-                            <Opcion
-                                 to="/mis-materias"
-                                 icono={<FiBookOpen />}
-                            >
-                                     Mis materias
-                            </Opcion>
-                        )}
-
-                        {tienePermiso("GENERAR_REPORTES")&&(
-                            <div className="sidebar-opcion">
-                                <span className="sidebar-icono">
-                                    <FiBarChart2/>
-                                </span>
-
-                                <span className="sidebar-texto">
-                                    Reportes
-                                </span>
-                            </div>
-                        )}
-
-                        {tienePermiso("VER_AUDITORIA")&&(
-                            <Opcion
-                                to="/auditoria"
-                                icono={<FiClock/>}
-                            >
-                                Auditoría
-                            </Opcion>
-                        )}
-                    </nav>
-                </>
+                    {rolActual === "DOCENTE" && (
+                      <NavLink
+                        to="/ingreso/ingresos-registrados"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Ingresos registrados
+                      </NavLink>
+                    )}
+                  </div>
+                )}
+              </>
             )}
-        </aside>
-    );
+
+            {rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO") && (
+              <Opcion to="/ingreso/intentos-no-autorizados" icono={<FiAlertTriangle />}>
+                Incidencias
+              </Opcion>
+            )}
+
+            {usuario?.nombreRol === "ESTUDIANTE" && (
+              <Opcion to="/inscripcion-qr/inscribir" icono={<FiMaximize />}>
+                Inscripción QR
+              </Opcion>
+            )}
+
+            {usuario?.nombreRol === "ESTUDIANTE" && (
+              <Opcion to="/mis-materias" icono={<FiBookOpen />}>
+                Mis materias
+              </Opcion>
+            )}
+
+            {usuario?.nombreRol?.trim().toUpperCase() === "ESTUDIANTE" && (
+              <Opcion to="/mis-examenes" icono={<FiCalendar />}>
+                Mis exámenes
+              </Opcion>
+            )}
+
+            {tienePermiso("GENERAR_REPORTES") && (
+              <div className="sidebar-opcion">
+                <span className="sidebar-icono">
+                  <FiBarChart2 />
+                </span>
+
+                <span className="sidebar-texto">Reportes</span>
+              </div>
+            )}
+
+            {tienePermiso("VER_AUDITORIA") && (
+              <Opcion to="/auditoria" icono={<FiClock />}>
+                Auditoría
+              </Opcion>
+            )}
+          </nav>
+        </>
+      )}
+    </aside>
+  );
 }
 
 export default Sidebar;

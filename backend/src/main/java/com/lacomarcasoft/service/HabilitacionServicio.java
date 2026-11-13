@@ -5,7 +5,6 @@ import com.lacomarcasoft.dto.response.HabilitacionRespuesta;
 import com.lacomarcasoft.dto.response.HistorialHabilitacionRespuesta;
 import com.lacomarcasoft.modelo.Examen;
 import com.lacomarcasoft.modelo.Usuario;
-import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,17 +24,18 @@ import java.util.Comparator;
 @Service
 public class HabilitacionServicio {
     private final JdbcTemplate jdbc;
-    private final ExamenRepositorio examenes;
     private final UsuarioRepositorio usuarios;
     private final LogActividadServicio auditoria;
+    private final AccesoExamenDocenteServicio accesoExamenDocente;
 
-    public HabilitacionServicio(JdbcTemplate jdbc, ExamenRepositorio examenes,
+    public HabilitacionServicio(JdbcTemplate jdbc,
             UsuarioRepositorio usuarios,
-            LogActividadServicio auditoria) {
+            LogActividadServicio auditoria,
+            AccesoExamenDocenteServicio accesoExamenDocente) {
         this.jdbc = jdbc;
-        this.examenes = examenes;
         this.usuarios = usuarios;
         this.auditoria = auditoria;
+        this.accesoExamenDocente = accesoExamenDocente;
     }
 
     @Transactional(readOnly = true)
@@ -585,31 +585,7 @@ public class HabilitacionServicio {
     }
 
     private Examen autorizado(Long examenId, Long responsableId) {
-        Usuario usuario = usuarios.findById(responsableId)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
-
-        if (!Boolean.TRUE.equals(usuario.getActivo())
-                || usuario.getRol() == null
-                || !"DOCENTE".equalsIgnoreCase(
-                    usuario.getRol().getNombreRol())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                "Solo los docentes activos pueden gestionar habilitaciones");
-        }
-
-        Examen examen = examenes.findById(examenId)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Examen no encontrado"));
-
-        if (examen.getMateria() == null
-                || examen.getMateria().getDocente() == null
-                || !responsableId.equals(
-                    examen.getMateria().getDocente().getIdUsuario())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                "No eres el docente encargado de esta materia y grupo");
-        }
-
-        return examen;
+        return accesoExamenDocente.autorizado(examenId, responsableId);
     }
 
     private OffsetDateTime leerFecha(Timestamp fecha) {

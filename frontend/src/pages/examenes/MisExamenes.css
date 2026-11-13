@@ -1,0 +1,384 @@
+
+.mis-examenes {
+  padding: 30px 34px;
+  color: #23354e;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.mis-examenes-cabecera,
+.mis-examenes-panel-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.mis-examenes-cabecera {
+  margin-bottom: 26px;
+}
+
+.mis-examenes h1 {
+  font-size: 26px;
+  margin: 0 0 7px;
+  font-weight: 700;
+  color: #15304f;
+}
+
+.mis-examenes-cabecera p {
+  margin: 0;
+  color: #758398;
+  font-size: 14px;
+}
+
+.mis-examenes button,
+.mis-examenes select {
+  cursor: pointer;
+}
+
+.mis-examenes-recargar {
+  border: 1px solid #d4ddeb;
+  color: #1265af;
+  background: #fff;
+  border-radius: 8px;
+  padding: 11px 15px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mis-examenes-panel {
+  background: white;
+  border: 1px solid #e7eaf0;
+  border-radius: 11px;
+  box-shadow: 0 2px 12px #1a365414;
+  padding: 24px;
+}
+
+.mis-examenes-panel-cabecera h2 {
+  font-size: 18px;
+  margin: 0;
+  color: #173554;
+}
+
+.mis-examenes-panel-cabecera span {
+  color: #7d889a;
+  font-size: 13px;
+}
+
+.mis-examenes-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 18px;
+}
+
+.mis-examenes-buscar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  padding: 0 12px;
+  flex: 1 1 350px;
+  min-width: 250px;
+  color: #8090a2;
+}
+
+.mis-examenes-buscar input {
+  border: 0;
+  outline: 0;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 0;
+  font: inherit;
+  background: transparent;
+}
+
+.mis-examenes-filtros select {
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: white;
+  padding: 10px 12px;
+  color: #40556b;
+}
+
+.mis-examenes-tabla-contenedor {
+  overflow-x: auto;
+}
+
+.mis-examenes-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.mis-examenes-tabla th {
+  background: #f4f7fc;
+  color: #60758d;
+  padding: 15px 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mis-examenes-tabla td {
+  padding: 17px 12px;
+  border-bottom: 1px solid #edf1f6;
+  vertical-align: middle;
+}
+
+.mis-examenes-tabla td svg {
+  vertical-align: middle;
+  color: #6e8bb4;
+}
+
+.mis-examenes-tabla strong {
+  display: block;
+  color: #1b3653;
+}
+
+.mis-examenes-tabla small {
+  display: block;
+  margin-top: 5px;
+  color: #7d8b9e;
+}
+
+.mis-examenes-ver,
+.mis-examenes-modal footer button,
+.mis-examenes-estado button {
+  border: 0;
+  border-radius: 7px;
+  background: #0879df;
+  color: white;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.mis-examenes-estado {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  color: #708198;
+  text-align: center;
+}
+
+.mis-examenes-estado h3,
+.mis-examenes-estado p {
+  margin: 0;
+}
+
+.mis-examenes-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0d203d88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+  padding: 20px;
+}
+
+.mis-examenes-modal {
+  width: min(530px, 100%);
+  background: white;
+  border-radius: 13px;
+  box-shadow: 0 18px 55px #06172a4d;
+  padding: 26px;
+  max-height: 85vh;
+  overflow: auto;
+}
+
+.mis-examenes-modal-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5ebf3;
+  padding-bottom: 12px;
+}
+
+.mis-examenes-modal-titulo h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.mis-examenes-modal-titulo button {
+  border: 0;
+  background: transparent;
+  font-size: 27px;
+  color: #63758a;
+}
+
+.mis-examenes-modal h3 {
+  font-size: 17px;
+  color: #0d64aa;
+  margin: 18px 0;
+}
+
+.mis-examenes-detalles {
+  display: grid;
+  grid-template-columns: 135px 1fr;
+  gap: 12px 14px;
+  font-size: 14px;
+}
+
+.mis-examenes-detalles dt {
+  color: #79869a;
+}
+
+.mis-examenes-detalles dd {
+  margin: 0;
+  color: #253e58;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.mis-examenes-aviso {
+  border-radius: 7px;
+  padding: 13px;
+  margin-top: 16px;
+  background: #fff7e7;
+  color: #8b5a12;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.mis-examenes-modal footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+@media (max-width: 750px) {
+  .mis-examenes {
+    padding: 20px 14px;
+  }
+
+  .mis-examenes-cabecera,
+  .mis-examenes-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mis-examenes-detalles {
+    grid-template-columns: 110px 1fr;
+  }
+}
+
+.mis-examenes-modal-error {
+  text-align: center;
+}
+
+.mis-examenes-modal-error h2 {
+  color: #163453;
+  margin: 12px 0;
+}
+
+.mis-examenes-modal-error p {
+  color: #62758b;
+  line-height: 1.5;
+}
+
+.mis-examenes-modal-error footer {
+  justify-content: center;
+}
+
+.mis-examenes-filtro-fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 190px;
+}
+
+.mis-examenes-filtro-fecha label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #40556b;
+}
+
+.mis-examenes-fecha-controles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mis-examenes-fecha-controles input {
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: white;
+  color: #40556b;
+  font: inherit;
+  min-width: 0;
+}
+
+.mis-examenes-fecha-controles button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: white;
+  color: #0b63ce;
+  cursor: pointer;
+}
+
+.mis-examenes-fecha-controles button:hover {
+  background: #f4f7fc;
+}
+
+/* Estilo general del estado temporal */
+
+.mis-examenes-estado-temporal {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Examen finalizado */
+.mis-examenes-estado-temporal.estado-finalizado {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Examen próximo */
+.mis-examenes-estado-temporal.estado-próximo {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Examen en curso */
+.mis-examenes-estado-temporal.estado-en-curso {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* Examen pendiente de programación */
+.mis-examenes-estado-temporal.estado-por-confirmar {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+
+/* Estado temporal en el detalle */
+
+.mis-examenes-detalle-estado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.mis-examenes-detalle-estado strong {
+  color: #243b53;
+  font-size: 14px;
+}

@@ -8,7 +8,6 @@ import {
   FiEye,
   FiPlus,
   FiSearch,
-  FiSettings,
 } from "react-icons/fi";
 
 import {
@@ -313,20 +312,6 @@ function Examenes() {
                             }
                           >
                             <FiEdit2 />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="examenes-boton-accion"
-                            title="Configurar examen"
-                            aria-label="Configurar fecha, hora y duración del examen"
-                            onClick={() =>
-                              navigate(
-                                `/examenes/${examen.idExamen ?? examen.id}/configuracion`,
-                              )
-                            }
-                          >
-                            <FiSettings />
                           </button>
                         </div>
                       </td>

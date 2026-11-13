@@ -1,0 +1,117 @@
+package com.lacomarcasoft.controller;
+
+import com.lacomarcasoft.service.ConsultaIngresoServicio;
+import com.lacomarcasoft.service.IdentificacionQrServicio;
+import com.lacomarcasoft.service.PerfilFotoServicio;
+import org.springframework.core.io.Resource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/ingresos/examenes")
+public class ConsultaIngresoControlador {
+
+    private final ConsultaIngresoServicio servicio;
+    private final PerfilFotoServicio fotoServicio;
+    private final IdentificacionQrServicio identificacionQrServicio;
+
+    public ConsultaIngresoControlador(
+            ConsultaIngresoServicio servicio,
+            PerfilFotoServicio fotoServicio,
+            IdentificacionQrServicio identificacionQrServicio) {
+        this.servicio = servicio;
+        this.fotoServicio = fotoServicio;
+        this.identificacionQrServicio = identificacionQrServicio;
+    }
+
+    public record SolicitudIdentificacionQr(String token) {}
+
+    @GetMapping("/disponibles")
+    public List<ConsultaIngresoServicio.ExamenDisponible>
+            listarExamenes() {
+        return servicio.listarExamenes();
+    }
+
+    @GetMapping("/identificar-documento/examenes")
+    public List<ConsultaIngresoServicio.ExamenDisponible>
+            listarExamenesIdentificacionDocumento() {
+        return servicio.listarExamenesIdentificacionDocumento();
+    }
+
+    @GetMapping("/{idExamen}/estudiantes")
+    public List<ConsultaIngresoServicio.EstudianteDisponible>
+            listarEstudiantes(@PathVariable Long idExamen) {
+        return servicio.listarEstudiantes(idExamen);
+    }
+
+    @GetMapping("/identificar-documento")
+    public ConsultaIngresoServicio.EstudianteIdentificadoDocumento
+            identificarPorDocumento(@RequestParam String documento) {
+        return servicio.identificarPorDocumento(documento);
+    }
+
+    @GetMapping("/{idExamen}/identificar-documento")
+    public ConsultaIngresoServicio.EstudianteIdentificado
+            identificarPorDocumento(
+                    @PathVariable Long idExamen,
+                    @RequestParam String documento) {
+        return servicio.identificarPorDocumento(idExamen, documento);
+    }
+
+    @GetMapping("/{idExamen}/identificar-codigo")
+    public ConsultaIngresoServicio.EstudianteIdentificado identificarPorCodigo(
+            @PathVariable Long idExamen,
+            @RequestParam String codigo) {
+        return servicio.identificarPorCodigo(idExamen, codigo);
+    }
+
+    @PostMapping("/{idExamen}/identificar-qr")
+    public ConsultaIngresoServicio.EstudianteIdentificado identificarPorQr(
+            @PathVariable Long idExamen,
+            @RequestBody(required = false) SolicitudIdentificacionQr solicitud) {
+        return identificacionQrServicio.identificar(
+                idExamen,
+                solicitud == null ? null : solicitud.token()
+        );
+    }
+
+    @GetMapping("/identificar-documento/{idEstudiante}/foto")
+    public ResponseEntity<Resource> fotoEstudianteIdentificado(
+            @PathVariable Long idEstudiante,
+            @RequestParam String documento) {
+
+        servicio.comprobarAccesoFotoIdentificacion(
+            idEstudiante,
+            documento
+        );
+
+        PerfilFotoServicio.FotoPerfil foto =
+            fotoServicio.consultar(idEstudiante);
+
+        return ResponseEntity.ok()
+            .contentType(
+                MediaType.parseMediaType(foto.tipoContenido())
+            )
+            .cacheControl(CacheControl.noStore())
+            .body(foto.recurso());
+    }
+
+    @GetMapping("/{idExamen}/estudiantes/{idEstudiante}/foto")
+    public ResponseEntity<Resource> fotoEstudiante(
+            @PathVariable Long idExamen,
+            @PathVariable Long idEstudiante) {
+        servicio.comprobarAccesoFoto(idExamen, idEstudiante);
+        PerfilFotoServicio.FotoPerfil foto =
+                fotoServicio.consultar(idEstudiante);
+
+        return ResponseEntity.ok()
+                .contentType(
+                        MediaType.parseMediaType(foto.tipoContenido()))
+                .cacheControl(CacheControl.noStore())
+                .body(foto.recurso());
+    }
+}

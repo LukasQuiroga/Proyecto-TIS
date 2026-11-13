@@ -5,10 +5,12 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
 COPY pom.xml ./
-RUN mvn -B -q dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+    mvn -B -ntp -DskipTests dependency:go-offline
 
 COPY backend/src ./backend/src
-RUN mvn -B -q -DskipTests package
+RUN --mount=type=cache,target=/root/.m2,sharing=locked \
+    mvn -B -ntp -DskipTests package
 
 # ---------- Etapa de runtime ----------
 FROM eclipse-temurin:21-jre

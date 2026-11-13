@@ -10,15 +10,19 @@ import com.lacomarcasoft.repository.AsignaturaCarreraRepositorio;
 import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
+import com.lacomarcasoft.service.evento.QrExamenEnvioSolicitadoEvento;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.context.ApplicationEventPublisher;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +36,8 @@ class ExamenServicioTest {
 
     private ExamenRepositorio examenRepositorio;
     private MateriaRepositorio materiaRepositorio;
+    private QrExamenServicio qrExamenServicio;
+    private ApplicationEventPublisher eventPublisher;
     private ExamenServicio examenServicio;
 
     @BeforeEach
@@ -39,6 +45,11 @@ class ExamenServicioTest {
         examenRepositorio = mock(ExamenRepositorio.class);
 
         materiaRepositorio = mock(MateriaRepositorio.class);
+        qrExamenServicio = mock(QrExamenServicio.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
+
+        when(qrExamenServicio.generarFaltantesParaExamen(any()))
+                .thenReturn(List.of());
 
         AsignaturaCarreraRepositorio asignaturaCarreraRepositorio =
                 mock(AsignaturaCarreraRepositorio.class);
@@ -49,7 +60,9 @@ class ExamenServicioTest {
                 examenRepositorio,
                 materiaRepositorio,
                 asignaturaCarreraRepositorio,
-                carreraRepositorio
+                carreraRepositorio,
+                qrExamenServicio,
+                eventPublisher
         );
     }
 
@@ -538,6 +551,8 @@ void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
     void debeRechazarCambioDeAsignaturaAlEditar() {
 
         int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+        LocalDate fecha = LocalDate.now(ZONA_BOLIVIA)
+                .plusDays(3);
 
         Materia materiaOriginal = new Materia();
         materiaOriginal.setIdMateria(7L);
@@ -558,9 +573,9 @@ void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
                         "1/" + anioActual,
                         "ACTIVO",
                         null,
-                        null,
-                        null,
-                        null
+                        fecha,
+                        LocalTime.of(8, 0),
+                        LocalTime.of(10, 0)
                 );
 
         ResponseStatusException error = assertThrows(
@@ -587,9 +602,63 @@ void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
     }
 
     @Test
+    void debePersistirProgramacionYGenerarQrAlRegistrar() {
+
+        int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+        LocalDate fecha = LocalDate.now(ZONA_BOLIVIA)
+                .plusDays(5);
+
+        Materia materia = new Materia();
+        materia.setIdMateria(7L);
+
+        when(materiaRepositorio.findById(7L))
+                .thenReturn(Optional.of(materia));
+
+        when(examenRepositorio.existeCodigo("FIN-040"))
+                .thenReturn(false);
+
+        when(examenRepositorio.save(any(Examen.class)))
+                .thenAnswer(invocacion -> {
+                    Examen examen = invocacion.getArgument(0);
+                    examen.setIdExamen(40L);
+                    return examen;
+                });
+
+        RegistrarExamenSolicitud solicitud =
+                new RegistrarExamenSolicitud(
+                        "FIN-040",
+                        "Examen final programado",
+                        7L,
+                        "FINAL",
+                        "1/" + anioActual,
+                        "ACTIVO",
+                        null,
+                        fecha,
+                        LocalTime.of(8, 0),
+                        LocalTime.of(10, 0)
+                );
+
+        ExamenRespuesta respuesta =
+                examenServicio.registrar(solicitud);
+
+        assertEquals(fecha, respuesta.fechaExamen());
+        assertEquals(LocalTime.of(8, 0), respuesta.horaInicio());
+        assertEquals(LocalTime.of(10, 0), respuesta.horaFin());
+
+        verify(qrExamenServicio)
+                .generarFaltantesParaExamen(any(Examen.class));
+
+        verify(eventPublisher).publishEvent(
+                any(QrExamenEnvioSolicitadoEvento.class)
+        );
+    }
+
+    @Test
     void debePermitirEditarSinCambiarAsignatura() {
 
         int anioActual = LocalDate.now(ZONA_BOLIVIA).getYear();
+        LocalDate fecha = LocalDate.now(ZONA_BOLIVIA)
+                .plusDays(4);
 
         Materia materiaOriginal = new Materia();
         materiaOriginal.setIdMateria(7L);
@@ -615,10 +684,10 @@ void debeRechazarExamenQueTerminaExactamenteEnMedianoche() {
                         "FINAL",
                         "1/" + anioActual,
                         "ACTIVO",
-                        "Descripción actualizada",
-                        null,
-                        null,
-                        null
+                        "Descripci��n actualizada",
+                        fecha,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(11, 0)
                 );
 
         ExamenRespuesta respuesta =

@@ -7,11 +7,14 @@ import com.lacomarcasoft.modelo.AsignaturaCarrera;
 import com.lacomarcasoft.modelo.Carrera;
 import com.lacomarcasoft.modelo.Examen;
 import com.lacomarcasoft.modelo.Materia;
+import com.lacomarcasoft.modelo.QrExamenEstudiante;
 import com.lacomarcasoft.repository.AsignaturaCarreraRepositorio;
 import com.lacomarcasoft.repository.CarreraRepositorio;
 import com.lacomarcasoft.repository.ExamenRepositorio;
 import com.lacomarcasoft.repository.MateriaRepositorio;
+import com.lacomarcasoft.service.evento.QrExamenEnvioSolicitadoEvento;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class ExamenServicio {
@@ -55,17 +59,23 @@ public class ExamenServicio {
     private final MateriaRepositorio materiaRepositorio;
     private final AsignaturaCarreraRepositorio asignaturaCarreraRepositorio;
     private final CarreraRepositorio carreraRepositorio;
+    private final QrExamenServicio qrExamenServicio;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ExamenServicio(
             ExamenRepositorio examenRepositorio,
             MateriaRepositorio materiaRepositorio,
             AsignaturaCarreraRepositorio asignaturaCarreraRepositorio,
-            CarreraRepositorio carreraRepositorio
+            CarreraRepositorio carreraRepositorio,
+            QrExamenServicio qrExamenServicio,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.examenRepositorio = examenRepositorio;
         this.materiaRepositorio = materiaRepositorio;
         this.asignaturaCarreraRepositorio = asignaturaCarreraRepositorio;
         this.carreraRepositorio = carreraRepositorio;
+        this.qrExamenServicio = qrExamenServicio;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -90,7 +100,17 @@ public class ExamenServicio {
 
         aplicar(examen, solicitud, codigo, materia);
 
-        return convertir(examenRepositorio.save(examen));
+        Examen guardado = examenRepositorio.save(examen);
+
+        qrExamenServicio.generarFaltantesParaExamen(guardado);
+
+        eventPublisher.publishEvent(
+                new QrExamenEnvioSolicitadoEvento(
+                        guardado.getIdExamen()
+                )
+        );
+
+        return convertir(guardado);
     }
 
     @Transactional
@@ -131,9 +151,39 @@ public class ExamenServicio {
 
         validarCupoParcial(materia, solicitud, id);
 
+        LocalDate fechaAnterior = examen.getFechaExamen();
+        LocalTime inicioAnterior = examen.getHoraInicio();
+        LocalTime finAnterior = examen.getHoraFin();
+
         aplicar(examen, solicitud, codigo, materia);
 
-        return convertir(examenRepositorio.save(examen));
+        Examen guardado = examenRepositorio.save(examen);
+
+        List<QrExamenEstudiante> nuevos =
+                qrExamenServicio.generarFaltantesParaExamen(guardado);
+
+        boolean programacionCambiada =
+                !Objects.equals(fechaAnterior, guardado.getFechaExamen())
+                        || !Objects.equals(
+                                inicioAnterior,
+                                guardado.getHoraInicio()
+                        )
+                        || !Objects.equals(
+                                finAnterior,
+                                guardado.getHoraFin()
+                        );
+
+        if (programacionCambiada) {
+            qrExamenServicio.marcarPendientesParaReenvio(id);
+        }
+
+        if (programacionCambiada || !nuevos.isEmpty()) {
+            eventPublisher.publishEvent(
+                    new QrExamenEnvioSolicitadoEvento(id)
+            );
+        }
+
+        return convertir(guardado);
 }
 
 
@@ -162,34 +212,14 @@ public ExamenRespuesta configurar(
         );
         }
 
-        LocalDateTime ahora = LocalDateTime.now(
-                ZoneId.of("America/La_Paz")
-        );
-
-        if (solicitud.fechaExamen().isBefore(ahora.toLocalDate())) {
-        throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "La fecha del examen no puede ser anterior a la fecha actual"
-        );
-        }
-
-        if (solicitud.fechaExamen().isEqual(ahora.toLocalDate()) &&
-                !solicitud.horaInicio().isAfter(ahora.toLocalTime())) {
-        throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "La hora de inicio debe ser posterior a la hora actual"
-        );
-        }
-
         LocalTime horaFin = solicitud.horaInicio()
                 .plusMinutes(solicitud.duracionMinutos());
 
-        if (!horaFin.isAfter(solicitud.horaInicio())) {
-        throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "El examen debe finalizar el mismo día"
+        validarProgramacion(
+                solicitud.fechaExamen(),
+                solicitud.horaInicio(),
+                horaFin
         );
-        }
 
         Examen examen = examenRepositorio
                 .obtenerDetalle(id)
@@ -200,11 +230,41 @@ public ExamenRespuesta configurar(
                         )
                 );
 
+        LocalDate fechaAnterior = examen.getFechaExamen();
+        LocalTime inicioAnterior = examen.getHoraInicio();
+        LocalTime finAnterior = examen.getHoraFin();
+
         examen.setFechaExamen(solicitud.fechaExamen());
         examen.setHoraInicio(solicitud.horaInicio());
         examen.setHoraFin(horaFin);
 
-        return convertir(examenRepositorio.save(examen));
+        Examen guardado = examenRepositorio.save(examen);
+
+        List<QrExamenEstudiante> nuevos =
+                qrExamenServicio.generarFaltantesParaExamen(guardado);
+
+        boolean programacionCambiada =
+                !Objects.equals(fechaAnterior, guardado.getFechaExamen())
+                        || !Objects.equals(
+                                inicioAnterior,
+                                guardado.getHoraInicio()
+                        )
+                        || !Objects.equals(
+                                finAnterior,
+                                guardado.getHoraFin()
+                        );
+
+        if (programacionCambiada) {
+            qrExamenServicio.marcarPendientesParaReenvio(id);
+        }
+
+        if (programacionCambiada || !nuevos.isEmpty()) {
+            eventPublisher.publishEvent(
+                    new QrExamenEnvioSolicitadoEvento(id)
+            );
+        }
+
+        return convertir(guardado);
 }
 
     @Transactional(readOnly = true)
@@ -343,7 +403,55 @@ public ExamenRespuesta configurar(
             );
         }
 
+        validarProgramacion(
+                solicitud.fechaExamen(),
+                solicitud.horaInicio(),
+                solicitud.horaFin()
+        );
+
         return codigo;
+    }
+
+    private void validarProgramacion(
+            LocalDate fechaExamen,
+            LocalTime horaInicio,
+            LocalTime horaFin
+    ) {
+
+        if (fechaExamen == null ||
+                horaInicio == null ||
+                horaFin == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha y hora del examen son obligatorias"
+            );
+        }
+
+        LocalDateTime ahora = LocalDateTime.now(
+                ZoneId.of("America/La_Paz")
+        );
+
+        if (fechaExamen.isBefore(ahora.toLocalDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha del examen no puede ser anterior a la fecha actual"
+            );
+        }
+
+        if (fechaExamen.isEqual(ahora.toLocalDate()) &&
+                !horaInicio.isAfter(ahora.toLocalTime())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La hora de inicio debe ser posterior a la hora actual"
+            );
+        }
+
+        if (!horaFin.isAfter(horaInicio)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El examen debe finalizar el mismo día"
+            );
+        }
     }
 
     private void aplicar(
@@ -372,6 +480,10 @@ public ExamenRespuesta configurar(
         );
 
         examen.setDescripcion(descripcion.isBlank() ? null : descripcion);
+
+        examen.setFechaExamen(solicitud.fechaExamen());
+        examen.setHoraInicio(solicitud.horaInicio());
+        examen.setHoraFin(solicitud.horaFin());
     }
 
 

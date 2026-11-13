@@ -1,8 +1,6 @@
-
 import { useEffect, useRef, useState } from "react";
 import {
     Navigate,
-    useLocation,
     useNavigate
 } from "react-router-dom";
 
@@ -13,33 +11,6 @@ import { login } from "../../services/authService";
 import { useAuth } from "../../context/useAuth";
 
 const CLAVE_RUTA_PENDIENTE = "hu12_ruta_pendiente";
-
-function obtenerDestinoSeguro(origen) {
-    if (
-        !origen ||
-        typeof origen.pathname !== "string" ||
-        !origen.pathname.startsWith("/") ||
-        origen.pathname.startsWith("//") ||
-        origen.pathname.startsWith("/\\") ||
-        origen.pathname === "/login"
-    ) {
-        return null;
-    }
-
-    return {
-        pathname: origen.pathname,
-        search:
-            typeof origen.search === "string" &&
-            origen.search.startsWith("?")
-                ? origen.search
-                : "",
-        hash:
-            typeof origen.hash === "string" &&
-            origen.hash.startsWith("#")
-                ? origen.hash
-                : ""
-    };
-}
 
 function obtenerRutaQrPendiente() {
     const rutaGuardada = sessionStorage.getItem(
@@ -78,7 +49,6 @@ function obtenerRutaQrPendiente() {
 
 function Login() {
     const navigate = useNavigate();
-    const location = useLocation();
 
     const {
         usuario,
@@ -98,17 +68,9 @@ function Login() {
 
     const temporizador = useRef(null);
 
-    const [destino] = useState(() => {
-        const destinoProtectedRoute = obtenerDestinoSeguro(
-            location.state?.from
-        );
-
-        if (destinoProtectedRoute) {
-            return destinoProtectedRoute;
-        }
-
-        return obtenerRutaQrPendiente() || "/";
-    });
+    // Al iniciar una sesión normal se abre Inicio.
+    // Se conserva únicamente un enlace QR de inscripción pendiente.
+    const [destino] = useState(() => obtenerRutaQrPendiente() || "/");
 
     useEffect(() => {
         return () => {
@@ -146,7 +108,13 @@ function Login() {
             return;
         }
 
-        if (!correo || !password) {
+        const correoLimpio = correo.trim();
+        const passwordLimpia = password.trimEnd();
+
+        setCorreo(correoLimpio);
+        setPassword(passwordLimpia);
+
+        if (!correoLimpio || !passwordLimpia) {
             setModal({
                 mostrar: true,
                 tipo: "error"
@@ -168,14 +136,14 @@ function Login() {
             setCargando(true);
 
             const respuesta = await login(
-                correo,
-                password
+                correoLimpio,
+                passwordLimpia
             );
-
+            
             iniciarSesion(
                 respuesta.usuario,
                 respuesta.token,
-                false
+                true
             );
 
             setModal({
@@ -243,7 +211,7 @@ function Login() {
                             placeholder="202001068@edu.est.umss"
                             onChange={(e) =>
                                 setCorreo(
-                                    e.target.value.slice(0, 50)
+                                    e.target.value.trim().slice(0, 50)
                                 )
                             }
                         />
@@ -338,7 +306,7 @@ function Login() {
                                 ? "No se pudo conectar con el sistema. Verifica tu conexión a Internet e intenta nuevamente."
                                 : esError
                                     ? "Verifica tu correo electrónico y contraseña e intenta nuevamente."
-                                    : "Bienvenido al sistema. Redirigiendo..."}
+                                    : "Bienvenido a ExamPass. Redirigiendo..."}
                         </p>
 
                         {!esExito ? (

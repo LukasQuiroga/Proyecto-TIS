@@ -1,4 +1,4 @@
-import {useState} from "react";
+import { useEffect, useState } from "react";
 import {Outlet} from "react-router-dom";
 import Navbar from "../Navbar/Navbar.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
@@ -8,8 +8,17 @@ import "./PlantillaPrincipal.css";
 
 function PlantillaPrincipal(){
 
-    const [sidebarAbierto,setSidebarAbierto]=
-        useState(false);
+    const [sidebarAbierto, setSidebarAbierto] = useState(() => {
+        return sessionStorage.getItem("sidebarAbierto") === "true";
+    });
+
+    const cambiarSidebar = () => {
+        setSidebarAbierto((anterior) => !anterior);
+    };
+
+    useEffect(() => {
+        sessionStorage.setItem("sidebarAbierto", String(sidebarAbierto));
+    }, [sidebarAbierto]);
 
     const {token}=useAuth();
 
@@ -21,11 +30,7 @@ function PlantillaPrincipal(){
             {token&&(
                 <Sidebar
                     sidebarAbierto={sidebarAbierto}
-                    cambiarSidebar={()=>
-                        setSidebarAbierto(
-                            !sidebarAbierto
-                        )
-                    }
+                    cambiarSidebar={cambiarSidebar}
                 />
             )}
 

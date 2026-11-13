@@ -28,15 +28,69 @@ import InscripcionEstudianteQr from "./pages/asignaturas/InscripcionEstudianteQr
 import MisMaterias from "./pages/asignaturas/MisMaterias.jsx";
 
 import Examenes from "./pages/examenes/Examenes.jsx";
+import MisExamenes from "./pages/examenes/MisExamenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
-import ConfigurarExamen from "./pages/examenes/ConfigurarExamen.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
+import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
+import ComprobarExamenCorrespondiente from "./pages/ingreso/ComprobarExamenCorrespondiente";
+import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
+import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
+import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
+import IntentosNoAutorizados from "./pages/ingreso/IntentosNoAutorizados.jsx";
+import AccesoDenegado from "./routes/AccesoDenegado.jsx";
+import { useAuth } from "./context/useAuth";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
 import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
+
+function AccesoSoloDocenteHabilitaciones({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario || usuario.nombreRol?.trim().toUpperCase() !== "DOCENTE") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+function AccesoSoloEstudiante({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (usuario.nombreRol?.trim().toUpperCase() !== "ESTUDIANTE") {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
+function AccesoControlIngreso({ children, permitirAdministrador = false }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const rolActual = usuario.nombreRol?.trim().toUpperCase();
+  const esDocente = rolActual === "DOCENTE";
+  const esAdministrador = rolActual === "ADMINISTRADOR";
+
+  const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
+
+  const rolAutorizado = esDocente || (permitirAdministrador && esAdministrador);
+
+  if (!rolAutorizado || !tienePermiso) {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
 
 function App() {
   return (
@@ -158,12 +212,18 @@ function App() {
             />
 
             {/* Materias inscritas del estudiante */}
-            <Route
-              path="/mis-materias"
-              element={<MisMaterias />}
-            />
+            <Route path="/mis-materias" element={<MisMaterias />} />
 
             {/* EXÁMENES */}
+
+            <Route
+              path="/mis-examenes"
+              element={
+                <AccesoSoloEstudiante>
+                  <MisExamenes />
+                </AccesoSoloEstudiante>
+              }
+            />
 
             <Route
               path="/examenes"
@@ -201,22 +261,69 @@ function App() {
               }
             />
 
+            {/* HABILITACIONES */}
             <Route
-              path="/examenes/:id/configuracion"
+              path="/habilitaciones"
               element={
-                <ProtectedPermission
-                  permiso="GESTIONAR_EXAMENES"
-                  accesoDenegado={<AccesoNoAutorizadoExamenes />}
-                >
-                  <ConfigurarExamen />
+                <AccesoSoloDocenteHabilitaciones>
+                  <Habilitaciones />
+                </AccesoSoloDocenteHabilitaciones>
+              }
+            />
+
+            {/* Identificacion por documento de identidad */}
+            <Route
+              path="/ingreso/identificar-documento"
+              element={
+                <AccesoControlIngreso permitirAdministrador>
+                  <IdentificarDocumento />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/comprobar-examen"
+              element={
+                <AccesoControlIngreso permitirAdministrador>
+                  <ComprobarExamenCorrespondiente />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/identificar-codigo"
+              element={
+                <AccesoControlIngreso>
+                  <IdentificarCodigo />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/identificar-qr"
+              element={
+                <AccesoControlIngreso>
+                  <IdentificarQr />
+                </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/ingreso/ingresos-registrados"
+              element={
+                <ProtectedPermission permiso="CONTROL_INGRESO">
+                  <IngresosRegistrados />
                 </ProtectedPermission>
               }
             />
 
-            {/* HABILITACIONES */}
             <Route
-              path="/habilitaciones"
-              element={<Habilitaciones />}
+              path="/ingreso/intentos-no-autorizados"
+              element={
+                <AccesoControlIngreso>
+                  <IntentosNoAutorizados />
+                </AccesoControlIngreso>
+              }
             />
 
             {/* AUDITORIA */}

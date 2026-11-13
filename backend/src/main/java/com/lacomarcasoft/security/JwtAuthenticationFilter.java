@@ -3,6 +3,7 @@ package com.lacomarcasoft.security;
 import com.lacomarcasoft.modelo.Usuario;
 import com.lacomarcasoft.repository.UsuarioRepositorio;
 import com.lacomarcasoft.service.TokenSesionService;
+import com.lacomarcasoft.service.PlazoFotoPerfilServicio;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,15 +27,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final TokenSesionService tokenSesionService;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final PlazoFotoPerfilServicio plazoFotoPerfilServicio;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
             TokenSesionService tokenSesionService,
-            UsuarioRepositorio usuarioRepositorio
+            UsuarioRepositorio usuarioRepositorio,
+            PlazoFotoPerfilServicio plazoFotoPerfilServicio
     ) {
         this.jwtService = jwtService;
         this.tokenSesionService = tokenSesionService;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.plazoFotoPerfilServicio = plazoFotoPerfilServicio;
     }
 
     @Override
@@ -89,6 +93,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     !Boolean.TRUE.equals(usuario.getActivo()) ||
                     usuario.getRol() == null
             ) {
+                rechazarAutenticacion(response);
+                return;
+            }
+
+            if (plazoFotoPerfilServicio.bloquearSiVencio(idUsuario)) {
                 rechazarAutenticacion(response);
                 return;
             }

@@ -56,6 +56,17 @@ public class Usuario {
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "fecha_primer_inicio_sesion")
+    private LocalDateTime fechaPrimerInicioSesion;
+
+    public LocalDateTime getFechaPrimerInicioSesion() {
+        return fechaPrimerInicioSesion;
+    }
+
+    public void setFechaPrimerInicioSesion(LocalDateTime fechaPrimerInicioSesion) {
+        this.fechaPrimerInicioSesion = fechaPrimerInicioSesion;
+    }
+
     public Usuario() {
     }
 

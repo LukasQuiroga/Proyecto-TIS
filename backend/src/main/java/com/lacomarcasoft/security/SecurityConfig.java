@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -89,7 +90,7 @@ public class SecurityConfig {
                     HttpMethod.PUT,
                     "/api/perfil/me/contrasena"
                 ).authenticated()
-      
+
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/perfil/me/foto"
@@ -99,6 +100,23 @@ public class SecurityConfig {
                     HttpMethod.PUT,
                     "/api/perfil/me/foto"
                 ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/ingresos/examenes/*/identificar-documento",
+                    "/api/ingresos/examenes/identificar-documento",
+                    "/api/ingresos/examenes/identificar-documento/*/foto",
+                    "/api/ingresos/examenes/identificar-documento/*/estudiantes/*/habilitacion",
+                    "/api/ingresos/examenes/identificar-documento/examenes"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"
+                ))
+
+                .requestMatchers("/api/ingresos/examenes/**")
+                .access(new WebExpressionAuthorizationManager(
+                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
+                ))
 
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
@@ -176,6 +194,11 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/habilitaciones/**"
                 ).hasAnyRole("DOCENTE", "ADMINISTRADOR")
+                          
+                .requestMatchers(
+                    HttpMethod.GET,
+                      "/api/estudiante/examenes"
+                ).hasRole("ESTUDIANTE")
 
                 .requestMatchers(
                     "/api/examenes",

@@ -1,4 +1,3 @@
-
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.modelo.Usuario;
@@ -33,6 +32,7 @@ public class PerfilFotoServicio {
     private static final long TAMANO_MAXIMO = 2L * 1024 * 1024;
 
     private final UsuarioRepositorio usuarios;
+    private final ValidadorFotoCarnet validadorFotoCarnet;
     private final HttpClient cliente;
     private final String baseStorage;
     private final String clave;
@@ -44,11 +44,13 @@ public class PerfilFotoServicio {
 
     public PerfilFotoServicio(
             UsuarioRepositorio usuarios,
+            ValidadorFotoCarnet validadorFotoCarnet,
             @Value("${app.supabase.url}") String supabaseUrl,
             @Value("${app.supabase.bucket:fotos-perfil}") String bucket,
             @Value("${app.supabase.service-role-key}") String clave
     ) {
         this.usuarios = usuarios;
+        this.validadorFotoCarnet = validadorFotoCarnet;
         this.clave = clave;
 
         String url = supabaseUrl.replaceAll("/+$", "");
@@ -97,6 +99,8 @@ public class PerfilFotoServicio {
             contenido,
             archivo.getContentType()
         );
+
+        validadorFotoCarnet.validar(contenido);
 
         String extension = tipo.equals("image/png")
             ? ".png"
