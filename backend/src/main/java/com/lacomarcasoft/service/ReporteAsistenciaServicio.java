@@ -4,6 +4,7 @@ import com.lacomarcasoft.dto.response.ReporteAsistenciaDetalleRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaExamenRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaHistorialRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaRespuesta;
+import com.lacomarcasoft.dto.response.ReporteAusentesRespuesta;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -65,6 +66,25 @@ public class ReporteAsistenciaServicio {
                 rs.getString("nombre_asignatura"), fecha(rs.getDate("fecha_examen")),
                 hora(rs.getTime("hora_inicio"))
         ), parametros.toArray());
+    }
+
+    @Transactional(readOnly = true)
+    public ReporteAusentesRespuesta consultarAusentes(Long idExamen) {
+        if (idExamen == null || idExamen <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Examen inválido");
+        }
+
+        ReporteAsistenciaExamenRespuesta examen = buscarExamen(idExamen);
+        List<ReporteAsistenciaDetalleRespuesta> padron = consultarPadronAsociadoAExamen(idExamen);
+        List<ReporteAsistenciaDetalleRespuesta> ausentes = padron.stream()
+                .filter(estudiante -> "AUSENTE".equals(estudiante.estadoAsistencia()))
+                .toList();
+        int asistentes = padron.size() - ausentes.size();
+
+        return new ReporteAusentesRespuesta(
+                examen.idExamen(), examen.codigoExamen(), examen.nombreExamen(),
+                examen.asignatura(), examen.fechaExamen(), examen.horaInicio(),
+                ausentes.size(), asistentes, padron.size(), ausentes);
     }
 
     @Transactional
@@ -242,6 +262,32 @@ public class ReporteAsistenciaServicio {
                     rs.getLong("id_usuario"), rs.getString("codigo_sis"), rs.getString("nombre_completo"),
                     ingreso == null ? "AUSENTE" : "ASISTIO", ingreso);
         }, idExamen, idExamen, idExamen);
+    }
+
+    private List<ReporteAsistenciaDetalleRespuesta> consultarPadronAsociadoAExamen(Long idExamen) {
+        return jdbc.query("""
+                WITH ingresos AS (
+                    SELECT id_estudiante, MIN(fecha_hora_ingreso) AS fecha_hora_ingreso
+                    FROM academico.ingreso_examen
+                    WHERE id_examen = ?
+                    GROUP BY id_estudiante
+                )
+                SELECT u.id_usuario, u.codigo_sis,
+                       TRIM(CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, ''))) AS nombre_completo,
+                       i.fecha_hora_ingreso
+                FROM academico.examen_estudiante ee
+                JOIN seguridad.usuario u ON u.id_usuario = ee.id_estudiante
+                JOIN seguridad.rol r ON r.id_rol = u.id_rol
+                LEFT JOIN ingresos i ON i.id_estudiante = ee.id_estudiante
+                WHERE ee.id_examen = ?
+                  AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                ORDER BY LOWER(u.apellido), LOWER(u.nombre), u.codigo_sis NULLS LAST, u.id_usuario
+                """, (rs, fila) -> {
+            OffsetDateTime ingreso = rs.getObject("fecha_hora_ingreso", OffsetDateTime.class);
+            return new ReporteAsistenciaDetalleRespuesta(
+                    rs.getLong("id_usuario"), rs.getString("codigo_sis"), rs.getString("nombre_completo"),
+                    ingreso == null ? "AUSENTE" : "ASISTIO", ingreso);
+        }, idExamen, idExamen);
     }
 
     private static LocalDate fecha(Date fecha) {

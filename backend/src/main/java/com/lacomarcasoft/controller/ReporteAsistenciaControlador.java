@@ -3,6 +3,7 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaExamenRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaHistorialRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaRespuesta;
+import com.lacomarcasoft.dto.response.ReporteAusentesRespuesta;
 import com.lacomarcasoft.service.ReporteAsistenciaServicio;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,6 +31,11 @@ public class ReporteAsistenciaControlador {
             @RequestParam(required = false) String buscar,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         return servicio.listarExamenes(buscar, fecha);
+    }
+
+    @GetMapping("/ausentes/examenes/{idExamen}")
+    public ReporteAusentesRespuesta consultarAusentes(@PathVariable Long idExamen) {
+        return servicio.consultarAusentes(idExamen);
     }
 
     @PostMapping("/examenes/{idExamen}")
