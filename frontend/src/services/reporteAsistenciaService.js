@@ -31,3 +31,10 @@ export async function descargarReporteAsistencia(idReporte) {
   });
   return data;
 }
+
+export async function consultarReporteAusentes(idExamen) {
+  const { data } = await api.get(
+    `/reportes/asistencia/ausentes/examenes/${idExamen}`,
+  );
+  return data;
+}
