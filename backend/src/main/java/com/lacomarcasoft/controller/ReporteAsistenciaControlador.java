@@ -3,6 +3,7 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaExamenRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaHistorialRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaRespuesta;
+import com.lacomarcasoft.dto.response.ReporteAusentesHistorialRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAusentesRespuesta;
 import com.lacomarcasoft.service.ReporteAsistenciaServicio;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +37,27 @@ public class ReporteAsistenciaControlador {
     @GetMapping("/ausentes/examenes/{idExamen}")
     public ReporteAusentesRespuesta consultarAusentes(@PathVariable Long idExamen) {
         return servicio.consultarAusentes(idExamen);
+    }
+
+    @PostMapping("/ausentes/examenes/{idExamen}")
+    public ReporteAusentesRespuesta generarAusentes(
+            @PathVariable Long idExamen,
+            Authentication authentication,
+            HttpServletRequest request) {
+        Long idGenerador = authentication != null && authentication.getDetails() instanceof Long id
+                ? id : null;
+        return servicio.generarAusentes(idExamen, idGenerador, obtenerIp(request));
+    }
+
+    @GetMapping("/ausentes/historial")
+    public List<ReporteAusentesHistorialRespuesta> historialAusentes(
+            @RequestParam(required = false) String buscar) {
+        return servicio.historialAusentes(buscar);
+    }
+
+    @GetMapping("/ausentes/{idReporte}")
+    public ReporteAusentesRespuesta obtenerAusentes(@PathVariable Long idReporte) {
+        return servicio.obtenerAusentes(idReporte);
     }
 
     @PostMapping("/examenes/{idExamen}")

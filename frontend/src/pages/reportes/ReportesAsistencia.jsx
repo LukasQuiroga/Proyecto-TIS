@@ -24,6 +24,7 @@ import {
   obtenerReporteHorarios
 } from '../../services/reporteHorariosService'
 import './ReportesAsistencia.css'
+import HistorialAusentes from './HistorialAusentes.jsx'
 import ReporteAusentes from './ReporteAusentes.jsx'
 
 function fechaLegible(fecha) {
@@ -372,6 +373,12 @@ export default function ReportesAsistencia() {
         >
           <FiUsers /> Reporte de ausentes
         </button>
+        <button
+          className={pestana === 'historial-ausentes' ? 'activa' : ''}
+          onClick={() => setPestana('historial-ausentes')}
+        >
+          <FiClock /> Historial de ausentes
+        </button>
       </nav>
 
       {error && (
@@ -393,7 +400,9 @@ export default function ReportesAsistencia() {
         </div>
       )}
 
-      {pestana === 'ausentes' ? (
+      {pestana === 'historial-ausentes' ? (
+        <HistorialAusentes />
+      ) : pestana === 'ausentes' ? (
         <ReporteAusentes />
       ) : pestana === 'generar' ? (
         <section className="ra-panel">

@@ -38,3 +38,22 @@ export async function consultarReporteAusentes(idExamen) {
   );
   return data;
 }
+
+export async function generarReporteAusentes(idExamen) {
+  const { data } = await api.post(
+    `/reportes/asistencia/ausentes/examenes/${idExamen}`,
+  );
+  return data;
+}
+
+export async function listarHistorialAusentes(buscar = "") {
+  const { data } = await api.get("/reportes/asistencia/ausentes/historial", {
+    params: buscar.trim() ? { buscar: buscar.trim() } : {},
+  });
+  return data;
+}
+
+export async function obtenerReporteAusentes(idReporte) {
+  const { data } = await api.get(`/reportes/asistencia/ausentes/${idReporte}`);
+  return data;
+}
