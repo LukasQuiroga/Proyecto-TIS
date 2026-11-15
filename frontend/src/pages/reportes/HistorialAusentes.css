@@ -1,0 +1,23 @@
+.rah-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rah-detalle-cabecera {
+  margin-top: 8px;
+}
+
+.rah-panel .ra-resumen-ausentes {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 760px) {
+  .rah-panel .ra-tabla-contenedor {
+    overflow-x: auto;
+  }
+
+  .rah-panel .ra-tabla {
+    min-width: 800px;
+  }
+}

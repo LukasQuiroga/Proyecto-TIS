@@ -1,0 +1,105 @@
+.ra-ausentes-panel {
+  min-height: 280px;
+}
+
+.ra-ausentes-confirmacion {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  max-width: 650px;
+  margin: 24px auto;
+  padding: 42px 24px;
+  border: 1px solid #e0e9f5;
+  border-radius: 10px;
+  background: #fff;
+  text-align: center;
+}
+
+.ra-ausentes-icono-exito {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 50%;
+  color: #16864b;
+  background: #d9f8e5;
+  font-size: 36px;
+}
+
+.ra-ausentes-confirmacion h2 {
+  margin: 4px 0 0;
+  color: #17345f;
+  font-size: 22px;
+}
+
+.ra-ausentes-confirmacion p {
+  margin: 0;
+  color: #617a9d;
+  font-size: 14px;
+}
+
+.ra-ausentes-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ra-ausentes-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  color: #1769e8;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ra-resumen-ausentes {
+  grid-template-columns: repeat(4, minmax(100px, 1fr)) repeat(3, minmax(100px, 0.8fr));
+}
+
+.ra-ausentes-busqueda {
+  width: min(360px, 40vw);
+}
+
+.ra-ausentes-vacio svg {
+  color: #17844c;
+  background: #e0f7e9;
+}
+
+@media (max-width: 1050px) {
+  .ra-resumen-ausentes {
+    grid-template-columns: repeat(4, minmax(100px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .ra-pestanas {
+    flex-wrap: wrap;
+  }
+
+  .ra-ausentes-acciones {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ra-ausentes-acciones button {
+    width: 100%;
+  }
+
+  .ra-ausentes-busqueda {
+    width: auto;
+  }
+
+  .ra-resumen-ausentes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
