@@ -87,6 +87,11 @@ public class SecurityConfig {
                 ).authenticated()
 
                 .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/perfil/me/documento"
+                ).authenticated()
+
+                .requestMatchers(
                     HttpMethod.PUT,
                     "/api/perfil/me/contrasena"
                 ).authenticated()

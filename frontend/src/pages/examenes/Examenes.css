@@ -45,8 +45,8 @@
 
 .examenes-filtros {
     display: grid;
-    grid-template-columns: minmax(0, 70fr) minmax(0, 28fr);
-    gap: 2%;
+    grid-template-columns: minmax(0, 1.6fr) minmax(170px, 0.7fr) minmax(230px, 1fr);
+    gap: 12px;
     margin-bottom: 16px;
 }
 

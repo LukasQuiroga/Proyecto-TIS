@@ -85,6 +85,37 @@ public class UsuarioServicio {
                 .map(this::convertirRespuesta);
     }
 
+    @Transactional(readOnly = true)
+    public Page<UsuarioRespuesta> buscarPaginado(
+            String nombre,
+            String apellido,
+            String ci,
+            String correo,
+            String rol,
+            String estado,
+            Pageable pageable
+    ) {
+        Boolean activo = switch (estado == null ? "" : estado.trim().toUpperCase(Locale.ROOT)) {
+            case "ACTIVO" -> true;
+            case "INACTIVO" -> false;
+            default -> null;
+        };
+
+        return usuarioRepositorio.buscarPaginado(
+                normalizarFiltro(nombre),
+                normalizarFiltro(apellido),
+                normalizarFiltro(ci),
+                normalizarFiltro(correo),
+                normalizarFiltro(rol),
+                activo,
+                pageable
+        ).map(this::convertirRespuesta);
+    }
+
+    private String normalizarFiltro(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim();
+    }
+
     public List<MateriaRespuesta> listarMaterias(){
 
         return materiaRepositorio

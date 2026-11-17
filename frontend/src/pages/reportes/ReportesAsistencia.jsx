@@ -14,7 +14,9 @@ import {
   descargarReporteAsistencia,
   generarReporteAsistencia,
   listarExamenesParaReporte,
+  listarHistorialAusentes,
   listarHistorialReportes,
+  obtenerReporteAusentes,
   obtenerReporteAsistencia
 } from '../../services/reporteAsistenciaService'
 import {
@@ -24,7 +26,6 @@ import {
   obtenerReporteHorarios
 } from '../../services/reporteHorariosService'
 import './ReportesAsistencia.css'
-import HistorialAusentes from './HistorialAusentes.jsx'
 import ReporteAusentes from './ReporteAusentes.jsx'
 
 function fechaLegible(fecha) {
@@ -54,6 +55,34 @@ function descargarBlob(blob, nombre) {
   enlace.click()
   enlace.remove()
   URL.revokeObjectURL(url)
+}
+
+function descargarAusentesCsv(reporte) {
+  const campo = (valor) => {
+    const texto = String(valor ?? '')
+    const seguro = /^[=+\-@]/.test(texto) ? `'${texto}` : texto
+    return `"${seguro.replaceAll('"', '""')}"`
+  }
+  const filas = [
+    ['Reporte de ausentes'],
+    ['Examen', reporte.nombreExamen],
+    ['Asignatura', reporte.asignatura],
+    ['Fecha del examen', reporte.fechaExamen],
+    ['Hora del examen', reporte.horaInicio],
+    ['Total de ausentes', reporte.totalAusentes],
+    [],
+    ['Código', 'Nombre completo', 'Estado'],
+    ...(reporte.estudiantesAusentes || []).map((estudiante) => [
+      estudiante.codigoEstudiante,
+      estudiante.nombreCompleto,
+      'Ausente'
+    ])
+  ]
+  const contenido = `\uFEFF${filas.map((fila) => fila.map(campo).join(';')).join('\r\n')}`
+  descargarBlob(
+    new Blob([contenido], { type: 'text/csv;charset=utf-8' }),
+    `reporte-ausentes-${reporte.idReporte}.csv`
+  )
 }
 
 function fechaHoraIngresoLegible(valor) {
@@ -144,9 +173,10 @@ export default function ReportesAsistencia() {
 
     async function cargar() {
       try {
-        const [reportesAsistencia, reportesHorarios] = await Promise.all([
+        const [reportesAsistencia, reportesHorarios, reportesAusentes] = await Promise.all([
           listarHistorialReportes(solicitudHistorial.buscar),
-          listarHistorialReportesHorarios(solicitudHistorial.buscar)
+          listarHistorialReportesHorarios(solicitudHistorial.buscar),
+          listarHistorialAusentes(solicitudHistorial.buscar)
         ])
 
         if (!vigente) return
@@ -167,7 +197,12 @@ export default function ReportesAsistencia() {
           tipoReporte: 'HORARIOS_INGRESO'
         }))
 
-        const todos = [...asistencia, ...horarios].sort((a, b) => {
+        const ausentes = (Array.isArray(reportesAusentes)
+          ? reportesAusentes
+          : []
+        ).map((item) => ({ ...item, tipoReporte: 'AUSENTES' }))
+
+        const todos = [...asistencia, ...horarios, ...ausentes].sort((a, b) => {
           const fechaA = new Date(a.fechaGeneracion).getTime()
           const fechaB = new Date(b.fechaGeneracion).getTime()
 
@@ -277,10 +312,16 @@ export default function ReportesAsistencia() {
       const data =
         item.tipoReporte === 'ASISTENCIA'
           ? await obtenerReporteAsistencia(item.idReporte)
-          : await obtenerReporteHorarios(item.idReporte)
+          : item.tipoReporte === 'AUSENTES'
+            ? await obtenerReporteAusentes(item.idReporte)
+            : await obtenerReporteHorarios(item.idReporte)
 
       setTipoReporteVisualizado(item.tipoReporte)
-      setReporte(data)
+      setReporte(
+        item.tipoReporte === 'AUSENTES'
+          ? { ...data, idReporte: item.idReporte }
+          : data
+      )
 
       setFiltroEstudiantes('')
       setEstadoEstudiantes('TODOS')
@@ -309,18 +350,18 @@ export default function ReportesAsistencia() {
     setDescargando(true)
     setError('')
     try {
-      const esAsistencia =
-        tipoReporteVisualizado === 'ASISTENCIA'
-
-      const blob = esAsistencia
-        ? await descargarReporteAsistencia(reporte.idReporte)
-        : await descargarReporteHorarios(reporte.idReporte)
-
-      const nombreArchivo = esAsistencia
-        ? `reporte-asistencia-${reporte.idReporte}.csv`
-        : `reporte-horarios-${reporte.idReporte}.csv`
-
-      descargarBlob(blob, nombreArchivo)
+      if (tipoReporteVisualizado === 'AUSENTES') {
+        descargarAusentesCsv(reporte)
+      } else {
+        const esAsistencia = tipoReporteVisualizado === 'ASISTENCIA'
+        const blob = esAsistencia
+          ? await descargarReporteAsistencia(reporte.idReporte)
+          : await descargarReporteHorarios(reporte.idReporte)
+        const nombreArchivo = esAsistencia
+          ? `reporte-asistencia-${reporte.idReporte}.csv`
+          : `reporte-horarios-${reporte.idReporte}.csv`
+        descargarBlob(blob, nombreArchivo)
+      }
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
@@ -367,18 +408,6 @@ export default function ReportesAsistencia() {
         <button className={pestana === 'historial' ? 'activa' : ''} onClick={solicitarHistorial}>
           <FiClock /> Historial de reportes
         </button>
-        <button
-          className={pestana === 'ausentes' ? 'activa' : ''}
-          onClick={() => setPestana('ausentes')}
-        >
-          <FiUsers /> Reporte de ausentes
-        </button>
-        <button
-          className={pestana === 'historial-ausentes' ? 'activa' : ''}
-          onClick={() => setPestana('historial-ausentes')}
-        >
-          <FiClock /> Historial de ausentes
-        </button>
       </nav>
 
       {error && (
@@ -400,11 +429,7 @@ export default function ReportesAsistencia() {
         </div>
       )}
 
-      {pestana === 'historial-ausentes' ? (
-        <HistorialAusentes />
-      ) : pestana === 'ausentes' ? (
-        <ReporteAusentes />
-      ) : pestana === 'generar' ? (
+      {pestana === 'generar' ? (
         <section className="ra-panel">
           <div className="ra-panel-cabecera">
             <div>
@@ -429,14 +454,19 @@ export default function ReportesAsistencia() {
               <option value="HORARIOS_INGRESO">
                 Reporte de horarios de ingreso
               </option>
+
+              <option value="AUSENTES">Reporte de ausentes</option>
             </select>
 
             <p>
               {tipoReporte === 'ASISTENCIA'
                 ? 'Consulta los estudiantes que asistieron y los ausentes.'
-                : 'Consulta las fechas y horas de ingreso de los estudiantes.'}
+                : tipoReporte === 'AUSENTES'
+                  ? 'Consulta los estudiantes del padrón que no registraron su ingreso.'
+                  : 'Consulta las fechas y horas de ingreso de los estudiantes.'}
             </p>
           </div>
+          {tipoReporte === 'AUSENTES' ? <ReporteAusentes /> : <>
           <form
             className="ra-filtros"
             onSubmit={(event) => {
@@ -519,6 +549,7 @@ export default function ReportesAsistencia() {
           <p className="ra-conteo">
             Mostrando {examenes.length} de {examenes.length} exámenes
           </p>
+          </>}
         </section>
       ) : (
         <section className="ra-panel">
@@ -549,6 +580,8 @@ export default function ReportesAsistencia() {
               <option value="HORARIOS_INGRESO">
                 Reportes de horarios de ingreso
               </option>
+
+              <option value="AUSENTES">Reportes de ausentes</option>
             </select>
           </div>
           <form
@@ -588,7 +621,8 @@ export default function ReportesAsistencia() {
                 {historialFiltrado.map((item) => (
                   <tr key={`${item.tipoReporte}-${item.idReporte}`}>
                     <td>
-                      RPT-{String(item.idReporte).padStart(3, '0')}
+                      {item.tipoReporte === 'AUSENTES' ? 'RAU-' : 'RPT-'}
+                      {String(item.idReporte).padStart(3, '0')}
                     </td>
 
                     <td className="ra-texto-fuerte">
@@ -600,7 +634,9 @@ export default function ReportesAsistencia() {
                       <span className="ra-etiqueta-tipo">
                         {item.tipoReporte === 'ASISTENCIA'
                           ? 'Asistencia'
-                          : 'Horarios de ingreso'}
+                          : item.tipoReporte === 'AUSENTES'
+                            ? 'Ausentes'
+                            : 'Horarios de ingreso'}
                       </span>
                     </td>
 
@@ -611,7 +647,9 @@ export default function ReportesAsistencia() {
                     <td>
                       {item.tipoReporte === 'ASISTENCIA'
                         ? item.totalAsistentes
-                        : item.totalIngresos}
+                        : item.tipoReporte === 'AUSENTES'
+                          ? item.totalAusentes
+                          : item.totalIngresos}
                     </td>
 
                     <td>
@@ -795,6 +833,49 @@ export default function ReportesAsistencia() {
             Mostrando {estudiantesVisibles.length} de {reporte.totalPadron} estudiantes ·{' '}
             {reporte.totalAusentes} ausentes
           </p>
+        </section>
+      )}
+
+      {reporte && tipoReporteVisualizado === 'AUSENTES' && (
+        <section className="ra-panel ra-reporte" id="reporte-asistencia-vista-previa">
+          <div className="ra-reporte-encabezado">
+            <div>
+              <span className="ra-etiqueta">REPORTE GUARDADO · RAU-{String(reporte.idReporte).padStart(3, '0')}</span>
+              <h2>Reporte de ausentes</h2>
+              <p>Estudiantes asociados al examen que no registraron su ingreso.</p>
+            </div>
+            <button className="ra-boton-primario" onClick={descargar} disabled={descargando}>
+              <FiDownload /> {descargando ? 'Descargando...' : 'Descargar CSV'}
+            </button>
+          </div>
+          <div className="ra-resumen ra-resumen-ausentes">
+            <div><span>Examen</span><strong>{reporte.nombreExamen}</strong></div>
+            <div><span>Asignatura</span><strong>{reporte.asignatura}</strong></div>
+            <div><span>Fecha</span><strong>{fechaLegible(reporte.fechaExamen)}</strong></div>
+            <div><span>Hora</span><strong>{horaLegible(reporte.horaInicio)}</strong></div>
+            <div className="ra-resumen-contador ra-total-ausentes"><span>Total de ausentes</span><strong>{reporte.totalAusentes}</strong></div>
+            <div className="ra-resumen-contador"><span>Total de asistentes</span><strong>{reporte.totalAsistentes}</strong></div>
+            <div className="ra-resumen-contador ra-total-padron"><span>Total en padrón</span><strong>{reporte.totalPadron}</strong></div>
+          </div>
+          {reporte.totalPadron === 0 ? (
+            <div className="ra-vacio-grande"><FiAlertCircle /><h3>No hay estudiantes asociados al examen</h3></div>
+          ) : (reporte.estudiantesAusentes || []).length === 0 ? (
+            <div className="ra-vacio-grande ra-ausentes-vacio"><FiCheckCircle /><h3>No hay estudiantes ausentes</h3></div>
+          ) : (
+            <div className="ra-tabla-contenedor">
+              <table className="ra-tabla">
+                <thead><tr><th>#</th><th>Código</th><th>Nombre completo</th><th>Estado</th></tr></thead>
+                <tbody>{reporte.estudiantesAusentes.map((estudiante, indice) => (
+                  <tr key={estudiante.idEstudiante}>
+                    <td>{indice + 1}</td><td>{estudiante.codigoEstudiante || '—'}</td>
+                    <td className="ra-texto-fuerte">{estudiante.nombreCompleto}</td>
+                    <td><span className="ra-estado ra-estado-ausente">Ausente</span></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+          <p className="ra-conteo">{reporte.totalAusentes} estudiantes ausentes</p>
         </section>
       )}
 

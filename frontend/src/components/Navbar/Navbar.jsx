@@ -57,6 +57,13 @@ function Navbar() {
         const imagen = await obtenerFotoPerfil();
         if (!activo || numeroSolicitud !== solicitud) return;
 
+        if (!imagen || imagen.size === 0) {
+          if (urlActual) URL.revokeObjectURL(urlActual);
+          urlActual = null;
+          setFotoPerfilUrl(null);
+          return;
+        }
+
         const nuevaUrl = URL.createObjectURL(imagen);
         if (urlActual) URL.revokeObjectURL(urlActual);
         urlActual = nuevaUrl;

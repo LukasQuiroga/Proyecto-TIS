@@ -40,6 +40,33 @@ public interface ExamenRepositorio extends JpaRepository<Examen, Long> {
         FROM Examen e
         JOIN FETCH e.materia m
         JOIN FETCH m.asignatura
+        WHERE m.docente.idUsuario = :idDocente
+        ORDER BY e.idExamen DESC
+        """)
+    List<Examen> listarPorDocente(@Param("idDocente") Long idDocente);
+
+    @Query("""
+        SELECT e
+        FROM Examen e
+        JOIN FETCH e.materia m
+        JOIN FETCH m.asignatura
+        WHERE m.docente.idUsuario = :idDocente
+          AND (
+              LOWER(e.nombreExamen) LIKE LOWER(CONCAT('%', :texto, '%'))
+              OR LOWER(m.asignatura.nombreAsignatura) LIKE LOWER(CONCAT('%', :texto, '%'))
+          )
+        ORDER BY e.idExamen DESC
+        """)
+    List<Examen> buscarPorDocente(
+            @Param("idDocente") Long idDocente,
+            @Param("texto") String texto
+    );
+
+    @Query("""
+        SELECT e
+        FROM Examen e
+        JOIN FETCH e.materia m
+        JOIN FETCH m.asignatura
         WHERE e.idExamen = :id
         """)
     Optional<Examen> obtenerDetalle(@Param("id") Long id);

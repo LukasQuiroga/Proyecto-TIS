@@ -169,6 +169,7 @@ function Login() {
                 !navigator.onLine ||
                 error.code === "ERR_NETWORK" ||
                 error.code === "ECONNABORTED" ||
+                [502, 503, 504].includes(error.response?.status) ||
                 !error.response;
 
             setModal({
@@ -295,7 +296,7 @@ function Login() {
 
                         <h2>
                             {esConexion
-                                ? "Sin conexión"
+                                ? "Servicio no disponible"
                                 : esError
                                     ? "Credenciales incorrectas"
                                     : "Acceso exitoso"}
@@ -303,7 +304,7 @@ function Login() {
 
                         <p>
                             {esConexion
-                                ? "No se pudo conectar con el sistema. Verifica tu conexión a Internet e intenta nuevamente."
+                                ? "El sistema no pudo responder en este momento. Intenta nuevamente en unos minutos."
                                 : esError
                                     ? "Verifica tu correo electrónico y contraseña e intenta nuevamente."
                                     : "Bienvenido a ExamPass. Redirigiendo..."}

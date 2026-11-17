@@ -31,8 +31,15 @@ public class PerfilFotoControlador {
 
     @GetMapping
     public ResponseEntity<Resource> consultar(Authentication auth) {
-        PerfilFotoServicio.FotoPerfil foto =
-            servicio.consultar(obtenerIdUsuario(auth));
+        PerfilFotoServicio.FotoPerfil foto;
+        try {
+            foto = servicio.consultar(obtenerIdUsuario(auth));
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
+                return ResponseEntity.noContent().build();
+            }
+            throw ex;
+        }
 
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(foto.tipoContenido()))

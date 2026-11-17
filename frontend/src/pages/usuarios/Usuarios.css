@@ -158,4 +158,48 @@
     margin-top:12px;
     color:#62799b;
     font-size:11px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.usuarios-paginacion{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.usuarios-paginacion button,
+.usuarios-error button{
+    border:1px solid #cbd9eb;
+    border-radius:6px;
+    padding:7px 12px;
+    background:#fff;
+    color:#075fdf;
+    cursor:pointer;
+}
+
+.usuarios-paginacion button:disabled{
+    color:#9aa8ba;
+    cursor:not-allowed;
+}
+
+.usuarios-error{
+    margin:0 0 12px;
+    padding:12px 14px;
+    border:1px solid #f1bcbc;
+    border-radius:6px;
+    background:#fff4f4;
+    color:#a52a2a;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+}
+
+.usuarios-vacio{
+    height:140px;
+    text-align:center !important;
+    color:#62799b;
 }
