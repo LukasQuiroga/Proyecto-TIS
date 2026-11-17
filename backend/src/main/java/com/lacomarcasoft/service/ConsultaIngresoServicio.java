@@ -82,8 +82,32 @@ public class ConsultaIngresoServicio {
 
     @Transactional(readOnly = true)
     public List<ExamenDisponible> listarExamenes() {
-        Long idDocente = accesoExamenDocente.obtenerDocenteAutenticado();
 
+        Authentication autenticacion = SecurityContextHolder
+               .getContext()
+               .getAuthentication();
+
+        if (autenticacion == null ||
+            !autenticacion.isAuthenticated()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Debe iniciar sesion"
+            );
+        }
+
+     boolean esAdministrador = autenticacion.getAuthorities()
+            .stream()
+            .anyMatch(a ->
+                "ROLE_ADMINISTRADOR".equals(a.getAuthority())
+            );
+
+     boolean tienePermisoReportes = autenticacion.getAuthorities()
+            .stream()
+            .anyMatch(a ->
+                "GENERAR_REPORTES".equals(a.getAuthority())
+            );
+
+     if (esAdministrador && tienePermisoReportes) {
         return jdbc.query("""
                 SELECT
                     e.id_examen,
@@ -96,7 +120,6 @@ public class ConsultaIngresoServicio {
                     ON m.id_materia = e.id_materia
                 JOIN academico.asignatura a
                     ON a.id_asignatura = m.id_asignatura
-                WHERE m.id_docente = ?
                 ORDER BY e.id_examen DESC
                 """,
                 (rs, fila) -> new ExamenDisponible(
@@ -105,10 +128,56 @@ public class ConsultaIngresoServicio {
                         rs.getString("nombre_examen"),
                         rs.getString("materia"),
                         rs.getString("estado")
-                ),
-                idDocente
+                )
         );
     }
+
+     boolean esDocente = autenticacion.getAuthorities()
+            .stream()
+            .anyMatch(a ->
+                "ROLE_DOCENTE".equals(a.getAuthority())
+            );
+
+     boolean tienePermisoIngreso = autenticacion.getAuthorities()
+            .stream()
+            .anyMatch(a ->
+                "CONTROL_INGRESO".equals(a.getAuthority())
+            );
+
+     if (!esDocente || !tienePermisoIngreso) {
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "No tiene permisos para consultar los examenes"
+        );
+     }
+
+     Long idDocente = accesoExamenDocente.obtenerDocenteAutenticado();
+
+     return jdbc.query("""
+            SELECT
+                e.id_examen,
+                e.codigo,
+                e.nombre_examen,
+                e.estado,
+                CONCAT(a.nombre_asignatura, ' - Grupo ', m.grupo) AS materia
+            FROM academico.examen e
+            JOIN academico.materia m
+                ON m.id_materia = e.id_materia
+            JOIN academico.asignatura a
+                ON a.id_asignatura = m.id_asignatura
+            WHERE m.id_docente = ?
+            ORDER BY e.id_examen DESC
+            """,
+            (rs, fila) -> new ExamenDisponible(
+                    rs.getLong("id_examen"),
+                    rs.getString("codigo"),
+                    rs.getString("nombre_examen"),
+                    rs.getString("materia"),
+                    rs.getString("estado")
+            ),
+            idDocente
+    );
+ }
 
     @Transactional(readOnly = true)
     public List<ExamenDisponible> listarExamenesIdentificacionDocumento() {

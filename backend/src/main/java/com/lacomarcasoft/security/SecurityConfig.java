@@ -118,6 +118,24 @@ public class SecurityConfig {
                     "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"
                 ))
 
+                .requestMatchers(
+                    HttpMethod.GET,
+                      "/api/ingresos/examenes/registrados",
+                      "/api/ingresos/examenes/registrados/*"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                   "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
+
+                .requestMatchers(
+                       HttpMethod.GET,
+                       "/api/ingresos/examenes/disponibles"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                        "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
+                        "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
+                ))
+
                 .requestMatchers("/api/ingresos/examenes/**")
                 .access(new WebExpressionAuthorizationManager(
                     "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"

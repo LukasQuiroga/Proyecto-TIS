@@ -324,10 +324,10 @@ function App() {
             <Route
               path="/ingreso/ingresos-registrados"
               element={
-                <ProtectedPermission permiso="CONTROL_INGRESO">
+                <AccesoReportes>
                   <IngresosRegistrados />
-                </ProtectedPermission>
-              }
+                </AccesoReportes>
+             }
             />
 
             <Route
