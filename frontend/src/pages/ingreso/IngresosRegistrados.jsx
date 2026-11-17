@@ -1,308 +1,337 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiCalendar, FiEdit, FiEye, FiFileText, FiFilter, FiSearch, FiX } from "react-icons/fi";
 import {
-  actualizarIngresoRegistrado,
+  FiCalendar,
+  FiEye,
+  FiFileText,
+  FiFilter,
+  FiSearch,
+  FiX,
+} from "react-icons/fi";
+
+import {
+  listarIngresosRegistrados,
   obtenerExamenesIngreso,
   obtenerIngresoRegistrado,
 } from "../../services/validacionHabilitacionService";
-import { listarIngresosRegistrados } from "../../services/validacionHabilitacionService";
+
 import "./IngresosRegistrados.css";
+
+function formatearId(id) {
+  if (id == null) return "-";
+  return `IG-${String(id).padStart(3, "0")}`;
+}
+
+function formatearFecha(valor) {
+  if (!valor) return "-";
+
+  const fecha = new Date(valor);
+
+  if (Number.isNaN(fecha.getTime())) return "-";
+
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+
+  return `${dia}/${mes}/${fecha.getFullYear()}`;
+}
+
+function formatearHora(valor) {
+  if (!valor) return "-";
+
+  const fecha = new Date(valor);
+
+  if (Number.isNaN(fecha.getTime())) return "-";
+
+  const horas = String(fecha.getHours()).padStart(2, "0");
+  const minutos = String(fecha.getMinutes()).padStart(2, "0");
+  const segundos = String(fecha.getSeconds()).padStart(2, "0");
+
+  return `${horas}:${minutos}:${segundos}`;
+}
+
+function mensajeError(error, mensajePredeterminado) {
+  return (
+    error?.response?.data?.mensaje ||
+    error?.response?.data?.message ||
+    mensajePredeterminado
+  );
+}
 
 function IngresosRegistrados() {
   const location = useLocation();
   const navigate = useNavigate();
+
   const [examenes, setExamenes] = useState([]);
   const [ingresos, setIngresos] = useState([]);
+
   const [q, setQ] = useState("");
   const [idExamen, setIdExamen] = useState("");
   const [fecha, setFecha] = useState("");
-  const [cargando, setCargando] = useState(false);
+
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [pagina, setPagina] = useState(1);
-  const porPagina = 5;
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [modalModo, setModalModo] = useState("editar");
-  const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null);
-  const [estadoSeleccionado, setEstadoSeleccionado] = useState("SUSPENDIDO");
-  const [motivo, setMotivo] = useState("");
-  const [guardando, setGuardando] = useState(false);
-  const [errorModal, setErrorModal] = useState("");
 
+  const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+  const solicitudListado = useRef(0);
+  const solicitudDetalle = useRef(0);
+
+  const porPagina = 5;
+
+  // Cargar los examenes disponibles.
   useEffect(() => {
     let activo = true;
+
     obtenerExamenesIngreso()
       .then((datos) => {
-        if (activo) setExamenes(datos || []);
+        if (activo) {
+          setExamenes(Array.isArray(datos) ? datos : []);
+        }
       })
       .catch(() => {
-        if (activo) setError("No se pudieron cargar los exámenes.");
+        if (activo) {
+          setError("No se pudieron cargar los exámenes.");
+        }
       });
+
     return () => {
       activo = false;
     };
   }, []);
 
-  const cargar = async () => {
+  // Consultar ingresos registrados.
+  const cargar = useCallback(async (filtros = {}) => {
+    const idSolicitud = ++solicitudListado.current;
+
     setCargando(true);
     setError("");
+
     try {
-      const datos = await listarIngresosRegistrados({ q, idExamen, fecha });
+      const datos = await listarIngresosRegistrados(filtros);
+
+      if (idSolicitud !== solicitudListado.current) return;
+
       setIngresos(Array.isArray(datos) ? datos : []);
       setPagina(1);
     } catch (err) {
-      setError(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          "No se pudieron cargar los ingresos registrados."
-      );
-      setIngresos([]);
-    } finally {
-      setCargando(false);
-    }
-  };
+      if (idSolicitud !== solicitudListado.current) return;
 
+      setIngresos([]);
+      setPagina(1);
+
+      setError(
+        mensajeError(
+          err,
+          "No se pudieron cargar los ingresos registrados."
+        )
+      );
+    } finally {
+      if (idSolicitud === solicitudListado.current) {
+        setCargando(false);
+      }
+    }
+  }, []);
+
+  // CORRECCION ESLINT: primera carga asincrona.
   useEffect(() => {
     let activo = true;
 
-    const ejecutarCarga = async () => {
+    Promise.resolve().then(() => {
+      if (activo) {
+        cargar({});
+      }
+    });
+
+    return () => {
+      activo = false;
+      solicitudListado.current += 1;
+    };
+  }, [cargar]);
+
+  // Aplicar filtros seleccionados.
+  const aplicarFiltros = () => {
+    if (cargando) return;
+
+    cargar({
+      q: q.trim(),
+      idExamen,
+      fecha,
+    });
+  };
+
+  // Paginacion.
+  const total = ingresos.length;
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(total / porPagina)
+  );
+
+  const paginaActual = Math.min(pagina, totalPaginas);
+
+  const inicio = (paginaActual - 1) * porPagina;
+
+  const datosPagina = ingresos.slice(
+    inicio,
+    inicio + porPagina
+  );
+
+  const paginas = useMemo(
+    () => Array.from(
+      { length: totalPaginas },
+      (_, i) => i + 1
+    ),
+    [totalPaginas]
+  );
+
+  const cambiarPagina = (nuevaPagina) => {
+    if (
+      nuevaPagina >= 1 &&
+      nuevaPagina <= totalPaginas
+    ) {
+      setPagina(nuevaPagina);
+    }
+  };
+
+  // Consultar detalle del ingreso.
+  const abrirDetalle = useCallback(async (idIngreso) => {
+    const idSolicitud = ++solicitudDetalle.current;
+
+    setCargandoDetalle(true);
+    setError("");
+
+    try {
+      const detalle = await obtenerIngresoRegistrado(idIngreso);
+
+      if (idSolicitud === solicitudDetalle.current) {
+        setIngresoSeleccionado(detalle);
+      }
+    } catch (err) {
+      if (idSolicitud === solicitudDetalle.current) {
+        setError(
+          mensajeError(
+            err,
+            "No se pudo cargar el ingreso seleccionado."
+          )
+        );
+      }
+    } finally {
+      if (idSolicitud === solicitudDetalle.current) {
+        setCargandoDetalle(false);
+      }
+    }
+  }, []);
+
+  // CORRECCION ESLINT: abrir detalle desde otra pantalla.
+  useEffect(() => {
+    const idIngreso = location.state?.idIngreso;
+
+    if (!idIngreso) return;
+
+    let activo = true;
+
+    Promise.resolve().then(() => {
       if (!activo) return;
-      setCargando(true);
-      setError("");
-      try {
-        const datos = await listarIngresosRegistrados({});
-        if (activo) {
-          setIngresos(Array.isArray(datos) ? datos : []);
-          setPagina(1);
-        }
-      } catch (err) {
-        if (activo) {
-          setError(
-            err.response?.data?.mensaje ||
-              err.response?.data?.message ||
-              "No se pudieron cargar los ingresos registrados."
-          );
-          setIngresos([]);
-        }
-      } finally {
-        if (activo) {
-          setCargando(false);
-        }
+
+      abrirDetalle(idIngreso);
+
+      navigate(location.pathname, {
+        replace: true,
+        state: null,
+      });
+    });
+
+    return () => {
+      activo = false;
+    };
+  }, [
+    location.state?.idIngreso,
+    location.pathname,
+    navigate,
+    abrirDetalle,
+  ]);
+
+  // Cerrar el modal.
+  const cerrarModal = useCallback(() => {
+    setIngresoSeleccionado(null);
+  }, []);
+
+  // Cerrar el modal con Escape.
+  useEffect(() => {
+    if (!ingresoSeleccionado) return;
+
+    const cerrarConEscape = (event) => {
+      if (event.key === "Escape") {
+        cerrarModal();
       }
     };
 
-    ejecutarCarga();
+    document.addEventListener(
+      "keydown",
+      cerrarConEscape
+    );
 
     return () => {
-      activo = false;
-    };
-  }, []);
-
-  const formatearId = (id) => {
-    if (!id) return "-";
-    return `IG-${String(id).padStart(3, "0")}`;
-  };
-
-  const formatearFecha = (valor) => {
-    if (!valor) return "-";
-    try {
-      const fechaObj = new Date(valor);
-      const dia = String(fechaObj.getDate()).padStart(2, "0");
-      const mes = String(fechaObj.getMonth() + 1).padStart(2, "0");
-      const anio = fechaObj.getFullYear();
-      return `${dia}/${mes}/${anio}`;
-    } catch {
-      return "-";
-    }
-  };
-
-  const formatearHora = (valor) => {
-    if (!valor) return "-";
-    try {
-      const fechaObj = new Date(valor);
-      const horas = String(fechaObj.getHours()).padStart(2, "0");
-      const minutos = String(fechaObj.getMinutes()).padStart(2, "0");
-      const segundos = String(fechaObj.getSeconds()).padStart(2, "0");
-      return `${horas}:${minutos}:${segundos}`;
-    } catch {
-      return "-";
-    }
-  };
-
-  const total = ingresos.length;
-  const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
-  const paginaActual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaActual - 1) * porPagina;
-  const datosPagina = ingresos.slice(inicio, inicio + porPagina);
-
-  const cambiarPagina = (nuevaPagina) => {
-    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
-    setPagina(nuevaPagina);
-  };
-
-  const paginas = useMemo(() => {
-    const arr = [];
-    for (let i = 1; i <= totalPaginas; i++) {
-      arr.push(i);
-    }
-    return arr;
-  }, [totalPaginas]);
-
-  const abrirEditar = async (ingreso) => {
-    try {
-      const detalle = await obtenerIngresoRegistrado(ingreso.idIngreso);
-      setIngresoSeleccionado(detalle);
-      setModalModo("editar");
-      setEstadoSeleccionado(detalle.estado === "SUSPENDIDO" ? "REINCORPORADO" : "SUSPENDIDO");
-      setMotivo("");
-      setErrorModal("");
-      setModalAbierto(true);
-    } catch (err) {
-      setError(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          "No se pudo cargar el ingreso seleccionado.",
+      document.removeEventListener(
+        "keydown",
+        cerrarConEscape
       );
-    }
-  };
-
-  const abrirVer = async (ingreso) => {
-    try {
-      const detalle = await obtenerIngresoRegistrado(ingreso.idIngreso);
-      setIngresoSeleccionado(detalle);
-      setModalModo("ver");
-      setErrorModal("");
-      setModalAbierto(true);
-    } catch (err) {
-      setError(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          "No se pudo cargar el ingreso seleccionado.",
-      );
-    }
-  };
-
-  useEffect(() => {
-    const idIngreso = location.state?.idIngreso;
-    if (!idIngreso) return undefined;
-
-    let activo = true;
-    obtenerIngresoRegistrado(idIngreso)
-      .then((detalle) => {
-        if (!activo) return;
-        setIngresoSeleccionado(detalle);
-        setModalModo("ver");
-        setErrorModal("");
-        setModalAbierto(true);
-        navigate(location.pathname, { replace: true, state: null });
-      })
-      .catch((err) => {
-        if (!activo) return;
-        setError(
-          err.response?.data?.mensaje ||
-            err.response?.data?.message ||
-            "No se pudo cargar el ingreso seleccionado.",
-        );
-        navigate(location.pathname, { replace: true, state: null });
-      });
-
-    return () => {
-      activo = false;
     };
-  }, [location.pathname, location.state?.idIngreso, navigate]);
-
-  const estadoInicial = ingresoSeleccionado
-    ? ingresoSeleccionado.estado === "SUSPENDIDO"
-      ? "REINCORPORADO"
-      : "SUSPENDIDO"
-    : "SUSPENDIDO";
-  const hayCambiosSinGuardar =
-    modalModo === "editar" &&
-    (motivo.trim().length > 0 || estadoSeleccionado !== estadoInicial);
-
-  const cerrarModal = useCallback(() => {
-    setModalAbierto(false);
-    setIngresoSeleccionado(null);
-    setMotivo("");
-    setErrorModal("");
-  }, []);
-
-  const solicitarCierre = useCallback(() => {
-    if (guardando) return;
-    if (
-      hayCambiosSinGuardar &&
-      !window.confirm("Tienes cambios sin guardar. ¿Deseas descartarlos?")
-    ) {
-      return;
-    }
-    cerrarModal();
-  }, [guardando, hayCambiosSinGuardar, cerrarModal]);
-
-  useEffect(() => {
-    if (!modalAbierto) return undefined;
-    const cerrarConEscape = (e) => {
-      if (e.key === "Escape") solicitarCierre();
-    };
-    document.addEventListener("keydown", cerrarConEscape);
-    return () => document.removeEventListener("keydown", cerrarConEscape);
-  }, [modalAbierto, solicitarCierre]);
-
-  const guardarEdicion = async () => {
-    if (!ingresoSeleccionado) return;
-    if (motivo.trim().length === 0) {
-      setErrorModal("Debe ingresar el motivo.");
-      return;
-    }
-    if (motivo.trim().length > 200) {
-      setErrorModal("El motivo no debe exceder 200 caracteres.");
-      return;
-    }
-
-    setGuardando(true);
-    setErrorModal("");
-    try {
-      await actualizarIngresoRegistrado(ingresoSeleccionado.idIngreso, {
-        estado: estadoSeleccionado,
-        motivo: motivo.trim(),
-      });
-      await cargar();
-      cerrarModal();
-    } catch (err) {
-      setErrorModal(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          "No se pudo actualizar el ingreso.",
-      );
-    } finally {
-      setGuardando(false);
-    }
-  };
+  }, [ingresoSeleccionado, cerrarModal]);
 
   return (
     <main className="ingresos-registrados-pagina">
       <header className="ingresos-registrados-encabezado">
         <h1>Ingresos registrados</h1>
-        <p>Consulte la fecha y hora de los ingresos autorizados de los estudiantes.</p>
+
+        <p>
+          Consulte la fecha y hora de los ingresos
+          autorizados de los estudiantes.
+        </p>
       </header>
 
       <section className="ingresos-registrados-contenedor">
+
+        {/* FILTROS */}
         <div className="ingresos-registrados-filtros">
+
+          {/* BUSCADOR */}
           <div className="ingresos-registrados-buscador">
             <FiSearch className="ingresos-registrados-buscador-icono" />
+
             <input
               type="text"
               placeholder="Buscar estudiante por código o nombre..."
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(event) => setQ(event.target.value)}
+              maxLength={100}
+              aria-label="Buscar estudiante por código o nombre"
             />
           </div>
 
+          {/* FILTRO POR EXAMEN */}
           <div className="ingresos-registrados-campo">
-            <label>Examen</label>
-            <select value={idExamen} onChange={(e) => setIdExamen(e.target.value)} style={{ direction: "ltr" }}>
+            <label htmlFor="filtro-examen-ingreso">
+              Examen
+            </label>
+
+            <select
+              id="filtro-examen-ingreso"
+              value={idExamen}
+              onChange={(event) =>
+                setIdExamen(event.target.value)
+              }
+            >
               <option value="">Todos</option>
+
               {examenes.map((examen) => (
-                <option key={examen.idExamen} value={examen.idExamen} style={{ direction: "ltr" }}>
+                <option
+                  key={examen.idExamen}
+                  value={examen.idExamen}
+                >
                   {examen.codigo && examen.nombreExamen
                     ? `${examen.codigo} - ${examen.nombreExamen}`
                     : examen.nombreExamen || examen.codigo}
@@ -311,38 +340,71 @@ function IngresosRegistrados() {
             </select>
           </div>
 
+          {/* FILTRO POR FECHA */}
           <div className="ingresos-registrados-campo">
-            <label>Fecha</label>
+            <label htmlFor="filtro-fecha-ingreso">
+              Fecha
+            </label>
+
             <div className="ingresos-registrados-fecha-wrapper">
               <FiCalendar className="ingresos-registrados-fecha-icono" />
+
               <input
+                id="filtro-fecha-ingreso"
                 type="date"
                 value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                placeholder="Seleccionar fecha"
+                onChange={(event) =>
+                  setFecha(event.target.value)
+                }
               />
             </div>
           </div>
 
-          <button type="button" className="ingresos-registrados-boton-filtrar" onClick={cargar}>
+          {/* BOTON FILTRAR */}
+          <button
+            type="button"
+            className="ingresos-registrados-boton-filtrar"
+            onClick={aplicarFiltros}
+            disabled={cargando}
+          >
             <FiFilter />
-            <span>Filtrar</span>
+
+            <span>
+              {cargando ? "Filtrando..." : "Filtrar"}
+            </span>
           </button>
         </div>
 
-        <div className="ingresos-registrados-mensaje">
+        {/* MENSAJE DE RESULTADOS */}
+        <div
+          className={`ingresos-registrados-mensaje ${
+            error
+              ? "ingresos-registrados-mensaje-error"
+              : ""
+          }`}
+          role={error ? "alert" : "status"}
+          aria-live="polite"
+        >
           <div className="ingresos-registrados-mensaje-icono">
             <FiFileText />
           </div>
+
           <span>
             {cargando
               ? "Cargando ingresos registrados..."
               : error
                 ? error
-                : `Se encontraron ${total} ingreso${total === 1 ? "" : "s"} registrado${total === 1 ? "" : "s"}.`}
+                : total === 0
+                  ? "No se encontraron ingresos registrados."
+                  : `Se encontraron ${total} ingreso${
+                      total === 1 ? "" : "s"
+                    } registrado${
+                      total === 1 ? "" : "s"
+                    }.`}
           </span>
         </div>
 
+        {/* TABLA */}
         <div className="ingresos-registrados-tabla-contenedor">
           <table className="ingresos-registrados-tabla">
             <thead>
@@ -358,35 +420,94 @@ function IngresosRegistrados() {
                 <th>Acciones</th>
               </tr>
             </thead>
+
             <tbody>
-              {datosPagina.map((ingreso, index) => (
-                <tr key={ingreso.idIngreso || index}>
-                  <td>{formatearId(ingreso.idIngreso)}</td>
-                  <td>{ingreso.codigoUniversitario || "-"}</td>
-                  <td className="ingresos-registrados-estudiante">{ingreso.nombreEstudiante || "-"}</td>
-                  <td>{ingreso.nombreExamen || "-"}</td>
-                  <td>{ingreso.ambiente || "-"}</td>
-                  <td>{formatearFecha(ingreso.fechaHoraIngreso)}</td>
-                  <td>{formatearHora(ingreso.fechaHoraIngreso)}</td>
-                  <td>
-                    <span className={`ingresos-registrados-estado ${ingreso.estado === "SUSPENDIDO" ? "ingresos-registrados-estado-suspendido" : ""}`}>{ingreso.estado || "REGISTRADO"}</span>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      <button type="button" className="ingresos-registrados-boton-ver" title="Ver" onClick={() => abrirVer(ingreso)}>
+              {!cargando &&
+                datosPagina.map((ingreso) => (
+                  <tr key={ingreso.idIngreso}>
+                    <td>
+                      {formatearId(ingreso.idIngreso)}
+                    </td>
+
+                    <td>
+                      {ingreso.codigoUniversitario || "-"}
+                    </td>
+
+                    <td className="ingresos-registrados-estudiante">
+                      {ingreso.nombreEstudiante || "-"}
+                    </td>
+
+                    <td>
+                      {ingreso.nombreExamen || "-"}
+                    </td>
+
+                    <td>
+                      {ingreso.ambiente || "-"}
+                    </td>
+
+                    <td>
+                      {formatearFecha(
+                        ingreso.fechaHoraIngreso
+                      )}
+                    </td>
+
+                    <td>
+                      {formatearHora(
+                        ingreso.fechaHoraIngreso
+                      )}
+                    </td>
+
+                    <td>
+                      <span
+                        className={`ingresos-registrados-estado ${
+                          ingreso.estado === "SUSPENDIDO"
+                            ? "ingresos-registrados-estado-suspendido"
+                            : ""
+                        }`}
+                      >
+                        {ingreso.estado || "REGISTRADO"}
+                      </span>
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="ingresos-registrados-boton-ver"
+                        title="Ver detalle"
+                        aria-label={`Ver ingreso de ${
+                          ingreso.nombreEstudiante || "estudiante"
+                        }`}
+                        onClick={() =>
+                          abrirDetalle(ingreso.idIngreso)
+                        }
+                        disabled={cargandoDetalle}
+                      >
                         <FiEye />
                       </button>
-                      <button type="button" className="ingresos-registrados-boton-ver" title="Editar" onClick={() => abrirEditar(ingreso)}>
-                        <FiEdit />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))}
+
               {!cargando && datosPagina.length === 0 && (
                 <tr>
-                  <td colSpan="9" className="ingresos-registrados-sin-resultados">
-                    No hay ingresos registrados para los filtros seleccionados.
+                  <td
+                    colSpan={9}
+                    className="ingresos-registrados-sin-resultados"
+                  >
+                    {error
+                      ? "No se pudo obtener la información."
+                      : "No hay ingresos registrados para los filtros seleccionados."}
+                  </td>
+                </tr>
+              )}
+
+              {cargando && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="ingresos-registrados-sin-resultados"
+                  >
+                    Cargando registros...
                   </td>
                 </tr>
               )}
@@ -394,157 +515,202 @@ function IngresosRegistrados() {
           </table>
         </div>
 
+        {/* PAGINACION */}
         <div className="ingresos-registrados-paginacion">
           <div className="ingresos-registrados-paginacion-info">
-            Mostrando {datosPagina.length === 0 ? 0 : inicio + 1} - {Math.min(inicio + porPagina, total)} de {total} ingresos registrados
+            Mostrando{" "}
+            {total === 0 ? 0 : inicio + 1}
+            {" - "}
+            {Math.min(inicio + porPagina, total)}
+            {" de "}
+            {total} ingresos registrados
           </div>
+
           <div className="ingresos-registrados-paginacion-controles">
             <button
               type="button"
               className="ingresos-registrados-paginacion-boton"
-              onClick={() => cambiarPagina(paginaActual - 1)}
-              disabled={paginaActual === 1}
+              onClick={() =>
+                cambiarPagina(paginaActual - 1)
+              }
+              disabled={
+                cargando || paginaActual === 1
+              }
+              aria-label="Página anterior"
             >
               ‹
             </button>
-            {paginas.map((num) => (
+
+            {paginas.map((numero) => (
               <button
-                key={num}
+                key={numero}
                 type="button"
-                className={`ingresos-registrados-paginacion-boton ${num === paginaActual ? "activa" : ""}`}
-                onClick={() => cambiarPagina(num)}
+                className={`ingresos-registrados-paginacion-boton ${
+                  numero === paginaActual
+                    ? "activa"
+                    : ""
+                }`}
+                onClick={() => cambiarPagina(numero)}
+                disabled={cargando}
+                aria-label={`Página ${numero}`}
+                aria-current={
+                  numero === paginaActual
+                    ? "page"
+                    : undefined
+                }
               >
-                {num}
+                {numero}
               </button>
             ))}
-                <button
-                  type="button"
-                  className="ingresos-registrados-paginacion-boton"
-                  onClick={() => cambiarPagina(paginaActual + 1)}
-                  disabled={paginaActual === totalPaginas}
-                >
-                  ›
-                </button>
-              </div>
-            </div>
-          </section>
 
-          {modalAbierto && (
-            <div
-              className="ingresos-registrados-modal-overlay"
-              onMouseDown={(e) => {
-                if (e.target === e.currentTarget) solicitarCierre();
-              }}
+            <button
+              type="button"
+              className="ingresos-registrados-paginacion-boton"
+              onClick={() =>
+                cambiarPagina(paginaActual + 1)
+              }
+              disabled={
+                cargando ||
+                paginaActual === totalPaginas
+              }
+              aria-label="Página siguiente"
             >
-              <div className="ingresos-registrados-modal">
-                <div className="ingresos-registrados-modal-header">
-                  <h2>{modalModo === "ver" ? "Detalle de ingreso" : "Actualizar ingreso"}</h2>
-                  <button
-                    type="button"
-                    onClick={solicitarCierre}
-                    className="ingresos-registrados-modal-close"
-                    disabled={guardando}
-                  >
-                    <FiX />
-                  </button>
-                </div>
-                <div className="ingresos-registrados-modal-body">
-                  {ingresoSeleccionado && (
-                    <>
-                      <div className="ingresos-registrados-modal-grid">
-                        <div>
-                          <label>ID</label>
-                          <p>{formatearId(ingresoSeleccionado.idIngreso)}</p>
-                        </div>
-                        <div>
-                          <label>Código</label>
-                          <p>{ingresoSeleccionado.codigoUniversitario || "-"}</p>
-                        </div>
-                        <div>
-                          <label>Estudiante</label>
-                          <p>{ingresoSeleccionado.nombreEstudiante || "-"}</p>
-                        </div>
-                        <div>
-                          <label>Examen</label>
-                          <p>{ingresoSeleccionado.nombreExamen || "-"}</p>
-                        </div>
-                        <div>
-                          <label>Ambiente</label>
-                          <p>{ingresoSeleccionado.ambiente || "-"}</p>
-                        </div>
-                        <div>
-                          <label>Fecha de ingreso</label>
-                          <p>{formatearFecha(ingresoSeleccionado.fechaHoraIngreso)}</p>
-                        </div>
-                        <div>
-                          <label>Hora de ingreso</label>
-                          <p>{formatearHora(ingresoSeleccionado.fechaHoraIngreso)}</p>
-                        </div>
-                        <div>
-                          <label>Fecha/Hora de salida</label>
-                          <p>{ingresoSeleccionado.fechaHoraSalida ? `${formatearFecha(ingresoSeleccionado.fechaHoraSalida)} ${formatearHora(ingresoSeleccionado.fechaHoraSalida)}` : "-"}</p>
-                        </div>
-                        <div>
-                          <label>Estado</label>
-                          <p>{ingresoSeleccionado.estado || "REGISTRADO"}</p>
-                        </div>
-                        <div>
-                          <label>Motivo de suspensión</label>
-                          <p>{ingresoSeleccionado.motivoSuspension || "-"}</p>
-                        </div>
-                        <div>
-                          <label>Motivo de reincorporación</label>
-                          <p>{ingresoSeleccionado.motivoReincorporacion || "-"}</p>
-                        </div>
-                      </div>
+              ›
+            </button>
+          </div>
+        </div>
+      </section>
 
-                      {modalModo === "editar" && (
-                        <div className="ingresos-registrados-modal-form">
-                          <div className="ingresos-registrados-campo">
-                            <label>Acción</label>
-                            <select value={estadoSeleccionado} onChange={(e) => setEstadoSeleccionado(e.target.value)}>
-                              {ingresoSeleccionado.estado === "SUSPENDIDO" ? (
-                                <option value="REINCORPORADO">Reincorporado</option>
-                              ) : (
-                                <option value="SUSPENDIDO">Suspendido</option>
-                              )}
-                            </select>
-                          </div>
-                          <div className="ingresos-registrados-campo" style={{ flex: 1 }}>
-                            <label>
-                              {estadoSeleccionado === "SUSPENDIDO" ? "Motivo de suspensión (máx. 200)" : "Motivo de reincorporación (máx. 200)"}
-                            </label>
-                            <textarea
-                              value={motivo}
-                              onChange={(e) => {
-                                setMotivo(e.target.value);
-                                if (errorModal) setErrorModal("");
-                              }}
-                              maxLength={200}
-                              rows={3}
-                              placeholder="Ingrese el motivo..."
-                            />
-                            <small>{motivo.length}/200</small>
-                          </div>
-                          {errorModal && <div className="ingresos-registrados-modal-error">{errorModal}</div>}
-                          <div className="ingresos-registrados-modal-actions">
-                            <button type="button" className="ingresos-registrados-boton-ver" style={{ width: "auto", padding: "0 16px" }} onClick={solicitarCierre}>
-                              Cancelar
-                            </button>
-                            <button type="button" className="ingresos-registrados-boton-filtrar" style={{ marginLeft: 0 }} onClick={guardarEdicion} disabled={guardando}>
-                              {guardando ? "Guardando..." : "Guardar"}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
+      {/* MODAL DE CONSULTA */}
+      {ingresoSeleccionado && (
+        <div
+          className="ingresos-registrados-modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              cerrarModal();
+            }
+          }}
+        >
+          <div
+            className="ingresos-registrados-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="detalle-ingreso-titulo"
+          >
+            <div className="ingresos-registrados-modal-header">
+              <h2 id="detalle-ingreso-titulo">
+                Detalle de ingreso
+              </h2>
+
+              <button
+                type="button"
+                onClick={cerrarModal}
+                className="ingresos-registrados-modal-close"
+                aria-label="Cerrar detalle"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="ingresos-registrados-modal-body">
+              <div className="ingresos-registrados-modal-grid">
+
+                <div>
+                  <label>ID</label>
+                  <p>
+                    {formatearId(
+                      ingresoSeleccionado.idIngreso
+                    )}
+                  </p>
                 </div>
+
+                <div>
+                  <label>Código</label>
+                  <p>
+                    {ingresoSeleccionado.codigoUniversitario || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Estudiante</label>
+                  <p>
+                    {ingresoSeleccionado.nombreEstudiante || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Examen</label>
+                  <p>
+                    {ingresoSeleccionado.nombreExamen || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Ambiente</label>
+                  <p>
+                    {ingresoSeleccionado.ambiente || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Fecha de ingreso</label>
+                  <p>
+                    {formatearFecha(
+                      ingresoSeleccionado.fechaHoraIngreso
+                    )}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Hora de ingreso</label>
+                  <p>
+                    {formatearHora(
+                      ingresoSeleccionado.fechaHoraIngreso
+                    )}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Fecha/Hora de salida</label>
+                  <p>
+                    {ingresoSeleccionado.fechaHoraSalida
+                      ? `${formatearFecha(
+                          ingresoSeleccionado.fechaHoraSalida
+                        )} ${formatearHora(
+                          ingresoSeleccionado.fechaHoraSalida
+                        )}`
+                      : "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Estado</label>
+                  <p>
+                    {ingresoSeleccionado.estado || "REGISTRADO"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Motivo de suspensión</label>
+                  <p>
+                    {ingresoSeleccionado.motivoSuspension || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <label>Motivo de reincorporación</label>
+                  <p>
+                    {ingresoSeleccionado.motivoReincorporacion || "-"}
+                  </p>
+                </div>
+
               </div>
             </div>
-          )}
-        </main>
-      );
-    }
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
 
-    export default IngresosRegistrados;
+export default IngresosRegistrados;
