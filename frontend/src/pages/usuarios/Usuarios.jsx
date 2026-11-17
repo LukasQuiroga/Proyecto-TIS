@@ -43,14 +43,13 @@ function Usuarios() {
   const [error, setError] = useState("");
 
   const cargarUsuarios = useCallback(async () => {
-    setCargando(true);
-    setError("");
     try {
       const respuesta = await obtenerUsuariosPaginado(pagina, TAMANO_PAGINA, filtrosAplicados);
       const data = respuesta.data;
       setUsuarios(Array.isArray(data.content) ? data.content : []);
       setTotalPaginas(data.totalPages || 0);
       setTotalElementos(data.totalElements || 0);
+      setError("");
     } catch (err) {
       setUsuarios([]);
       setTotalPaginas(0);
@@ -75,11 +74,13 @@ function Usuarios() {
 
   const buscar = (event) => {
     event.preventDefault();
+    setCargando(true);
     setPagina(0);
     setFiltrosAplicados({ ...filtros });
   };
 
   const limpiar = () => {
+    setCargando(true);
     setFiltros(FILTROS_VACIOS);
     setPagina(0);
     setFiltrosAplicados({ ...FILTROS_VACIOS });
@@ -124,7 +125,7 @@ function Usuarios() {
         </div>
       </form>
 
-      {error && <div className="usuarios-error" role="alert">{error} <button type="button" onClick={() => void cargarUsuarios()}>Reintentar</button></div>}
+      {error && <div className="usuarios-error" role="alert">{error} <button type="button" onClick={() => { setCargando(true); void cargarUsuarios(); }}>Reintentar</button></div>}
 
       <section className="usuarios-panel" aria-busy={cargando}>
         <table className="usuarios-tabla">
@@ -156,9 +157,9 @@ function Usuarios() {
         <div className="usuarios-pie">
           <span>Mostrando {totalElementos === 0 ? 0 : pagina * TAMANO_PAGINA + 1}–{Math.min((pagina + 1) * TAMANO_PAGINA, totalElementos)} de {totalElementos} usuarios</span>
           <div className="usuarios-paginacion">
-            <button type="button" onClick={() => setPagina((actual) => Math.max(0, actual - 1))} disabled={cargando || pagina === 0}>Anterior</button>
+            <button type="button" onClick={() => { setCargando(true); setPagina((actual) => Math.max(0, actual - 1)); }} disabled={cargando || pagina === 0}>Anterior</button>
             <span>{totalPaginas === 0 ? 0 : pagina + 1} / {totalPaginas}</span>
-            <button type="button" onClick={() => setPagina((actual) => Math.min(totalPaginas - 1, actual + 1))} disabled={cargando || pagina + 1 >= totalPaginas}>Siguiente</button>
+            <button type="button" onClick={() => { setCargando(true); setPagina((actual) => Math.min(totalPaginas - 1, actual + 1)); }} disabled={cargando || pagina + 1 >= totalPaginas}>Siguiente</button>
           </div>
         </div>
       </section>
