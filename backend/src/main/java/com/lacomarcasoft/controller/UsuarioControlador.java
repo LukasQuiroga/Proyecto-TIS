@@ -65,14 +65,18 @@ public class UsuarioControlador {
     }
 
     @GetMapping("/paginado")
-        public ResponseEntity<Page<UsuarioRespuesta>> listarUsuariosPaginado(
-                @PageableDefault(size = 7)
-                Pageable pageable
-        ){
-                return ResponseEntity.ok(
-                        usuarioServicio.listarPaginado(pageable)
-        );
-
+    public ResponseEntity<Page<UsuarioRespuesta>> listarUsuariosPaginado(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String apellido,
+            @RequestParam(required = false) String ci,
+            @RequestParam(required = false) String correo,
+            @RequestParam(required = false) String rol,
+            @RequestParam(required = false) String estado,
+            @PageableDefault(size = 10, sort = {"apellido", "nombre"}) Pageable pageable
+    ) {
+        return ResponseEntity.ok(usuarioServicio.buscarPaginado(
+                nombre, apellido, ci, correo, rol, estado, pageable
+        ));
     }
 
     @PostMapping

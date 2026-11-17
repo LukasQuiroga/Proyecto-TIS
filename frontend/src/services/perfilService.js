@@ -10,6 +10,11 @@ export const actualizarTelefonoPerfil = async (celular) => {
   return data;
 };
 
+export const actualizarDocumentoPerfil = async (carnetIdentidad) => {
+  const { data } = await api.patch("/perfil/me/documento", { carnetIdentidad });
+  return data;
+};
+
 export const cambiarContrasenaPerfil = async (datos) => {
   const { data } = await api.put("/perfil/me/contrasena", datos);
   return data;

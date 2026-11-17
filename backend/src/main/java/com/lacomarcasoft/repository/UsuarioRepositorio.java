@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +26,26 @@ public interface UsuarioRepositorio
     Optional<Usuario> findByCarnetIdentidad(
         String carnetIdentidad
    );
+
+    @Query("""
+        SELECT u FROM Usuario u
+        WHERE (:nombre IS NULL OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
+          AND (:apellido IS NULL OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :apellido, '%')))
+          AND (:ci IS NULL OR u.carnetIdentidad LIKE CONCAT('%', :ci, '%'))
+          AND (:correo IS NULL OR LOWER(u.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
+          AND (:rol IS NULL OR UPPER(u.rol.nombreRol) = UPPER(:rol))
+          AND (:activo IS NULL OR u.activo = :activo)
+        ORDER BY u.apellido ASC, u.nombre ASC, u.idUsuario ASC
+        """)
+    Page<Usuario> buscarPaginado(
+        @Param("nombre") String nombre,
+        @Param("apellido") String apellido,
+        @Param("ci") String ci,
+        @Param("correo") String correo,
+        @Param("rol") String rol,
+        @Param("activo") Boolean activo,
+        Pageable pageable
+    );
 
 Optional<Usuario> findByCodigoSis(
         String codigoSis

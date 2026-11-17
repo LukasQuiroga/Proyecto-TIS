@@ -1,6 +1,7 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.ActualizarTelefonoPerfilSolicitud;
+import com.lacomarcasoft.dto.request.ActualizarDocumentoPerfilSolicitud;
 import com.lacomarcasoft.dto.request.CambiarContrasenaPerfilSolicitud;
 import com.lacomarcasoft.dto.response.PerfilRespuesta;
 import com.lacomarcasoft.modelo.Usuario;
@@ -66,6 +67,41 @@ public class PerfilServicio {
                 idUsuario,
                 "ACTUALIZAR_TELEFONO_PERFIL",
                 "El usuario actualizo su telefono de contacto",
+                null,
+                true
+            );
+        }
+
+        return consultar(idUsuario);
+    }
+
+    @Transactional
+    public PerfilRespuesta actualizarDocumento(
+            Long idUsuario,
+            ActualizarDocumentoPerfilSolicitud solicitud
+    ) {
+        Usuario usuario = obtenerUsuario(idUsuario);
+        String documento = solicitud.carnetIdentidad();
+        documento = documento == null || documento.isBlank() ? null : documento.trim();
+
+        if (documento != null && !documento.equals(usuario.getCarnetIdentidad())) {
+            usuarios.findByCarnetIdentidad(documento).ifPresent(otro -> {
+                if (!otro.getIdUsuario().equals(idUsuario)) {
+                    throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Ese documento de identidad ya está registrado en otra cuenta."
+                    );
+                }
+            });
+        }
+
+        if (!java.util.Objects.equals(documento, usuario.getCarnetIdentidad())) {
+            usuario.setCarnetIdentidad(documento);
+            usuarios.saveAndFlush(usuario);
+            auditoria.registrar(
+                idUsuario,
+                "ACTUALIZAR_DOCUMENTO_PERFIL",
+                "El usuario actualizó su documento de identidad",
                 null,
                 true
             );

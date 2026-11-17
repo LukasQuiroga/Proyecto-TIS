@@ -16,6 +16,7 @@ import {
 } from "../../services/examenService";
 import DetalleExamen from "./DetalleExamen.jsx";
 import {
+  formatearFechaExamen,
   formatearTipoEvaluacion,
   obtenerEstadoConfiguracion,
   obtenerEstadoExamen,
@@ -45,6 +46,7 @@ function Examenes() {
 
   const [buscar, setBuscar] = useState("");
   const [estado, setEstado] = useState("");
+  const [ordenFecha, setOrdenFecha] = useState("ASC");
   const [pagina, setPagina] = useState(1);
 
   const [examenDetalle, setExamenDetalle] = useState(null);
@@ -111,8 +113,21 @@ function Examenes() {
         !estado || obtenerEstadoExamen(examen.estado).clave === estado;
 
       return coincideBusqueda && coincideEstado;
+    }).sort((a, b) => {
+      if (!a.fechaExamen && b.fechaExamen) return 1;
+      if (a.fechaExamen && !b.fechaExamen) return -1;
+      if (!a.fechaExamen && !b.fechaExamen) {
+        return Number(b.idExamen ?? b.id ?? 0) - Number(a.idExamen ?? a.id ?? 0);
+      }
+      const fechaA = a.fechaExamen;
+      const fechaB = b.fechaExamen;
+      const horarioA = `${fechaA}T${a.horaInicio || "23:59:59"}`;
+      const horarioB = `${fechaB}T${b.horaInicio || "23:59:59"}`;
+      const comparacion = horarioA.localeCompare(horarioB) ||
+        Number(b.idExamen ?? b.id ?? 0) - Number(a.idExamen ?? a.id ?? 0);
+      return ordenFecha === "ASC" ? comparacion : -comparacion;
     });
-  }, [examenes, buscar, estado]);
+  }, [examenes, buscar, estado, ordenFecha]);
 
   const totalPaginas = Math.max(
     1,
@@ -179,6 +194,18 @@ function Examenes() {
             </option>
           ))}
         </select>
+
+        <select
+          aria-label="Ordenar exámenes por fecha"
+          value={ordenFecha}
+          onChange={(e) => {
+            setOrdenFecha(e.target.value);
+            setPagina(1);
+          }}
+        >
+          <option value="ASC">Fecha: más cercana a más lejana</option>
+          <option value="DESC">Fecha: más lejana a más cercana</option>
+        </select>
       </section>
 
       {error && (
@@ -198,6 +225,7 @@ function Examenes() {
                 <th>Asignatura</th>
                 <th>Tipo</th>
                 <th>Gestión</th>
+                <th>Fecha del examen</th>
                 <th>Estado</th>
                 <th>Configuración</th>
                 <th>Habilitaciones</th>
@@ -209,13 +237,13 @@ function Examenes() {
             <tbody>
               {cargando ? (
                 <tr>
-                  <td colSpan={11} className="examenes-mensaje-tabla">
+                  <td colSpan={12} className="examenes-mensaje-tabla">
                     Cargando exámenes...
                   </td>
                 </tr>
               ) : examenesPagina.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="examenes-mensaje-tabla">
+                  <td colSpan={12} className="examenes-mensaje-tabla">
                     <FiClipboard size={26} />
 
                     <span>
@@ -259,6 +287,8 @@ function Examenes() {
                       <td>{formatearTipoEvaluacion(examen.tipoEvaluacion)}</td>
 
                       <td>{examen.gestion || "—"}</td>
+
+                      <td>{formatearFechaExamen(examen.fechaExamen)}</td>
 
                       <td>
                         <span

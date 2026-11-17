@@ -10,7 +10,7 @@ import {
   FiUsers
 } from 'react-icons/fi'
 import {
-  consultarReporteAusentes,
+  generarReporteAusentes,
   listarExamenesParaReporte
 } from '../../services/reporteAsistenciaService'
 import './ReporteAusentes.css'
@@ -125,7 +125,7 @@ export default function ReporteAusentes() {
     setGenerandoId(idExamen)
     setError('')
     try {
-      const data = await consultarReporteAusentes(idExamen)
+      const data = await generarReporteAusentes(idExamen)
       setReporte(data)
       setBusquedaAusente('')
       setPaso('confirmacion')

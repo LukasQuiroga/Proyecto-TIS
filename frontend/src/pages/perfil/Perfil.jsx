@@ -34,8 +34,12 @@ function Perfil() {
           try {
             const imagen = await obtenerFotoPerfil();
             if (!activo) return;
-            url = URL.createObjectURL(imagen);
-            setFoto(url);
+            if (imagen.size > 0) {
+              url = URL.createObjectURL(imagen);
+              setFoto(url);
+            } else {
+              setFoto("");
+            }
           } catch {
             if (activo) setFoto("");
           }
