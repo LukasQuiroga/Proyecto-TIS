@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { obtenerUsuariosPaginado } from "../../services/usuarioService";
 import "./Usuarios.css";
@@ -41,32 +41,41 @@ function Usuarios() {
   const [totalElementos, setTotalElementos] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-
-  const cargarUsuarios = useCallback(async () => {
-    try {
-      const respuesta = await obtenerUsuariosPaginado(pagina, TAMANO_PAGINA, filtrosAplicados);
-      const data = respuesta.data;
-      setUsuarios(Array.isArray(data.content) ? data.content : []);
-      setTotalPaginas(data.totalPages || 0);
-      setTotalElementos(data.totalElements || 0);
-      setError("");
-    } catch (err) {
-      setUsuarios([]);
-      setTotalPaginas(0);
-      setTotalElementos(0);
-      setError(
-        err.response?.data?.mensaje ||
-          err.response?.data?.message ||
-          "No se pudieron cargar los usuarios. Intenta nuevamente.",
-      );
-    } finally {
-      setCargando(false);
-    }
-  }, [pagina, filtrosAplicados]);
+  const [intentoCarga, setIntentoCarga] = useState(0);
 
   useEffect(() => {
-    void cargarUsuarios();
-  }, [cargarUsuarios]);
+    let activo = true;
+
+    obtenerUsuariosPaginado(pagina, TAMANO_PAGINA, filtrosAplicados)
+      .then((respuesta) => {
+        if (!activo) return;
+
+        const data = respuesta.data;
+        setUsuarios(Array.isArray(data.content) ? data.content : []);
+        setTotalPaginas(data.totalPages || 0);
+        setTotalElementos(data.totalElements || 0);
+        setError("");
+      })
+      .catch((err) => {
+        if (!activo) return;
+
+        setUsuarios([]);
+        setTotalPaginas(0);
+        setTotalElementos(0);
+        setError(
+          err.response?.data?.mensaje ||
+            err.response?.data?.message ||
+            "No se pudieron cargar los usuarios. Intenta nuevamente.",
+        );
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [pagina, filtrosAplicados, intentoCarga]);
 
   const actualizarFiltro = (campo, valor) => {
     setFiltros((actuales) => ({ ...actuales, [campo]: valor }));
@@ -125,7 +134,7 @@ function Usuarios() {
         </div>
       </form>
 
-      {error && <div className="usuarios-error" role="alert">{error} <button type="button" onClick={() => { setCargando(true); void cargarUsuarios(); }}>Reintentar</button></div>}
+      {error && <div className="usuarios-error" role="alert">{error} <button type="button" onClick={() => { setCargando(true); setIntentoCarga((intento) => intento + 1); }}>Reintentar</button></div>}
 
       <section className="usuarios-panel" aria-busy={cargando}>
         <table className="usuarios-tabla">
