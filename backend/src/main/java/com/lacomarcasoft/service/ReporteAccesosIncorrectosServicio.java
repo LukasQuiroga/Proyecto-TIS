@@ -333,7 +333,9 @@ public class ReporteAccesosIncorrectosServicio {
         return examenes.get(0);
     }
 
-    private List<ReporteAccesosIncorrectosDetalleRespuesta> consultarIntentos(Long idExamen) {
+    
+    private List<ReporteAccesosIncorrectosDetalleRespuesta>
+            consultarIntentos(Long idExamen) {
 
         return jdbc.query("""
                 SELECT
@@ -347,7 +349,16 @@ public class ReporteAccesosIncorrectosServicio {
                             COALESCE(u.apellido, '')
                         )
                     ) AS nombre_completo,
-                    u.carrera,
+                    (
+                        SELECT STRING_AGG(
+                            DISTINCT c.nombre,
+                            ', ' ORDER BY c.nombre
+                        )
+                        FROM academico.usuario_carrera uc
+                        JOIN academico.carrera c
+                            ON c.id_carrera = uc.id_carrera
+                        WHERE uc.id_usuario = i.id_estudiante
+                    ) AS carrera,
                     i.identificador_intentado,
                     i.metodo_identificacion,
                     i.motivo_rechazo,
@@ -360,21 +371,26 @@ public class ReporteAccesosIncorrectosServicio {
                     i.fecha_hora DESC,
                     i.id_intento DESC
                 """,
-                (rs, fila) -> new ReporteAccesosIncorrectosDetalleRespuesta(
-                        rs.getLong("id_intento"),
-                        rs.getObject(
-                                "id_estudiante",
-                                Long.class),
-                        rs.getString("codigo_sis"),
-                        rs.getString("nombre_completo"),
-                        rs.getString("carrera"),
-                        rs.getString("identificador_intentado"),
-                        rs.getString("metodo_identificacion"),
-                        rs.getString("motivo_rechazo"),
-                        rs.getObject(
-                                "fecha_hora",
-                                OffsetDateTime.class)),
-                idExamen);
+                (rs, fila) ->
+                        new ReporteAccesosIncorrectosDetalleRespuesta(
+                                rs.getLong("id_intento"),
+                                rs.getObject(
+                                        "id_estudiante",
+                                        Long.class
+                                ),
+                                rs.getString("codigo_sis"),
+                                rs.getString("nombre_completo"),
+                                rs.getString("carrera"),
+                                rs.getString("identificador_intentado"),
+                                rs.getString("metodo_identificacion"),
+                                rs.getString("motivo_rechazo"),
+                                rs.getObject(
+                                        "fecha_hora",
+                                        OffsetDateTime.class
+                                )
+                        ),
+                idExamen
+        );
     }
 
     private int contarIngresosAutorizados(Long idExamen) {
