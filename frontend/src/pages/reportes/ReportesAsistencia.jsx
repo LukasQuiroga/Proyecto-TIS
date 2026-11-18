@@ -21,10 +21,18 @@ import {
 } from '../../services/reporteAsistenciaService'
 import {
   descargarReporteHorarios,
+  descargarReporteHorariosExcel,
   generarReporteHorarios,
   listarHistorialReportesHorarios,
   obtenerReporteHorarios
 } from '../../services/reporteHorariosService'
+import {
+  descargarReporteAccesosIncorrectos,
+  descargarReporteAccesosIncorrectosExcel,
+  generarReporteAccesosIncorrectos,
+  listarHistorialReportesAccesosIncorrectos,
+  obtenerReporteAccesosIncorrectos
+} from '../../services/reporteAccesosIncorrectosService'
 import './ReportesAsistencia.css'
 import ReporteAusentes from './ReporteAusentes.jsx'
 
@@ -133,6 +141,9 @@ export default function ReportesAsistencia() {
   const [tipoReporteVisualizado, setTipoReporteVisualizado] = useState('ASISTENCIA')
   const [tipoHistorial, setTipoHistorial] = useState('TODOS')
   const [abriendoReporte, setAbriendoReporte] = useState(false)
+  const [busquedaIntentos, setBusquedaIntentos] = useState('')
+  const [paginaIntentos, setPaginaIntentos] = useState(1)
+  const [descargandoExcel, setDescargandoExcel] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -170,13 +181,14 @@ export default function ReportesAsistencia() {
   useEffect(() => {
     if (pestana !== 'historial') return undefined
     let vigente = true
-
     async function cargar() {
       try {
-        const [reportesAsistencia, reportesHorarios, reportesAusentes] = await Promise.all([
+        const [reportesAsistencia, reportesHorarios, reportesAusentes, reportesAccesosIncorrectos
+        ] = await Promise.all([
           listarHistorialReportes(solicitudHistorial.buscar),
           listarHistorialReportesHorarios(solicitudHistorial.buscar),
-          listarHistorialAusentes(solicitudHistorial.buscar)
+          listarHistorialAusentes(solicitudHistorial.buscar),
+          listarHistorialReportesAccesosIncorrectos(solicitudHistorial.buscar)
         ])
 
         if (!vigente) return
@@ -202,7 +214,17 @@ export default function ReportesAsistencia() {
           : []
         ).map((item) => ({ ...item, tipoReporte: 'AUSENTES' }))
 
-        const todos = [...asistencia, ...horarios, ...ausentes].sort((a, b) => {
+        const accesosIncorrectos = (
+          Array.isArray(reportesAccesosIncorrectos)
+            ? reportesAccesosIncorrectos
+            : []
+        ).map((item) => ({
+          ...item,
+          tipoReporte: 'ACCESOS_INCORRECTOS'
+        }))
+
+        const todos = [...asistencia, ...horarios, ...ausentes, ...accesosIncorrectos
+        ].sort((a, b) => {
           const fechaA = new Date(a.fechaGeneracion).getTime()
           const fechaB = new Date(b.fechaGeneracion).getTime()
 
@@ -253,6 +275,7 @@ export default function ReportesAsistencia() {
     setCargandoHistorial(true)
     setError('')
     setPestana('historial')
+
     setSolicitudHistorial((anterior) => ({
       buscar: busquedaHistorial,
       numero: anterior.numero + 1
@@ -266,16 +289,30 @@ export default function ReportesAsistencia() {
     setError('')
     setMensaje('')
     setReporte(null)
-
     try {
-      const data =
-        tipoSeleccionado === 'ASISTENCIA'
-          ? await generarReporteAsistencia(idExamen)
-          : await generarReporteHorarios(idExamen)
+      let data
+
+      switch (tipoSeleccionado) {
+        case 'ASISTENCIA':
+          data = await generarReporteAsistencia(idExamen)
+          break
+
+        case 'HORARIOS_INGRESO':
+          data = await generarReporteHorarios(idExamen)
+          break
+
+        case 'ACCESOS_INCORRECTOS':
+          data = await generarReporteAccesosIncorrectos(idExamen)
+          break
+
+        default:
+          throw new Error('Tipo de reporte no válido')
+      }
 
       setTipoReporteVisualizado(tipoSeleccionado)
       setReporte(data)
-
+      setBusquedaIntentos('')
+      setPaginaIntentos(1)
       setMensaje(
         `La generación del reporte de “${data.nombreExamen}” quedó registrada en el historial.`
       )
@@ -283,24 +320,28 @@ export default function ReportesAsistencia() {
       setFiltroEstudiantes('')
       setEstadoEstudiantes('TODOS')
       requestAnimationFrame(() => {
-        document
-          .getElementById('reporte-asistencia-vista-previa')
-          ?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          })
+        const idVista =
+          tipoSeleccionado === 'ACCESOS_INCORRECTOS'
+            ? 'reporte-accesos-incorrectos-vista-previa'
+            : 'reporte-asistencia-vista-previa'
+
+        document.getElementById(idVista)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
       })
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
           err.response?.data?.message ||
+          err.message ||
           'No se pudo generar el reporte.'
       )
     } finally {
       setGenerandoId(null)
     }
   }
-
+  
   const verReporte = async (item) => {
     if (abriendoReporte) return
     setAbriendoReporte(true)
@@ -309,35 +350,54 @@ export default function ReportesAsistencia() {
     setReporte(null)
 
     try {
-      const data =
-        item.tipoReporte === 'ASISTENCIA'
-          ? await obtenerReporteAsistencia(item.idReporte)
-          : item.tipoReporte === 'AUSENTES'
-            ? await obtenerReporteAusentes(item.idReporte)
-            : await obtenerReporteHorarios(item.idReporte)
+      let data
+
+      switch (item.tipoReporte) {
+        case 'ASISTENCIA':
+          data = await obtenerReporteAsistencia(item.idReporte)
+          break
+
+        case 'HORARIOS_INGRESO':
+          data = await obtenerReporteHorarios(item.idReporte)
+          break
+
+        case 'AUSENTES':
+          data = await obtenerReporteAusentes(item.idReporte)
+          data = { ...data, idReporte: item.idReporte }
+          break
+
+        case 'ACCESOS_INCORRECTOS':
+          data = await obtenerReporteAccesosIncorrectos(item.idReporte)
+          break
+
+        default:
+          throw new Error('Tipo de reporte no válido')
+      }
 
       setTipoReporteVisualizado(item.tipoReporte)
-      setReporte(
-        item.tipoReporte === 'AUSENTES'
-          ? { ...data, idReporte: item.idReporte }
-          : data
-      )
+      setReporte(data)
 
       setFiltroEstudiantes('')
       setEstadoEstudiantes('TODOS')
+      setBusquedaIntentos('')
+      setPaginaIntentos(1)
 
       requestAnimationFrame(() => {
-        document
-          .getElementById('reporte-asistencia-vista-previa')
-          ?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          })
+        const idVista =
+          item.tipoReporte === 'ACCESOS_INCORRECTOS'
+            ? 'reporte-accesos-incorrectos-vista-previa'
+            : 'reporte-asistencia-vista-previa'
+
+        document.getElementById(idVista)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
       })
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
           err.response?.data?.message ||
+          err.message ||
           'No se pudo abrir el reporte.'
       )
     } finally {
@@ -353,23 +413,81 @@ export default function ReportesAsistencia() {
       if (tipoReporteVisualizado === 'AUSENTES') {
         descargarAusentesCsv(reporte)
       } else {
-        const esAsistencia = tipoReporteVisualizado === 'ASISTENCIA'
-        const blob = esAsistencia
-          ? await descargarReporteAsistencia(reporte.idReporte)
-          : await descargarReporteHorarios(reporte.idReporte)
-        const nombreArchivo = esAsistencia
-          ? `reporte-asistencia-${reporte.idReporte}.csv`
-          : `reporte-horarios-${reporte.idReporte}.csv`
+        let blob
+        let nombreArchivo
+
+        switch (tipoReporteVisualizado) {
+          case 'ASISTENCIA':
+            blob = await descargarReporteAsistencia(reporte.idReporte)
+            nombreArchivo = `reporte-asistencia-${reporte.idReporte}.csv`
+            break
+
+          case 'HORARIOS_INGRESO':
+            blob = await descargarReporteHorarios(reporte.idReporte)
+            nombreArchivo = `reporte-horarios-${reporte.idReporte}.csv`
+            break
+
+          case 'ACCESOS_INCORRECTOS':
+            blob = await descargarReporteAccesosIncorrectos(
+              reporte.idReporte
+            )
+            nombreArchivo =
+              `reporte-accesos-incorrectos-${reporte.idReporte}.csv`
+            break
+
+          default:
+            throw new Error('Tipo de reporte no válido')
+        }
+
         descargarBlob(blob, nombreArchivo)
       }
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
           err.response?.data?.message ||
+          err.message ||
           'No se pudo descargar el reporte.'
       )
     } finally {
       setDescargando(false)
+    }
+  }
+
+  const descargarExcel = async () => {
+    if (!reporte || descargandoExcel) return
+    if (
+      tipoReporteVisualizado !== 'ACCESOS_INCORRECTOS' &&
+      tipoReporteVisualizado !== 'HORARIOS_INGRESO'
+    ) {
+      return
+    }
+    setDescargandoExcel(true)
+    setError('')
+    try {
+      let blob
+      let nombreArchivo
+
+      if (tipoReporteVisualizado === 'ACCESOS_INCORRECTOS') {
+        blob = await descargarReporteAccesosIncorrectosExcel(
+          reporte.idReporte
+        )
+        nombreArchivo =
+          `reporte-accesos-incorrectos-${reporte.idReporte}.xlsx`
+      } else {
+        blob = await descargarReporteHorariosExcel(reporte.idReporte)
+        nombreArchivo = `reporte-horarios-${reporte.idReporte}.xlsx`
+      }
+
+      descargarBlob(blob, nombreArchivo)
+    } catch (err) {
+      setError(
+        err.response?.data?.mensaje ||
+          err.response?.data?.message ||
+          err.message ||
+          'No se pudo exportar el reporte a Excel.'
+      )
+    } finally {
+      setDescargandoExcel(false)
     }
   }
 
@@ -387,6 +505,45 @@ export default function ReportesAsistencia() {
       return coincideEstado && coincideTexto
     })
   }, [reporte, filtroEstudiantes, estadoEstudiantes])
+
+  const intentosVisibles = useMemo(() => {
+    if (
+      !reporte ||
+      tipoReporteVisualizado !== 'ACCESOS_INCORRECTOS'
+    ) {
+      return []
+    }
+
+    const busqueda = busquedaIntentos.trim().toLocaleLowerCase('es')
+
+    return (reporte.intentos || []).filter((intento) => {
+      const texto = [
+        intento.codigoEstudiante,
+        intento.nombreCompleto,
+        intento.carrera,
+        intento.identificadorIntentado,
+        intento.metodoIdentificacion,
+        intento.motivoRechazo
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('es')
+
+      return !busqueda || texto.includes(busqueda)
+    })
+  }, [reporte, tipoReporteVisualizado, busquedaIntentos])
+
+  const intentosPorPagina = 10
+
+  const totalPaginasIntentos = Math.max(
+    1,
+    Math.ceil(intentosVisibles.length / intentosPorPagina)
+  )
+
+  const intentosPaginados = intentosVisibles.slice(
+    (paginaIntentos - 1) * intentosPorPagina,
+    paginaIntentos * intentosPorPagina
+  )
 
   return (
     <main className="reportes-asistencia">
@@ -456,14 +613,20 @@ export default function ReportesAsistencia() {
               </option>
 
               <option value="AUSENTES">Reporte de ausentes</option>
+
+              <option value="ACCESOS_INCORRECTOS">
+                Reporte de accesos incorrectos
+              </option>
             </select>
 
             <p>
               {tipoReporte === 'ASISTENCIA'
                 ? 'Consulta los estudiantes que asistieron y los ausentes.'
-                : tipoReporte === 'AUSENTES'
-                  ? 'Consulta los estudiantes del padrón que no registraron su ingreso.'
-                  : 'Consulta las fechas y horas de ingreso de los estudiantes.'}
+                : tipoReporte === 'HORARIOS_INGRESO'
+                  ? 'Consulta las fechas y horas de ingreso de los estudiantes.'
+                  : tipoReporte === 'AUSENTES'
+                    ? 'Consulta los estudiantes del padrón que no registraron su ingreso.'
+                    : 'Consulta los intentos de ingreso rechazados durante los exámenes.'}
             </p>
           </div>
           {tipoReporte === 'AUSENTES' ? <ReporteAusentes /> : <>
@@ -582,6 +745,10 @@ export default function ReportesAsistencia() {
               </option>
 
               <option value="AUSENTES">Reportes de ausentes</option>
+
+              <option value="ACCESOS_INCORRECTOS">
+                Reportes de accesos incorrectos
+              </option>
             </select>
           </div>
           <form
@@ -636,7 +803,9 @@ export default function ReportesAsistencia() {
                           ? 'Asistencia'
                           : item.tipoReporte === 'AUSENTES'
                             ? 'Ausentes'
-                            : 'Horarios de ingreso'}
+                            : item.tipoReporte === 'HORARIOS_INGRESO'
+                              ? 'Horarios de ingreso'
+                              : 'Accesos incorrectos'}
                       </span>
                     </td>
 
@@ -649,7 +818,9 @@ export default function ReportesAsistencia() {
                         ? item.totalAsistentes
                         : item.tipoReporte === 'AUSENTES'
                           ? item.totalAusentes
-                          : item.totalIngresos}
+                          : item.tipoReporte === 'HORARIOS_INGRESO'
+                            ? item.totalIngresos
+                            : item.totalRechazados}
                     </td>
 
                     <td>
@@ -674,7 +845,7 @@ export default function ReportesAsistencia() {
                     </td>
                   </tr>
                 )}
-                {cargandoHistorial && (
+                {cargandoHistorial && historialFiltrado.length === 0 && (
                   <tr>
                     <td colSpan="8" className="ra-vacio">
                       Cargando historial...
@@ -704,7 +875,7 @@ export default function ReportesAsistencia() {
                 {reporte.nombreGenerador}. La asistencia refleja los registros actuales del examen.
               </p>
             </div>
-            <button className="ra-boton-primario" onClick={descargar} disabled={descargando}>
+            <button className="ra-boton-secundario" onClick={descargar} disabled={descargando}>
               <FiDownload />
               {descargando ? 'Descargando...' : 'Descargar CSV'}
             </button>
@@ -844,7 +1015,7 @@ export default function ReportesAsistencia() {
               <h2>Reporte de ausentes</h2>
               <p>Estudiantes asociados al examen que no registraron su ingreso.</p>
             </div>
-            <button className="ra-boton-primario" onClick={descargar} disabled={descargando}>
+            <button className="ra-boton-secundario" onClick={descargar} disabled={descargando}>
               <FiDownload /> {descargando ? 'Descargando...' : 'Descargar CSV'}
             </button>
           </div>
@@ -897,16 +1068,28 @@ export default function ReportesAsistencia() {
                 Generado el {fechaHoraLegible(reporte.fechaGeneracion)}
                 {' '}por {reporte.nombreGenerador}.
               </p>
+            </div> 
+            <div className="ra-acciones-exportacion">
+              <button
+                type="button"
+                className="ra-boton-primario"
+                onClick={descargarExcel}
+                disabled={descargandoExcel}
+              >
+                <FiDownload />
+                {descargandoExcel ? 'Exportando...' : 'Exportar Excel'}
+              </button>
+
+              <button
+                type="button"
+                className="ra-boton-secundario"
+                onClick={descargar}
+                disabled={descargando}
+              >
+                <FiDownload />
+                {descargando ? 'Descargando...' : 'Descargar CSV'}
+              </button>
             </div>
-            <button
-              type="button"
-              className="ra-boton-primario"
-              onClick={descargar}
-              disabled={descargando}
-            >
-              <FiDownload />
-              {descargando ? 'Descargando...' : 'Descargar CSV'}
-            </button>
           </div>
 
           <div className="ra-resumen ra-resumen-horarios">
@@ -997,6 +1180,245 @@ export default function ReportesAsistencia() {
           <p className="ra-conteo">
             Total de ingresos registrados: {reporte.totalIngresos}
           </p>
+        </section>
+      )}
+
+      {reporte && tipoReporteVisualizado === 'ACCESOS_INCORRECTOS' && (
+        <section
+          className="ra-panel ra-reporte"
+          id="reporte-accesos-incorrectos-vista-previa"
+        >
+          <div className="ra-reporte-encabezado">
+            <div>
+              <span className="ra-etiqueta">
+                VISTA PREVIA · RPT-
+                {String(reporte.idReporte).padStart(3, '0')}
+              </span>
+
+              <h2>Reporte de accesos incorrectos</h2>
+
+              <p>
+                Generado el {fechaHoraLegible(reporte.fechaGeneracion)} por{' '}
+                {reporte.nombreGenerador}.
+              </p>
+            </div>
+      
+          <div className="ra-acciones-exportacion">
+            <button
+              type="button"
+              className="ra-boton-primario"
+              onClick={descargarExcel}
+              disabled={descargandoExcel}
+            >
+              <FiDownload />
+              {descargandoExcel ? 'Exportando...' : 'Exportar Excel'}
+            </button>
+
+            <button
+              type="button"
+              className="ra-boton-secundario"
+              onClick={descargar}
+              disabled={descargando}
+            >
+              <FiDownload />
+              {descargando ? 'Descargando...' : 'Descargar CSV'}
+            </button>
+          </div>
+          </div>
+
+          <div className="ra-resumen ra-resumen-accesos">
+            <div>
+              <span>Examen</span>
+              <strong>{reporte.nombreExamen}</strong>
+            </div>
+
+            <div>
+              <span>Asignatura</span>
+              <strong>{reporte.asignatura}</strong>
+            </div>
+
+            <div>
+              <span>Fecha del examen</span>
+              <strong>{fechaLegible(reporte.fechaExamen)}</strong>
+            </div>
+
+            <div>
+              <span>Hora de inicio</span>
+              <strong>{horaLegible(reporte.horaInicio)}</strong>
+            </div>
+
+            <div className="ra-resumen-contador ra-total-rechazados">
+              <span>
+                <FiAlertCircle /> Accesos incorrectos
+              </span>
+              <strong>{reporte.totalRechazados}</strong>
+            </div>
+
+            <div className="ra-resumen-contador">
+              <span>
+                <FiCheckCircle /> Ingresos autorizados
+              </span>
+              <strong>{reporte.totalIngresosAutorizados}</strong>
+            </div>
+
+            <div className="ra-resumen-contador ra-total-padron">
+              <span>
+                <FiUsers /> Total padrón
+              </span>
+              <strong>{reporte.totalPadron}</strong>
+            </div>
+          </div>
+
+          <div className="ra-lista-cabecera">
+            <div>
+              <h3>Lista de intentos rechazados</h3>
+              <p>
+                Se muestran todos los intentos registrados, incluidos los
+                repetidos de un mismo estudiante.
+              </p>
+            </div>
+
+            <div className="ra-lista-filtros">
+              <label className="ra-busqueda">
+                <FiSearch />
+                <input
+                  value={busquedaIntentos}
+                  onChange={(event) => {
+                    setBusquedaIntentos(event.target.value)
+                    setPaginaIntentos(1)
+                  }}
+                  placeholder="Buscar estudiante, código o motivo..."
+                  aria-label="Buscar intentos rechazados"
+                />
+              </label>
+            </div>
+          </div>
+
+          {reporte.totalRechazados === 0 ? (
+            <div className="ra-vacio-grande">
+              <FiAlertCircle />
+              <h3>No hay accesos rechazados registrados</h3>
+              <p>
+                Este examen no tiene intentos de ingreso incorrectos.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="ra-tabla-contenedor">
+                <table className="ra-tabla">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Código SIS</th>
+                      <th>Estudiante</th>
+                      <th>Carrera</th>
+                      <th>Identificador intentado</th>
+                      <th>Método</th>
+                      <th>Fecha y hora</th>
+                      <th>Motivo de rechazo</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {intentosPaginados.map((intento, indice) => (
+                      <tr key={intento.idIntento}>
+                        <td>
+                          {(paginaIntentos - 1) * intentosPorPagina +
+                            indice +
+                            1}
+                        </td>
+
+                        <td>{intento.codigoEstudiante || '—'}</td>
+
+                        <td className="ra-texto-fuerte">
+                          {intento.nombreCompleto?.trim() ||
+                            'No identificado'}
+                        </td>
+
+                        <td>{intento.carrera || '—'}</td>
+
+                        <td>
+                          {intento.identificadorIntentado || '—'}
+                        </td>
+
+                        <td>
+                          {intento.metodoIdentificacion || '—'}
+                        </td>
+
+                        <td>
+                          {fechaHoraIngresoLegible(intento.fechaHora)}
+                        </td>
+
+                        <td>{intento.motivoRechazo || '—'}</td>
+
+                        <td>
+                          <span className="ra-estado ra-estado-rechazado">
+                            Rechazado
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {intentosVisibles.length === 0 && (
+                      <tr>
+                        <td colSpan="9" className="ra-vacio">
+                          No se encontraron intentos para la búsqueda.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ra-paginacion">
+                <span className="ra-conteo">
+                  Mostrando{' '}
+                  {intentosVisibles.length === 0
+                    ? 0
+                    : (paginaIntentos - 1) * intentosPorPagina + 1}
+                  {' '}a{' '}
+                  {Math.min(
+                    paginaIntentos * intentosPorPagina,
+                    intentosVisibles.length
+                  )}
+                  {' '}de {intentosVisibles.length} intentos
+                </span>
+
+                <div className="ra-paginacion-botones">
+                  <button
+                    type="button"
+                    className="ra-boton-secundario"
+                    onClick={() =>
+                      setPaginaIntentos((anterior) =>
+                        Math.max(1, anterior - 1)
+                      )
+                    }
+                    disabled={paginaIntentos === 1}
+                  >
+                    Anterior
+                  </button>
+
+                  <span>
+                    Página {paginaIntentos} de {totalPaginasIntentos}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="ra-boton-secundario"
+                    onClick={() =>
+                      setPaginaIntentos((anterior) =>
+                        Math.min(totalPaginasIntentos, anterior + 1)
+                      )
+                    }
+                    disabled={paginaIntentos >= totalPaginasIntentos}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </section>
       )}
     </main>

@@ -548,3 +548,70 @@
     border-top: 1px solid #e2eaf4;
   }
 }
+
+.ra-resumen-accesos {
+  grid-template-columns: repeat(4, minmax(100px, 1fr)) repeat(3, minmax(100px, 0.8fr));
+}
+
+.ra-total-rechazados strong {
+  color: #bd332e;
+}
+
+.ra-estado-rechazado {
+  color: #a51b25;
+  background: #fff0f0;
+}
+
+.ra-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ra-paginacion .ra-conteo {
+  margin: 0;
+}
+
+.ra-paginacion-botones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #526e92;
+  font-size: 12px;
+}
+
+.ra-paginacion-botones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 1050px) {
+  .ra-resumen-accesos {
+    grid-template-columns: repeat(4, minmax(100px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .ra-resumen-accesos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ra-paginacion {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ra-paginacion-botones {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.ra-acciones-exportacion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

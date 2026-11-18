@@ -9,17 +9,20 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.lacomarcasoft.service.ReporteHorariosExcelServicio;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/reportes/horarios")
 public class ReporteHorariosControlador {
-
     private final ReporteHorariosServicio servicio;
-
-    public ReporteHorariosControlador(ReporteHorariosServicio servicio) {
+    private final ReporteHorariosExcelServicio excelServicio;
+    public ReporteHorariosControlador(
+            ReporteHorariosServicio servicio,
+            ReporteHorariosExcelServicio excelServicio) {
         this.servicio = servicio;
+        this.excelServicio = excelServicio;
     }
 
     @PostMapping("/examenes/{idExamen}")
@@ -74,6 +77,28 @@ public class ReporteHorariosControlador {
                 )
                 .body(servicio.descargarCsv(idReporte));
     }
+
+        @GetMapping(
+                value = "/{idReporte}/excel",
+                produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        public ResponseEntity<byte[]> descargarExcel(
+                @PathVariable Long idReporte) {
+
+        byte[] archivo = excelServicio.generarExcel(idReporte);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"reporte-horarios-"
+                                + idReporte + ".xlsx\""
+                )
+                .contentLength(archivo.length)
+                .body(archivo);
+        }
 
     private String obtenerIp(HttpServletRequest request) {
 
