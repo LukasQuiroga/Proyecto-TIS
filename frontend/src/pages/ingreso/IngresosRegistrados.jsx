@@ -10,6 +10,7 @@ import {
   FiCheckCircle,
   FiClock,
   FiAlertTriangle,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 import {
@@ -77,7 +78,6 @@ function IngresosRegistrados() {
   const [error, setError] = useState("");
   const [pagina, setPagina] = useState(1);
 
-  // Indicadores: totales por examen, independientes del filtro de fecha y búsqueda.
   const [resumen, setResumen] = useState(null);
   const [cargandoResumen, setCargandoResumen] = useState(true);
   const [errorResumen, setErrorResumen] = useState("");
@@ -89,10 +89,10 @@ function IngresosRegistrados() {
   const solicitudListado = useRef(0);
   const solicitudDetalle = useRef(0);
   const solicitudResumen = useRef(0);
+  const filtrosAplicados = useRef({});
 
   const porPagina = 5;
 
-  // Cargar los examenes disponibles.
   useEffect(() => {
     let activo = true;
 
@@ -113,7 +113,6 @@ function IngresosRegistrados() {
     };
   }, []);
 
-  // Consultar ingresos registrados.
   const cargar = useCallback(async (filtros = {}) => {
     const idSolicitud = ++solicitudListado.current;
 
@@ -146,7 +145,6 @@ function IngresosRegistrados() {
     }
   }, []);
 
-  // Consulta independiente del resumen; evita respuestas fuera de orden.
   const cargarResumen = useCallback(async (examen = "") => {
     const idSolicitud = ++solicitudResumen.current;
     setCargandoResumen(true);
@@ -182,7 +180,6 @@ function IngresosRegistrados() {
     };
   }, [cargarResumen]);
 
-  // CORRECCION ESLINT: primera carga asincrona.
   useEffect(() => {
     let activo = true;
 
@@ -198,19 +195,28 @@ function IngresosRegistrados() {
     };
   }, [cargar]);
 
-  // Aplicar filtros seleccionados.
   const aplicarFiltros = () => {
-    if (cargando) return;
+    if (cargando || cargandoResumen) return;
 
-    cargar({
+    const filtros = {
       q: q.trim(),
       idExamen,
       fecha,
-    });
+    };
+
+    filtrosAplicados.current = filtros;
+    cargar(filtros);
     cargarResumen(idExamen);
   };
 
-  // Paginacion.
+  const actualizarDatos = () => {
+    if (cargando || cargandoResumen) return;
+
+    const filtros = filtrosAplicados.current;
+    cargar(filtros);
+    cargarResumen(filtros.idExamen || "");
+  };
+
   const total = ingresos.length;
 
   const totalPaginas = Math.max(
@@ -244,7 +250,6 @@ function IngresosRegistrados() {
     }
   };
 
-  // Consultar detalle del ingreso.
   const abrirDetalle = useCallback(async (idIngreso) => {
     const idSolicitud = ++solicitudDetalle.current;
 
@@ -273,7 +278,6 @@ function IngresosRegistrados() {
     }
   }, []);
 
-  // CORRECCION ESLINT: abrir detalle desde otra pantalla.
   useEffect(() => {
     const idIngreso = location.state?.idIngreso;
 
@@ -302,12 +306,12 @@ function IngresosRegistrados() {
     abrirDetalle,
   ]);
 
-  // Cerrar el modal.
   const cerrarModal = useCallback(() => {
+    solicitudDetalle.current += 1;
+    setCargandoDetalle(false);
     setIngresoSeleccionado(null);
   }, []);
 
-  // Cerrar el modal con Escape.
   useEffect(() => {
     if (!ingresoSeleccionado) return;
 
@@ -467,13 +471,24 @@ function IngresosRegistrados() {
             type="button"
             className="ingresos-registrados-boton-filtrar"
             onClick={aplicarFiltros}
-            disabled={cargando}
+            disabled={cargando || cargandoResumen}
           >
             <FiFilter />
 
             <span>
               {cargando ? "Filtrando..." : "Filtrar"}
             </span>
+          </button>
+
+          <button
+            type="button"
+            className="ingresos-registrados-boton-actualizar"
+            onClick={actualizarDatos}
+            disabled={cargando || cargandoResumen}
+            title="Actualizar el listado y los indicadores"
+          >
+            <FiRefreshCw aria-hidden="true" />
+            <span>Actualizar</span>
           </button>
         </div>
 
@@ -704,14 +719,26 @@ function IngresosRegistrados() {
                 Detalle de ingreso
               </h2>
 
-              <button
-                type="button"
-                onClick={cerrarModal}
-                className="ingresos-registrados-modal-close"
-                aria-label="Cerrar detalle"
-              >
-                <FiX />
-              </button>
+              <div className="ingresos-registrados-modal-acciones">
+                <button
+                  type="button"
+                  onClick={() => abrirDetalle(ingresoSeleccionado.idIngreso)}
+                  className="ingresos-registrados-modal-actualizar"
+                  disabled={cargandoDetalle}
+                  aria-label="Actualizar detalle del ingreso"
+                  title="Volver a consultar el estado del ingreso"
+                >
+                  <FiRefreshCw />
+                </button>
+                <button
+                  type="button"
+                  onClick={cerrarModal}
+                  className="ingresos-registrados-modal-close"
+                  aria-label="Cerrar detalle"
+                >
+                  <FiX />
+                </button>
+              </div>
             </div>
 
             <div className="ingresos-registrados-modal-body">

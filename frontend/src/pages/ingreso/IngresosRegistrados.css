@@ -484,3 +484,57 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Actualizar el listado y los detalles sin cambiar su estado */
+.ingresos-registrados-boton-actualizar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #b8c9df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #164a86;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ingresos-registrados-boton-actualizar:hover:not(:disabled) {
+  background: #eef5ff;
+}
+
+.ingresos-registrados-boton-actualizar:disabled,
+.ingresos-registrados-modal-actualizar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ingresos-registrados-boton-actualizar:focus-visible,
+.ingresos-registrados-modal-actualizar:focus-visible {
+  outline: 2px solid #0066ff;
+  outline-offset: 2px;
+}
+
+.ingresos-registrados-modal-acciones {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ingresos-registrados-modal-actualizar {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  color: #164a86;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .ingresos-registrados-boton-actualizar {
+    width: 100%;
+  }
+}
