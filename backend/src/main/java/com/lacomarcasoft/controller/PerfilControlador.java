@@ -1,6 +1,7 @@
 package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.ActualizarTelefonoPerfilSolicitud;
+import com.lacomarcasoft.dto.request.ActualizarDocumentoPerfilSolicitud;
 import com.lacomarcasoft.dto.request.CambiarContrasenaPerfilSolicitud;
 import com.lacomarcasoft.dto.response.PerfilRespuesta;
 import com.lacomarcasoft.service.PerfilServicio;
@@ -37,6 +38,14 @@ public class PerfilControlador {
             obtenerIdUsuario(auth),
             solicitud
         );
+    }
+
+    @PatchMapping("/me/documento")
+    public PerfilRespuesta actualizarDocumento(
+            Authentication auth,
+            @Valid @RequestBody ActualizarDocumentoPerfilSolicitud solicitud
+    ) {
+        return servicio.actualizarDocumento(obtenerIdUsuario(auth), solicitud);
     }
 
     @PutMapping("/me/contrasena")

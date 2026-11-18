@@ -4,13 +4,19 @@ import com.lacomarcasoft.dto.response.ReporteAsistenciaDetalleRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaExamenRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaHistorialRespuesta;
 import com.lacomarcasoft.dto.response.ReporteAsistenciaRespuesta;
+import com.lacomarcasoft.dto.response.ReporteAusentesHistorialRespuesta;
+import com.lacomarcasoft.dto.response.ReporteAusentesRespuesta;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.Time;
@@ -18,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +33,8 @@ import java.util.regex.Pattern;
 public class ReporteAsistenciaServicio {
 
     private static final String TIPO_ACCION = "GENERAR_REPORTE_ASISTENCIA";
-    private static final Pattern ID_EXAMEN = Pattern.compile("idExamen=(\\d+)");
+    private static final String TIPO_ACCION_AUSENTES = "GENERAR_REPORTE_AUSENTES";
+    private static final Pattern SNAPSHOT_AUSENTES = Pattern.compile("snapshot=([A-Za-z0-9_-]+)");
     private static final DateTimeFormatter FORMATO_FECHA_HORA =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
 
@@ -65,6 +73,112 @@ public class ReporteAsistenciaServicio {
                 rs.getString("nombre_asignatura"), fecha(rs.getDate("fecha_examen")),
                 hora(rs.getTime("hora_inicio"))
         ), parametros.toArray());
+    }
+
+    @Transactional(readOnly = true)
+    public ReporteAusentesRespuesta consultarAusentes(Long idExamen) {
+        if (idExamen == null || idExamen <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Examen inválido");
+        }
+
+        ReporteAsistenciaExamenRespuesta examen = buscarExamen(idExamen);
+        List<ReporteAsistenciaDetalleRespuesta> padron = consultarPadronAsociadoAExamen(idExamen);
+        List<ReporteAsistenciaDetalleRespuesta> ausentes = padron.stream()
+                .filter(estudiante -> "AUSENTE".equals(estudiante.estadoAsistencia()))
+                .toList();
+        int asistentes = padron.size() - ausentes.size();
+
+        return new ReporteAusentesRespuesta(
+                examen.idExamen(), examen.codigoExamen(), examen.nombreExamen(),
+                examen.asignatura(), examen.fechaExamen(), examen.horaInicio(),
+                ausentes.size(), asistentes, padron.size(), ausentes);
+    }
+
+    @Transactional
+    public ReporteAusentesRespuesta generarAusentes(Long idExamen, Long idGenerador, String ipOrigen) {
+        if (idExamen == null || idExamen <= 0 || idGenerador == null || idGenerador <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Examen o usuario inválido");
+        }
+
+        ReporteAusentesRespuesta reporte = consultarAusentes(idExamen);
+        final String snapshot;
+        try {
+            snapshot = codificarReporteAusentes(reporte);
+        } catch (IOException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "No se pudo conservar el reporte de ausentes", ex);
+        }
+
+        String descripcion = "idExamen=" + idExamen
+                + ";asistentes=" + reporte.totalAsistentes()
+                + ";ausentes=" + reporte.totalAusentes()
+                + ";padron=" + reporte.totalPadron()
+                + ";snapshot=" + snapshot;
+        jdbc.update("""
+                INSERT INTO seguridad.log_actividad
+                    (id_usuario, tipo_accion, descripcion, ip_origen, fecha, exitosa)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, TRUE)
+                """, idGenerador, TIPO_ACCION_AUSENTES, descripcion, ipOrigen);
+        return reporte;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReporteAusentesHistorialRespuesta> historialAusentes(String busqueda) {
+        String filtro = busqueda == null || busqueda.isBlank()
+                ? null : "%" + busqueda.trim().toLowerCase() + "%";
+        return jdbc.query("""
+                SELECT l.id_log, l.fecha,
+                       COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.nombre, u.apellido)), ''), 'Administrador') AS nombre_generador,
+                       substring(l.descripcion FROM 'idExamen=([0-9]+)')::BIGINT AS id_examen,
+                       COALESCE(substring(l.descripcion FROM 'ausentes=([0-9]+)')::INTEGER, 0) AS total_ausentes,
+                       COALESCE(substring(l.descripcion FROM 'asistentes=([0-9]+)')::INTEGER, 0) AS total_asistentes,
+                       COALESCE(substring(l.descripcion FROM 'padron=([0-9]+)')::INTEGER, 0) AS total_padron,
+                       e.nombre_examen, a.nombre_asignatura, e.fecha_examen, e.hora_inicio
+                FROM seguridad.log_actividad l
+                LEFT JOIN seguridad.usuario u ON u.id_usuario = l.id_usuario
+                LEFT JOIN academico.examen e
+                    ON e.id_examen = substring(l.descripcion FROM 'idExamen=([0-9]+)')::BIGINT
+                LEFT JOIN academico.materia m ON m.id_materia = e.id_materia
+                LEFT JOIN academico.asignatura a ON a.id_asignatura = m.id_asignatura
+                WHERE l.tipo_accion = ?
+                  AND (CAST(? AS VARCHAR) IS NULL OR LOWER(COALESCE(e.nombre_examen, '')) LIKE ?
+                       OR LOWER(COALESCE(a.nombre_asignatura, '')) LIKE ?
+                       OR LOWER(COALESCE(u.nombre, '') || ' ' || COALESCE(u.apellido, '')) LIKE ?)
+                ORDER BY l.fecha DESC, l.id_log DESC
+                LIMIT 500
+                """, (rs, fila) -> new ReporteAusentesHistorialRespuesta(
+                rs.getLong("id_log"), rs.getObject("id_examen", Long.class),
+                rs.getString("nombre_examen"), rs.getString("nombre_asignatura"),
+                fecha(rs.getDate("fecha_examen")), hora(rs.getTime("hora_inicio")),
+                rs.getObject("fecha", OffsetDateTime.class), rs.getString("nombre_generador"),
+                rs.getInt("total_ausentes"), rs.getInt("total_asistentes"), rs.getInt("total_padron")
+        ), TIPO_ACCION_AUSENTES, filtro, filtro, filtro, filtro);
+    }
+
+    @Transactional(readOnly = true)
+    public ReporteAusentesRespuesta obtenerAusentes(Long idReporte) {
+        if (idReporte == null || idReporte <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Identificador de reporte inválido");
+        }
+        String descripcion = jdbc.query("""
+                SELECT descripcion FROM seguridad.log_actividad
+                WHERE id_log = ? AND tipo_accion = ?
+                """, rs -> rs.next() ? rs.getString("descripcion") : null,
+                idReporte, TIPO_ACCION_AUSENTES);
+        if (descripcion == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte de ausentes no encontrado");
+        }
+        Matcher matcher = SNAPSHOT_AUSENTES.matcher(descripcion);
+        if (!matcher.find()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El historial no contiene el reporte guardado");
+        }
+        try {
+            byte[] snapshot = Base64.getUrlDecoder().decode(matcher.group(1));
+            return decodificarReporteAusentes(snapshot);
+        } catch (IOException | IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "No se pudo leer el reporte guardado", ex);
+        }
     }
 
     @Transactional
@@ -242,6 +356,131 @@ public class ReporteAsistenciaServicio {
                     rs.getLong("id_usuario"), rs.getString("codigo_sis"), rs.getString("nombre_completo"),
                     ingreso == null ? "AUSENTE" : "ASISTIO", ingreso);
         }, idExamen, idExamen, idExamen);
+    }
+
+    private List<ReporteAsistenciaDetalleRespuesta> consultarPadronAsociadoAExamen(Long idExamen) {
+        return jdbc.query("""
+                WITH ingresos AS (
+                    SELECT id_estudiante, MIN(fecha_hora_ingreso) AS fecha_hora_ingreso
+                    FROM academico.ingreso_examen
+                    WHERE id_examen = ?
+                    GROUP BY id_estudiante
+                )
+                SELECT u.id_usuario, u.codigo_sis,
+                       TRIM(CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, ''))) AS nombre_completo,
+                       i.fecha_hora_ingreso
+                FROM academico.examen_estudiante ee
+                JOIN seguridad.usuario u ON u.id_usuario = ee.id_estudiante
+                JOIN seguridad.rol r ON r.id_rol = u.id_rol
+                LEFT JOIN ingresos i ON i.id_estudiante = ee.id_estudiante
+                WHERE ee.id_examen = ?
+                  AND UPPER(r.nombre_rol) = 'ESTUDIANTE'
+                ORDER BY LOWER(u.apellido), LOWER(u.nombre), u.codigo_sis NULLS LAST, u.id_usuario
+                """, (rs, fila) -> {
+            OffsetDateTime ingreso = rs.getObject("fecha_hora_ingreso", OffsetDateTime.class);
+            return new ReporteAsistenciaDetalleRespuesta(
+                    rs.getLong("id_usuario"), rs.getString("codigo_sis"), rs.getString("nombre_completo"),
+                    ingreso == null ? "AUSENTE" : "ASISTIO", ingreso);
+        }, idExamen, idExamen);
+    }
+
+    private static String codificarReporteAusentes(ReporteAusentesRespuesta reporte) throws IOException {
+        try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+             DataOutputStream salida = new DataOutputStream(bytes)) {
+            salida.writeInt(1);
+            escribirLong(salida, reporte.idExamen());
+            escribirTexto(salida, reporte.codigoExamen());
+            escribirTexto(salida, reporte.nombreExamen());
+            escribirTexto(salida, reporte.asignatura());
+            escribirTexto(salida, reporte.fechaExamen() == null ? null : reporte.fechaExamen().toString());
+            escribirTexto(salida, reporte.horaInicio() == null ? null : reporte.horaInicio().toString());
+            salida.writeInt(reporte.totalAusentes());
+            salida.writeInt(reporte.totalAsistentes());
+            salida.writeInt(reporte.totalPadron());
+            salida.writeInt(reporte.estudiantesAusentes().size());
+            for (ReporteAsistenciaDetalleRespuesta estudiante : reporte.estudiantesAusentes()) {
+                escribirLong(salida, estudiante.idEstudiante());
+                escribirTexto(salida, estudiante.codigoEstudiante());
+                escribirTexto(salida, estudiante.nombreCompleto());
+                escribirTexto(salida, estudiante.estadoAsistencia());
+                escribirTexto(salida, estudiante.fechaHoraIngreso() == null
+                        ? null : estudiante.fechaHoraIngreso().toString());
+            }
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes.toByteArray());
+        }
+    }
+
+    private static ReporteAusentesRespuesta decodificarReporteAusentes(byte[] snapshot) throws IOException {
+        try (DataInputStream entrada = new DataInputStream(new ByteArrayInputStream(snapshot))) {
+            if (entrada.readInt() != 1) {
+                throw new IOException("Versión de reporte guardado no reconocida");
+            }
+            Long idExamen = leerLong(entrada);
+            String codigoExamen = leerTexto(entrada);
+            String nombreExamen = leerTexto(entrada);
+            String asignatura = leerTexto(entrada);
+            String fechaExamen = leerTexto(entrada);
+            String horaInicio = leerTexto(entrada);
+            int totalAusentes = entrada.readInt();
+            int totalAsistentes = entrada.readInt();
+            int totalPadron = entrada.readInt();
+            int cantidad = entrada.readInt();
+            if (cantidad < 0 || cantidad > 250_000) {
+                throw new IOException("Cantidad de estudiantes inválida en el reporte guardado");
+            }
+
+            List<ReporteAsistenciaDetalleRespuesta> ausentes = new java.util.ArrayList<>(cantidad);
+            for (int i = 0; i < cantidad; i++) {
+                Long idEstudiante = leerLong(entrada);
+                String codigo = leerTexto(entrada);
+                String nombre = leerTexto(entrada);
+                String estado = leerTexto(entrada);
+                String fechaIngreso = leerTexto(entrada);
+                ausentes.add(new ReporteAsistenciaDetalleRespuesta(
+                        idEstudiante, codigo, nombre, estado,
+                        fechaIngreso == null ? null : OffsetDateTime.parse(fechaIngreso)));
+            }
+            if (entrada.available() != 0) {
+                throw new IOException("El reporte guardado contiene datos adicionales");
+            }
+            return new ReporteAusentesRespuesta(
+                    idExamen, codigoExamen, nombreExamen, asignatura,
+                    fechaExamen == null ? null : LocalDate.parse(fechaExamen),
+                    horaInicio == null ? null : LocalTime.parse(horaInicio),
+                    totalAusentes, totalAsistentes, totalPadron, ausentes);
+        } catch (RuntimeException ex) {
+            throw new IOException("No se pudo interpretar el reporte guardado", ex);
+        }
+    }
+
+    private static void escribirLong(DataOutputStream salida, Long valor) throws IOException {
+        salida.writeBoolean(valor != null);
+        if (valor != null) salida.writeLong(valor);
+    }
+
+    private static Long leerLong(DataInputStream entrada) throws IOException {
+        return entrada.readBoolean() ? entrada.readLong() : null;
+    }
+
+    private static void escribirTexto(DataOutputStream salida, String valor) throws IOException {
+        if (valor == null) {
+            salida.writeInt(-1);
+            return;
+        }
+        byte[] bytes = valor.getBytes(StandardCharsets.UTF_8);
+        salida.writeInt(bytes.length);
+        salida.write(bytes);
+    }
+
+    private static String leerTexto(DataInputStream entrada) throws IOException {
+        int longitud = entrada.readInt();
+        if (longitud == -1) return null;
+        if (longitud < 0 || longitud > 1_000_000) {
+            throw new IOException("Campo de texto inválido en el reporte guardado");
+        }
+        byte[] bytes = entrada.readNBytes(longitud);
+        if (bytes.length != longitud) throw new IOException("Reporte guardado incompleto");
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static LocalDate fecha(Date fecha) {

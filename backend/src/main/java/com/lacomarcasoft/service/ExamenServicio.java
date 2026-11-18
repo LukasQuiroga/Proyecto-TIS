@@ -270,9 +270,19 @@ public ExamenRespuesta configurar(
     @Transactional(readOnly = true)
     public List<ExamenRespuesta> listar(String buscar) {
 
+        return listar(buscar, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ExamenRespuesta> listar(String buscar, Long idDocente) {
+
         List<Examen> examenes;
 
-        if (buscar == null || buscar.isBlank()) {
+        if (idDocente != null) {
+            examenes = buscar == null || buscar.isBlank()
+                    ? examenRepositorio.listarPorDocente(idDocente)
+                    : examenRepositorio.buscarPorDocente(idDocente, buscar.trim());
+        } else if (buscar == null || buscar.isBlank()) {
             examenes = examenRepositorio.listarTodos();
         } else {
             examenes = examenRepositorio.buscar(buscar.trim());

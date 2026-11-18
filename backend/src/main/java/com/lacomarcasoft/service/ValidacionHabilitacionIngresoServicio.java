@@ -8,8 +8,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -48,42 +46,7 @@ public ValidacionHabilitacionRespuesta validarPorDocumento(
         Long idExamen,
         Long idEstudiante) {
 
-    validarIdentificadores(idExamen, idEstudiante);
-
-    Authentication autenticacion = SecurityContextHolder
-            .getContext()
-            .getAuthentication();
-
-    if (autenticacion == null
-            || !autenticacion.isAuthenticated()
-            || !(autenticacion.getDetails() instanceof Long)) {
-        throw new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED,
-                "Debe iniciar sesion"
-        );
-    }
-
-    boolean esDocente = autenticacion.getAuthorities().stream()
-            .anyMatch(a -> "ROLE_DOCENTE".equals(a.getAuthority()));
-
-    boolean esAdministrador = autenticacion.getAuthorities().stream()
-            .anyMatch(a -> "ROLE_ADMINISTRADOR".equals(a.getAuthority()));
-
-    boolean tienePermiso = autenticacion.getAuthorities().stream()
-            .anyMatch(a -> "CONTROL_INGRESO".equals(a.getAuthority()));
-
-    if (!tienePermiso || (!esDocente && !esAdministrador)) {
-        throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN,
-                "No tiene permisos para validar la habilitacion"
-        );
-    }
-
-    if (esDocente) {
-        accesoExamenDocente.verificarExamenActual(idExamen);
-    }
-
-    return consultarEstado(idExamen, idEstudiante);
+    return validar(idExamen, idEstudiante);
 }
 
 private void validarIdentificadores(

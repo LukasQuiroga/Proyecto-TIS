@@ -87,6 +87,11 @@ public class SecurityConfig {
                 ).authenticated()
 
                 .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/perfil/me/documento"
+                ).authenticated()
+
+                .requestMatchers(
                     HttpMethod.PUT,
                     "/api/perfil/me/contrasena"
                 ).authenticated()
@@ -110,7 +115,25 @@ public class SecurityConfig {
                     "/api/ingresos/examenes/identificar-documento/examenes"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                    "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"
+                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
+                ))
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                      "/api/ingresos/examenes/registrados",
+                      "/api/ingresos/examenes/registrados/*"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                   "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
+
+                .requestMatchers(
+                       HttpMethod.GET,
+                       "/api/ingresos/examenes/disponibles"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                        "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
+                        "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
                 ))
 
                 .requestMatchers("/api/ingresos/examenes/**")
