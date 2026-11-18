@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiAlertCircle, FiCalendar, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
-import { listarIntentosNoAutorizados, obtenerExamenesIngreso } from "../../services/validacionHabilitacionService";
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
+import { listarIntentosNoAutorizados, obtenerExamenesIngreso, obtenerFotoIntento, resolverIncidencia } from "../../services/validacionHabilitacionService";
 import "./IntentosNoAutorizados.css";
 
 function formatearFecha(valor) {
@@ -28,6 +28,12 @@ export default function IntentosNoAutorizados() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
+  const [modalResolverAbierto, setModalResolverAbierto] = useState(false);
+  const [incidenteResolver, setIncidenteResolver] = useState(null);
+  const [veredictoResolver, setVeredictoResolver] = useState("");
+  const [guardandoResolver, setGuardandoResolver] = useState(false);
+  const [errorResolver, setErrorResolver] = useState("");
+  const [fotografiaResolver, setFotografiaResolver] = useState(null);
   const [pagina, setPagina] = useState(1);
   const porPagina = 10;
 
@@ -50,6 +56,73 @@ export default function IntentosNoAutorizados() {
       setError(err.response?.data?.mensaje || "No se pudo consultar el historial.");
     } finally {
       setCargando(false);
+    }
+  };
+
+  const abrirResolver = async (fila) => {
+    setErrorResolver("");
+    setVeredictoResolver("");
+    setGuardandoResolver(false);
+    setFotografiaResolver(null);
+
+    setIncidenteResolver(fila);
+
+    try {
+      const foto = await obtenerFotoIntento(fila.idIntento);
+      setFotografiaResolver(foto);
+    } catch {
+      setFotografiaResolver(null);
+    }
+
+    setModalResolverAbierto(true);
+  };
+
+  const cerrarResolver = () => {
+    setModalResolverAbierto(false);
+    setIncidenteResolver(null);
+    setVeredictoResolver("");
+    setErrorResolver("");
+    setFotografiaResolver(null);
+  };
+
+  const marcarResuelta = async () => {
+    if (!incidenteResolver?.idIntento) {
+      return;
+    }
+
+    const veredicto = (veredictoResolver || "").trim();
+
+    if (!veredicto) {
+      setErrorResolver("El veredicto es obligatorio.");
+      return;
+    }
+
+    if (veredicto.length > 300) {
+      setErrorResolver("El veredicto no puede superar 300 caracteres.");
+      return;
+    }
+
+    if (!/^[\p{L}\p{N}\s]+$/u.test(veredicto)) {
+      setErrorResolver("El veredicto solo admite letras, numeros y espacios.");
+      return;
+    }
+
+    setGuardandoResolver(true);
+    setErrorResolver("");
+
+    try {
+      await resolverIncidencia(incidenteResolver.idIntento, veredicto);
+      setModalResolverAbierto(false);
+      setIncidenteResolver(null);
+      await cargar();
+    } catch (err) {
+      setErrorResolver(
+        err.response?.data?.mensaje ||
+          err.response?.data?.message ||
+          "No se pudo resolver la incidencia."
+      );
+    } finally {
+      setGuardandoResolver(false);
     }
   };
 
@@ -151,7 +224,13 @@ export default function IntentosNoAutorizados() {
             <td><strong>{fila.nombreEstudiante || "No identificado"}</strong><small>{fila.identificadorIntentado || "—"}</small></td>
             <td>{fila.metodoIdentificacion}</td><td>{fila.nombreExamen}</td>
             <td><span className="hu23-motivo">{fila.motivoRechazo}</span></td><td>{fila.responsable}</td>
-            <td><button className="hu23-ver" onClick={() => setSeleccionado(fila)} type="button"><FiEye /> Ver</button></td>
+            <td>
+              {String(fila.estado || "PENDIENTE") === "RESUELTA" ? (
+                <button className="hu23-ver" onClick={() => setSeleccionado(fila)} type="button"><FiEye /> Ver</button>
+              ) : (
+                <button className="hu23-ver" onClick={() => void abrirResolver(fila)} type="button"><FiCheckCircle /> Resolver incidencia</button>
+              )}
+            </td>
           </tr>)}{!cargando && visibles.length === 0 && <tr><td colSpan={7} className="hu23-vacio">No hay intentos registrados.</td></tr>}</tbody>
         </table></div>
         <div className="hu23-pie"><span>Mostrando {visibles.length} de {filasFiltradas.length} intentos</span><div><button type="button" disabled={pagina === 1} onClick={() => setPagina(p => p-1)}>Anterior</button> {pagina} / {total} <button type="button" disabled={pagina === total} onClick={() => setPagina(p => p+1)}>Siguiente</button></div></div>
@@ -178,6 +257,75 @@ export default function IntentosNoAutorizados() {
           <button className="hu23-cerrar" onClick={() => setSeleccionado(null)}>Cerrar</button>
         </section>
       </div>}
+
+      {modalResolverAbierto && incidenteResolver && (
+        <div className="hu23-fondo" role="presentation" onClick={() => cerrarResolver()}>
+          <section className="hu23-modal" role="dialog" aria-modal="true" aria-label="Resolver incidencia" onClick={(e) => e.stopPropagation()}>
+            <div className="hu23-modal-cabecera">
+              <h2>Resolver incidencia #{incidenteResolver.idIntento}</h2>
+              <button aria-label="Cerrar" onClick={() => cerrarResolver()}><FiX /></button>
+            </div>
+            <dl>
+              <div>
+                <dt>Estudiante</dt>
+                <dd>{incidenteResolver.nombreEstudiante || "No identificado"}</dd>
+              </div>
+              <div>
+                <dt>Identificador</dt>
+                <dd>{incidenteResolver.identificadorIntentado || "—"}</dd>
+              </div>
+              <div>
+                <dt>Codigo</dt>
+                <dd>{incidenteResolver.codigoUniversitario || "—"}</dd>
+              </div>
+              <div>
+                <dt>Carnet</dt>
+                <dd>{incidenteResolver.carnetIdentidad || "—"}</dd>
+              </div>
+              <div>
+                <dt>Examen</dt>
+                <dd>{incidenteResolver.nombreExamen}</dd>
+              </div>
+              <div>
+                <dt>Fecha y hora</dt>
+                <dd>{formatearFecha(incidenteResolver.fechaHora)}</dd>
+              </div>
+              <div>
+                <dt>Responsable</dt>
+                <dd>{incidenteResolver.responsable}</dd>
+              </div>
+              <div>
+                <dt>Estado</dt>
+                <dd>{incidenteResolver.estado}</dd>
+              </div>
+              <div>
+                <dt>Motivo de rechazo</dt>
+                <dd>{incidenteResolver.motivoRechazo}</dd>
+              </div>
+            </dl>
+            {fotografiaResolver && (
+              <div>
+                <img src={fotografiaResolver} alt="Evidencia del intento" />
+              </div>
+            )}
+            {errorResolver && <p role="alert">{errorResolver}</p>}
+            <div>
+              <textarea
+                value={veredictoResolver}
+                onChange={(e) => setVeredictoResolver(e.target.value)}
+                placeholder="Veredicto del docente"
+                rows={4}
+              />
+              <button type="button" onClick={() => void marcarResuelta()} disabled={guardandoResolver}>
+                {guardandoResolver ? "Resolviendo..." : "Marcar como resuelta"}
+              </button>
+              <button type="button" onClick={() => cerrarResolver()} disabled={guardandoResolver}>
+                Cancelar
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
