@@ -115,7 +115,7 @@ public class SecurityConfig {
                     "/api/ingresos/examenes/identificar-documento/examenes"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                    "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"
+                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
                 ))
 
                 .requestMatchers(

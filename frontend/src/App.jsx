@@ -73,7 +73,8 @@ function AccesoSoloEstudiante({ children }) {
 
 function AccesoReportes({ children }) {
   const { usuario } = useAuth();
-  const esAdministrador = usuario?.nombreRol?.trim().toUpperCase() === "ADMINISTRADOR";
+  const esAdministrador =
+    usuario?.nombreRol?.trim().toUpperCase() === "ADMINISTRADOR";
   const tienePermiso = usuario?.permisos?.includes("GENERAR_REPORTES") ?? false;
 
   if (!esAdministrador || !tienePermiso) {
@@ -83,22 +84,17 @@ function AccesoReportes({ children }) {
   return children;
 }
 
-function AccesoControlIngreso({ children, permitirAdministrador = false }) {
+function AccesoControlIngreso({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
     return <Navigate to="/login" replace />;
   }
 
-  const rolActual = usuario.nombreRol?.trim().toUpperCase();
-  const esDocente = rolActual === "DOCENTE";
-  const esAdministrador = rolActual === "ADMINISTRADOR";
-
+  const esDocente = usuario.nombreRol?.trim().toUpperCase() === "DOCENTE";
   const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
-  const rolAutorizado = esDocente || (permitirAdministrador && esAdministrador);
-
-  if (!rolAutorizado || !tienePermiso) {
+  if (!esDocente || !tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -288,7 +284,7 @@ function App() {
             <Route
               path="/ingreso/identificar-documento"
               element={
-                <AccesoControlIngreso permitirAdministrador>
+                <AccesoControlIngreso>
                   <IdentificarDocumento />
                 </AccesoControlIngreso>
               }
@@ -297,7 +293,7 @@ function App() {
             <Route
               path="/ingreso/comprobar-examen"
               element={
-                <AccesoControlIngreso permitirAdministrador>
+                <AccesoControlIngreso>
                   <ComprobarExamenCorrespondiente />
                 </AccesoControlIngreso>
               }
@@ -327,7 +323,7 @@ function App() {
                 <AccesoReportes>
                   <IngresosRegistrados />
                 </AccesoReportes>
-             }
+              }
             />
 
             <Route
