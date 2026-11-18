@@ -181,7 +181,7 @@ export default function ReportesAsistencia() {
   useEffect(() => {
     if (pestana !== 'historial') return undefined
     let vigente = true
-
+    setCargandoHistorial(true)
     async function cargar() {
       try {
         const [reportesAsistencia, reportesHorarios, reportesAusentes, reportesAccesosIncorrectos
@@ -273,9 +273,9 @@ export default function ReportesAsistencia() {
   }
 
   const solicitarHistorial = () => {
-    setCargandoHistorial(true)
     setError('')
     setPestana('historial')
+
     setSolicitudHistorial((anterior) => ({
       buscar: busquedaHistorial,
       numero: anterior.numero + 1
@@ -845,7 +845,7 @@ export default function ReportesAsistencia() {
                     </td>
                   </tr>
                 )}
-                {cargandoHistorial && (
+                {cargandoHistorial && historialFiltrado.length === 0 && (
                   <tr>
                     <td colSpan="8" className="ra-vacio">
                       Cargando historial...
@@ -875,7 +875,7 @@ export default function ReportesAsistencia() {
                 {reporte.nombreGenerador}. La asistencia refleja los registros actuales del examen.
               </p>
             </div>
-            <button className="ra-boton-primario" onClick={descargar} disabled={descargando}>
+            <button className="ra-boton-secundario" onClick={descargar} disabled={descargando}>
               <FiDownload />
               {descargando ? 'Descargando...' : 'Descargar CSV'}
             </button>
@@ -1015,7 +1015,7 @@ export default function ReportesAsistencia() {
               <h2>Reporte de ausentes</h2>
               <p>Estudiantes asociados al examen que no registraron su ingreso.</p>
             </div>
-            <button className="ra-boton-primario" onClick={descargar} disabled={descargando}>
+            <button className="ra-boton-secundario" onClick={descargar} disabled={descargando}>
               <FiDownload /> {descargando ? 'Descargando...' : 'Descargar CSV'}
             </button>
           </div>
