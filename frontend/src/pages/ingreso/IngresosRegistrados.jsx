@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -8,6 +7,9 @@ import {
   FiFilter,
   FiSearch,
   FiX,
+  FiCheckCircle,
+  FiClock,
+  FiAlertTriangle,
 } from "react-icons/fi";
 
 import {
@@ -15,6 +17,8 @@ import {
   obtenerExamenesIngreso,
   obtenerIngresoRegistrado,
 } from "../../services/validacionHabilitacionService";
+
+import { obtenerResumenIngresos } from "../../services/resumenIngresosService";
 
 import "./IngresosRegistrados.css";
 
@@ -73,11 +77,18 @@ function IngresosRegistrados() {
   const [error, setError] = useState("");
   const [pagina, setPagina] = useState(1);
 
+  // Indicadores: totales por examen, independientes del filtro de fecha y búsqueda.
+  const [resumen, setResumen] = useState(null);
+  const [cargandoResumen, setCargandoResumen] = useState(true);
+  const [errorResumen, setErrorResumen] = useState("");
+  const [examenResumen, setExamenResumen] = useState("");
+
   const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
   const solicitudListado = useRef(0);
   const solicitudDetalle = useRef(0);
+  const solicitudResumen = useRef(0);
 
   const porPagina = 5;
 
@@ -135,6 +146,42 @@ function IngresosRegistrados() {
     }
   }, []);
 
+  // Consulta independiente del resumen; evita respuestas fuera de orden.
+  const cargarResumen = useCallback(async (examen = "") => {
+    const idSolicitud = ++solicitudResumen.current;
+    setCargandoResumen(true);
+    setErrorResumen("");
+
+    try {
+      const datos = await obtenerResumenIngresos(examen);
+      if (idSolicitud !== solicitudResumen.current) return;
+
+      setResumen(datos);
+      setExamenResumen(examen);
+    } catch (err) {
+      if (idSolicitud !== solicitudResumen.current) return;
+      setResumen(null);
+      setErrorResumen(mensajeError(err, "No se pudieron cargar los indicadores."));
+    } finally {
+      if (idSolicitud === solicitudResumen.current) {
+        setCargandoResumen(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    Promise.resolve().then(() => {
+      if (activo) cargarResumen("");
+    });
+
+    return () => {
+      activo = false;
+      solicitudResumen.current += 1;
+    };
+  }, [cargarResumen]);
+
   // CORRECCION ESLINT: primera carga asincrona.
   useEffect(() => {
     let activo = true;
@@ -160,6 +207,7 @@ function IngresosRegistrados() {
       idExamen,
       fecha,
     });
+    cargarResumen(idExamen);
   };
 
   // Paginacion.
@@ -292,6 +340,60 @@ function IngresosRegistrados() {
           autorizados de los estudiantes.
         </p>
       </header>
+
+      {/* INDICADORES DE SEGUIMIENTO */}
+      <section className="ingresos-registrados-resumen" aria-label="Indicadores de ingresos">
+        <div className="ingresos-registrados-resumen-encabezado">
+          <h2>Resumen de ingresos</h2>
+          <p>
+            {examenResumen
+              ? "Totales del examen seleccionado"
+              : "Totales de todos los exámenes"}
+            {" · "}No incluyen los filtros de búsqueda ni fecha.
+          </p>
+        </div>
+
+        {errorResumen && (
+          <p className="ingresos-registrados-resumen-error" role="alert">
+            {errorResumen}
+          </p>
+        )}
+
+        <div className="ingresos-registrados-resumen-grid" aria-live="polite">
+          <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-ingresados">
+            <div className="ingresos-registrados-resumen-icono"><FiCheckCircle /></div>
+            <div>
+              <p className="ingresos-registrados-resumen-etiqueta">Ingresados</p>
+              <strong className="ingresos-registrados-resumen-cantidad">
+                {cargandoResumen ? "..." : (resumen?.ingresados ?? "—")}
+              </strong>
+              <p className="ingresos-registrados-resumen-descripcion">Registros de ingreso</p>
+            </div>
+          </article>
+
+          <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-pendientes">
+            <div className="ingresos-registrados-resumen-icono"><FiClock /></div>
+            <div>
+              <p className="ingresos-registrados-resumen-etiqueta">Pendientes</p>
+              <strong className="ingresos-registrados-resumen-cantidad">
+                {cargandoResumen ? "..." : (resumen?.pendientes ?? "—")}
+              </strong>
+              <p className="ingresos-registrados-resumen-descripcion">Estudiante-examen sin ingreso</p>
+            </div>
+          </article>
+
+          <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-rechazados">
+            <div className="ingresos-registrados-resumen-icono"><FiAlertTriangle /></div>
+            <div>
+              <p className="ingresos-registrados-resumen-etiqueta">Rechazados</p>
+              <strong className="ingresos-registrados-resumen-cantidad">
+                {cargandoResumen ? "..." : (resumen?.rechazados ?? "—")}
+              </strong>
+              <p className="ingresos-registrados-resumen-descripcion">Intentos rechazados</p>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <section className="ingresos-registrados-contenedor">
 

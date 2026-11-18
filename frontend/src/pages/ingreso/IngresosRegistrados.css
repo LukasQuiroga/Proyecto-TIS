@@ -1,4 +1,3 @@
-
 .ingresos-registrados-pagina {
   padding: 24px 32px 40px;
   background: #f7f9fc;
@@ -318,10 +317,7 @@
 
 .ingresos-registrados-modal-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(220px, 1fr)
-  );
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px 16px;
 }
 
@@ -337,15 +333,21 @@
   color: #1f2d3d;
 }
 
-/* Distribucion adaptable de filtros */
+@media (max-width: 1100px) {
+  .ingresos-registrados-filtros {
+    align-items: stretch;
+  }
 
-.ingresos-registrados-filtros
-> .ingresos-registrados-campo {
+  .ingresos-registrados-boton-filtrar {
+    margin-left: 0;
+  }
+}
+
+/* Distribución adaptable de filtros */
+.ingresos-registrados-filtros > .ingresos-registrados-campo {
   flex: 1 1 230px;
   min-width: 0;
 }
-
-/* Mensajes de error */
 
 .ingresos-registrados-mensaje-error {
   background: #fff5f5;
@@ -353,20 +355,15 @@
   color: #c53030;
 }
 
-.ingresos-registrados-mensaje-error
-.ingresos-registrados-mensaje-icono {
+.ingresos-registrados-mensaje-error .ingresos-registrados-mensaje-icono {
   background: #c53030;
 }
-
-/* Botones deshabilitados */
 
 .ingresos-registrados-boton-filtrar:disabled,
 .ingresos-registrados-boton-ver:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
-
-/* Estados visuales */
 
 .ingresos-registrados-boton-ver:hover:not(:disabled) {
   background: #eef5ff;
@@ -380,70 +377,110 @@
   outline-offset: 2px;
 }
 
-/* Pantallas medianas */
+@media (max-width: 768px) {
+  .ingresos-registrados-pagina { padding: 16px; }
+  .ingresos-registrados-encabezado h1 { font-size: 26px; }
+  .ingresos-registrados-encabezado p { font-size: 15px; }
+  .ingresos-registrados-filtros { flex-direction: column; align-items: stretch; }
+  .ingresos-registrados-buscador { flex: initial; max-width: 100%; min-width: 0; }
+  .ingresos-registrados-filtros > .ingresos-registrados-campo { flex: initial; width: 100%; }
+  .ingresos-registrados-campo select,
+  .ingresos-registrados-fecha-wrapper input { width: 100%; max-width: none; }
+  .ingresos-registrados-boton-filtrar { width: 100%; justify-content: center; }
+  .ingresos-registrados-paginacion { justify-content: center; }
+  .ingresos-registrados-modal { max-height: calc(100vh - 32px); }
+  .ingresos-registrados-modal-body { overflow-y: auto; }
+}
 
-@media (max-width: 1100px) {
-  .ingresos-registrados-filtros {
-    align-items: stretch;
-  }
+/* Indicadores de seguimiento (resumen global o por examen) */
+.ingresos-registrados-resumen {
+  margin-top: 20px;
+}
 
-  .ingresos-registrados-boton-filtrar {
-    margin-left: 0;
+.ingresos-registrados-resumen-encabezado h2 {
+  margin: 0;
+  font-size: 19px;
+  color: #0f1f3d;
+}
+
+.ingresos-registrados-resumen-encabezado p {
+  margin: 5px 0 14px;
+  color: #596780;
+  font-size: 13px;
+}
+
+.ingresos-registrados-resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ingresos-registrados-resumen-tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.ingresos-registrados-resumen-icono {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  border-radius: 10px;
+}
+
+.ingresos-registrados-resumen-ingresados .ingresos-registrados-resumen-icono {
+  background: #e6f7ed;
+  color: #21834a;
+}
+
+.ingresos-registrados-resumen-pendientes .ingresos-registrados-resumen-icono {
+  background: #edf4ff;
+  color: #1258b5;
+}
+
+.ingresos-registrados-resumen-rechazados .ingresos-registrados-resumen-icono {
+  background: #fff0f0;
+  color: #c53030;
+}
+
+.ingresos-registrados-resumen-etiqueta,
+.ingresos-registrados-resumen-descripcion {
+  margin: 0;
+  font-size: 13px;
+  color: #53627b;
+}
+
+.ingresos-registrados-resumen-cantidad {
+  display: block;
+  margin: 4px 0;
+  font-size: 30px;
+  line-height: 1.2;
+  color: #102344;
+  font-variant-numeric: tabular-nums;
+}
+
+.ingresos-registrados-resumen-error {
+  color: #c53030;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+@media (max-width: 1000px) {
+  .ingresos-registrados-resumen-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* Pantallas pequeñas */
-
-@media (max-width: 768px) {
-  .ingresos-registrados-pagina {
-    padding: 16px;
-  }
-
-  .ingresos-registrados-encabezado h1 {
-    font-size: 26px;
-  }
-
-  .ingresos-registrados-encabezado p {
-    font-size: 15px;
-  }
-
-  .ingresos-registrados-filtros {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .ingresos-registrados-buscador {
-    flex: initial;
-    max-width: 100%;
-    min-width: 0;
-  }
-
-  .ingresos-registrados-filtros
-  > .ingresos-registrados-campo {
-    flex: initial;
-    width: 100%;
-  }
-
-  .ingresos-registrados-campo select,
-  .ingresos-registrados-fecha-wrapper input {
-    width: 100%;
-    max-width: none;
-  }
-
-  .ingresos-registrados-boton-filtrar {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .ingresos-registrados-paginacion {
-    justify-content: center;
-  }
-
-  .ingresos-registrados-modal {
-    max-height: calc(100vh - 32px);
-  }
-
-  .ingresos-registrados-modal-body {
-    overflow-y: auto;
+@media (max-width: 650px) {
+  .ingresos-registrados-resumen-grid {
+    grid-template-columns: 1fr;
   }
 }
