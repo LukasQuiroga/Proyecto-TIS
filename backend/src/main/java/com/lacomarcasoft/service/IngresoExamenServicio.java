@@ -286,6 +286,13 @@ public class IngresoExamenServicio {
 
         List<Object> params = new ArrayList<>();
 
+        if (idExamen != null && idExamen <= 0) {
+            throw new ResponseStatusException(
+               HttpStatus.BAD_REQUEST,
+               "El identificador del examen debe ser mayor a cero."
+            );
+        }
+
         if (q != null && !q.trim().isEmpty()) {
             String filtro = "%" + q.trim().toLowerCase() + "%";
             sql.append(" AND (LOWER(COALESCE(u.codigo_sis,'')) LIKE ? OR LOWER(TRIM(CONCAT(COALESCE(u.nombre,''), ' ', COALESCE(u.apellido,'')))) LIKE ?)");
@@ -293,18 +300,24 @@ public class IngresoExamenServicio {
             params.add(filtro);
         }
 
-        if (idExamen != null && idExamen > 0) {
-            sql.append(" AND e.id_examen = ?");
-            params.add(idExamen);
+        if (idExamen != null) {
+             sql.append(" AND e.id_examen = ?");
+             params.add(idExamen);
         }
 
-        if (fecha != null && !fecha.trim().isEmpty()) {
-            try {
-                LocalDate fechaLocal = LocalDate.parse(fecha.trim());
-                sql.append(" AND DATE(ie.fecha_hora_ingreso) = ?");
-                params.add(Date.valueOf(fechaLocal));
-            } catch (Exception ignored) {
-            }
+       if (fecha != null && !fecha.trim().isEmpty()) {
+         try {
+            LocalDate fechaLocal = LocalDate.parse(fecha.trim());
+
+            sql.append(" AND DATE(ie.fecha_hora_ingreso) = ?");
+            params.add(Date.valueOf(fechaLocal));
+
+          } catch (java.time.format.DateTimeParseException ex) {
+            throw new ResponseStatusException(
+             HttpStatus.BAD_REQUEST,
+             "Fecha invalida. Use el formato AAAA-MM-DD."
+            );
+          }
         }
 
         sql.append(" ORDER BY ie.fecha_hora_ingreso DESC");

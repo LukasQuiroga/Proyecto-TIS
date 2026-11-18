@@ -34,7 +34,6 @@ public class ReporteAsistenciaServicio {
 
     private static final String TIPO_ACCION = "GENERAR_REPORTE_ASISTENCIA";
     private static final String TIPO_ACCION_AUSENTES = "GENERAR_REPORTE_AUSENTES";
-    private static final Pattern ID_EXAMEN = Pattern.compile("idExamen=(\\d+)");
     private static final Pattern SNAPSHOT_AUSENTES = Pattern.compile("snapshot=([A-Za-z0-9_-]+)");
     private static final DateTimeFormatter FORMATO_FECHA_HORA =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");

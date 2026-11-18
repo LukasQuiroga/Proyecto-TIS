@@ -49,6 +49,10 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
 
   const rolActual = usuario?.nombreRol?.trim().toUpperCase();
 
+  const puedeConsultarIngresos =
+    rolActual === "ADMINISTRADOR" &&
+    tienePermiso("GENERAR_REPORTES");
+
   const puedeIdentificarDocumento =
     tienePermiso("CONTROL_INGRESO") &&
     (rolActual === "DOCENTE" || rolActual === "ADMINISTRADOR");
@@ -178,7 +182,7 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
-            {puedeIdentificarDocumento && (
+            {(puedeIdentificarDocumento || puedeConsultarIngresos) && (
               <>
                 <button
                   type="button"
@@ -223,29 +227,31 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                       </>
                     )}
 
+                    {puedeIdentificarDocumento && (
+                     <NavLink
+                         to="/ingreso/identificar-documento"
+                         className={({ isActive }) =>
+                           `sidebar-subopcion ${
+                               isActive ? "sidebar-subopcion-activa" : ""
+                           }`
+                         }
+                       >
+                           Por documento de identidad
+                     </NavLink>
+                    )}
+
+                   {puedeConsultarIngresos && (
                     <NavLink
-                      to="/ingreso/identificar-documento"
+                      to="/ingreso/ingresos-registrados"
                       className={({ isActive }) =>
                         `sidebar-subopcion ${
                           isActive ? "sidebar-subopcion-activa" : ""
                         }`
                       }
                     >
-                      Por documento de identidad
-                    </NavLink>
-
-                    {rolActual === "DOCENTE" && (
-                      <NavLink
-                        to="/ingreso/ingresos-registrados"
-                        className={({ isActive }) =>
-                          `sidebar-subopcion ${
-                            isActive ? "sidebar-subopcion-activa" : ""
-                          }`
-                        }
-                      >
                         Ingresos registrados
-                      </NavLink>
-                    )}
+                    </NavLink>
+                  )}
                   </div>
                 )}
               </>

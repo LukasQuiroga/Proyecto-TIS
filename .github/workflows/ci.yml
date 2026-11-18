@@ -49,11 +49,8 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Dar permisos a Maven Wrapper
-        run: chmod +x mvnw
-
       - name: Compilar backend y ejecutar pruebas
-        run: ./mvnw -B clean verify
+        run: mvn -B clean verify
 
 
   frontend:
