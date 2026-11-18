@@ -50,12 +50,10 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
   const rolActual = usuario?.nombreRol?.trim().toUpperCase();
 
   const puedeConsultarIngresos =
-    rolActual === "ADMINISTRADOR" &&
-    tienePermiso("GENERAR_REPORTES");
+    rolActual === "ADMINISTRADOR" && tienePermiso("GENERAR_REPORTES");
 
   const puedeIdentificarDocumento =
-    tienePermiso("CONTROL_INGRESO") &&
-    (rolActual === "DOCENTE" || rolActual === "ADMINISTRADOR");
+    rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO");
 
   return (
     <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
@@ -228,37 +226,40 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                     )}
 
                     {puedeIdentificarDocumento && (
-                     <NavLink
-                         to="/ingreso/identificar-documento"
-                         className={({ isActive }) =>
-                           `sidebar-subopcion ${
-                               isActive ? "sidebar-subopcion-activa" : ""
-                           }`
-                         }
-                       >
-                           Por documento de identidad
-                     </NavLink>
+                      <NavLink
+                        to="/ingreso/identificar-documento"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Por documento de identidad
+                      </NavLink>
                     )}
 
-                   {puedeConsultarIngresos && (
-                    <NavLink
-                      to="/ingreso/ingresos-registrados"
-                      className={({ isActive }) =>
-                        `sidebar-subopcion ${
-                          isActive ? "sidebar-subopcion-activa" : ""
-                        }`
-                      }
-                    >
+                    {puedeConsultarIngresos && (
+                      <NavLink
+                        to="/ingreso/ingresos-registrados"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
                         Ingresos registrados
-                    </NavLink>
-                  )}
+                      </NavLink>
+                    )}
                   </div>
                 )}
               </>
             )}
 
             {rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO") && (
-              <Opcion to="/ingreso/intentos-no-autorizados" icono={<FiAlertTriangle />}>
+              <Opcion
+                to="/ingreso/intentos-no-autorizados"
+                icono={<FiAlertTriangle />}
+              >
                 Incidencias
               </Opcion>
             )}
