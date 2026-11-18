@@ -23,3 +23,11 @@ export async function descargarReporteAccesosIncorrectos(idReporte) {
   })
   return data
 }
+
+export async function descargarReporteAccesosIncorrectosExcel(idReporte) {
+  const { data } = await api.get(`/reportes/accesos-incorrectos/${idReporte}/excel`, {
+    responseType: 'blob'
+  })
+
+  return data
+}

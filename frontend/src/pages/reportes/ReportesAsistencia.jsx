@@ -27,6 +27,7 @@ import {
 } from '../../services/reporteHorariosService'
 import {
   descargarReporteAccesosIncorrectos,
+  descargarReporteAccesosIncorrectosExcel,
   generarReporteAccesosIncorrectos,
   listarHistorialReportesAccesosIncorrectos,
   obtenerReporteAccesosIncorrectos
@@ -141,6 +142,7 @@ export default function ReportesAsistencia() {
   const [abriendoReporte, setAbriendoReporte] = useState(false)
   const [busquedaIntentos, setBusquedaIntentos] = useState('')
   const [paginaIntentos, setPaginaIntentos] = useState(1)
+  const [descargandoExcel, setDescargandoExcel] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -447,6 +449,36 @@ export default function ReportesAsistencia() {
       )
     } finally {
       setDescargando(false)
+    }
+  }
+
+  const descargarExcel = async () => {
+    if (
+      !reporte ||
+      tipoReporteVisualizado !== 'ACCESOS_INCORRECTOS' ||
+      descargandoExcel
+    ) {
+      return
+    }
+    setDescargandoExcel(true)
+    setError('')
+    try {
+      const blob = await descargarReporteAccesosIncorrectosExcel(
+        reporte.idReporte
+      )
+      descargarBlob(
+        blob,
+        `reporte-accesos-incorrectos-${reporte.idReporte}.xlsx`
+      )
+    } catch (err) {
+      setError(
+        err.response?.data?.mensaje ||
+          err.response?.data?.message ||
+          err.message ||
+          'No se pudo exportar el reporte a Excel.'
+      )
+    } finally {
+      setDescargandoExcel(false)
     }
   }
 
@@ -1149,16 +1181,28 @@ export default function ReportesAsistencia() {
                 {reporte.nombreGenerador}.
               </p>
             </div>
-
+      
+          <div className="ra-acciones-exportacion">
             <button
               type="button"
               className="ra-boton-primario"
+              onClick={descargarExcel}
+              disabled={descargandoExcel}
+            >
+              <FiDownload />
+              {descargandoExcel ? 'Exportando...' : 'Exportar Excel'}
+            </button>
+
+            <button
+              type="button"
+              className="ra-boton-secundario"
               onClick={descargar}
               disabled={descargando}
             >
               <FiDownload />
               {descargando ? 'Descargando...' : 'Descargar CSV'}
             </button>
+          </div>
           </div>
 
           <div className="ra-resumen ra-resumen-accesos">
