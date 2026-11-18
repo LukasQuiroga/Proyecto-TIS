@@ -181,7 +181,6 @@ export default function ReportesAsistencia() {
   useEffect(() => {
     if (pestana !== 'historial') return undefined
     let vigente = true
-    setCargandoHistorial(true)
     async function cargar() {
       try {
         const [reportesAsistencia, reportesHorarios, reportesAusentes, reportesAccesosIncorrectos
@@ -273,6 +272,7 @@ export default function ReportesAsistencia() {
   }
 
   const solicitarHistorial = () => {
+    setCargandoHistorial(true)
     setError('')
     setPestana('historial')
 
