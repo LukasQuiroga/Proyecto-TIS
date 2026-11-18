@@ -21,6 +21,7 @@ import {
 } from '../../services/reporteAsistenciaService'
 import {
   descargarReporteHorarios,
+  descargarReporteHorariosExcel,
   generarReporteHorarios,
   listarHistorialReportesHorarios,
   obtenerReporteHorarios
@@ -453,23 +454,31 @@ export default function ReportesAsistencia() {
   }
 
   const descargarExcel = async () => {
+    if (!reporte || descargandoExcel) return
     if (
-      !reporte ||
-      tipoReporteVisualizado !== 'ACCESOS_INCORRECTOS' ||
-      descargandoExcel
+      tipoReporteVisualizado !== 'ACCESOS_INCORRECTOS' &&
+      tipoReporteVisualizado !== 'HORARIOS_INGRESO'
     ) {
       return
     }
     setDescargandoExcel(true)
     setError('')
     try {
-      const blob = await descargarReporteAccesosIncorrectosExcel(
-        reporte.idReporte
-      )
-      descargarBlob(
-        blob,
-        `reporte-accesos-incorrectos-${reporte.idReporte}.xlsx`
-      )
+      let blob
+      let nombreArchivo
+
+      if (tipoReporteVisualizado === 'ACCESOS_INCORRECTOS') {
+        blob = await descargarReporteAccesosIncorrectosExcel(
+          reporte.idReporte
+        )
+        nombreArchivo =
+          `reporte-accesos-incorrectos-${reporte.idReporte}.xlsx`
+      } else {
+        blob = await descargarReporteHorariosExcel(reporte.idReporte)
+        nombreArchivo = `reporte-horarios-${reporte.idReporte}.xlsx`
+      }
+
+      descargarBlob(blob, nombreArchivo)
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
@@ -1059,16 +1068,28 @@ export default function ReportesAsistencia() {
                 Generado el {fechaHoraLegible(reporte.fechaGeneracion)}
                 {' '}por {reporte.nombreGenerador}.
               </p>
+            </div> 
+            <div className="ra-acciones-exportacion">
+              <button
+                type="button"
+                className="ra-boton-primario"
+                onClick={descargarExcel}
+                disabled={descargandoExcel}
+              >
+                <FiDownload />
+                {descargandoExcel ? 'Exportando...' : 'Exportar Excel'}
+              </button>
+
+              <button
+                type="button"
+                className="ra-boton-secundario"
+                onClick={descargar}
+                disabled={descargando}
+              >
+                <FiDownload />
+                {descargando ? 'Descargando...' : 'Descargar CSV'}
+              </button>
             </div>
-            <button
-              type="button"
-              className="ra-boton-primario"
-              onClick={descargar}
-              disabled={descargando}
-            >
-              <FiDownload />
-              {descargando ? 'Descargando...' : 'Descargar CSV'}
-            </button>
           </div>
 
           <div className="ra-resumen ra-resumen-horarios">

@@ -23,3 +23,11 @@ export async function descargarReporteHorarios(idReporte) {
   })
   return data
 }
+
+export async function descargarReporteHorariosExcel(idReporte) {
+  const { data } = await api.get(`/reportes/horarios/${idReporte}/excel`, {
+    responseType: 'blob'
+  })
+
+  return data
+}
