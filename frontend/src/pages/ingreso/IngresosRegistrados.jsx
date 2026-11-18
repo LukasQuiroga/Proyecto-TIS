@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -56,11 +57,34 @@ function formatearHora(valor) {
 }
 
 function mensajeError(error, mensajePredeterminado) {
-  return (
-    error?.response?.data?.mensaje ||
-    error?.response?.data?.message ||
-    mensajePredeterminado
-  );
+  const estado = error?.response?.status;
+
+  if (estado === 401) {
+    return "Tu sesión expiró. Inicia sesión nuevamente.";
+  }
+
+  if (estado === 403) {
+    return "No tienes permisos para consultar esta información.";
+  }
+
+  if (estado === 404) {
+    return "El registro solicitado ya no está disponible.";
+  }
+
+  if (estado >= 500) {
+    return "El servidor no pudo completar la consulta. Intenta nuevamente.";
+  }
+
+  if (!error?.response) {
+    return "No se pudo conectar con el servidor. Revisa la conexión e intenta nuevamente.";
+  }
+
+  const respuesta = error.response.data;
+  const detalle = respuesta?.mensaje || respuesta?.message;
+
+  return typeof detalle === "string" && detalle.trim()
+    ? detalle
+    : mensajePredeterminado;
 }
 
 function IngresosRegistrados() {
@@ -76,6 +100,8 @@ function IngresosRegistrados() {
 
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [errorExamenes, setErrorExamenes] = useState("");
+  const [errorDetalle, setErrorDetalle] = useState("");
   const [pagina, setPagina] = useState(1);
 
   const [resumen, setResumen] = useState(null);
@@ -98,13 +124,19 @@ function IngresosRegistrados() {
 
     obtenerExamenesIngreso()
       .then((datos) => {
-        if (activo) {
-          setExamenes(Array.isArray(datos) ? datos : []);
+        if (!activo) return;
+
+        if (!Array.isArray(datos)) {
+          throw new Error("Respuesta de exámenes inválida");
         }
+
+        setExamenes(datos);
       })
       .catch(() => {
         if (activo) {
-          setError("No se pudieron cargar los exámenes.");
+          setErrorExamenes(
+            "No se pudieron cargar los exámenes disponibles."
+          );
         }
       });
 
@@ -124,7 +156,13 @@ function IngresosRegistrados() {
 
       if (idSolicitud !== solicitudListado.current) return;
 
-      setIngresos(Array.isArray(datos) ? datos : []);
+      if (!Array.isArray(datos)) {
+        throw new Error(
+          "La respuesta del listado no tiene el formato esperado"
+        );
+      }
+
+      setIngresos(datos);
       setPagina(1);
     } catch (err) {
       if (idSolicitud !== solicitudListado.current) return;
@@ -147,19 +185,43 @@ function IngresosRegistrados() {
 
   const cargarResumen = useCallback(async (examen = "") => {
     const idSolicitud = ++solicitudResumen.current;
+
     setCargandoResumen(true);
     setErrorResumen("");
 
     try {
       const datos = await obtenerResumenIngresos(examen);
+
       if (idSolicitud !== solicitudResumen.current) return;
+
+      const claves = ["ingresados", "pendientes", "rechazados"];
+
+      if (
+        !datos ||
+        !claves.every(
+          (clave) =>
+            Number.isSafeInteger(datos[clave]) &&
+            datos[clave] >= 0
+        )
+      ) {
+        throw new Error(
+          "La respuesta de indicadores no tiene el formato esperado"
+        );
+      }
 
       setResumen(datos);
       setExamenResumen(examen);
     } catch (err) {
       if (idSolicitud !== solicitudResumen.current) return;
+
       setResumen(null);
-      setErrorResumen(mensajeError(err, "No se pudieron cargar los indicadores."));
+
+      setErrorResumen(
+        mensajeError(
+          err,
+          "No se pudieron cargar los indicadores."
+        )
+      );
     } finally {
       if (idSolicitud === solicitudResumen.current) {
         setCargandoResumen(false);
@@ -171,7 +233,9 @@ function IngresosRegistrados() {
     let activo = true;
 
     Promise.resolve().then(() => {
-      if (activo) cargarResumen("");
+      if (activo) {
+        cargarResumen("");
+      }
     });
 
     return () => {
@@ -205,6 +269,7 @@ function IngresosRegistrados() {
     };
 
     filtrosAplicados.current = filtros;
+
     cargar(filtros);
     cargarResumen(idExamen);
   };
@@ -213,6 +278,7 @@ function IngresosRegistrados() {
     if (cargando || cargandoResumen) return;
 
     const filtros = filtrosAplicados.current;
+
     cargar(filtros);
     cargarResumen(filtros.idExamen || "");
   };
@@ -225,7 +291,6 @@ function IngresosRegistrados() {
   );
 
   const paginaActual = Math.min(pagina, totalPaginas);
-
   const inicio = (paginaActual - 1) * porPagina;
 
   const datosPagina = ingresos.slice(
@@ -234,10 +299,11 @@ function IngresosRegistrados() {
   );
 
   const paginas = useMemo(
-    () => Array.from(
-      { length: totalPaginas },
-      (_, i) => i + 1
-    ),
+    () =>
+      Array.from(
+        { length: totalPaginas },
+        (_, i) => i + 1
+      ),
     [totalPaginas]
   );
 
@@ -254,23 +320,33 @@ function IngresosRegistrados() {
     const idSolicitud = ++solicitudDetalle.current;
 
     setCargandoDetalle(true);
-    setError("");
+    setErrorDetalle("");
 
     try {
       const detalle = await obtenerIngresoRegistrado(idIngreso);
 
-      if (idSolicitud === solicitudDetalle.current) {
-        setIngresoSeleccionado(detalle);
-      }
-    } catch (err) {
-      if (idSolicitud === solicitudDetalle.current) {
-        setError(
-          mensajeError(
-            err,
-            "No se pudo cargar el ingreso seleccionado."
-          )
+      if (idSolicitud !== solicitudDetalle.current) return;
+
+      if (
+        !detalle ||
+        typeof detalle !== "object" ||
+        detalle.idIngreso == null
+      ) {
+        throw new Error(
+          "El detalle del ingreso no tiene el formato esperado"
         );
       }
+
+      setIngresoSeleccionado(detalle);
+    } catch (err) {
+      if (idSolicitud !== solicitudDetalle.current) return;
+
+      setErrorDetalle(
+        mensajeError(
+          err,
+          "No se pudo cargar el ingreso seleccionado."
+        )
+      );
     } finally {
       if (idSolicitud === solicitudDetalle.current) {
         setCargandoDetalle(false);
@@ -309,6 +385,7 @@ function IngresosRegistrados() {
   const cerrarModal = useCallback(() => {
     solicitudDetalle.current += 1;
     setCargandoDetalle(false);
+    setErrorDetalle("");
     setIngresoSeleccionado(null);
   }, []);
 
@@ -336,6 +413,8 @@ function IngresosRegistrados() {
 
   return (
     <main className="ingresos-registrados-pagina">
+
+      {/* ENCABEZADO */}
       <header className="ingresos-registrados-encabezado">
         <h1>Ingresos registrados</h1>
 
@@ -345,61 +424,120 @@ function IngresosRegistrados() {
         </p>
       </header>
 
-      {/* INDICADORES DE SEGUIMIENTO */}
-      <section className="ingresos-registrados-resumen" aria-label="Indicadores de ingresos">
+      {/* INDICADORES */}
+      <section
+        className="ingresos-registrados-resumen"
+        aria-label="Indicadores de ingresos"
+      >
         <div className="ingresos-registrados-resumen-encabezado">
           <h2>Resumen de ingresos</h2>
+
           <p>
             {examenResumen
               ? "Totales del examen seleccionado"
               : "Totales de todos los exámenes"}
-            {" · "}No incluyen los filtros de búsqueda ni fecha.
+            {" · "}
+            No incluyen los filtros de búsqueda ni fecha.
           </p>
         </div>
 
         {errorResumen && (
-          <p className="ingresos-registrados-resumen-error" role="alert">
+          <p
+            className="ingresos-registrados-resumen-error"
+            role="alert"
+          >
             {errorResumen}
           </p>
         )}
 
-        <div className="ingresos-registrados-resumen-grid" aria-live="polite">
+        <div
+          className="ingresos-registrados-resumen-grid"
+          aria-live="polite"
+        >
+
+          {/* INGRESADOS */}
           <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-ingresados">
-            <div className="ingresos-registrados-resumen-icono"><FiCheckCircle /></div>
+            <div className="ingresos-registrados-resumen-icono">
+              <FiCheckCircle />
+            </div>
+
             <div>
-              <p className="ingresos-registrados-resumen-etiqueta">Ingresados</p>
+              <p className="ingresos-registrados-resumen-etiqueta">
+                Ingresados
+              </p>
+
               <strong className="ingresos-registrados-resumen-cantidad">
-                {cargandoResumen ? "..." : (resumen?.ingresados ?? "—")}
+                {cargandoResumen
+                  ? "..."
+                  : (resumen?.ingresados ?? "—")}
               </strong>
-              <p className="ingresos-registrados-resumen-descripcion">Registros de ingreso</p>
+
+              <p className="ingresos-registrados-resumen-descripcion">
+                Registros de ingreso
+              </p>
             </div>
           </article>
 
+          {/* PENDIENTES */}
           <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-pendientes">
-            <div className="ingresos-registrados-resumen-icono"><FiClock /></div>
+            <div className="ingresos-registrados-resumen-icono">
+              <FiClock />
+            </div>
+
             <div>
-              <p className="ingresos-registrados-resumen-etiqueta">Pendientes</p>
+              <p className="ingresos-registrados-resumen-etiqueta">
+                Pendientes
+              </p>
+
               <strong className="ingresos-registrados-resumen-cantidad">
-                {cargandoResumen ? "..." : (resumen?.pendientes ?? "—")}
+                {cargandoResumen
+                  ? "..."
+                  : (resumen?.pendientes ?? "—")}
               </strong>
-              <p className="ingresos-registrados-resumen-descripcion">Estudiante-examen sin ingreso</p>
+
+              <p className="ingresos-registrados-resumen-descripcion">
+                Estudiante-examen sin ingreso
+              </p>
             </div>
           </article>
 
+          {/* RECHAZADOS */}
           <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-rechazados">
-            <div className="ingresos-registrados-resumen-icono"><FiAlertTriangle /></div>
+            <div className="ingresos-registrados-resumen-icono">
+              <FiAlertTriangle />
+            </div>
+
             <div>
-              <p className="ingresos-registrados-resumen-etiqueta">Rechazados</p>
+              <p className="ingresos-registrados-resumen-etiqueta">
+                Rechazados
+              </p>
+
               <strong className="ingresos-registrados-resumen-cantidad">
-                {cargandoResumen ? "..." : (resumen?.rechazados ?? "—")}
+                {cargandoResumen
+                  ? "..."
+                  : (resumen?.rechazados ?? "—")}
               </strong>
-              <p className="ingresos-registrados-resumen-descripcion">Intentos rechazados</p>
+
+              <p className="ingresos-registrados-resumen-descripcion">
+                Intentos rechazados
+              </p>
             </div>
           </article>
         </div>
       </section>
 
+      {/* LISTADO */}
       <section className="ingresos-registrados-contenedor">
+
+        {/* ERROR DE EXÁMENES */}
+        {errorExamenes && (
+          <p
+            className="ingresos-registrados-aviso-error"
+            role="alert"
+          >
+            {errorExamenes}
+          </p>
+        )}
 
         {/* FILTROS */}
         <div className="ingresos-registrados-filtros">
@@ -418,7 +556,7 @@ function IngresosRegistrados() {
             />
           </div>
 
-          {/* FILTRO POR EXAMEN */}
+          {/* EXAMEN */}
           <div className="ingresos-registrados-campo">
             <label htmlFor="filtro-examen-ingreso">
               Examen
@@ -446,7 +584,7 @@ function IngresosRegistrados() {
             </select>
           </div>
 
-          {/* FILTRO POR FECHA */}
+          {/* FECHA */}
           <div className="ingresos-registrados-campo">
             <label htmlFor="filtro-fecha-ingreso">
               Fecha
@@ -466,7 +604,7 @@ function IngresosRegistrados() {
             </div>
           </div>
 
-          {/* BOTON FILTRAR */}
+          {/* FILTRAR */}
           <button
             type="button"
             className="ingresos-registrados-boton-filtrar"
@@ -480,6 +618,7 @@ function IngresosRegistrados() {
             </span>
           </button>
 
+          {/* ACTUALIZAR */}
           <button
             type="button"
             className="ingresos-registrados-boton-actualizar"
@@ -495,9 +634,7 @@ function IngresosRegistrados() {
         {/* MENSAJE DE RESULTADOS */}
         <div
           className={`ingresos-registrados-mensaje ${
-            error
-              ? "ingresos-registrados-mensaje-error"
-              : ""
+            error ? "ingresos-registrados-mensaje-error" : ""
           }`}
           role={error ? "alert" : "status"}
           aria-live="polite"
@@ -521,6 +658,16 @@ function IngresosRegistrados() {
           </span>
         </div>
 
+        {/* ERROR AL ABRIR DETALLE */}
+        {errorDetalle && !ingresoSeleccionado && (
+          <p
+            className="ingresos-registrados-aviso-error"
+            role="alert"
+          >
+            {errorDetalle}
+          </p>
+        )}
+
         {/* TABLA */}
         <div className="ingresos-registrados-tabla-contenedor">
           <table className="ingresos-registrados-tabla">
@@ -542,6 +689,7 @@ function IngresosRegistrados() {
               {!cargando &&
                 datosPagina.map((ingreso) => (
                   <tr key={ingreso.idIngreso}>
+
                     <td>
                       {formatearId(ingreso.idIngreso)}
                     </td>
@@ -632,7 +780,7 @@ function IngresosRegistrados() {
           </table>
         </div>
 
-        {/* PAGINACION */}
+        {/* PAGINACIÓN */}
         <div className="ingresos-registrados-paginacion">
           <div className="ingresos-registrados-paginacion-info">
             Mostrando{" "}
@@ -698,7 +846,7 @@ function IngresosRegistrados() {
         </div>
       </section>
 
-      {/* MODAL DE CONSULTA */}
+      {/* MODAL DE DETALLE */}
       {ingresoSeleccionado && (
         <div
           className="ingresos-registrados-modal-overlay"
@@ -722,7 +870,9 @@ function IngresosRegistrados() {
               <div className="ingresos-registrados-modal-acciones">
                 <button
                   type="button"
-                  onClick={() => abrirDetalle(ingresoSeleccionado.idIngreso)}
+                  onClick={() =>
+                    abrirDetalle(ingresoSeleccionado.idIngreso)
+                  }
                   className="ingresos-registrados-modal-actualizar"
                   disabled={cargandoDetalle}
                   aria-label="Actualizar detalle del ingreso"
@@ -730,6 +880,7 @@ function IngresosRegistrados() {
                 >
                   <FiRefreshCw />
                 </button>
+
                 <button
                   type="button"
                   onClick={cerrarModal}
@@ -742,6 +893,17 @@ function IngresosRegistrados() {
             </div>
 
             <div className="ingresos-registrados-modal-body">
+
+              {/* ERROR INDEPENDIENTE DEL MODAL */}
+              {errorDetalle && (
+                <p
+                  className="ingresos-registrados-aviso-error"
+                  role="alert"
+                >
+                  {errorDetalle}
+                </p>
+              )}
+
               <div className="ingresos-registrados-modal-grid">
 
                 <div>
