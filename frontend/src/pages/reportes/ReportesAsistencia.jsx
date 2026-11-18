@@ -27,7 +27,9 @@ import {
 } from '../../services/reporteHorariosService'
 import {
   descargarReporteAccesosIncorrectos,
-  generarReporteAccesosIncorrectos
+  generarReporteAccesosIncorrectos,
+  listarHistorialReportesAccesosIncorrectos,
+  obtenerReporteAccesosIncorrectos
 } from '../../services/reporteAccesosIncorrectosService'
 import './ReportesAsistencia.css'
 import ReporteAusentes from './ReporteAusentes.jsx'
@@ -179,10 +181,12 @@ export default function ReportesAsistencia() {
 
     async function cargar() {
       try {
-        const [reportesAsistencia, reportesHorarios, reportesAusentes] = await Promise.all([
+        const [reportesAsistencia, reportesHorarios, reportesAusentes, reportesAccesosIncorrectos
+        ] = await Promise.all([
           listarHistorialReportes(solicitudHistorial.buscar),
           listarHistorialReportesHorarios(solicitudHistorial.buscar),
-          listarHistorialAusentes(solicitudHistorial.buscar)
+          listarHistorialAusentes(solicitudHistorial.buscar),
+          listarHistorialReportesAccesosIncorrectos(solicitudHistorial.buscar)
         ])
 
         if (!vigente) return
@@ -208,7 +212,17 @@ export default function ReportesAsistencia() {
           : []
         ).map((item) => ({ ...item, tipoReporte: 'AUSENTES' }))
 
-        const todos = [...asistencia, ...horarios, ...ausentes].sort((a, b) => {
+        const accesosIncorrectos = (
+          Array.isArray(reportesAccesosIncorrectos)
+            ? reportesAccesosIncorrectos
+            : []
+        ).map((item) => ({
+          ...item,
+          tipoReporte: 'ACCESOS_INCORRECTOS'
+        }))
+
+        const todos = [...asistencia, ...horarios, ...ausentes, ...accesosIncorrectos
+        ].sort((a, b) => {
           const fechaA = new Date(a.fechaGeneracion).getTime()
           const fechaB = new Date(b.fechaGeneracion).getTime()
 
@@ -324,8 +338,7 @@ export default function ReportesAsistencia() {
       setGenerandoId(null)
     }
   }
-
-
+  
   const verReporte = async (item) => {
     if (abriendoReporte) return
     setAbriendoReporte(true)
@@ -334,42 +347,60 @@ export default function ReportesAsistencia() {
     setReporte(null)
 
     try {
-      const data =
-        item.tipoReporte === 'ASISTENCIA'
-          ? await obtenerReporteAsistencia(item.idReporte)
-          : item.tipoReporte === 'AUSENTES'
-            ? await obtenerReporteAusentes(item.idReporte)
-            : await obtenerReporteHorarios(item.idReporte)
+      let data
+
+      switch (item.tipoReporte) {
+        case 'ASISTENCIA':
+          data = await obtenerReporteAsistencia(item.idReporte)
+          break
+
+        case 'HORARIOS_INGRESO':
+          data = await obtenerReporteHorarios(item.idReporte)
+          break
+
+        case 'AUSENTES':
+          data = await obtenerReporteAusentes(item.idReporte)
+          data = { ...data, idReporte: item.idReporte }
+          break
+
+        case 'ACCESOS_INCORRECTOS':
+          data = await obtenerReporteAccesosIncorrectos(item.idReporte)
+          break
+
+        default:
+          throw new Error('Tipo de reporte no válido')
+      }
 
       setTipoReporteVisualizado(item.tipoReporte)
-      setReporte(
-        item.tipoReporte === 'AUSENTES'
-          ? { ...data, idReporte: item.idReporte }
-          : data
-      )
+      setReporte(data)
 
       setFiltroEstudiantes('')
       setEstadoEstudiantes('TODOS')
+      setBusquedaIntentos('')
+      setPaginaIntentos(1)
 
       requestAnimationFrame(() => {
-        document
-          .getElementById('reporte-asistencia-vista-previa')
-          ?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          })
+        const idVista =
+          item.tipoReporte === 'ACCESOS_INCORRECTOS'
+            ? 'reporte-accesos-incorrectos-vista-previa'
+            : 'reporte-asistencia-vista-previa'
+
+        document.getElementById(idVista)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
       })
     } catch (err) {
       setError(
         err.response?.data?.mensaje ||
           err.response?.data?.message ||
+          err.message ||
           'No se pudo abrir el reporte.'
       )
     } finally {
       setAbriendoReporte(false)
     }
   }
-
   
   const descargar = async () => {
     if (!reporte || descargando) return
@@ -673,6 +704,10 @@ export default function ReportesAsistencia() {
               </option>
 
               <option value="AUSENTES">Reportes de ausentes</option>
+
+              <option value="ACCESOS_INCORRECTOS">
+                Reportes de accesos incorrectos
+              </option>
             </select>
           </div>
           <form
@@ -727,7 +762,9 @@ export default function ReportesAsistencia() {
                           ? 'Asistencia'
                           : item.tipoReporte === 'AUSENTES'
                             ? 'Ausentes'
-                            : 'Horarios de ingreso'}
+                            : item.tipoReporte === 'HORARIOS_INGRESO'
+                              ? 'Horarios de ingreso'
+                              : 'Accesos incorrectos'}
                       </span>
                     </td>
 
@@ -740,7 +777,9 @@ export default function ReportesAsistencia() {
                         ? item.totalAsistentes
                         : item.tipoReporte === 'AUSENTES'
                           ? item.totalAusentes
-                          : item.totalIngresos}
+                          : item.tipoReporte === 'HORARIOS_INGRESO'
+                            ? item.totalIngresos
+                            : item.totalRechazados}
                     </td>
 
                     <td>
