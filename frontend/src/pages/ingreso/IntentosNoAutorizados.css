@@ -223,6 +223,7 @@
     border-top-color:#0864e8;
     border-radius:50%;
     animation: hu23-evidencia-girar 0.8s linear infinite;
+    justify-self: center;
 }
 
 @keyframes hu23-evidencia-girar {
