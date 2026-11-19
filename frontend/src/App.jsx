@@ -37,6 +37,7 @@ import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
 import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
 import EstudiantesPendientes from "./pages/ingreso/EstudiantesPendientes.jsx";
+import Expulsiones from "./pages/expulsiones/Expulsiones.jsx";
 import IntentosNoAutorizados from "./pages/ingreso/IntentosNoAutorizados.jsx";
 import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
@@ -96,6 +97,20 @@ function AccesoControlIngreso({ children }) {
   const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
   if (!esDocente || !tienePermiso) {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
+function AccesoSoloAdministradorExpulsiones({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
     return <AccesoDenegado />;
   }
 
@@ -342,6 +357,15 @@ function App() {
                 <AccesoControlIngreso>
                   <IntentosNoAutorizados />
                 </AccesoControlIngreso>
+              }
+            />
+
+            <Route
+              path="/expulsiones"
+              element={
+                <AccesoSoloAdministradorExpulsiones>
+                  <Expulsiones />
+                </AccesoSoloAdministradorExpulsiones>
               }
             />
 
