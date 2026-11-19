@@ -174,6 +174,12 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
+            {rolActual === "ADMINISTRADOR" && (
+              <Opcion to="/expulsiones" icono={<FiAlertTriangle />}>
+                Registrar expulsiones
+              </Opcion>
+            )}
+
             {usuario?.nombreRol === "DOCENTE" && (
               <Opcion to="/habilitaciones" icono={<FiGrid />}>
                 Habilitaciones
