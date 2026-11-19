@@ -1,4 +1,3 @@
-
 .pendientes-pagina {
   padding: 24px 32px 40px;
   background: #f7f9fc;
@@ -426,5 +425,244 @@
 
   .pendientes-paginas {
     justify-content: flex-start;
+  }
+}
+
+.pendientes-boton-ver {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: #eef5ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #0057d9;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pendientes-boton-ver:hover {
+  background: #dbeafe;
+}
+
+.pendientes-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.pendientes-modal {
+  width: min(100%, 720px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.pendientes-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 26px;
+  border-bottom: 1px solid #e5e9f2;
+}
+
+.pendientes-modal-header h2 {
+  margin: 0;
+  color: #0f1f3d;
+  font-size: 22px;
+}
+
+.pendientes-modal-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.pendientes-modal-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pendientes-modal-actualizar,
+.pendientes-modal-cerrar {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.pendientes-modal-actualizar:hover,
+.pendientes-modal-cerrar:hover {
+  background: #e2e8f0;
+}
+
+.pendientes-modal-actualizar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pendientes-modal-body {
+  padding: 26px;
+  overflow-y: auto;
+}
+
+.pendientes-modal-estado {
+  margin-bottom: 24px;
+}
+
+.pendientes-modal-seccion {
+  margin-bottom: 24px;
+}
+
+.pendientes-modal-seccion h3 {
+  margin: 0 0 16px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f1f3d;
+}
+
+.pendientes-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.pendientes-modal-campo {
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.pendientes-modal-campo dt {
+  margin-bottom: 7px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pendientes-modal-campo dd {
+  margin: 0;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pendientes-modal-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #92400e;
+}
+
+.pendientes-modal-nota svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pendientes-modal-nota p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pendientes-modal-cargando,
+.pendientes-modal-vacio {
+  padding: 30px 10px;
+  color: #64748b;
+  text-align: center;
+}
+
+.pendientes-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 25px;
+  color: #b91c1c;
+  text-align: center;
+}
+
+.pendientes-modal-error p {
+  margin: 0;
+}
+
+.pendientes-modal-error button {
+  padding: 9px 14px;
+  background: white;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+.pendientes-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 26px;
+  border-top: 1px solid #e5e9f2;
+}
+
+.pendientes-modal-volver {
+  padding: 10px 20px;
+  background: #0066ff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pendientes-modal-volver:hover {
+  background: #0052cc;
+}
+
+@media (max-width: 600px) {
+  .pendientes-modal-overlay {
+    padding: 10px;
+  }
+
+  .pendientes-modal-header,
+  .pendientes-modal-body {
+    padding: 18px;
+  }
+
+  .pendientes-modal-header h2 {
+    font-size: 19px;
+  }
+
+  .pendientes-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pendientes-modal-footer {
+    padding: 14px 18px;
   }
 }
