@@ -270,3 +270,161 @@
     max-width: 100%;
   }
 }
+
+.pendientes-filtros-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pendientes-filtros-titulo h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #0f1f3d;
+  font-size: 19px;
+}
+
+.pendientes-limpiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 1px solid #c9d4e6;
+  border-radius: 6px;
+  background: #fff;
+  color: #40516b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pendientes-limpiar:hover:not(:disabled) {
+  background: #f0f5fc;
+}
+
+.pendientes-limpiar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pendientes-filtros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.pendientes-selector {
+  max-width: none;
+  min-width: 0;
+}
+
+.pendientes-selector input,
+.pendientes-selector select {
+  width: 100%;
+  height: 44px;
+  box-sizing: border-box;
+  border: 1px solid #c9d4e6;
+  border-radius: 6px;
+  background: white;
+  color: #1f2d3d;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.pendientes-selector input:focus,
+.pendientes-selector select:focus {
+  outline: 2px solid #99c2ff;
+  outline-offset: 1px;
+  border-color: #0066ff;
+}
+
+.pendientes-buscador {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pendientes-buscador > svg {
+  position: absolute;
+  left: 13px;
+  color: #718096;
+  pointer-events: none;
+}
+
+.pendientes-buscador input {
+  padding-left: 40px;
+}
+
+.pendientes-paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 20px;
+}
+
+.pendientes-paginacion > span {
+  color: #596780;
+  font-size: 13px;
+}
+
+.pendientes-paginas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pendientes-paginas button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 9px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #d9e1ed;
+  border-radius: 6px;
+  background: white;
+  color: #40516b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pendientes-paginas button:hover:not(:disabled) {
+  background: #edf4ff;
+  border-color: #93baff;
+}
+
+.pendientes-paginas button.activa {
+  background: #0066ff;
+  border-color: #0066ff;
+  color: white;
+  font-weight: 600;
+}
+
+.pendientes-paginas button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .pendientes-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .pendientes-paginacion {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pendientes-paginas {
+    justify-content: flex-start;
+  }
+}
