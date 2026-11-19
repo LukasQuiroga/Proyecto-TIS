@@ -250,6 +250,19 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         Ingresos registrados
                       </NavLink>
                     )}
+
+                    {puedeConsultarIngresos && (
+                      <NavLink
+                        to="/ingreso/estudiantes-pendientes"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Estudiantes pendientes
+                      </NavLink>
+                    )}
                   </div>
                 )}
               </>

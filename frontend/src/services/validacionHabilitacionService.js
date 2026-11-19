@@ -156,3 +156,29 @@ export async function comprobarCorrespondencia(idExamen, idEstudiante) {
 
   return data
 }
+
+export async function listarEstudiantesPendientes(idExamen = "") {
+  const params = {};
+
+  if (idExamen !== "" && idExamen != null) {
+    params.idExamen = idExamen;
+  }
+
+  const { data } = await api.get(
+    "/ingresos/examenes/pendientes",
+    { params }
+  );
+
+  return data;
+}
+
+export async function obtenerEstudiantePendiente(
+  idExamen,
+  idEstudiante
+) {
+  const { data } = await api.get(
+    `/ingresos/examenes/pendientes/${idExamen}/estudiantes/${idEstudiante}`
+  );
+
+  return data;
+}
