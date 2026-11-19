@@ -243,10 +243,10 @@ export default function IntentosNoAutorizados() {
             <td>{fila.metodoIdentificacion}</td><td>{fila.nombreExamen}</td>
             <td><span className="hu23-motivo">{fila.motivoRechazo}</span></td><td>{fila.responsable}</td>
             <td>
-              {String(fila.estado || "PENDIENTE") === "RESUELTA" ? (
-                <button className="hu23-ver" onClick={() => setSeleccionado(fila)} type="button"><FiEye /> Ver</button>
-              ) : (
+              {String(fila.motivoRechazo || "").toLowerCase() === "ingreso duplicado" ? (
                 <button className="hu23-ver" onClick={() => void abrirResolver(fila)} type="button"><FiCheckCircle /> Resolver incidencia</button>
+              ) : (
+                <button className="hu23-ver" onClick={() => setSeleccionado(fila)} type="button"><FiEye /> Ver</button>
               )}
             </td>
           </tr>)}{!cargando && visibles.length === 0 && <tr><td colSpan={7} className="hu23-vacio">No hay intentos registrados.</td></tr>}</tbody>
