@@ -216,6 +216,21 @@
     color:#5b708c;
     text-align:center;}
 
+.hu23-evidencia-spinner {
+    width:34px;
+    height:34px;
+    border:3px solid #dce7f2;
+    border-top-color:#0864e8;
+    border-radius:50%;
+    animation: hu23-evidencia-girar 0.8s linear infinite;
+}
+
+@keyframes hu23-evidencia-girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .hu23-veredicto {
     margin-top: 40px;
 }

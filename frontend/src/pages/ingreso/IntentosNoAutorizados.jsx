@@ -34,6 +34,7 @@ export default function IntentosNoAutorizados() {
   const [guardandoResolver, setGuardandoResolver] = useState(false);
   const [errorResolver, setErrorResolver] = useState("");
   const [fotografiaResolver, setFotografiaResolver] = useState(null);
+  const [cargandoFoto, setCargandoFoto] = useState(false);
   const [pagina, setPagina] = useState(1);
   const porPagina = 10;
   const fotografiaResolverUrlRef = useRef(null);
@@ -65,8 +66,10 @@ export default function IntentosNoAutorizados() {
     setVeredictoResolver("");
     setGuardandoResolver(false);
     setFotografiaResolver(null);
+    setCargandoFoto(true);
 
     setIncidenteResolver(fila);
+    setModalResolverAbierto(true);
 
     try {
       const foto = await obtenerFotoIntento(fila.idIntento);
@@ -83,9 +86,9 @@ export default function IntentosNoAutorizados() {
       }
       fotografiaResolverUrlRef.current = null;
       setFotografiaResolver(null);
+    } finally {
+      setCargandoFoto(false);
     }
-
-    setModalResolverAbierto(true);
   };
 
   const cerrarResolver = () => {
@@ -315,6 +318,12 @@ export default function IntentosNoAutorizados() {
                 <dd>{incidenteResolver.motivoRechazo}</dd>
               </div>
             </dl>
+            {cargandoFoto && (
+              <div className="hu23-evidencia">
+                <p className="hu23-evidencia-caption">Infractor</p>
+                <div className="hu23-evidencia-spinner" />
+              </div>
+            )}
             {fotografiaResolver && (
               <div className="hu23-evidencia">
                 <p className="hu23-evidencia-caption">Infractor</p>
