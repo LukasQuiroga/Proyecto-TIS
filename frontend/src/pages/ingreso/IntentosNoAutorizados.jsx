@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
 import { listarIntentosNoAutorizados, obtenerExamenesIngreso, obtenerFotoIntento, resolverIncidencia } from "../../services/validacionHabilitacionService";
 import "./IntentosNoAutorizados.css";
@@ -36,6 +36,7 @@ export default function IntentosNoAutorizados() {
   const [fotografiaResolver, setFotografiaResolver] = useState(null);
   const [pagina, setPagina] = useState(1);
   const porPagina = 10;
+  const fotografiaResolverUrlRef = useRef(null);
 
   useEffect(() => {
     let vigente = true;
@@ -69,8 +70,18 @@ export default function IntentosNoAutorizados() {
 
     try {
       const foto = await obtenerFotoIntento(fila.idIntento);
-      setFotografiaResolver(foto);
+      if (fotografiaResolverUrlRef.current) {
+        URL.revokeObjectURL(fotografiaResolverUrlRef.current);
+      }
+      fotografiaResolverUrlRef.current = foto
+        ? URL.createObjectURL(foto)
+        : null;
+      setFotografiaResolver(fotografiaResolverUrlRef.current);
     } catch {
+      if (fotografiaResolverUrlRef.current) {
+        URL.revokeObjectURL(fotografiaResolverUrlRef.current);
+      }
+      fotografiaResolverUrlRef.current = null;
       setFotografiaResolver(null);
     }
 
@@ -78,6 +89,10 @@ export default function IntentosNoAutorizados() {
   };
 
   const cerrarResolver = () => {
+    if (fotografiaResolverUrlRef.current) {
+      URL.revokeObjectURL(fotografiaResolverUrlRef.current);
+      fotografiaResolverUrlRef.current = null;
+    }
     setModalResolverAbierto(false);
     setIncidenteResolver(null);
     setVeredictoResolver("");
@@ -304,7 +319,8 @@ export default function IntentosNoAutorizados() {
               </div>
             </dl>
             {fotografiaResolver && (
-              <div>
+              <div className="hu23-evidencia">
+                <p className="hu23-evidencia-caption">Infractor</p>
                 <img src={fotografiaResolver} alt="Evidencia del intento" />
               </div>
             )}

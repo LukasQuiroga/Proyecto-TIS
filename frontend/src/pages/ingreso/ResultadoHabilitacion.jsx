@@ -13,7 +13,6 @@ import {
 import {
   consultarIngresoRegistrado,
   obtenerIngresoRegistrado,
-  registrarIntentoIngresoDuplicado,
   registrarIntentoIngresoDuplicadoConFoto,
   registrarIngresoExamen,
   verificarIngresoYRegistrarRechazo,
@@ -47,7 +46,6 @@ function ResultadoHabilitacion({
   const streamRef = useRef(null);
 
   const registrandoActual = useRef(false);
-  const intentosDuplicadosEnviados = useRef(new Set());
   const verificacionesEnCurso = useRef(new Map());
 
   const claveIngreso = `${idExamen}:${idEstudiante}`;
@@ -273,20 +271,6 @@ function ResultadoHabilitacion({
         if (datos.ingresoRegistrado === true) {
           setModalDuplicadoAbierto(true);
           setErrorRegistroIntento("");
-          if (!intentosDuplicadosEnviados.current.has(claveIngreso)) {
-            intentosDuplicadosEnviados.current.add(claveIngreso);
-            void registrarIntentoIngresoDuplicado(
-              Number(idExamen),
-              Number(idEstudiante)
-            ).catch((errRegistro) => {
-              intentosDuplicadosEnviados.current.delete(claveIngreso);
-              setErrorRegistroIntento(
-                errRegistro.response?.data?.mensaje ||
-                  errRegistro.response?.data?.message ||
-                  "No se pudo guardar este rechazo en el historial."
-              );
-            });
-          }
         }
 
         if (

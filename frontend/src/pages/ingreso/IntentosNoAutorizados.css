@@ -188,6 +188,32 @@
     float:right;
     cursor:pointer}
 
+.hu23-evidencia {
+    display:grid;
+    gap:8px;
+    margin-top:14px;
+}
+
+.hu23-evidencia img {
+    display:block;
+    max-width:100%;
+    max-height:300px;
+    width:auto;
+    height:auto;
+    object-fit:contain;
+    margin:0 auto;
+    background:#f8fafc;
+    border:1px solid #e4ebf3;
+    border-radius:6px;
+}
+
+.hu23-evidencia-caption {
+    margin:0;
+    font-size:13px;
+    font-weight:600;
+    color:#5b708c;
+    text-align:center;}
+
 @media (max-width: 700px) {
     .hu23-pagina {
     padding:18px 12px}
