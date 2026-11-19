@@ -271,7 +271,9 @@ export default function IntentosNoAutorizados() {
                 ]
               : []),
             ["Responsable", seleccionado.responsable],
-            ["Veredicto", seleccionado.veredicto || "—"],
+            ...(String(seleccionado.motivoRechazo || "").toLowerCase().includes("ingreso duplicado")
+              ? [["Veredicto", seleccionado.veredicto || "—"]]
+              : []),
           ].map(([titulo, valor]) => <div key={titulo}><dt>{titulo}</dt><dd>{valor || "—"}</dd></div>)}</dl>
           <button className="hu23-cerrar" onClick={() => setSeleccionado(null)}>Cerrar</button>
         </section>
