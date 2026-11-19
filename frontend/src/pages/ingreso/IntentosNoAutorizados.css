@@ -241,6 +241,61 @@
     background:white;
 }
 
+.hu23-veredicto-acciones {
+    display:flex;
+    gap:12px;
+}
+
+.hu23-boton-resolver,
+.hu23-boton-cancelar {
+    flex:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    height:44px;
+    padding:0 20px;
+    border:0;
+    border-radius:10px;
+    color:#FFFFFF;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.hu23-boton-resolver {
+    background:#38A9EB;
+}
+
+.hu23-boton-resolver:hover:not(:disabled) {
+    background:#218DCE;
+}
+
+.hu23-boton-cancelar {
+    background:#DC3545;
+}
+
+.hu23-boton-cancelar:hover:not(:disabled) {
+    background:#B52A38;
+}
+
+.hu23-boton-resolver:focus-visible {
+    outline:2px solid #218DCE;
+    outline-offset:2px;
+}
+
+.hu23-boton-cancelar:focus-visible {
+    outline:2px solid #B52A38;
+    outline-offset:2px;
+}
+
+.hu23-boton-resolver:disabled,
+.hu23-boton-cancelar:disabled {
+    opacity:0.6;
+    cursor:not-allowed;
+}
+
 @media (max-width: 700px) {
     .hu23-pagina {
     padding:18px 12px}

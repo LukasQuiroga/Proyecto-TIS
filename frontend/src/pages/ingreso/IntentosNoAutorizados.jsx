@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
 import { listarIntentosNoAutorizados, obtenerExamenesIngreso, obtenerFotoIntento, resolverIncidencia } from "../../services/validacionHabilitacionService";
 import "./IntentosNoAutorizados.css";
 
@@ -334,12 +334,14 @@ export default function IntentosNoAutorizados() {
                 placeholder="El estudiante será..."
                 rows={8}
               />
-              <button type="button" onClick={() => void marcarResuelta()} disabled={guardandoResolver}>
-                {guardandoResolver ? "Resolviendo..." : "Marcar como resuelta"}
-              </button>
-              <button type="button" onClick={() => cerrarResolver()} disabled={guardandoResolver}>
-                Cancelar
-              </button>
+              <div className="hu23-veredicto-acciones">
+                <button type="button" className="hu23-boton-cancelar" onClick={() => cerrarResolver()} disabled={guardandoResolver}>
+                  <FiX aria-hidden="true" /> Cancelar
+                </button>
+                <button type="button" className="hu23-boton-resolver" onClick={() => void marcarResuelta()} disabled={guardandoResolver}>
+                  <FiCheck aria-hidden="true" /> {guardandoResolver ? "Resolviendo..." : "Marcar como resuelta"}
+                </button>
+              </div>
             </div>
           </section>
         </div>
