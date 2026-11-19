@@ -268,6 +268,7 @@ export default function IntentosNoAutorizados() {
                 ]
               : []),
             ["Responsable", seleccionado.responsable],
+            ["Veredicto", seleccionado.veredicto || "—"],
           ].map(([titulo, valor]) => <div key={titulo}><dt>{titulo}</dt><dd>{valor || "—"}</dd></div>)}</dl>
           <button className="hu23-cerrar" onClick={() => setSeleccionado(null)}>Cerrar</button>
         </section>
@@ -286,15 +287,11 @@ export default function IntentosNoAutorizados() {
                 <dd>{incidenteResolver.nombreEstudiante || "No identificado"}</dd>
               </div>
               <div>
-                <dt>Identificador</dt>
-                <dd>{incidenteResolver.identificadorIntentado || "—"}</dd>
-              </div>
-              <div>
-                <dt>Codigo</dt>
+                <dt>CodSiS</dt>
                 <dd>{incidenteResolver.codigoUniversitario || "—"}</dd>
               </div>
               <div>
-                <dt>Carnet</dt>
+                <dt>CI</dt>
                 <dd>{incidenteResolver.carnetIdentidad || "—"}</dd>
               </div>
               <div>
