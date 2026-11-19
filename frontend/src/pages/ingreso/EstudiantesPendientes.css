@@ -1,0 +1,272 @@
+
+.pendientes-pagina {
+  padding: 24px 32px 40px;
+  background: #f7f9fc;
+  min-height: calc(100vh - 120px);
+}
+
+.pendientes-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pendientes-encabezado h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #0f1f3d;
+  margin: 0;
+}
+
+.pendientes-encabezado p {
+  font-size: 18px;
+  color: #4f5d75;
+  margin: 6px 0 0;
+}
+
+.pendientes-actualizar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #0066ff;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pendientes-actualizar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pendientes-resumen {
+  margin-top: 24px;
+}
+
+.pendientes-resumen h2,
+.pendientes-tabla-titulo h2 {
+  font-size: 19px;
+  color: #0f1f3d;
+  margin: 0 0 16px;
+}
+
+.pendientes-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pendientes-tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  background: white;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+}
+
+.pendientes-tarjeta div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pendientes-tarjeta span {
+  font-size: 14px;
+  color: #596780;
+}
+
+.pendientes-tarjeta strong {
+  font-size: 30px;
+  color: #0f1f3d;
+}
+
+.pendientes-icono {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.pendientes-icono.ingresados {
+  color: #38a169;
+}
+
+.pendientes-icono.pendientes {
+  color: #d69e2e;
+}
+
+.pendientes-icono.rechazados {
+  color: #e53e3e;
+}
+
+.pendientes-contenedor {
+  margin-top: 24px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #e5e9f2;
+  border-radius: 8px;
+}
+
+.pendientes-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.pendientes-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+  max-width: 430px;
+}
+
+.pendientes-selector label {
+  color: #1f2d3d;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pendientes-selector select {
+  height: 44px;
+  width: 100%;
+  border: 1px solid #c9d4e6;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2d3d;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.pendientes-tabla-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pendientes-tabla-titulo h2 {
+  margin: 0;
+}
+
+.pendientes-tabla-titulo span {
+  color: #596780;
+  font-size: 14px;
+}
+
+.pendientes-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.pendientes-tabla {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.pendientes-tabla thead {
+  background: #f0f5fc;
+}
+
+.pendientes-tabla th {
+  padding: 15px;
+  color: #0f1f3d;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid #e5e9f2;
+}
+
+.pendientes-tabla td {
+  padding: 16px 15px;
+  color: #1f2d3d;
+  font-size: 14px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.pendientes-tabla tbody tr:hover {
+  background: #f8faff;
+}
+
+.pendientes-estado {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #fff8e6;
+  color: #975a16;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pendientes-vacio,
+.pendientes-cargando {
+  text-align: center;
+  padding: 48px 16px;
+  color: #596780;
+}
+
+.pendientes-vacio svg {
+  color: #a0aec0;
+}
+
+.pendientes-error {
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  padding: 14px;
+  color: #c53030;
+  margin: 12px 0;
+}
+
+.pendientes-error button {
+  margin-left: 12px;
+  padding: 7px 12px;
+  border: 1px solid #c53030;
+  border-radius: 5px;
+  background: white;
+  color: #c53030;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .pendientes-tarjetas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .pendientes-pagina {
+    padding: 18px 14px;
+  }
+
+  .pendientes-encabezado h1 {
+    font-size: 25px;
+  }
+
+  .pendientes-encabezado p {
+    font-size: 15px;
+  }
+
+  .pendientes-actualizar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pendientes-contenedor {
+    padding: 14px;
+  }
+
+  .pendientes-selector {
+    max-width: 100%;
+  }
+}
