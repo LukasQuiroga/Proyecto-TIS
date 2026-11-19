@@ -326,11 +326,13 @@ export default function IntentosNoAutorizados() {
             )}
             {errorResolver && <p role="alert">{errorResolver}</p>}
             <div>
+              <label className="hu23-veredicto-label" htmlFor="veredictoResolver">Veredicto</label>
               <textarea
+                id="veredictoResolver"
                 value={veredictoResolver}
                 onChange={(e) => setVeredictoResolver(e.target.value)}
-                placeholder="Veredicto del docente"
-                rows={4}
+                placeholder="El estudiante será..."
+                rows={8}
               />
               <button type="button" onClick={() => void marcarResuelta()} disabled={guardandoResolver}>
                 {guardandoResolver ? "Resolviendo..." : "Marcar como resuelta"}

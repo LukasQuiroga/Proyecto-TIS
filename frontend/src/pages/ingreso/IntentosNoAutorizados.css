@@ -214,6 +214,27 @@
     color:#5b708c;
     text-align:center;}
 
+.hu23-veredicto-label {
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:#5b708c;
+    margin-bottom:6px;
+}
+
+.hu23-modal textarea {
+    width:100%;
+    min-height:140px;
+    resize:vertical;
+    border:1px solid #d5dfeb;
+    border-radius:5px;
+    padding:10px 12px;
+    font:inherit;
+    font-size:14px;
+    color:#273e5c;
+    background:white;
+}
+
 @media (max-width: 700px) {
     .hu23-pagina {
     padding:18px 12px}
