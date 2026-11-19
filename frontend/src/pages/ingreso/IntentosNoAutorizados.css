@@ -190,8 +190,8 @@
 
 .hu23-evidencia {
     display:grid;
-    gap:8px;
-    margin-top:14px;
+    gap:10px;
+    margin-top:26px;
 }
 
 .hu23-evidencia img {
@@ -209,7 +209,7 @@
 
 .hu23-evidencia-caption {
     margin:0;
-    font-size:13px;
+    font-size:16px;
     font-weight:600;
     color:#5b708c;
     text-align:center;}
