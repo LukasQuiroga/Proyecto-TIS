@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import {
   obtenerExamenes,
@@ -6,6 +5,7 @@ import {
 } from "../../services/examenService";
 import {
   listarEstudiantesExamen,
+  listarHistorialExpulsiones,
   registrarExpulsion,
   obtenerMensajeErrorExpulsion,
 } from "../../services/expulsionService";
@@ -39,6 +39,23 @@ function horaActual() {
   ].join(":");
 }
 
+function formatearFechaHora(valor) {
+  if (!valor) {
+    return "—";
+  }
+
+  const fecha = new Date(valor);
+
+  if (Number.isNaN(fecha.getTime())) {
+    return "—";
+  }
+
+  return fecha.toLocaleString("es-BO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
 function Expulsiones() {
   const [examenes, setExamenes] = useState([]);
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
@@ -52,6 +69,9 @@ function Expulsiones() {
   const [errorEstudiantes, setErrorEstudiantes] = useState("");
   const [busquedaEstudiante, setBusquedaEstudiante] = useState("");
   const [recargaEstudiantes, setRecargaEstudiantes] = useState(0);
+  const [historial, setHistorial] = useState([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+  const [errorHistorial, setErrorHistorial] = useState("");
 
   const [estudianteSeleccionado, setEstudianteSeleccionado] = useState(null);
   const [fechaExpulsion, setFechaExpulsion] = useState("");
@@ -127,7 +147,7 @@ function Expulsiones() {
           setErrorEstudiantes(
             error?.response?.status === 403
               ? "No tienes autorización para consultar estos estudiantes."
-              : "No se pudieron cargar los estudiantes del examen."
+              : "No se pudieron cargar los estudiantes del examen.",
           );
         }
       } finally {
@@ -144,6 +164,57 @@ function Expulsiones() {
     };
   }, [idExamen, recargaEstudiantes]);
 
+  useEffect(() => {
+    if (idExamen == null) {
+      return;
+    }
+
+    let activo = true;
+
+    async function cargarHistorial() {
+      setCargandoHistorial(true);
+      setErrorHistorial("");
+
+      try {
+        const datos = await listarHistorialExpulsiones(idExamen);
+
+        if (!Array.isArray(datos)) {
+          throw new Error("Historial de expulsiones inválido");
+        }
+
+        if (activo) {
+          setHistorial(datos);
+        }
+      } catch (error) {
+        if (activo) {
+          setHistorial([]);
+
+          if (error?.response?.status === 401) {
+            setErrorHistorial(
+              "Tu sesión ha expirado. Inicia sesión nuevamente.",
+            );
+          } else if (error?.response?.status === 403) {
+            setErrorHistorial(
+              "No tienes autorización para consultar el historial.",
+            );
+          } else {
+            setErrorHistorial("No se pudo cargar el historial de expulsiones.");
+          }
+        }
+      } finally {
+        if (activo) {
+          setCargandoHistorial(false);
+        }
+      }
+    }
+
+    cargarHistorial();
+
+    return () => {
+      activo = false;
+    };
+  }, [idExamen, recargaEstudiantes]);
+
   const examenesFiltrados = useMemo(() => {
     const texto = normalizarTexto(busquedaExamen);
 
@@ -153,7 +224,7 @@ function Expulsiones() {
           examen.codigo,
           examen.nombreExamen,
           obtenerNombreAsignatura(examen),
-        ].join(" ")
+        ].join(" "),
       );
 
       return (
@@ -168,8 +239,8 @@ function Expulsiones() {
 
     return estudiantes.filter((estudiante) =>
       normalizarTexto(
-        `${estudiante.nombreCompleto} ${estudiante.codigoUniversitario}`
-      ).includes(texto)
+        `${estudiante.nombreCompleto} ${estudiante.codigoUniversitario}`,
+      ).includes(texto),
     );
   }, [estudiantes, busquedaEstudiante]);
 
@@ -223,7 +294,7 @@ function Expulsiones() {
     }
 
     const confirmado = window.confirm(
-      `¿Confirmas la expulsión de ${estudianteSeleccionado.nombreCompleto} del examen ${examenSeleccionado.nombreExamen}?`
+      `¿Confirmas la expulsión de ${estudianteSeleccionado.nombreCompleto} del examen ${examenSeleccionado.nombreExamen}?`,
     );
 
     if (!confirmado) {
@@ -251,8 +322,8 @@ function Expulsiones() {
         anteriores.map((estudiante) =>
           estudiante.idEstudiante === estudianteSeleccionado.idEstudiante
             ? { ...estudiante, expulsado: true }
-            : estudiante
-        )
+            : estudiante,
+        ),
       );
 
       setEstudianteSeleccionado(null);
@@ -391,6 +462,67 @@ function Expulsiones() {
             </div>
           </section>
 
+          <section className="expulsiones-panel expulsiones-historial">
+            <div className="expulsiones-historial-encabezado">
+              <h2>Historial de expulsiones</h2>
+
+              <button
+                type="button"
+                className="expulsiones-boton-secundario"
+                onClick={() => setRecargaEstudiantes((valor) => valor + 1)}
+                disabled={cargandoHistorial}
+              >
+                Actualizar historial
+              </button>
+            </div>
+
+            {errorHistorial && (
+              <p className="expulsiones-error" role="alert">
+                {errorHistorial}
+              </p>
+            )}
+
+            {cargandoHistorial ? (
+              <p role="status">Cargando historial de expulsiones...</p>
+            ) : errorHistorial ? null : historial.length === 0 ? (
+              <p>No existen expulsiones registradas para este examen.</p>
+            ) : (
+              <div className="expulsiones-tabla-contenedor">
+                <table className="expulsiones-tabla">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Estudiante</th>
+                      <th>Fecha de expulsión</th>
+                      <th>Fecha de registro</th>
+                      <th>Motivo</th>
+                      <th>Observaciones</th>
+                      <th>Responsable (ID)</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {historial.map((registro) => (
+                      <tr key={registro.idExpulsion}>
+                        <td>{registro.codigoUniversitario || "—"}</td>
+                        <td>{registro.nombreCompleto || "—"}</td>
+                        <td>
+                          {formatearFechaHora(registro.fechaHoraExpulsion)}
+                        </td>
+                        <td>
+                          {formatearFechaHora(registro.fechaHoraRegistro)}
+                        </td>
+                        <td>{registro.motivo || "—"}</td>
+                        <td>{registro.observaciones || "—"}</td>
+                        <td>{registro.idResponsable ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
           <div className="expulsiones-columnas">
             <section className="expulsiones-panel">
               <h2>Estudiantes del examen</h2>
@@ -506,7 +638,10 @@ function Expulsiones() {
                     </span>
                   </p>
 
-                  <form className="expulsiones-formulario" onSubmit={guardarExpulsion}>
+                  <form
+                    className="expulsiones-formulario"
+                    onSubmit={guardarExpulsion}
+                  >
                     <div className="expulsiones-filtros">
                       <label>
                         Fecha de expulsión

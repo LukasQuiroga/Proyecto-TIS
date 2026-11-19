@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.lacomarcasoft.dto.response.HistorialExpulsionRespuesta;
+import java.util.List;
 
 @Service
 public class ExpulsionServicio {
@@ -114,5 +116,56 @@ public class ExpulsionServicio {
         );
 
         return expulsiones.save(expulsion);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<HistorialExpulsionRespuesta> listarHistorial(Long idExamen) {
+
+        if (idExamen == null || idExamen <= 0) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Identificador de examen invalido"
+            );
+        }
+
+        if (!examenes.existsById(idExamen)) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Examen no encontrado"
+            );
+        }
+
+        return expulsiones
+            .findByExamen_IdExamenOrderByFechaHoraExpulsionDesc(idExamen)
+            .stream()
+            .map(expulsion -> {
+                var estudiante = expulsion.getEstudiante();
+
+                String nombre = estudiante.getNombre() == null
+                    ? ""
+                    : estudiante.getNombre();
+
+                String apellido = estudiante.getApellido() == null
+                    ? ""
+                    : estudiante.getApellido();
+
+                String codigo = estudiante.getCodigoSis() == null
+                    ? ""
+                    : String.valueOf(estudiante.getCodigoSis());
+
+                return new HistorialExpulsionRespuesta(
+                    expulsion.getIdExpulsion(),
+                    estudiante.getIdUsuario(),
+                    (nombre + " " + apellido).trim(),
+                    codigo,
+                    expulsion.getResponsable().getIdUsuario(),
+                    expulsion.getFechaHoraExpulsion(),
+                    expulsion.getFechaHoraRegistro(),
+                    expulsion.getMotivo(),
+                    expulsion.getObservaciones()
+                );
+            })
+            .toList();
     }
 }

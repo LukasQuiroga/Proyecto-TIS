@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.lacomarcasoft.dto.response.HistorialExpulsionRespuesta;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/expulsiones")
@@ -44,5 +46,11 @@ public class ExpulsionControlador {
             expulsion.getMotivo(),
             expulsion.getObservaciones()
         );
+    }
+
+    @GetMapping("/examenes/{idExamen}/historial")
+    public List<HistorialExpulsionRespuesta> listarHistorial(
+            @PathVariable Long idExamen) {
+        return servicio.listarHistorial(idExamen);
     }
 }

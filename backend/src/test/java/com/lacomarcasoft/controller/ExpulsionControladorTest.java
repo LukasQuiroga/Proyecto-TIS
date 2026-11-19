@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -92,5 +93,15 @@ class ExpulsionControladorTest {
         );
 
         verify(servicio).registrar(same(solicitud), isNull());
+    }
+
+    @Test
+    void consultaHistorialDelExamenSeleccionado() {
+        when(servicio.listarHistorial(12L)).thenReturn(List.of());
+
+        var respuesta = controlador.listarHistorial(12L);
+
+        assertTrue(respuesta.isEmpty());
+        verify(servicio).listarHistorial(12L);
     }
 }

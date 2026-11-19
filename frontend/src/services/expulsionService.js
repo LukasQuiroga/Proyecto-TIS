@@ -8,6 +8,14 @@ export const listarEstudiantesExamen = async (idExamen) => {
   return respuesta.data;
 };
 
+export const listarHistorialExpulsiones = async (idExamen) => {
+  const respuesta = await api.get(
+    `/expulsiones/examenes/${idExamen}/historial`,
+  );
+
+  return respuesta.data;
+};
+
 export const registrarExpulsion = (datos) => {
   return api.post("/expulsiones", datos);
 };
