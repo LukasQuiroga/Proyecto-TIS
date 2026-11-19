@@ -214,12 +214,16 @@
     color:#5b708c;
     text-align:center;}
 
+.hu23-veredicto {
+    margin-top: 40px;
+}
+
 .hu23-veredicto-label {
     display:block;
     font-size:13px;
     font-weight:600;
     color:#5b708c;
-    margin-bottom:6px;
+    margin-bottom: 8px;
 }
 
 .hu23-modal textarea {

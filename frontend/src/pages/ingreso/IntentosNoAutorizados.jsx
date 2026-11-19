@@ -325,7 +325,7 @@ export default function IntentosNoAutorizados() {
               </div>
             )}
             {errorResolver && <p role="alert">{errorResolver}</p>}
-            <div>
+            <div className="hu23-veredicto">
               <label className="hu23-veredicto-label" htmlFor="veredictoResolver">Veredicto</label>
               <textarea
                 id="veredictoResolver"
