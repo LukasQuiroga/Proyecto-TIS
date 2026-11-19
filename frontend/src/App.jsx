@@ -36,6 +36,7 @@ import ComprobarExamenCorrespondiente from "./pages/ingreso/ComprobarExamenCorre
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
 import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
+import EstudiantesPendientes from "./pages/ingreso/EstudiantesPendientes.jsx";
 import IntentosNoAutorizados from "./pages/ingreso/IntentosNoAutorizados.jsx";
 import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
@@ -322,6 +323,15 @@ function App() {
               element={
                 <AccesoReportes>
                   <IngresosRegistrados />
+                </AccesoReportes>
+              }
+            />
+
+            <Route
+              path="/ingreso/estudiantes-pendientes"
+              element={
+                <AccesoReportes>
+                  <EstudiantesPendientes />
                 </AccesoReportes>
               }
             />

@@ -72,6 +72,7 @@ public class ConsultaPendientesServicio {
                 + (idExamen == null
                     ? ""
                     : " AND e.id_examen = ?")
+                + "\n"
                 + """
                   ORDER BY e.fecha_examen NULLS LAST,
                            e.id_examen,
