@@ -34,7 +34,7 @@ public interface SituacionExcepcionalRepositorio
                     OR estudiante.idUsuario = :idEstudiante)
               AND (:tipoSituacion IS NULL
                     OR LOWER(s.tipoSituacion)
-                    LIKE LOWER(CONCAT('%', :tipoSituacion, '%')))
+                    LIKE LOWER(CONCAT('%', CAST(:tipoSituacion AS String), '%')))
             ORDER BY s.fechaRegistro DESC, s.idSituacion DESC
             """)
     List<SituacionExcepcional> buscarHistorial(
