@@ -47,6 +47,11 @@
     width:100%;
     min-width:150px}
 
+.hu23-filtro-fecha,
+.hu23-filtro-examen {
+    height:48px;
+}
+
 .hu23-filtros button {
     background:#1770f8;
     color:white;
