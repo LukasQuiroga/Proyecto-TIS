@@ -11,6 +11,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
+import com.lacomarcasoft.dto.response.SituacionExcepcionalDetalleRespuesta;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -86,6 +91,71 @@ class SituacionExcepcionalControladorTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje").value(
                         "La descripcion es obligatoria"
+                ));
+    }
+        @Test
+    void historialRecibeFiltrosYDevuelve200() throws Exception {
+        when(servicio.listarHistorial(8L, 12L, "Interrupcion"))
+                .thenReturn(List.of());
+
+        mvc.perform(get("/api/situaciones-excepcionales")
+                .param("idExamen", "8")
+                .param("idEstudiante", "12")
+                .param("tipoSituacion", "Interrupcion"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(servicio).listarHistorial(
+                8L,
+                12L,
+                "Interrupcion"
+        );
+    }
+
+    @Test
+    void detalleExistenteDevuelve200() throws Exception {
+        var respuesta = new SituacionExcepcionalDetalleRespuesta(
+                15L,
+                8L,
+                "Primer parcial",
+                null,
+                null,
+                "Interrupcion",
+                "Corte de energia electrica",
+                LocalDate.of(2026, 11, 19),
+                LocalTime.of(10, 30),
+                null,
+                true,
+                "Carlos Lopez"
+        );
+
+        when(servicio.obtenerDetalle(15L))
+                .thenReturn(respuesta);
+
+        mvc.perform(get("/api/situaciones-excepcionales/15"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idSituacion").value(15))
+                .andExpect(jsonPath("$.nombreExamen").value("Primer parcial"))
+                .andExpect(jsonPath("$.descripcion").value(
+                        "Corte de energia electrica"
+                ))
+                .andExpect(jsonPath("$.tieneEvidencia").value(true));
+
+        verify(servicio).obtenerDetalle(15L);
+    }
+
+    @Test
+    void detalleInexistenteDevuelve404() throws Exception {
+        when(servicio.obtenerDetalle(99L))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Situacion excepcional no encontrada"
+                ));
+
+        mvc.perform(get("/api/situaciones-excepcionales/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensaje").value(
+                        "Situacion excepcional no encontrada"
                 ));
     }
 }

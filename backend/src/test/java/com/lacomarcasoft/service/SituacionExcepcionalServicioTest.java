@@ -390,4 +390,145 @@ class SituacionExcepcionalServicioTest {
         verifyNoInteractions(situacionRepositorio);
     }
 
+    @Test
+    void historialIncluyeSituacionesSinEstudiante() {
+        Examen examen = new Examen();
+        examen.setIdExamen(8L);
+        examen.setNombreExamen("Primer parcial");
+
+        Usuario administrador = mock(Usuario.class);
+        when(administrador.getNombre()).thenReturn("Carlos");
+        when(administrador.getApellido()).thenReturn("Lopez");
+
+        SituacionExcepcional situacion = new SituacionExcepcional();
+        situacion.setIdSituacion(15L);
+        situacion.setExamen(examen);
+        situacion.setRegistradoPor(administrador);
+        situacion.setTipoSituacion("Interrupcion");
+        situacion.setFechaOcurrencia(LocalDate.of(2026, 11, 19));
+        situacion.setHoraOcurrencia(LocalTime.of(10, 30));
+
+        when(situacionRepositorio.buscarHistorial(null, null, null))
+                .thenReturn(List.of(situacion));
+
+        var resultado = servicio.listarHistorial(null, null, null);
+
+        assertEquals(1, resultado.size());
+
+        var resumen = resultado.get(0);
+
+        assertEquals(15L, resumen.idSituacion());
+        assertEquals(8L, resumen.idExamen());
+        assertEquals("Primer parcial", resumen.nombreExamen());
+        assertNull(resumen.idEstudiante());
+        assertNull(resumen.nombreEstudiante());
+        assertEquals("Interrupcion", resumen.tipoSituacion());
+        assertEquals("Carlos Lopez", resumen.registradoPor());
+        assertFalse(resumen.tieneEvidencia());
+
+        verify(situacionRepositorio).buscarHistorial(null, null, null);
+    }
+
+    @Test
+    void historialAplicaFiltrosCombinados() {
+        when(situacionRepositorio.buscarHistorial(
+                8L,
+                12L,
+                "Interrupcion"
+        )).thenReturn(List.of());
+
+        var resultado = servicio.listarHistorial(
+                8L,
+                12L,
+                "  Interrupcion  "
+        );
+
+        assertTrue(resultado.isEmpty());
+
+        verify(situacionRepositorio).buscarHistorial(
+                8L,
+                12L,
+                "Interrupcion"
+        );
+    }
+
+    @Test
+    void historialRechazaIdentificadorInvalido() {
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> servicio.listarHistorial(0L, null, null)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+
+        verifyNoInteractions(situacionRepositorio);
+    }
+
+    @Test
+    void detalleDevuelveSituacionRegistrada() {
+        Examen examen = new Examen();
+        examen.setIdExamen(8L);
+        examen.setNombreExamen("Primer parcial");
+
+        Usuario administrador = mock(Usuario.class);
+        when(administrador.getNombre()).thenReturn("Carlos");
+        when(administrador.getApellido()).thenReturn("Lopez");
+
+        SituacionExcepcional situacion = new SituacionExcepcional();
+        situacion.setIdSituacion(15L);
+        situacion.setExamen(examen);
+        situacion.setRegistradoPor(administrador);
+        situacion.setTipoSituacion("Interrupcion");
+        situacion.setDescripcion("Corte de energia electrica");
+        situacion.setFechaOcurrencia(LocalDate.of(2026, 11, 19));
+        situacion.setHoraOcurrencia(LocalTime.of(10, 30));
+        situacion.setEvidenciaReferencia("archivo-privado.pdf");
+
+        when(situacionRepositorio.buscarDetalle(15L))
+                .thenReturn(Optional.of(situacion));
+
+        var resultado = servicio.obtenerDetalle(15L);
+
+        assertEquals(15L, resultado.idSituacion());
+        assertEquals(8L, resultado.idExamen());
+        assertEquals("Primer parcial", resultado.nombreExamen());
+        assertNull(resultado.idEstudiante());
+        assertNull(resultado.nombreEstudiante());
+        assertEquals("Interrupcion", resultado.tipoSituacion());
+        assertEquals(
+                "Corte de energia electrica",
+                resultado.descripcion()
+        );
+        assertEquals("Carlos Lopez", resultado.registradoPor());
+        assertTrue(resultado.tieneEvidencia());
+
+        verify(situacionRepositorio).buscarDetalle(15L);
+    }
+
+    @Test
+    void detalleInexistenteDevuelve404() {
+        when(situacionRepositorio.buscarDetalle(99L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> servicio.obtenerDetalle(99L)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
+
+        verify(situacionRepositorio).buscarDetalle(99L);
+    }
+
+    @Test
+    void detalleRechazaIdentificadorInvalido() {
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> servicio.obtenerDetalle(0L)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+
+        verifyNoInteractions(situacionRepositorio);
+    }
 }

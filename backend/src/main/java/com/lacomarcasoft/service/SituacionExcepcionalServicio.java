@@ -2,6 +2,8 @@
 package com.lacomarcasoft.service;
 
 import com.lacomarcasoft.dto.request.RegistrarSituacionExcepcionalSolicitud;
+import com.lacomarcasoft.dto.response.SituacionExcepcionalResumenRespuesta;
+import com.lacomarcasoft.dto.response.SituacionExcepcionalDetalleRespuesta;
 import com.lacomarcasoft.modelo.Examen;
 import com.lacomarcasoft.modelo.SituacionExcepcional;
 import com.lacomarcasoft.modelo.Usuario;
@@ -15,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 
 @Service
 public class SituacionExcepcionalServicio {
@@ -168,5 +171,113 @@ public class SituacionExcepcionalServicio {
         SituacionExcepcional registrada = situacionRepositorio.save(situacion);
 
         return registrada.getIdSituacion();
+    }
+
+    @Transactional(readOnly = true)
+    public List<SituacionExcepcionalResumenRespuesta> listarHistorial(
+            Long idExamen,
+            Long idEstudiante,
+            String tipoSituacion
+    ) {
+        if (idExamen != null && idExamen <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de examen invalido"
+            );
+        }
+
+        if (idEstudiante != null && idEstudiante <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de estudiante invalido"
+            );
+        }
+
+        String tipoFiltrado = tipoSituacion == null
+                || tipoSituacion.isBlank()
+                ? null
+                : tipoSituacion.trim();
+
+        return situacionRepositorio.buscarHistorial(
+                idExamen,
+                idEstudiante,
+                tipoFiltrado
+        ).stream()
+                .map(situacion -> {
+                    Usuario estudiante = situacion.getEstudiante();
+                    Usuario responsable = situacion.getRegistradoPor();
+
+                    String nombreEstudiante = estudiante == null
+                            ? null
+                            : estudiante.getNombre() + " "
+                                    + estudiante.getApellido();
+
+                    String nombreResponsable = responsable.getNombre()
+                            + " " + responsable.getApellido();
+
+                    String evidencia = situacion.getEvidenciaReferencia();
+
+                    return new SituacionExcepcionalResumenRespuesta(
+                            situacion.getIdSituacion(),
+                            situacion.getExamen().getIdExamen(),
+                            situacion.getExamen().getNombreExamen(),
+                            estudiante == null
+                                    ? null
+                                    : estudiante.getIdUsuario(),
+                            nombreEstudiante,
+                            situacion.getTipoSituacion(),
+                            situacion.getFechaOcurrencia(),
+                            situacion.getHoraOcurrencia(),
+                            situacion.getFechaRegistro(),
+                            evidencia != null && !evidencia.isBlank(),
+                            nombreResponsable
+                    );
+                })
+                .toList();
+    }
+        @Transactional(readOnly = true)
+    public SituacionExcepcionalDetalleRespuesta obtenerDetalle(
+            Long idSituacion
+    ) {
+        if (idSituacion == null || idSituacion <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de situacion invalido"
+            );
+        }
+
+        SituacionExcepcional situacion = situacionRepositorio
+                .buscarDetalle(idSituacion)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Situacion excepcional no encontrada"
+                ));
+
+        Usuario estudiante = situacion.getEstudiante();
+        Usuario responsable = situacion.getRegistradoPor();
+
+        String nombreEstudiante = estudiante == null
+                ? null
+                : estudiante.getNombre() + " " + estudiante.getApellido();
+
+        String nombreResponsable = responsable.getNombre()
+                + " " + responsable.getApellido();
+
+        String evidencia = situacion.getEvidenciaReferencia();
+
+        return new SituacionExcepcionalDetalleRespuesta(
+                situacion.getIdSituacion(),
+                situacion.getExamen().getIdExamen(),
+                situacion.getExamen().getNombreExamen(),
+                estudiante == null ? null : estudiante.getIdUsuario(),
+                nombreEstudiante,
+                situacion.getTipoSituacion(),
+                situacion.getDescripcion(),
+                situacion.getFechaOcurrencia(),
+                situacion.getHoraOcurrencia(),
+                situacion.getFechaRegistro(),
+                evidencia != null && !evidencia.isBlank(),
+                nombreResponsable
+        );
     }
 }
