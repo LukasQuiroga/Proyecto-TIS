@@ -31,6 +31,7 @@ import Examenes from "./pages/examenes/Examenes.jsx";
 import MisExamenes from "./pages/examenes/MisExamenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
 import RegistrarSituacionExcepcional from "./pages/situaciones/RegistrarSituacionExcepcional.jsx";
+import HistorialSituacionesExcepcionales from "./pages/situaciones/HistorialSituacionesExcepcionales.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 import ComprobarExamenCorrespondiente from "./pages/ingreso/ComprobarExamenCorrespondiente";
@@ -291,6 +292,15 @@ function App() {
               element={
                 <AccesoSoloAdministrador>
                   <RegistrarSituacionExcepcional />
+                </AccesoSoloAdministrador>
+              }
+            />
+
+            <Route
+              path="/situaciones-excepcionales/historial"
+              element={
+                <AccesoSoloAdministrador>
+                  <HistorialSituacionesExcepcionales />
                 </AccesoSoloAdministrador>
               }
             />

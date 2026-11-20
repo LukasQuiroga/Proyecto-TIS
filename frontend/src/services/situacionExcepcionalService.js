@@ -21,6 +21,26 @@ export const adjuntarEvidenciaSituacion = (idSituacion, archivo) => {
   return api.post(`${API}/${idSituacion}/evidencia`, datos);
 };
 
+export const obtenerHistorialSituaciones = (filtros = {}) => {
+  return api.get(API, {
+    params: Object.fromEntries(
+      Object.entries(filtros).filter(
+        ([, valor]) => valor !== "" && valor !== null && valor !== undefined,
+      ),
+    ),
+  });
+};
+
+export const obtenerDetalleSituacion = (idSituacion) => {
+  return api.get(`${API}/${idSituacion}`);
+};
+
+export const descargarEvidenciaSituacion = (idSituacion) => {
+  return api.get(`${API}/${idSituacion}/evidencia`, {
+    responseType: "blob",
+  });
+};
+
 export const obtenerErrorSituacion = (
   error,
   predeterminado = "No se pudo completar la operación.",

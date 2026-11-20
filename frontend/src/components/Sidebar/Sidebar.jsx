@@ -183,6 +183,15 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
+            {rolActual === "ADMINISTRADOR" && (
+              <Opcion
+                to="/situaciones-excepcionales/historial"
+                icono={<FiClock />}
+              >
+                Historial de situaciones
+              </Opcion>
+            )}
+
             {usuario?.nombreRol === "DOCENTE" && (
               <Opcion to="/habilitaciones" icono={<FiGrid />}>
                 Habilitaciones
