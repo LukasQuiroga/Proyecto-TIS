@@ -210,14 +210,14 @@ export default function IntentosNoAutorizados() {
           setCodigoAplicado(codigoExamen.trim().toLowerCase());
           cargar({ q: busqueda });
         }}>
-          <label className="hu23-busqueda"><FiSearch /><input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por estudiante o código..." /></label>
+          <label className="hu23-busqueda"><FiSearch /><input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por estudiante o código" /></label>
           <label className="hu23-busqueda">
             <FiSearch />
             <input
               type="search"
               value={codigoExamen}
               onChange={(e) => setCodigoExamen(e.target.value)}
-              placeholder="Buscar por código de examen..."
+              placeholder="Buscar por código de examen"
               aria-label="Código de examen"
             />
           </label>

@@ -21,13 +21,13 @@
 
 .hu23-filtros {
     display:flex;
-    gap:10px;
+    gap:12px;
     padding:15px;
     align-items:center;
     flex-wrap:wrap}
 
 .hu23-filtros select,.hu23-busqueda {
-    height:39px;
+    height:48px;
     border:1px solid #d5dfeb;
     background:white;
     border-radius:5px;
@@ -374,7 +374,7 @@
     display:flex;
     align-items:center;
     gap:6px;
-    height:39px;
+    height:48px;
     padding:0 8px;
     border:1px solid #d5dfeb;
     border-radius:5px;
