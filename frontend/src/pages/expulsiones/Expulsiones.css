@@ -1,0 +1,315 @@
+.expulsiones-pagina {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+  color: #17325c;
+}
+
+.expulsiones-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.expulsiones-encabezado h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.expulsiones-encabezado p {
+  margin: 0;
+  color: #64748b;
+}
+
+.expulsiones-panel {
+  min-width: 0;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
+}
+
+.expulsiones-panel h2 {
+  margin: 0 0 18px;
+  font-size: 18px;
+  color: #17325c;
+}
+
+.expulsiones-filtros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.expulsiones-pagina label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.expulsiones-pagina input,
+.expulsiones-pagina textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #17325c;
+  font: inherit;
+  font-weight: 400;
+}
+
+.expulsiones-pagina input:focus-visible,
+.expulsiones-pagina textarea:focus-visible,
+.expulsiones-pagina button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.expulsiones-pagina button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.expulsiones-pagina button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.expulsiones-boton-principal,
+.expulsiones-boton-secundario {
+  padding: 10px 15px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.expulsiones-boton-principal {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.expulsiones-boton-principal:not(:disabled):hover {
+  background: #1d4ed8;
+}
+
+.expulsiones-boton-secundario {
+  border: 1px solid #2563eb;
+  background: #fff;
+  color: #2563eb;
+}
+
+.expulsiones-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.expulsiones-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.expulsiones-tabla th {
+  padding: 12px;
+  text-align: left;
+  background: #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.expulsiones-tabla td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.expulsiones-tabla tbody tr:hover {
+  background: #f8fafc;
+}
+
+.expulsiones-vacio {
+  text-align: center;
+  color: #64748b;
+  padding: 28px !important;
+}
+
+.expulsiones-informacion {
+  margin-bottom: 20px;
+}
+
+.expulsiones-datos-examen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  font-size: 14px;
+}
+
+.expulsiones-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.expulsiones-busqueda {
+  margin-bottom: 18px;
+}
+
+.expulsiones-estado {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.expulsiones-estado-expulsado {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.expulsiones-estado-disponible {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.expulsiones-estudiante-actual {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.expulsiones-estudiante-actual span {
+  color: #64748b;
+}
+
+.expulsiones-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.expulsiones-formulario .expulsiones-filtros {
+  margin-bottom: 0;
+}
+
+.expulsiones-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.expulsiones-error {
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.expulsiones-error button {
+  margin-left: 12px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+}
+
+.expulsiones-instruccion,
+.expulsiones-resultado {
+  padding: 36px 12px;
+  text-align: center;
+}
+
+.expulsiones-instruccion p,
+.expulsiones-resultado p {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.expulsiones-exito-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: white;
+  font-size: 30px;
+}
+
+@media (max-width: 1050px) {
+  .expulsiones-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .expulsiones-datos-examen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .expulsiones-pagina {
+    padding: 18px 12px;
+  }
+
+  .expulsiones-encabezado {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .expulsiones-filtros,
+  .expulsiones-datos-examen {
+    grid-template-columns: 1fr;
+  }
+
+  .expulsiones-panel {
+    padding: 14px;
+  }
+
+  .expulsiones-acciones {
+    flex-wrap: wrap;
+  }
+}
+
+.expulsiones-historial {
+  margin-bottom: 20px;
+}
+
+.expulsiones-historial-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.expulsiones-historial-encabezado h2 {
+  margin-bottom: 0;
+}
+
+.expulsiones-historial .expulsiones-tabla-contenedor {
+  margin-top: 18px;
+}
+
+@media (max-width: 600px) {
+  .expulsiones-historial-encabezado {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
