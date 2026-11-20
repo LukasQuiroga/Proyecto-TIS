@@ -449,6 +449,7 @@ function ResultadoHabilitacion({
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        capturarFoto();
       }
     } catch {
       setErrorIncidencia(
@@ -927,10 +928,15 @@ function ResultadoHabilitacion({
                 </strong>
               </div>
               <div>
-                <span>Codigo</span>
+                <span>CodSiS</span>
                 <strong>
                   {codigoEstudiante ||
                     ingresoActual?.detalle?.codigoUniversitario ||
+                    "—"}
+                </strong>
+                <span>CI</span>
+                <strong>
+                  {ingresoActual?.detalle?.carnetIdentidad ||
                     "—"}
                 </strong>
               </div>
@@ -966,14 +972,6 @@ function ResultadoHabilitacion({
               >
                 Tomar fotografia
               </button>
-              <button
-                type="button"
-                className="duplicado-modal-boton-principal"
-                onClick={capturarFoto}
-                disabled={guardandoIncidencia}
-              >
-                Capturar
-              </button>
             </div>
 
             {fotografia && (
@@ -985,7 +983,7 @@ function ResultadoHabilitacion({
               </div>
             )}
 
-            <div className="duplicado-modal-acciones">
+            <div className="duplicado-modal-acciones duplicado-modal-acciones-final">
               <button
                 type="button"
                 className="duplicado-modal-boton-secundario"

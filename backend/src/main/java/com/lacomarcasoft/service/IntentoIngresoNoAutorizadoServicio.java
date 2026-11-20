@@ -105,7 +105,7 @@ public class IntentoIngresoNoAutorizadoServicio {
             rs.getString("responsable"), rs.getObject("fecha_hora", OffsetDateTime.class),
             rs.getString("estado"), rs.getString("veredicto"), rs.getObject("fecha_hora_resolucion", OffsetDateTime.class),
             rs.getString("foto_recurso"),
-            rs.getString("carnet_identidad"), rs.getString("codigo_sis")
+            rs.getString("codigo_sis"), rs.getString("carnet_identidad")
         ), args.toArray());
     }
 
