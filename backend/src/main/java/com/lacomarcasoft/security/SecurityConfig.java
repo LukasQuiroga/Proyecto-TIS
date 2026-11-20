@@ -129,11 +129,20 @@ public class SecurityConfig {
 
                 .requestMatchers(
                     HttpMethod.GET,
-                      "/api/ingresos/examenes/registrados",
-                      "/api/ingresos/examenes/registrados/*"
+                      "/api/ingresos/examenes/registrados/resumen",
+                      "/api/ingresos/examenes/registrados"
                 )
                 .access(new WebExpressionAuthorizationManager(
                    "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                      "/api/ingresos/examenes/registrados/*"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                   "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
+                   "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
                 ))
 
                 .requestMatchers(

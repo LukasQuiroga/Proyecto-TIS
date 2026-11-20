@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 
@@ -30,6 +31,7 @@ public class IngresoExamenServicio {
     private final AccesoExamenDocenteServicio accesoExamenDocente;
     private final ComprobacionCorrespondenciaServicio correspondencia;
     private final IntentoIngresoNoAutorizadoServicio intentos;
+    private final IntentoFotoServicio intentoFoto;
 
     public IngresoExamenServicio(
             JdbcTemplate jdbc,
@@ -38,7 +40,8 @@ public class IngresoExamenServicio {
             ValidacionHabilitacionIngresoServicio validacionHabilitacion,
             AccesoExamenDocenteServicio accesoExamenDocente,
             IntentoIngresoNoAutorizadoServicio intentos,
-            ComprobacionCorrespondenciaServicio correspondencia) {
+            ComprobacionCorrespondenciaServicio correspondencia,
+            IntentoFotoServicio intentoFoto) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
@@ -46,6 +49,7 @@ public class IngresoExamenServicio {
         this.accesoExamenDocente = accesoExamenDocente;
         this.intentos = intentos;
         this.correspondencia = correspondencia;
+        this.intentoFoto = intentoFoto;
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +68,8 @@ public class IngresoExamenServicio {
     public void registrarIntentoDuplicado(
             Long idExamen,
             Long idEstudiante,
-            Long idResponsable) {
+            Long idResponsable,
+            MultipartFile foto) {
 
         validarIds(idExamen, idEstudiante);
 
@@ -108,13 +113,20 @@ public class IngresoExamenServicio {
             .filter(codigo -> codigo != null && !codigo.isBlank())
             .orElse(String.valueOf(idEstudiante));
 
+        String fotoReferencia = intentoFoto.guardarEvidencia(
+            idExamen,
+            idEstudiante,
+            foto
+        );
+
         intentos.registrar(
             idExamen,
             idEstudiante,
             idResponsable,
             identificador,
             "SISTEMA",
-            "Ingreso duplicado"
+            "Ingreso duplicado",
+            fotoReferencia
         );
     }
 
@@ -167,7 +179,7 @@ public class IngresoExamenServicio {
 
         if (!habilitacion.puedeContinuar()) {
             intentos.registrar(idExamen, idEstudiante, idResponsable,
-                String.valueOf(idEstudiante), "SISTEMA", habilitacion.mensaje());
+                String.valueOf(idEstudiante), "SISTEMA", habilitacion.mensaje(), null);
             throw new ResponseStatusException(
                 HttpStatus.FORBIDDEN,
                 habilitacion.mensaje()
@@ -184,7 +196,7 @@ public class IngresoExamenServicio {
 
         if (insertados == 0) {
             intentos.registrar(idExamen, idEstudiante, idResponsable,
-                String.valueOf(idEstudiante), "SISTEMA", "Ingreso duplicado");
+                String.valueOf(idEstudiante), "SISTEMA", "Ingreso duplicado", null);
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT,
                 "Este estudiante ya tiene un ingreso registrado para este examen."
@@ -350,6 +362,7 @@ public class IngresoExamenServicio {
                 ie.id_ingreso,
                 ie.id_examen,
                 ie.id_estudiante,
+                u.carnet_identidad,
                 u.codigo_sis,
                 TRIM(CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, ''))) AS nombre_estudiante,
                 e.nombre_examen,
@@ -369,6 +382,7 @@ public class IngresoExamenServicio {
                 rs.getLong("id_examen"),
                 rs.getLong("id_estudiante"),
                 rs.getString("codigo_sis"),
+                rs.getString("carnet_identidad"),
                 rs.getString("nombre_estudiante"),
                 rs.getString("nombre_examen"),
                 rs.getString("ambiente"),
