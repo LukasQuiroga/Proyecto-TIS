@@ -30,6 +30,7 @@ import MisMaterias from "./pages/asignaturas/MisMaterias.jsx";
 import Examenes from "./pages/examenes/Examenes.jsx";
 import MisExamenes from "./pages/examenes/MisExamenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
+import RegistrarSituacionExcepcional from "./pages/situaciones/RegistrarSituacionExcepcional.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 import ComprobarExamenCorrespondiente from "./pages/ingreso/ComprobarExamenCorrespondiente";
@@ -66,6 +67,20 @@ function AccesoSoloEstudiante({ children }) {
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ESTUDIANTE") {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
+function AccesoSoloAdministrador({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
     return <AccesoDenegado />;
   }
 
@@ -268,6 +283,15 @@ function App() {
                 >
                   <RegistrarExamen />
                 </ProtectedPermission>
+              }
+            />
+
+            <Route
+              path="/situaciones-excepcionales/registro"
+              element={
+                <AccesoSoloAdministrador>
+                  <RegistrarSituacionExcepcional />
+                </AccesoSoloAdministrador>
               }
             />
 

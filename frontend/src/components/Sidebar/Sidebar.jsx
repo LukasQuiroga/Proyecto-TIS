@@ -174,6 +174,15 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
+            {rolActual === "ADMINISTRADOR" && (
+              <Opcion
+                to="/situaciones-excepcionales/registro"
+                icono={<FiAlertTriangle />}
+              >
+                Situaciones excepcionales
+              </Opcion>
+            )}
+
             {usuario?.nombreRol === "DOCENTE" && (
               <Opcion to="/habilitaciones" icono={<FiGrid />}>
                 Habilitaciones
