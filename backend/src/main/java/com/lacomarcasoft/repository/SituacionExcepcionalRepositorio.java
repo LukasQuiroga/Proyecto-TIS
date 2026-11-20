@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +53,16 @@ public interface SituacionExcepcionalRepositorio
             WHERE s.idSituacion = :idSituacion
             """)
     Optional<SituacionExcepcional> buscarDetalle(
+            @Param("idSituacion") Long idSituacion
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT s
+            FROM SituacionExcepcional s
+            WHERE s.idSituacion = :idSituacion
+            """)
+    Optional<SituacionExcepcional> bloquearParaAdjuntar(
             @Param("idSituacion") Long idSituacion
     );
 }
