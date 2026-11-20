@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
 import { listarIntentosNoAutorizados, obtenerExamenesIngreso, obtenerFotoIntento, resolverIncidencia } from "../../services/validacionHabilitacionService";
+import { buscarExamenPorCodigo } from "../../services/habilitacionService";
 import "./IntentosNoAutorizados.css";
 
 function formatearFecha(valor) {
@@ -79,7 +80,7 @@ export default function IntentosNoAutorizados() {
     }
   };
 
-  const aplicarFiltros = () => {
+  const aplicarFiltros = async () => {
     if (codigoExamen && !CODIGO_EXAMEN_REGEX.test(codigoExamen)) {
       setErrorValidacion("El código de examen debe tener el formato AAA-999, por ejemplo TEX-312.");
       return;
@@ -88,9 +89,22 @@ export default function IntentosNoAutorizados() {
       setErrorValidacion("El nombre solo admite letras y espacios.");
       return;
     }
-    setCodigoAplicado(codigoExamen.trim().toLowerCase());
     setErrorValidacion("");
-    cargar({ q: busqueda });
+    if (codigoExamen) {
+      try {
+        const idExamen = await buscarExamenPorCodigo(codigoExamen);
+        setExamenSeleccionado(String(idExamen));
+        setCodigoAplicado("");
+        await cargar({ q: busqueda, idExamen: String(idExamen) });
+        return;
+      } catch {
+        setErrorValidacion(`No se encontró el examen con el código ${codigoExamen}.`);
+        return;
+      }
+    }
+    setExamenSeleccionado("");
+    setCodigoAplicado("");
+    await cargar({ q: busqueda });
   };
 
   const abrirResolver = async (fila) => {
