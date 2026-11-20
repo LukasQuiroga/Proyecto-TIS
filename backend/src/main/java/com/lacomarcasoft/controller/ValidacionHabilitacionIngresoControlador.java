@@ -52,7 +52,7 @@ public class ValidacionHabilitacionIngresoControlador {
         if (!resultado.puedeContinuar()) {
             Long responsable = acceso.obtenerDocenteAutenticado();
             intentos.registrar(idExamen, idEstudiante, responsable,
-                    String.valueOf(idEstudiante), "SISTEMA", resultado.mensaje());
+                    String.valueOf(idEstudiante), "SISTEMA", resultado.mensaje(), null);
         }
         return resultado;
     }

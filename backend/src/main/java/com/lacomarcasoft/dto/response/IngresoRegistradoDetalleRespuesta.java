@@ -7,6 +7,7 @@ public record IngresoRegistradoDetalleRespuesta(
     Long idExamen,
     Long idEstudiante,
     String codigoUniversitario,
+    String carnetIdentidad,
     String nombreEstudiante,
     String nombreExamen,
     String ambiente,

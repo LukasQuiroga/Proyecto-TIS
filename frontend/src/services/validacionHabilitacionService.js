@@ -69,7 +69,33 @@ export async function consultarIngresoRegistrado(idExamen, idEstudiante) {
 export async function registrarIntentoIngresoDuplicado(idExamen, idEstudiante) {
   await api.post(
     '/ingresos/examenes/' + idExamen + '/estudiantes/' + idEstudiante + '/intentos-duplicados'
-  )
+  );
+}
+
+export async function registrarIntentoIngresoDuplicadoConFoto(idExamen, idEstudiante, fotoFile) {
+  const formData = new FormData();
+  formData.append('foto', fotoFile);
+  await api.post(
+    '/ingresos/examenes/' + idExamen + '/estudiantes/' + idEstudiante + '/intentos-duplicados',
+    formData
+  );
+}
+
+export async function obtenerDetalleIntento(idIntento) {
+  const { data } = await api.get('/ingresos/examenes/intentos-no-autorizados/' + idIntento);
+  return data;
+}
+
+export async function resolverIncidencia(idIntento, veredicto) {
+  const { data } = await api.put('/ingresos/examenes/intentos-no-autorizados/' + idIntento + '/resolver', { veredicto });
+  return data;
+}
+
+export async function obtenerFotoIntento(idIntento) {
+  const { data } = await api.get('/ingresos/examenes/intentos-no-autorizados/' + idIntento + '/foto', {
+    responseType: 'blob'
+  });
+  return data;
 }
 
 export async function registrarIngresoExamen(idExamen, idEstudiante) {
