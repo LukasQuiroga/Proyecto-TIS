@@ -67,7 +67,7 @@ export default function IntentosNoAutorizados() {
   };
 
   const manejarCambioBusqueda = (event) => {
-    const valor = event.target.value.replace(/[^\p{L}\s]/gu, "").trim().replace(/\s+/g, " ");
+    const valor = event.target.value.replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ");
     setBusqueda(valor);
     setErrorValidacion("");
   };
@@ -81,30 +81,32 @@ export default function IntentosNoAutorizados() {
   };
 
   const aplicarFiltros = async () => {
-    if (codigoExamen && !CODIGO_EXAMEN_REGEX.test(codigoExamen)) {
+    const busquedaLimpia = (busqueda || "").trim();
+    const codigoLimpio = (codigoExamen || "").trim();
+    if (codigoLimpio && !CODIGO_EXAMEN_REGEX.test(codigoLimpio)) {
       setErrorValidacion("El código de examen debe tener el formato AAA-999, por ejemplo TEX-312.");
       return;
     }
-    if (busqueda && !NOMBRE_REGEX.test(busqueda)) {
+    if (busquedaLimpia && !NOMBRE_REGEX.test(busquedaLimpia)) {
       setErrorValidacion("El nombre solo admite letras y espacios.");
       return;
     }
     setErrorValidacion("");
-    if (codigoExamen) {
+    if (codigoLimpio) {
       try {
-        const idExamen = await buscarExamenPorCodigo(codigoExamen);
+        const idExamen = await buscarExamenPorCodigo(codigoLimpio);
         setExamenSeleccionado(String(idExamen));
         setCodigoAplicado("");
-        await cargar({ q: busqueda, idExamen: String(idExamen) });
+        await cargar({ q: busquedaLimpia, idExamen: String(idExamen) });
         return;
       } catch {
-        setErrorValidacion(`No se encontró el examen con el código ${codigoExamen}.`);
+        setErrorValidacion(`No se encontró el examen con el código ${codigoLimpio}.`);
         return;
       }
     }
     setExamenSeleccionado("");
     setCodigoAplicado("");
-    await cargar({ q: busqueda });
+    await cargar({ q: busquedaLimpia });
   };
 
   const abrirResolver = async (fila) => {
