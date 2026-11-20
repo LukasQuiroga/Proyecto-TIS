@@ -16,6 +16,9 @@ function fechaLocalISO(valor) {
   return new Date(fecha.getTime() - zona).toISOString().slice(0, 10);
 }
 
+const NOMBRE_REGEX = /^[\p{L}]+( [\p{L}]+)*$/u;
+const CODIGO_EXAMEN_REGEX = /^[A-Z]{3}-[0-9]{3}$/;
+
 export default function IntentosNoAutorizados() {
   const [examenes, setExamenes] = useState([]);
   const [filas, setFilas] = useState([]);
@@ -27,6 +30,7 @@ export default function IntentosNoAutorizados() {
   const [examenSeleccionado, setExamenSeleccionado] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [errorValidacion, setErrorValidacion] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
   const [modalResolverAbierto, setModalResolverAbierto] = useState(false);
   const [incidenteResolver, setIncidenteResolver] = useState(null);
@@ -59,6 +63,34 @@ export default function IntentosNoAutorizados() {
     } finally {
       setCargando(false);
     }
+  };
+
+  const manejarCambioBusqueda = (event) => {
+    const valor = event.target.value.replace(/[^\p{L}\s]/gu, "").trim().replace(/\s+/g, " ");
+    setBusqueda(valor);
+    setErrorValidacion("");
+  };
+
+  const manejarCambioCodigoExamen = (event) => {
+    const valor = event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    setCodigoExamen(valor);
+    if (!valor || CODIGO_EXAMEN_REGEX.test(valor)) {
+      setErrorValidacion("");
+    }
+  };
+
+  const aplicarFiltros = () => {
+    if (codigoExamen && !CODIGO_EXAMEN_REGEX.test(codigoExamen)) {
+      setErrorValidacion("El código de examen debe tener el formato AAA-999, por ejemplo TEX-312.");
+      return;
+    }
+    if (busqueda && !NOMBRE_REGEX.test(busqueda)) {
+      setErrorValidacion("El nombre solo admite letras y espacios.");
+      return;
+    }
+    setCodigoAplicado(codigoExamen.trim().toLowerCase());
+    setErrorValidacion("");
+    cargar({ q: busqueda });
   };
 
   const abrirResolver = async (fila) => {
@@ -207,26 +239,23 @@ export default function IntentosNoAutorizados() {
         </div>
         <form className="hu23-filtros" onSubmit={(event) => {
           event.preventDefault();
-          setCodigoAplicado(codigoExamen.trim().toLowerCase());
-          cargar({ q: busqueda });
+          aplicarFiltros();
         }}>
-          <label className="hu23-busqueda"><FiSearch /><input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por estudiante o código" /></label>
           <label className="hu23-busqueda">
-            <FiSearch />
-            <input
-              type="search"
-              value={codigoExamen}
-              onChange={(e) => setCodigoExamen(e.target.value)}
-              placeholder="Buscar por código de examen"
-              aria-label="Código de examen"
-            />
+            <span>Buscar por nombre</span>
+            <span><FiSearch /><input value={busqueda} onChange={manejarCambioBusqueda} placeholder="Ejemplo: Joel Taborga" /></span>
+          </label>
+          <label className="hu23-busqueda">
+            <span>Buscar por código de examen</span>
+            <span><FiSearch /><input type="search" value={codigoExamen} onChange={manejarCambioCodigoExamen} placeholder="Ejemplo: TEX-312" aria-label="Código de examen" /></span>
           </label>
           <label className="hu23-filtro-fecha"><span>Fecha desde</span><span><FiCalendar /><input type="date" value={fechaDesde} max={fechaHasta || undefined} onChange={(e) => { setFechaDesde(e.target.value); setPagina(1); }} /></span></label>
           <label className="hu23-filtro-fecha"><span>Fecha hasta</span><span><FiCalendar /><input type="date" value={fechaHasta} min={fechaDesde || undefined} onChange={(e) => { setFechaHasta(e.target.value); setPagina(1); }} /></span></label>
           <label className="hu23-filtro-examen"><span>Examen</span><select value={examenSeleccionado} onChange={(e) => { setExamenSeleccionado(e.target.value); setPagina(1); }}><option value="">Todos los exámenes</option>{examenes.map((examen) => <option key={examen.idExamen} value={examen.idExamen}>{examen.nombreExamen || examen.codigo || `Examen ${examen.idExamen}`}</option>)}</select></label>
           <button type="submit" disabled={cargando}>Buscar</button>
-          <button type="button" className="hu23-refrescar" title="Actualizar" onClick={() => { setCodigoAplicado(codigoExamen.trim().toLowerCase()); cargar({ q: busqueda }); }}><FiRefreshCw /></button>
+          <button type="button" className="hu23-refrescar" title="Actualizar" onClick={aplicarFiltros}><FiRefreshCw /></button>
         </form>
+        {errorValidacion && <p role="alert" className="hu23-error">{errorValidacion}</p>}
         <div className="hu23-aviso-reporte"><FiInfo /><span>Solo se incluyen accesos rechazados. Los ingresos autorizados no forman parte de este reporte.</span></div>
         {error && <p role="alert" className="hu23-error">{error}</p>}
         <section className="hu23-seccion-reporte">

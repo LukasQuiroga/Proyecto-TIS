@@ -26,7 +26,7 @@
     align-items:center;
     flex-wrap:wrap}
 
-.hu23-filtros select,.hu23-busqueda {
+.hu23-filtros select {
     height:48px;
     border:1px solid #d5dfeb;
     background:white;
@@ -37,20 +37,26 @@
 
 .hu23-busqueda {
     flex:1;
+    display:grid;
+    gap:4px;
+    color:#526b94;
+    font-size:11px}
+
+.hu23-busqueda>span:last-child {
     display:flex;
     align-items:center;
-    gap:8px}
+    gap:8px;
+    height:48px;
+    padding:0 8px;
+    border:1px solid #d5dfeb;
+    border-radius:5px;
+    background:#fff}
 
 .hu23-busqueda input {
     border:0;
     outline:0;
     width:100%;
     min-width:150px}
-
-.hu23-filtro-fecha,
-.hu23-filtro-examen {
-    height:48px;
-}
 
 .hu23-filtros button {
     background:#1770f8;
@@ -387,7 +393,7 @@
 
 .hu23-filtro-fecha svg {flex:0 0 auto;color:#617ba5}
 .hu23-filtro-fecha input {width:130px;min-width:0;border:0;outline:0;color:#273e5c;font:inherit}
-.hu23-filtro-examen select {height:39px;min-width:150px;padding:0 9px;border:1px solid #d5dfeb;border-radius:5px;color:#273e5c;background:#fff}
+.hu23-filtro-examen select {height:48px;min-width:150px;padding:0 9px;border:1px solid #d5dfeb;border-radius:5px;color:#273e5c;background:#fff}
 
 .hu23-aviso-reporte {
     display:flex;
