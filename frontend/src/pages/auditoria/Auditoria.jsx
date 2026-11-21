@@ -249,7 +249,7 @@ function Auditoria() {
 
       <header className="auditoria-encabezado">
         <div>
-          <h1>Auditoría del sistema</h1>
+          <h1>Historial de operación</h1>
 
           <p>
             Consulte las operaciones registradas

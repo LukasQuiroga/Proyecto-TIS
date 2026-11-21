@@ -2,6 +2,7 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.ResolverIncidenciaSolicitud;
 import com.lacomarcasoft.dto.response.MensajeRespuesta;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.service.IntentoFotoServicio;
 import com.lacomarcasoft.service.IntentoIngresoNoAutorizadoServicio;
 import org.springframework.core.io.Resource;
@@ -9,6 +10,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
@@ -26,12 +29,15 @@ import java.util.List;
 public class IntentoIngresoNoAutorizadoControlador {
     private final IntentoIngresoNoAutorizadoServicio servicio;
     private final IntentoFotoServicio intentoFoto;
+    private final AuditoriaAccionesServicio auditoria;
 
     public IntentoIngresoNoAutorizadoControlador(
             IntentoIngresoNoAutorizadoServicio servicio,
-            IntentoFotoServicio intentoFoto) {
+            IntentoFotoServicio intentoFoto,
+            AuditoriaAccionesServicio auditoria) {
         this.servicio = servicio;
         this.intentoFoto = intentoFoto;
+        this.auditoria = auditoria;
     }
 
     @GetMapping
@@ -76,7 +82,22 @@ public class IntentoIngresoNoAutorizadoControlador {
     @PutMapping("/{idIntento}/resolver")
     public MensajeRespuesta resolver(
             @PathVariable Long idIntento,
-            @RequestBody ResolverIncidenciaSolicitud solicitud) {
-        return servicio.resolver(idIntento, solicitud.veredicto());
+            @RequestBody ResolverIncidenciaSolicitud solicitud,
+            Authentication auth,
+            HttpServletRequest request) {
+
+        MensajeRespuesta respuesta =
+                servicio.resolver(idIntento, solicitud.veredicto());
+
+        auditoria.registrar(
+                auth,
+                request,
+                "RESOLVER_INCIDENCIA",
+                "Resolución de la incidencia #" + idIntento
+                        + " con resultado "
+                        + solicitud.veredicto()
+        );
+
+        return respuesta;
     }
 }

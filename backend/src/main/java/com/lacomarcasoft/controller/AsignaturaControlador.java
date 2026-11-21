@@ -3,11 +3,14 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.RegistrarAsignaturaSolicitud;
 import com.lacomarcasoft.dto.response.AsignaturaRespuesta;
 import com.lacomarcasoft.service.AsignaturaServicio;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.dto.response.GrupoAsignaturaRespuesta;
 import com.lacomarcasoft.dto.response.DocentesPorFacultadRespuesta;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -17,20 +20,35 @@ import java.util.List;
 public class AsignaturaControlador {
 
     private final AsignaturaServicio asignaturaServicio;
+    private final AuditoriaAccionesServicio auditoria;
 
     public AsignaturaControlador(
-            AsignaturaServicio asignaturaServicio
+            AsignaturaServicio asignaturaServicio,
+            AuditoriaAccionesServicio auditoria
     ) {
         this.asignaturaServicio = asignaturaServicio;
+        this.auditoria = auditoria;
     }
 
     @PostMapping
     public ResponseEntity<AsignaturaRespuesta> registrar(
-            @Valid @RequestBody RegistrarAsignaturaSolicitud solicitud
+            @Valid @RequestBody RegistrarAsignaturaSolicitud solicitud,
+            Authentication authentication,
+            HttpServletRequest request
     ) {
 
         AsignaturaRespuesta respuesta =
                 asignaturaServicio.registrar(solicitud);
+
+        auditoria.registrar(
+                authentication,
+                request,
+                "CREAR_ASIGNATURA",
+                "Creación de la asignatura "
+                        + (respuesta.codigoAsignatura() != null
+                            ? respuesta.codigoAsignatura()
+                            : respuesta.nombreAsignatura())
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

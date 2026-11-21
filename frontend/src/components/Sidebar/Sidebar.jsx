@@ -41,6 +41,7 @@ function Opcion({ to, icono, children, exacta = false }) {
 function Sidebar({ sidebarAbierto, cambiarSidebar }) {
   const [usuariosAbierto, setUsuariosAbierto] = useState(false);
   const [ingresoAbierto, setIngresoAbierto] = useState(false);
+  const [auditoriaAbierto, setAuditoriaAbierto] = useState(false);
   const { usuario } = useAuth();
 
   const tienePermiso = (permiso) => {
@@ -302,9 +303,50 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
             )}
 
             {tienePermiso("VER_AUDITORIA") && (
-              <Opcion to="/auditoria" icono={<FiClock />}>
-                Auditoría
-              </Opcion>
+              <>
+                <button
+                  type="button"
+                  className="sidebar-opcion sidebar-desplegable"
+                  onClick={() => setAuditoriaAbierto(!auditoriaAbierto)}
+                  aria-expanded={auditoriaAbierto}
+                >
+                  <span className="sidebar-icono">
+                    <FiClock />
+                  </span>
+
+                  <span className="sidebar-texto">Auditoría</span>
+
+                  <span className="sidebar-flecha">
+                    {auditoriaAbierto ? <FiChevronUp /> : <FiChevronDown />}
+                  </span>
+                </button>
+
+                {auditoriaAbierto && (
+                  <div className="sidebar-submenu">
+                    <NavLink
+                      to="/auditoria/usuarios"
+                      className={({ isActive }) =>
+                        `sidebar-subopcion ${
+                          isActive ? "sidebar-subopcion-activa" : ""
+                        }`
+                      }
+                    >
+                      Auditoría de usuarios
+                    </NavLink>
+
+                    <NavLink
+                      to="/auditoria/operaciones"
+                      className={({ isActive }) =>
+                        `sidebar-subopcion ${
+                          isActive ? "sidebar-subopcion-activa" : ""
+                        }`
+                      }
+                    >
+                      Historial de operación
+                    </NavLink>
+                  </div>
+                )}
+              </>
             )}
           </nav>
         </>

@@ -42,6 +42,7 @@ import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
+import HistorialUsuarios from "./pages/auditoria/HistorialUsuarios.jsx";
 import ReportesAsistencia from "./pages/reportes/ReportesAsistencia.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
@@ -358,6 +359,20 @@ function App() {
 
             <Route
               path="/auditoria"
+              element={<Navigate to="/auditoria/operaciones" replace />}
+            />
+
+            <Route
+              path="/auditoria/usuarios"
+              element={
+                <ProtectedPermission permiso="VER_AUDITORIA">
+                  <HistorialUsuarios />
+                </ProtectedPermission>
+              }
+            />
+
+            <Route
+              path="/auditoria/operaciones"
               element={
                 <ProtectedPermission permiso="VER_AUDITORIA">
                   <Auditoria />

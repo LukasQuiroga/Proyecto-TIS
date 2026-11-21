@@ -78,6 +78,8 @@ public class LogActividadServicio {
 
     public ConsultaLogsRespuesta consultar(
             String busqueda,
+            String usuario,
+            String rol,
             String tipoAccion,
             LocalDate fechaDesde,
             LocalDate fechaHasta,
@@ -100,6 +102,8 @@ public class LogActividadServicio {
         List<LogActividadRespuesta> logs =
                 logActividadRepositorio.consultar(
                         busquedaNormalizada,
+                        normalizarTexto(usuario),
+                        normalizarTexto(rol),
                         normalizarTexto(tipoAccion),
                         fechaDesde,
                         fechaHasta,
@@ -111,6 +115,8 @@ public class LogActividadServicio {
 
         long total = logActividadRepositorio.contar(
                 busquedaNormalizada,
+                normalizarTexto(usuario),
+                normalizarTexto(rol),
                 normalizarTexto(tipoAccion),
                 fechaDesde,
                 fechaHasta,

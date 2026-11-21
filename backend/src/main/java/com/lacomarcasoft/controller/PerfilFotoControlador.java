@@ -1,6 +1,7 @@
 
 package com.lacomarcasoft.controller;
 
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.service.PerfilFotoServicio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
 
@@ -24,9 +26,13 @@ public class PerfilFotoControlador {
         LoggerFactory.getLogger(PerfilFotoControlador.class);
 
     private final PerfilFotoServicio servicio;
+    private final AuditoriaAccionesServicio auditoria;
 
-    public PerfilFotoControlador(PerfilFotoServicio servicio) {
+    public PerfilFotoControlador(
+            PerfilFotoServicio servicio,
+            AuditoriaAccionesServicio auditoria) {
         this.servicio = servicio;
+        this.auditoria = auditoria;
     }
 
     @GetMapping
@@ -50,7 +56,8 @@ public class PerfilFotoControlador {
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, String> actualizar(
             Authentication auth,
-            @RequestParam("foto") MultipartFile archivo
+            @RequestParam("foto") MultipartFile archivo,
+            HttpServletRequest request
     ) {
         Long idUsuario = obtenerIdUsuario(auth);
 
@@ -64,6 +71,13 @@ public class PerfilFotoControlador {
         try {
             servicio.guardar(idUsuario, archivo);
 
+            auditoria.registrar(
+                    auth,
+                    request,
+                    "ACTUALIZAR_FOTO_PERFIL",
+                    "El usuario actualizó su fotografía de perfil"
+            );
+
             log.info(
                 "HU13: fotografia guardada correctamente. Usuario={}",
                 idUsuario
@@ -75,6 +89,14 @@ public class PerfilFotoControlador {
             );
 
         } catch (ResponseStatusException ex) {
+            auditoria.registrarFallo(
+                    auth,
+                    request,
+                    "ACTUALIZAR_FOTO_PERFIL",
+                    "Intento fallido de actualización de la fotografía "
+                            + "de perfil: " + ex.getReason()
+            );
+
             log.warn(
                 "HU13: fotografia rechazada. Usuario={}, HTTP={}, motivo={}",
                 idUsuario,
