@@ -13,14 +13,13 @@ import {
   generarReporteAusentes,
   listarExamenesParaReporte
 } from '../../services/reporteAsistenciaService'
+import AvisoBusquedaExamen, {
+  validarBusquedaExamen
+} from './AvisoBusquedaExamen.jsx'
 import './ReporteAusentes.css'
 
 const FECHA_MINIMA_FILTRO_EXAMEN = '2026-01-01'
 const FECHA_MAXIMA_FILTRO_EXAMEN = '2028-12-31'
-
-function limpiarBusquedaExamen(valor) {
-  return valor.replace(/[^\p{L}\p{N}\s-]/gu, '')
-}
 
 function fechaLegible(fecha) {
   if (!fecha) return 'Sin fecha programada'
@@ -76,6 +75,7 @@ export default function ReporteAusentes() {
   const [paso, setPaso] = useState('seleccion')
   const [busquedaAusente, setBusquedaAusente] = useState('')
   const [error, setError] = useState('')
+  const [avisoBusqueda, setAvisoBusqueda] = useState(null)
 
   useEffect(() => {
     let vigente = true
@@ -175,11 +175,16 @@ export default function ReporteAusentes() {
               <FiSearch />
               <input
                 value={busqueda}
-                onChange={(event) =>
-                  setBusqueda(limpiarBusquedaExamen(event.target.value))
-                }
+                onChange={(event) => {
+                  const valor = event.target.value
+                  const validacion = validarBusquedaExamen(valor)
+                  if (validacion) {
+                    setAvisoBusqueda(validacion)
+                    return
+                  }
+                  setBusqueda(valor)
+                }}
                 placeholder="Buscar por examen, asignatura o código..."
-                maxLength={50}
               />
             </label>
             <label className="ra-fecha">
@@ -383,6 +388,10 @@ export default function ReporteAusentes() {
           </p>
         </>
       )}
+      <AvisoBusquedaExamen
+        tipo={avisoBusqueda}
+        onClose={() => setAvisoBusqueda(null)}
+      />
     </section>
   )
 }

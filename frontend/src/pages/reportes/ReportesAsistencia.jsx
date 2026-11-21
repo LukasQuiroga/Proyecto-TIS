@@ -33,15 +33,14 @@ import {
   listarHistorialReportesAccesosIncorrectos,
   obtenerReporteAccesosIncorrectos
 } from '../../services/reporteAccesosIncorrectosService'
+import AvisoBusquedaExamen, {
+  validarBusquedaExamen
+} from './AvisoBusquedaExamen.jsx'
 import './ReportesAsistencia.css'
 import ReporteAusentes from './ReporteAusentes.jsx'
 
 const FECHA_MINIMA_FILTRO_EXAMEN = '2026-01-01'
 const FECHA_MAXIMA_FILTRO_EXAMEN = '2028-12-31'
-
-function limpiarBusquedaExamen(valor) {
-  return valor.replace(/[^\p{L}\p{N}\s-]/gu, '')
-}
 
 function fechaLegible(fecha) {
   if (!fecha) return 'Sin fecha programada'
@@ -123,6 +122,7 @@ export default function ReportesAsistencia() {
   const [pestana, setPestana] = useState('generar')
   const [examenes, setExamenes] = useState([])
   const [busquedaExamen, setBusquedaExamen] = useState('')
+  const [avisoBusqueda, setAvisoBusqueda] = useState(null)
   const [fechaExamen, setFechaExamen] = useState('')
   const [solicitudExamenes, setSolicitudExamenes] = useState({
     buscar: '',
@@ -648,11 +648,16 @@ export default function ReportesAsistencia() {
               <FiSearch />
               <input
                 value={busquedaExamen}
-                onChange={(event) =>
-                  setBusquedaExamen(limpiarBusquedaExamen(event.target.value))
-                }
+                onChange={(event) => {
+                  const valor = event.target.value
+                  const validacion = validarBusquedaExamen(valor)
+                  if (validacion) {
+                    setAvisoBusqueda(validacion)
+                    return
+                  }
+                  setBusquedaExamen(valor)
+                }}
                 placeholder="Buscar por examen, asignatura o código..."
-                maxLength={50}
               />
             </label>
             <label className="ra-fecha">
@@ -1433,6 +1438,10 @@ export default function ReportesAsistencia() {
           )}
         </section>
       )}
+      <AvisoBusquedaExamen
+        tipo={avisoBusqueda}
+        onClose={() => setAvisoBusqueda(null)}
+      />
     </main>
   )
 }
