@@ -35,8 +35,13 @@ import {
   listarHistorialReportesAccesosIncorrectos,
   obtenerReporteAccesosIncorrectos
 } from '../../services/reporteAccesosIncorrectosService'
+import AvisoBusquedaExamen from './AvisoBusquedaExamen.jsx'
+import { validarBusquedaExamen } from './validarBusquedaExamen.js'
 import './ReportesAsistencia.css'
 import ReporteAusentes from './ReporteAusentes.jsx'
+
+const FECHA_MINIMA_FILTRO_EXAMEN = '2026-01-01'
+const FECHA_MAXIMA_FILTRO_EXAMEN = '2028-12-31'
 
 function fechaLegible(fecha) {
   if (!fecha) return 'Sin fecha programada'
@@ -143,6 +148,7 @@ export default function ReportesAsistencia() {
   const [pestana, setPestana] = useState('generar')
   const [examenes, setExamenes] = useState([])
   const [busquedaExamen, setBusquedaExamen] = useState('')
+  const [avisoBusqueda, setAvisoBusqueda] = useState(null)
   const [fechaExamen, setFechaExamen] = useState('')
   const [solicitudExamenes, setSolicitudExamenes] = useState({
     buscar: '',
@@ -780,7 +786,15 @@ export default function ReportesAsistencia() {
               <FiSearch />
               <input
                 value={busquedaExamen}
-                onChange={(event) => setBusquedaExamen(event.target.value)}
+                onChange={(event) => {
+                  const valor = event.target.value
+                  const validacion = validarBusquedaExamen(valor)
+                  if (validacion) {
+                    setAvisoBusqueda(validacion)
+                    return
+                  }
+                  setBusquedaExamen(valor)
+                }}
                 placeholder="Buscar por examen, asignatura o código..."
               />
             </label>
@@ -792,8 +806,8 @@ export default function ReportesAsistencia() {
                   id="fecha-examen-reporte"
                   name="fecha-examen-reporte"
                   type="date"
-                  min="0001-01-01"
-                  max="9999-12-31"
+                  min={FECHA_MINIMA_FILTRO_EXAMEN}
+                  max={FECHA_MAXIMA_FILTRO_EXAMEN}
                   value={fechaExamen}
                   onChange={(event) => {
                     setFechaExamen(event.target.value)
@@ -1659,6 +1673,10 @@ export default function ReportesAsistencia() {
           )}
         </section>
       )}
+      <AvisoBusquedaExamen
+        tipo={avisoBusqueda}
+        onClose={() => setAvisoBusqueda(null)}
+      />
     </main>
   )
 }

@@ -1,41 +1,41 @@
-import api from './api'
+import api from "./api";
 
 export async function generarReporteHorarios(idExamen) {
-  const { data } = await api.post(`/reportes/horarios/examenes/${idExamen}`)
-  return data
+  const { data } = await api.post(`/reportes/horarios/examenes/${idExamen}`);
+  return data;
 }
 
-export async function listarHistorialReportesHorarios(buscar = '') {
-  const { data } = await api.get('/reportes/horarios/historial', {
-    params: buscar.trim() ? { buscar: buscar.trim() } : {}
-  })
-  return data
+export async function listarHistorialReportesHorarios(buscar = "") {
+  const { data } = await api.get("/reportes/horarios/historial", {
+    params: buscar.trim() ? { buscar: buscar.trim() } : {},
+  });
+  return data;
 }
 
 export async function obtenerReporteHorarios(idReporte) {
-  const { data } = await api.get(`/reportes/horarios/${idReporte}`)
-  return data
+  const { data } = await api.get(`/reportes/horarios/${idReporte}`);
+  return data;
 }
 
 export async function descargarReporteHorarios(idReporte) {
   const { data } = await api.get(`/reportes/horarios/${idReporte}/descarga`, {
-    responseType: 'blob'
-  })
-  return data
+    responseType: "blob",
+  });
+  return data;
 }
 
 export async function descargarReporteHorariosExcel(idReporte) {
   const { data } = await api.get(`/reportes/horarios/${idReporte}/excel`, {
-    responseType: 'blob'
-  })
+    responseType: "blob",
+  });
 
-  return data
+  return data;
 }
 
 export async function descargarReporteHorariosPdf(idReporte) {
   const { data } = await api.get(`/reportes/horarios/${idReporte}/pdf`, {
-    responseType: 'blob'
-  })
+    responseType: "blob",
+  });
 
-  return data
+  return data;
 }
