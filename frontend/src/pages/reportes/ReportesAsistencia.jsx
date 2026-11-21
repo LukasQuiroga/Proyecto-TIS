@@ -36,6 +36,13 @@ import {
 import './ReportesAsistencia.css'
 import ReporteAusentes from './ReporteAusentes.jsx'
 
+const FECHA_MINIMA_FILTRO_EXAMEN = '2026-01-01'
+const FECHA_MAXIMA_FILTRO_EXAMEN = '2028-12-31'
+
+function limpiarBusquedaExamen(valor) {
+  return valor.replace(/[^\p{L}\p{N}\s-]/gu, '')
+}
+
 function fechaLegible(fecha) {
   if (!fecha) return 'Sin fecha programada'
   const [anio, mes, dia] = fecha.slice(0, 10).split('-')
@@ -641,8 +648,11 @@ export default function ReportesAsistencia() {
               <FiSearch />
               <input
                 value={busquedaExamen}
-                onChange={(event) => setBusquedaExamen(event.target.value)}
+                onChange={(event) =>
+                  setBusquedaExamen(limpiarBusquedaExamen(event.target.value))
+                }
                 placeholder="Buscar por examen, asignatura o código..."
+                maxLength={50}
               />
             </label>
             <label className="ra-fecha">
@@ -651,6 +661,8 @@ export default function ReportesAsistencia() {
                 <FiCalendar />
                 <input
                   type="date"
+                  min={FECHA_MINIMA_FILTRO_EXAMEN}
+                  max={FECHA_MAXIMA_FILTRO_EXAMEN}
                   value={fechaExamen}
                   onChange={(event) => setFechaExamen(event.target.value)}
                 />

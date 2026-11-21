@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
 @Service
 public class ReporteAsistenciaServicio {
 
+    private static final LocalDate FECHA_MINIMA_FILTRO_EXAMEN = LocalDate.of(2026, 1, 1);
+    private static final LocalDate FECHA_MAXIMA_FILTRO_EXAMEN = LocalDate.of(2028, 12, 31);
     private static final String TIPO_ACCION = "GENERAR_REPORTE_ASISTENCIA";
     private static final String TIPO_ACCION_AUSENTES = "GENERAR_REPORTE_AUSENTES";
     private static final Pattern SNAPSHOT_AUSENTES = Pattern.compile("snapshot=([A-Za-z0-9_-]+)");
@@ -46,6 +48,29 @@ public class ReporteAsistenciaServicio {
 
     @Transactional(readOnly = true)
     public List<ReporteAsistenciaExamenRespuesta> listarExamenes(String busqueda, LocalDate fecha) {
+        if (busqueda != null && busqueda.length() > 50) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La búsqueda no debe superar 50 caracteres"
+            );
+        }
+
+        if (busqueda != null && !busqueda.isBlank()
+                && !busqueda.matches("[\\p{L}\\p{N}\\s-]+")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La búsqueda solo puede contener letras, números, espacios y guiones"
+            );
+        }
+
+        if (fecha != null && (fecha.isBefore(FECHA_MINIMA_FILTRO_EXAMEN)
+                || fecha.isAfter(FECHA_MAXIMA_FILTRO_EXAMEN))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha debe estar entre 01/01/2026 y 31/12/2028"
+            );
+        }
+
         StringBuilder sql = new StringBuilder("""
                 SELECT e.id_examen, e.codigo, e.nombre_examen,
                        a.nombre_asignatura, e.fecha_examen, e.hora_inicio
@@ -56,8 +81,12 @@ public class ReporteAsistenciaServicio {
                 """);
         java.util.ArrayList<Object> parametros = new java.util.ArrayList<>();
         if (busqueda != null && !busqueda.isBlank()) {
+            String termino = busqueda.trim().toLowerCase(java.util.Locale.ROOT);
+            boolean unCaracter = termino.codePointCount(0, termino.length()) == 1;
             sql.append(" AND (LOWER(e.nombre_examen) LIKE ? OR LOWER(a.nombre_asignatura) LIKE ? OR LOWER(COALESCE(e.codigo, '')) LIKE ?)");
-            String filtro = "%" + busqueda.trim().toLowerCase() + "%";
+            String filtro = unCaracter
+                    ? termino + "%"
+                    : "%" + termino + "%";
             parametros.add(filtro);
             parametros.add(filtro);
             parametros.add(filtro);
