@@ -22,6 +22,7 @@ import {
 import {
   descargarReporteHorarios,
   descargarReporteHorariosExcel,
+  descargarReporteHorariosPdf,
   generarReporteHorarios,
   listarHistorialReportesHorarios,
   obtenerReporteHorarios
@@ -29,6 +30,7 @@ import {
 import {
   descargarReporteAccesosIncorrectos,
   descargarReporteAccesosIncorrectosExcel,
+  descargarReporteAccesosIncorrectosPdf,
   generarReporteAccesosIncorrectos,
   listarHistorialReportesAccesosIncorrectos,
   obtenerReporteAccesosIncorrectos
@@ -171,6 +173,7 @@ export default function ReportesAsistencia() {
   const [busquedaHorarios, setBusquedaHorarios] = useState('')
   const [paginaHorarios, setPaginaHorarios] = useState(1)
   const [descargandoExcel, setDescargandoExcel] = useState(false)
+  const [descargandoPdf, setDescargandoPdf] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -532,6 +535,47 @@ export default function ReportesAsistencia() {
     }
   }
 
+  const descargarPdf = async () => {
+    if (!reporte || descargandoPdf) return
+
+    if (
+      tipoReporteVisualizado !== 'HORARIOS_INGRESO' &&
+      tipoReporteVisualizado !== 'ACCESOS_INCORRECTOS'
+    ) {
+      return
+    }
+
+    setDescargandoPdf(true)
+    setError('')
+
+    try {
+      let blob
+      let nombreArchivo
+
+      if (tipoReporteVisualizado === 'HORARIOS_INGRESO') {
+        blob = await descargarReporteHorariosPdf(reporte.idReporte)
+        nombreArchivo = `reporte-horarios-${reporte.idReporte}.pdf`
+      } else {
+        blob = await descargarReporteAccesosIncorrectosPdf(
+          reporte.idReporte
+        )
+        nombreArchivo =
+          `reporte-accesos-incorrectos-${reporte.idReporte}.pdf`
+      }
+
+      descargarBlob(blob, nombreArchivo)
+    } catch (err) {
+      setError(
+        err.response?.data?.mensaje ||
+          err.response?.data?.message ||
+          err.message ||
+          'No se pudo exportar el reporte a PDF.'
+      )
+    } finally {
+      setDescargandoPdf(false)
+    }
+  }
+
   const estudiantesVisibles = useMemo(() => {
     if (!reporte) return []
     const busqueda = filtroEstudiantes.trim().toLocaleLowerCase('es')
@@ -637,7 +681,12 @@ export default function ReportesAsistencia() {
       <nav className="ra-pestanas" aria-label="Secciones de reportes">
         <button
           className={pestana === 'generar' ? 'activa' : ''}
-          onClick={() => setPestana('generar')}
+          onClick={() => {
+            setPestana('generar')
+            setReporte(null)
+            setMensaje('')
+            setError('')
+          }}
         >
           <FiFileText /> Generar reporte
         </button>
@@ -1171,7 +1220,7 @@ export default function ReportesAsistencia() {
             <div className="ra-acciones-exportacion">
               <button
                 type="button"
-                className="ra-boton-primario"
+                className="ra-boton-excel"
                 onClick={descargarExcel}
                 disabled={descargandoExcel}
               >
@@ -1181,7 +1230,17 @@ export default function ReportesAsistencia() {
 
               <button
                 type="button"
-                className="ra-boton-secundario"
+                className="ra-boton-pdf"
+                onClick={descargarPdf}
+                disabled={descargandoPdf}
+              >
+                <FiFileText />
+                {descargandoPdf ? 'Exportando...' : 'Exportar PDF'}
+              </button>
+
+              <button
+                type="button"
+                className="ra-boton-csv"
                 onClick={descargar}
                 disabled={descargando}
               >
@@ -1371,27 +1430,37 @@ export default function ReportesAsistencia() {
               </p>
             </div>
       
-          <div className="ra-acciones-exportacion">
-            <button
-              type="button"
-              className="ra-boton-primario"
-              onClick={descargarExcel}
-              disabled={descargandoExcel}
-            >
-              <FiDownload />
-              {descargandoExcel ? 'Exportando...' : 'Exportar Excel'}
-            </button>
+            <div className="ra-acciones-exportacion">
+              <button
+                type="button"
+                className="ra-boton-excel"
+                onClick={descargarExcel}
+                disabled={descargandoExcel}
+              >
+                <FiDownload />
+                {descargandoExcel ? 'Exportando...' : 'Exportar Excel'}
+              </button>
 
-            <button
-              type="button"
-              className="ra-boton-secundario"
-              onClick={descargar}
-              disabled={descargando}
-            >
-              <FiDownload />
-              {descargando ? 'Descargando...' : 'Descargar CSV'}
-            </button>
-          </div>
+              <button
+                type="button"
+                className="ra-boton-pdf"
+                onClick={descargarPdf}
+                disabled={descargandoPdf}
+              >
+                <FiFileText />
+                {descargandoPdf ? 'Exportando...' : 'Exportar PDF'}
+              </button>
+
+              <button
+                type="button"
+                className="ra-boton-csv"
+                onClick={descargar}
+                disabled={descargando}
+              >
+                <FiDownload />
+                {descargando ? 'Descargando...' : 'Descargar CSV'}
+              </button>
+            </div>
           </div>
 
           <div className="ra-resumen ra-resumen-accesos">
