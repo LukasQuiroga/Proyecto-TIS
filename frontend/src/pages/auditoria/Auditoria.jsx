@@ -19,6 +19,8 @@ const ESTADOS_AUDITORIA = Object.freeze({
   NO_EXITOSA: "NO_EXITOSA",
 });
 
+const INTERVALO_ACTUALIZACION_MS = 5000;
+
 
 function IconoBuscar() {
   return (
@@ -72,6 +74,19 @@ function formatearFecha(valor) {
 }
 
 
+function formatearHora(valor) {
+  if (!valor) {
+    return "—";
+  }
+
+  return valor.toLocaleTimeString("es-BO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+
 function Auditoria() {
   const [busqueda, setBusqueda] = useState("");
   const [tipoAccion, setTipoAccion] = useState("");
@@ -101,6 +116,9 @@ function Auditoria() {
   });
 
   const [cargando, setCargando] = useState(true);
+  const [actualizando, setActualizando] = useState(false);
+  const [ultimaActualizacion, setUltimaActualizacion] =
+    useState(null);
   const [error, setError] = useState("");
   const [busquedaRealizada, setBusquedaRealizada] =
     useState(false);
@@ -112,59 +130,127 @@ function Auditoria() {
     useState("");
 
 
- useEffect(() => {
-  let componenteActivo = true;
+  useEffect(() => {
+    let componenteActivo = true;
+    let enCurso = false;
 
-  consultarLogs({
-    ...consultaAplicada,
-    pagina,
-    tamanio: TAMANIO_PAGINA_AUDITORIA,
-  })
-    .then((respuesta) => {
-      if (!componenteActivo) {
+    function cargar({ silencioso = false } = {}) {
+      if (!componenteActivo || enCurso) {
         return;
       }
 
-      setDatos(respuesta);
-      setError("");
-    })
-    .catch((excepcion) => {
-      if (!componenteActivo) {
-        return;
+      enCurso = true;
+
+      if (silencioso) {
+        setActualizando(true);
+      } else {
+        setCargando(true);
       }
 
-      setError(
-        excepcion.message
-        || "No se pudo recuperar la auditoría."
-      );
-
-      setDatos({
-        logs: [],
-        total: 0,
-        pagina: 0,
+      consultarLogs({
+        ...consultaAplicada,
+        pagina,
         tamanio: TAMANIO_PAGINA_AUDITORIA,
-        totalPaginas: 0,
-      });
-    })
-    .finally(() => {
-      if (componenteActivo) {
-        setCargando(false);
-      }
-    });
+      })
+        .then((respuesta) => {
+          if (!componenteActivo) {
+            return;
+          }
 
-  return () => {
-    componenteActivo = false;
-  };
-}, [
-  consultaAplicada,
-  pagina
-]);
+          setDatos(respuesta);
+          setUltimaActualizacion(new Date());
+          setError("");
+        })
+        .catch((excepcion) => {
+          if (!componenteActivo || silencioso) {
+            return;
+          }
+
+          setError(
+            excepcion.message
+            || "No se pudo recuperar la auditoría."
+          );
+
+          setDatos({
+            logs: [],
+            total: 0,
+            pagina: 0,
+            tamanio: TAMANIO_PAGINA_AUDITORIA,
+            totalPaginas: 0,
+          });
+        })
+        .finally(() => {
+          enCurso = false;
+
+          if (componenteActivo) {
+            setCargando(false);
+            setActualizando(false);
+          }
+        });
+    }
+
+    cargar();
+
+    const intervalo = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        cargar({ silencioso: true });
+      }
+    }, INTERVALO_ACTUALIZACION_MS);
+
+    function alCambiarVisibilidad() {
+      if (document.visibilityState === "visible") {
+        cargar({ silencioso: true });
+      }
+    }
+
+    document.addEventListener(
+      "visibilitychange",
+      alCambiarVisibilidad
+    );
+
+    return () => {
+      componenteActivo = false;
+      clearInterval(intervalo);
+      document.removeEventListener(
+        "visibilitychange",
+        alCambiarVisibilidad
+      );
+    };
+  }, [
+    consultaAplicada,
+    pagina
+  ]);
 
 
   useEffect(() => {
-    obtenerTiposLog()
-      .then(setTipos)
-      .catch(() => setTipos([]));
+    let componenteActivo = true;
+
+    function cargarTipos() {
+      obtenerTiposLog()
+        .then((respuesta) => {
+          if (componenteActivo) {
+            setTipos(respuesta);
+          }
+        })
+        .catch(() => {
+          if (componenteActivo) {
+            setTipos([]);
+          }
+        });
+    }
+
+    cargarTipos();
+
+    const intervalo = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        cargarTipos();
+      }
+    }, INTERVALO_ACTUALIZACION_MS);
+
+    return () => {
+      componenteActivo = false;
+      clearInterval(intervalo);
+    };
   }, []);
 
 
@@ -249,7 +335,7 @@ function Auditoria() {
 
       <header className="auditoria-encabezado">
         <div>
-          <h1>Auditoría del sistema</h1>
+          <h1>Historial de operación</h1>
 
           <p>
             Consulte las operaciones registradas
@@ -258,9 +344,33 @@ function Auditoria() {
           </p>
         </div>
 
-        <div className="auditoria-resumen">
-          <span>Registros encontrados</span>
-          <strong>{datos.total}</strong>
+        <div className="auditoria-estado">
+          <div className="auditoria-resumen">
+            <span>Registros encontrados</span>
+            <strong>{datos.total}</strong>
+          </div>
+
+          <div
+            className="auditoria-tiempo-real"
+            aria-live="polite"
+          >
+            <span
+              className={`auditoria-tiempo-real-punto ${
+                actualizando
+                  ? "auditoria-tiempo-real-punto-activo"
+                  : ""
+              }`}
+              aria-hidden="true"
+            />
+
+            <span>
+              {actualizando
+                ? "Actualizando..."
+                : ultimaActualizacion
+                  ? `Actualizado a las ${formatearHora(ultimaActualizacion)}`
+                  : "Actualización automática activa"}
+            </span>
+          </div>
         </div>
       </header>
 

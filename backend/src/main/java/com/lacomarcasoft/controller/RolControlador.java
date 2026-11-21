@@ -7,9 +7,12 @@ import com.lacomarcasoft.service.RolServicio;
 import com.lacomarcasoft.dto.request.CrearRolSolicitud;
 import com.lacomarcasoft.dto.response.CampoError;
 import com.lacomarcasoft.dto.response.ErroresRegistroRespuesta;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,13 +23,16 @@ import java.util.List;
 public class RolControlador {
 
     private final RolServicio rolServicio;
+    private final AuditoriaAccionesServicio auditoria;
 
 
     public RolControlador(
-            RolServicio rolServicio
+            RolServicio rolServicio,
+            AuditoriaAccionesServicio auditoria
     ){
 
         this.rolServicio = rolServicio;
+        this.auditoria = auditoria;
 
     }
 
@@ -53,21 +59,33 @@ public class RolControlador {
     @PostMapping
         public ResponseEntity<RolRespuesta> crearRol(
                 @Valid 
-                @RequestBody CrearRolSolicitud solicitud
+                @RequestBody CrearRolSolicitud solicitud,
+                Authentication authentication,
+                HttpServletRequest request
         ){
 
-        return ResponseEntity.ok(
+        RolRespuesta respuesta =
                 rolServicio.crear(
                         solicitud
-                )
+                );
+
+        auditoria.registrar(
+                authentication,
+                request,
+                "CREAR_ROL",
+                "Creación del rol " + respuesta.nombreRol()
         );
+
+        return ResponseEntity.ok(respuesta);
 
     }
 
     @PutMapping("/{id}/permisos")
     public ResponseEntity<RolRespuesta> actualizarPermisos(
             @PathVariable Long id,
-            @RequestBody ActualizarPermisosSolicitud solicitud
+            @RequestBody ActualizarPermisosSolicitud solicitud,
+            Authentication authentication,
+            HttpServletRequest request
     ){
 
         Rol rol =
@@ -76,6 +94,12 @@ public class RolControlador {
                         solicitud.permisos()
                 );
 
+        auditoria.registrar(
+                authentication,
+                request,
+                "ACTUALIZAR_PERMISOS_ROL",
+                "Actualización de permisos del rol #" + id
+        );
 
         return ResponseEntity.ok(
                 rolServicio.buscarRespuesta(

@@ -3,8 +3,10 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.ConfigurarExamenSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarExamenSolicitud;
 import com.lacomarcasoft.dto.response.ExamenRespuesta;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.service.ExamenServicio;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -21,18 +23,35 @@ import java.util.Map;
 public class ExamenControlador {
 
     private final ExamenServicio examenServicio;
+    private final AuditoriaAccionesServicio auditoria;
 
-    public ExamenControlador(ExamenServicio examenServicio) {
+    public ExamenControlador(
+            ExamenServicio examenServicio,
+            AuditoriaAccionesServicio auditoria
+    ) {
         this.examenServicio = examenServicio;
+        this.auditoria = auditoria;
     }
 
     @PostMapping
     public ResponseEntity<ExamenRespuesta> registrar(
-            @Valid @RequestBody RegistrarExamenSolicitud solicitud
+            @Valid @RequestBody RegistrarExamenSolicitud solicitud,
+            Authentication authentication,
+            HttpServletRequest request
     ) {
 
         ExamenRespuesta respuesta =
                 examenServicio.registrar(solicitud);
+
+        auditoria.registrar(
+                authentication,
+                request,
+                "CREAR_EXAMEN",
+                "Creación del examen "
+                        + (respuesta.codigo() != null
+                            ? respuesta.codigo()
+                            : "#" + respuesta.idExamen())
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -105,24 +124,47 @@ public class ExamenControlador {
     @PutMapping("/{id}")
     public ResponseEntity<ExamenRespuesta> actualizar(
             @PathVariable Long id,
-            @Valid @RequestBody RegistrarExamenSolicitud solicitud
+            @Valid @RequestBody RegistrarExamenSolicitud solicitud,
+            Authentication authentication,
+            HttpServletRequest request
     ) {
 
-        return ResponseEntity.ok(
-                examenServicio.actualizar(id, solicitud)
+        ExamenRespuesta respuesta =
+                examenServicio.actualizar(id, solicitud);
+
+        auditoria.registrar(
+                authentication,
+                request,
+                "ACTUALIZAR_EXAMEN",
+                "Actualización del examen "
+                        + (respuesta.codigo() != null
+                            ? respuesta.codigo()
+                            : "#" + id)
         );
+
+        return ResponseEntity.ok(respuesta);
     }
 
 
 @PutMapping("/{id}/configuracion")
 public ResponseEntity<ExamenRespuesta> configurar(
         @PathVariable Long id,
-        @Valid @RequestBody ConfigurarExamenSolicitud solicitud
+        @Valid @RequestBody ConfigurarExamenSolicitud solicitud,
+        Authentication authentication,
+        HttpServletRequest request
 ) {
 
-        return ResponseEntity.ok(
-                examenServicio.configurar(id, solicitud)
+        ExamenRespuesta respuesta =
+                examenServicio.configurar(id, solicitud);
+
+        auditoria.registrar(
+                authentication,
+                request,
+                "CONFIGURAR_EXAMEN",
+                "Configuración del examen #" + id
         );
+
+        return ResponseEntity.ok(respuesta);
 }
 
 }

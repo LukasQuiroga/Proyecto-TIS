@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
@@ -271,7 +272,11 @@ public class UsuarioControlador {
             @PathVariable Long id,
 
             @Valid
-            @RequestBody CambiarRolSolicitud solicitud
+            @RequestBody CambiarRolSolicitud solicitud,
+
+            Authentication authentication,
+
+            HttpServletRequest request
 
 
     ){
@@ -283,6 +288,13 @@ public class UsuarioControlador {
                         solicitud.idRol()
                 );
 
+        registrarAuditoriaCambioRol(
+                authentication,
+                request,
+                id,
+                solicitud.idRol()
+        );
+
 
         return ResponseEntity.ok(
                 usuarioServicio.buscarRespuesta(
@@ -292,6 +304,51 @@ public class UsuarioControlador {
         );
 
 
+    }
+
+
+    private void registrarAuditoriaCambioRol(
+
+            Authentication authentication,
+            HttpServletRequest request,
+            Long idUsuarioModificado,
+            Long idRolNuevo
+    ){
+
+        try {
+
+            Long idUsuarioResponsable =
+
+                    authentication != null
+                    && authentication.getDetails() instanceof Long id
+                            ? id
+                            : null;
+
+            logActividadServicio.registrar(
+
+                    idUsuarioResponsable,
+
+                    "CAMBIAR_ROL_USUARIO",
+
+                    "Se cambió el rol del usuario "
+                    + idUsuarioModificado
+                    + " al rol "
+                    + idRolNuevo,
+
+                    request.getRemoteAddr(),
+
+                    true
+
+            );
+
+        } catch (Exception e) {
+
+            LOG.error(
+                    "No se pudo registrar la auditoría",
+                    e
+            );
+
+        }
     }
 
 

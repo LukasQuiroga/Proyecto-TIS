@@ -78,6 +78,8 @@ public class LogActividadRepositorio {
 
     public List<LogActividadRespuesta> consultar(
             String busqueda,
+            String usuario,
+            String rol,
             String tipoAccion,
             LocalDate fechaDesde,
             LocalDate fechaHasta,
@@ -92,6 +94,8 @@ public class LogActividadRepositorio {
 
         String condiciones = construirCondiciones(
                 busqueda,
+                usuario,
+                rol,
                 tipoAccion,
                 fechaDesde,
                 fechaHasta,
@@ -109,6 +113,7 @@ public class LogActividadRepositorio {
                     l.id_usuario,
                     u.nombre,
                     u.apellido,
+                    r.nombre_rol,
                     l.tipo_accion,
                     l.descripcion,
                     l.ip_origen,
@@ -117,6 +122,8 @@ public class LogActividadRepositorio {
                 FROM seguridad.log_actividad l
                 LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
+                LEFT JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
                 """ + condiciones + """
                 ORDER BY
                     l.fecha DESC,
@@ -134,6 +141,8 @@ public class LogActividadRepositorio {
 
     public long contar(
             String busqueda,
+            String usuario,
+            String rol,
             String tipoAccion,
             LocalDate fechaDesde,
             LocalDate fechaHasta,
@@ -146,6 +155,8 @@ public class LogActividadRepositorio {
 
         String condiciones = construirCondiciones(
                 busqueda,
+                usuario,
+                rol,
                 tipoAccion,
                 fechaDesde,
                 fechaHasta,
@@ -159,6 +170,8 @@ public class LogActividadRepositorio {
                 FROM seguridad.log_actividad l
                 LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
+                LEFT JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
                 """ + condiciones;
 
         Long total = jdbcTemplate.queryForObject(
@@ -182,6 +195,7 @@ public class LogActividadRepositorio {
                     l.id_usuario,
                     u.nombre,
                     u.apellido,
+                    r.nombre_rol,
                     l.tipo_accion,
                     l.descripcion,
                     l.ip_origen,
@@ -190,6 +204,8 @@ public class LogActividadRepositorio {
                 FROM seguridad.log_actividad l
                 LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
+                LEFT JOIN seguridad.rol r
+                    ON r.id_rol = u.id_rol
                 WHERE l.id_log = :idLog
                 """;
 
@@ -225,6 +241,8 @@ public class LogActividadRepositorio {
 
     private String construirCondiciones(
             String busqueda,
+            String usuario,
+            String rol,
             String tipoAccion,
             LocalDate fechaDesde,
             LocalDate fechaHasta,
@@ -262,6 +280,48 @@ public class LogActividadRepositorio {
                             .trim()
                             .toLowerCase()
                     + "%"
+            );
+        }
+
+        if (
+                usuario != null
+                && !usuario.isBlank()
+        ) {
+
+            condiciones.append("""
+                    AND (
+                        LOWER(COALESCE(u.nombre, ''))
+                            LIKE :usuario
+                        OR LOWER(COALESCE(u.apellido, ''))
+                            LIKE :usuario
+                        OR LOWER(
+                            CONCAT_WS(' ', u.nombre, u.apellido)
+                        ) LIKE :usuario
+                    )
+                    """);
+
+            parametros.addValue(
+                    "usuario",
+                    "%" +
+                    usuario
+                            .trim()
+                            .toLowerCase()
+                    + "%"
+            );
+        }
+
+        if (
+                rol != null
+                && !rol.isBlank()
+        ) {
+
+            condiciones.append(
+                    " AND LOWER(COALESCE(r.nombre_rol, '')) = LOWER(:rol)\n"
+            );
+
+            parametros.addValue(
+                    "rol",
+                    rol.trim()
             );
         }
 
@@ -355,15 +415,81 @@ public class LogActividadRepositorio {
             nombreUsuario = nombre;
         }
 
+        String tipoAccion = rs.getString("tipo_accion");
+
         return new LogActividadRespuesta(
                 rs.getLong("id_log"),
                 rs.getObject("id_usuario", Long.class),
                 nombreUsuario,
-                rs.getString("tipo_accion"),
+                rs.getString("nombre_rol"),
+                tipoAccion,
                 rs.getString("descripcion"),
+                resolverModulo(tipoAccion),
                 rs.getString("ip_origen"),
                 rs.getObject("fecha", OffsetDateTime.class),
                 rs.getBoolean("exitosa")
         );
+    }
+
+    private String resolverModulo(String tipoAccion) {
+
+        if (tipoAccion == null || tipoAccion.isBlank()) {
+            return "General";
+        }
+
+        String accion = tipoAccion.trim().toUpperCase();
+
+        if (
+                accion.contains("USUARIO")
+                || accion.contains("IMPORTAR")
+                || accion.contains("ROL")
+        ) {
+            return "Usuarios";
+        }
+
+        if (accion.contains("HABILITACION")) {
+            return "Habilitaciones";
+        }
+
+        if (
+                accion.contains("INGRESO")
+                || accion.contains("ACCESO")
+                || accion.contains("INTENTO")
+                || accion.contains("INCIDENCIA")
+        ) {
+            return "Control de ingreso";
+        }
+
+        if (accion.contains("ASIGNATURA")) {
+            return "Asignaturas";
+        }
+
+        if (accion.contains("EXAMEN")) {
+            return "Exámenes";
+        }
+
+        if (
+                accion.contains("INSCRIPCION")
+                || accion.contains("QR")
+        ) {
+            return "Inscripciones QR";
+        }
+
+        if (accion.contains("PERFIL")) {
+            return "Perfil";
+        }
+
+        if (accion.contains("REPORTE")) {
+            return "Reportes";
+        }
+
+        if (
+                accion.contains("SESION")
+                || accion.contains("CONTRASENA")
+        ) {
+            return "Autenticación";
+        }
+
+        return "General";
     }
 }

@@ -10,9 +10,13 @@ public record LogActividadRespuesta(
 
         String nombreUsuario,
 
+        String rol,
+
         String tipoAccion,
 
         String descripcion,
+
+        String modulo,
 
         String ipOrigen,
 

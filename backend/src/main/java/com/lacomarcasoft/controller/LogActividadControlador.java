@@ -39,6 +39,8 @@ public LogActividadControlador(
 @GetMapping
 public ConsultaLogsRespuesta consultar(
         @RequestParam(required = false) String busqueda,
+        @RequestParam(required = false) String usuario,
+        @RequestParam(required = false) String rol,
         @RequestParam(required = false) String tipoAccion,
         @RequestParam(required = false)
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -53,6 +55,8 @@ public ConsultaLogsRespuesta consultar(
 ) {
         return logActividadServicio.consultar(
                 busqueda,
+                usuario,
+                rol,
                 tipoAccion,
                 fechaDesde,
                 fechaHasta,
