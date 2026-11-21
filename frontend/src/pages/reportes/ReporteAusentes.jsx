@@ -13,7 +13,12 @@ import {
   generarReporteAusentes,
   listarExamenesParaReporte
 } from '../../services/reporteAsistenciaService'
+import AvisoBusquedaExamen from './AvisoBusquedaExamen.jsx'
+import { validarBusquedaExamen } from './validarBusquedaExamen.js'
 import './ReporteAusentes.css'
+
+const FECHA_MINIMA_FILTRO_EXAMEN = '2026-01-01'
+const FECHA_MAXIMA_FILTRO_EXAMEN = '2028-12-31'
 
 function fechaLegible(fecha) {
   if (!fecha) return 'Sin fecha programada'
@@ -69,6 +74,7 @@ export default function ReporteAusentes() {
   const [paso, setPaso] = useState('seleccion')
   const [busquedaAusente, setBusquedaAusente] = useState('')
   const [error, setError] = useState('')
+  const [avisoBusqueda, setAvisoBusqueda] = useState(null)
 
   useEffect(() => {
     let vigente = true
@@ -168,7 +174,15 @@ export default function ReporteAusentes() {
               <FiSearch />
               <input
                 value={busqueda}
-                onChange={(event) => setBusqueda(event.target.value)}
+                onChange={(event) => {
+                  const valor = event.target.value
+                  const validacion = validarBusquedaExamen(valor)
+                  if (validacion) {
+                    setAvisoBusqueda(validacion)
+                    return
+                  }
+                  setBusqueda(valor)
+                }}
                 placeholder="Buscar por examen, asignatura o código..."
               />
             </label>
@@ -178,6 +192,8 @@ export default function ReporteAusentes() {
                 <FiCalendar />
                 <input
                   type="date"
+                  min={FECHA_MINIMA_FILTRO_EXAMEN}
+                  max={FECHA_MAXIMA_FILTRO_EXAMEN}
                   value={fecha}
                   onChange={(event) => setFecha(event.target.value)}
                 />
@@ -371,6 +387,10 @@ export default function ReporteAusentes() {
           </p>
         </>
       )}
+      <AvisoBusquedaExamen
+        tipo={avisoBusqueda}
+        onClose={() => setAvisoBusqueda(null)}
+      />
     </section>
   )
 }

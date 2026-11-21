@@ -31,9 +31,12 @@ public class ReporteHorariosServicio {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
 
     private final JdbcTemplate jdbc;
-
-    public ReporteHorariosServicio(JdbcTemplate jdbc) {
+    private final ReporteSnapshotServicio snapshotServicio;
+    public ReporteHorariosServicio(
+            JdbcTemplate jdbc,
+            ReporteSnapshotServicio snapshotServicio) {
         this.jdbc = jdbc;
+        this.snapshotServicio = snapshotServicio;
     }
 
     private static final ZoneId ZONA_BOLIVIA =
@@ -81,19 +84,27 @@ public class ReporteHorariosServicio {
                 ipOrigen
         );
 
-        return obtener(idReporte);
+        GeneracionReporte generacion = consultarGeneracion(idReporte);
+
+        ReporteHorariosRespuesta reporte = new ReporteHorariosRespuesta(
+                idReporte,
+                idExamen,
+                examen.nombreExamen(),
+                examen.asignatura(),
+                examen.fechaExamen(),
+                examen.horaInicio(),
+                generacion.fechaGeneracion(),
+                generacion.nombreGenerador(),
+                totalIngresos,
+                estudiantes
+        );
+
+        snapshotServicio.guardar(idReporte, reporte);
+
+        return reporte;
     }
 
-    @Transactional(readOnly = true)
-    public ReporteHorariosRespuesta obtener(Long idReporte) {
-
-        if (idReporte == null || idReporte <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Identificador de reporte inválido"
-            );
-        }
-
+    private GeneracionReporte consultarGeneracion(Long idReporte) {
         List<GeneracionReporte> registros = jdbc.query("""
                 SELECT
                     l.id_log,
@@ -112,7 +123,7 @@ public class ReporteHorariosServicio {
                 LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
                 WHERE l.id_log = ?
-                  AND l.tipo_accion = ?
+                AND l.tipo_accion = ?
                 """,
                 (rs, fila) -> new GeneracionReporte(
                         rs.getLong("id_log"),
@@ -132,7 +143,29 @@ public class ReporteHorariosServicio {
             );
         }
 
-        GeneracionReporte generacion = registros.get(0);
+        return registros.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public ReporteHorariosRespuesta obtener(Long idReporte) {
+
+        if (idReporte == null || idReporte <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de reporte inválido"
+            );
+        }
+
+        GeneracionReporte generacion = consultarGeneracion(idReporte);
+
+        var snapshot = snapshotServicio.recuperar(
+                idReporte,
+                ReporteHorariosRespuesta.class
+        );
+
+        if (snapshot.isPresent()) {
+            return snapshot.get();
+        }
 
         ReporteAsistenciaExamenRespuesta examen =
                 buscarExamen(generacion.idExamen());
@@ -153,7 +186,6 @@ public class ReporteHorariosServicio {
                 estudiantes
         );
     }
-
     
     @Transactional(readOnly = true)
     public List<ReporteHorariosHistorialRespuesta> historial(String busqueda) {
@@ -339,6 +371,7 @@ public class ReporteHorariosServicio {
                 SELECT
                     u.id_usuario AS id_estudiante,
                     u.codigo_sis AS codigo_estudiante,
+                    u.carnet_identidad,
                     TRIM(
                         CONCAT(
                             COALESCE(u.nombre, ''),
@@ -358,13 +391,14 @@ public class ReporteHorariosServicio {
                     u.id_usuario ASC
                 """,
                 (rs, fila) -> new ReporteHorariosDetalleRespuesta(
-                        rs.getLong("id_estudiante"),
-                        rs.getString("codigo_estudiante"),
-                        rs.getString("nombre_completo"),
-                        rs.getObject(
-                                "fecha_hora_ingreso",
-                                OffsetDateTime.class
-                        )
+                    rs.getLong("id_estudiante"),
+                    rs.getString("codigo_estudiante"),
+                    rs.getString("nombre_completo"),
+                    rs.getObject(
+                            "fecha_hora_ingreso",
+                            OffsetDateTime.class
+                    ),
+                    rs.getString("carnet_identidad")
                 ),
                 idExamen
         );

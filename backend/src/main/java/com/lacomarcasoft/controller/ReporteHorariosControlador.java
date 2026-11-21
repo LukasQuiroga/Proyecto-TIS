@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.lacomarcasoft.service.ReporteHorariosExcelServicio;
-
+import com.lacomarcasoft.service.ReporteHorariosPdfServicio;
 import java.util.List;
 
 @RestController
@@ -18,11 +18,14 @@ import java.util.List;
 public class ReporteHorariosControlador {
     private final ReporteHorariosServicio servicio;
     private final ReporteHorariosExcelServicio excelServicio;
+    private final ReporteHorariosPdfServicio pdfServicio;
     public ReporteHorariosControlador(
             ReporteHorariosServicio servicio,
-            ReporteHorariosExcelServicio excelServicio) {
+            ReporteHorariosExcelServicio excelServicio,
+            ReporteHorariosPdfServicio pdfServicio) {
         this.servicio = servicio;
         this.excelServicio = excelServicio;
+        this.pdfServicio = pdfServicio;
     }
 
     @PostMapping("/examenes/{idExamen}")
@@ -95,6 +98,26 @@ public class ReporteHorariosControlador {
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"reporte-horarios-"
                                 + idReporte + ".xlsx\""
+                )
+                .contentLength(archivo.length)
+                .body(archivo);
+        }
+
+        @GetMapping(
+                value = "/{idReporte}/pdf",
+                produces = MediaType.APPLICATION_PDF_VALUE
+        )
+        public ResponseEntity<byte[]> descargarPdf(
+                @PathVariable Long idReporte) {
+
+        byte[] archivo = pdfServicio.generarPdf(idReporte);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"reporte-horarios-"
+                                + idReporte + ".pdf\""
                 )
                 .contentLength(archivo.length)
                 .body(archivo);

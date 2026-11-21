@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.lacomarcasoft.service.ReporteAccesosIncorrectosExcelServicio;
-
+import com.lacomarcasoft.service.ReporteAccesosIncorrectosPdfServicio;
 import java.util.List;
 
 @RestController
@@ -19,12 +19,14 @@ public class ReporteAccesosIncorrectosControlador {
 
     private final ReporteAccesosIncorrectosServicio servicio;
     private final ReporteAccesosIncorrectosExcelServicio excelServicio;
-
+    private final ReporteAccesosIncorrectosPdfServicio pdfServicio;    
     public ReporteAccesosIncorrectosControlador(
             ReporteAccesosIncorrectosServicio servicio,
-            ReporteAccesosIncorrectosExcelServicio excelServicio) {
+            ReporteAccesosIncorrectosExcelServicio excelServicio,
+            ReporteAccesosIncorrectosPdfServicio pdfServicio) {
         this.servicio = servicio;
         this.excelServicio = excelServicio;
+        this.pdfServicio = pdfServicio;
     }
 
     @PostMapping("/examenes/{idExamen}")
@@ -94,6 +96,26 @@ public class ReporteAccesosIncorrectosControlador {
                 .contentLength(archivo.length)
                 .body(archivo);
     }
+
+        @GetMapping(
+                value = "/{idReporte}/pdf",
+                produces = MediaType.APPLICATION_PDF_VALUE
+        )
+        public ResponseEntity<byte[]> descargarPdf(
+                @PathVariable Long idReporte) {
+
+        byte[] archivo = pdfServicio.generarPdf(idReporte);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"reporte-accesos-incorrectos-"
+                                + idReporte + ".pdf\""
+                )
+                .contentLength(archivo.length)
+                .body(archivo);
+        }
 
     private String obtenerIp(HttpServletRequest request) {
 

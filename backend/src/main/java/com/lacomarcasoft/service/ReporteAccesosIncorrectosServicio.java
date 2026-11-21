@@ -31,11 +31,17 @@ public class ReporteAccesosIncorrectosServicio {
     private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
 
     private final JdbcTemplate jdbc;
+    private final ReporteSnapshotServicio snapshotServicio;
 
-    public ReporteAccesosIncorrectosServicio(JdbcTemplate jdbc) {
+    public ReporteAccesosIncorrectosServicio(
+            JdbcTemplate jdbc,
+            ReporteSnapshotServicio snapshotServicio) {
+
         this.jdbc = jdbc;
+        this.snapshotServicio = snapshotServicio;
     }
 
+    
     @Transactional
     public ReporteAccesosIncorrectosRespuesta generar(
             Long idExamen,
@@ -46,16 +52,25 @@ public class ReporteAccesosIncorrectosServicio {
                 idGenerador == null || idGenerador <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Examen o usuario inválido");
+                    "Examen o usuario inválido"
+            );
         }
 
-        ReporteAsistenciaExamenRespuesta examen = buscarExamen(idExamen);
+        ReporteAsistenciaExamenRespuesta examen =
+                buscarExamen(idExamen);
 
-        List<ReporteAccesosIncorrectosDetalleRespuesta> intentos = consultarIntentos(idExamen);
+        List<ReporteAccesosIncorrectosDetalleRespuesta> intentos =
+                consultarIntentos(idExamen);
 
         int totalRechazados = intentos.size();
 
-        String descripcion = "idExamen=" + idExamen +
+        int totalIngresosAutorizados =
+                contarIngresosAutorizados(idExamen);
+
+        int totalPadron = contarPadron(idExamen);
+
+        String descripcion =
+                "idExamen=" + idExamen +
                 ";rechazados=" + totalRechazados +
                 ";Reporte de accesos incorrectos: " +
                 examen.nombreExamen();
@@ -63,7 +78,7 @@ public class ReporteAccesosIncorrectosServicio {
         Long idReporte = jdbc.queryForObject("""
                 INSERT INTO seguridad.log_actividad
                     (id_usuario, tipo_accion, descripcion,
-                     ip_origen, fecha, exitosa)
+                    ip_origen, fecha, exitosa)
                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, TRUE)
                 RETURNING id_log
                 """,
@@ -71,21 +86,34 @@ public class ReporteAccesosIncorrectosServicio {
                 idGenerador,
                 TIPO_ACCION,
                 descripcion,
-                ipOrigen);
+                ipOrigen
+        );
 
-        return obtener(idReporte);
+        GeneracionReporte generacion =
+                consultarGeneracion(idReporte);
+
+        ReporteAccesosIncorrectosRespuesta reporte =
+                new ReporteAccesosIncorrectosRespuesta(
+                        idReporte,
+                        idExamen,
+                        examen.nombreExamen(),
+                        examen.asignatura(),
+                        examen.fechaExamen(),
+                        examen.horaInicio(),
+                        generacion.fechaGeneracion(),
+                        generacion.nombreGenerador(),
+                        totalRechazados,
+                        totalIngresosAutorizados,
+                        totalPadron,
+                        intentos
+                );
+
+        snapshotServicio.guardar(idReporte, reporte);
+
+        return reporte;
     }
 
-    @Transactional(readOnly = true)
-    public ReporteAccesosIncorrectosRespuesta obtener(
-            Long idReporte) {
-
-        if (idReporte == null || idReporte <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Identificador de reporte inválido");
-        }
-
+    private GeneracionReporte consultarGeneracion(Long idReporte) {
         List<GeneracionReporte> registros = jdbc.query("""
                 SELECT
                     l.id_log,
@@ -104,34 +132,66 @@ public class ReporteAccesosIncorrectosServicio {
                 LEFT JOIN seguridad.usuario u
                     ON u.id_usuario = l.id_usuario
                 WHERE l.id_log = ?
-                  AND l.tipo_accion = ?
+                AND l.tipo_accion = ?
                 """,
                 (rs, fila) -> new GeneracionReporte(
                         rs.getLong("id_log"),
                         rs.getObject(
                                 "fecha",
-                                OffsetDateTime.class),
+                                OffsetDateTime.class
+                        ),
                         rs.getString("nombre_generador"),
-                        rs.getObject("id_examen", Long.class)),
+                        rs.getObject("id_examen", Long.class)
+                ),
                 idReporte,
-                TIPO_ACCION);
+                TIPO_ACCION
+        );
 
         if (registros.isEmpty() ||
                 registros.get(0).idExamen() == null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Reporte de accesos incorrectos no encontrado");
+                    "Reporte de accesos incorrectos no encontrado"
+            );
         }
 
-        GeneracionReporte generacion = registros.get(0);
+        return registros.get(0);
+    }
 
-        ReporteAsistenciaExamenRespuesta examen = buscarExamen(generacion.idExamen());
+    @Transactional(readOnly = true)
+    public ReporteAccesosIncorrectosRespuesta obtener(
+            Long idReporte) {
 
-        List<ReporteAccesosIncorrectosDetalleRespuesta> intentos = consultarIntentos(generacion.idExamen());
+        if (idReporte == null || idReporte <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Identificador de reporte inválido"
+            );
+        }
 
-        int totalIngresosAutorizados = contarIngresosAutorizados(generacion.idExamen());
+        GeneracionReporte generacion =
+                consultarGeneracion(idReporte);
 
-        int totalPadron = contarPadron(generacion.idExamen());
+        var snapshot = snapshotServicio.recuperar(
+                idReporte,
+                ReporteAccesosIncorrectosRespuesta.class
+        );
+
+        if (snapshot.isPresent()) {
+            return snapshot.get();
+        }
+
+        ReporteAsistenciaExamenRespuesta examen =
+                buscarExamen(generacion.idExamen());
+
+        List<ReporteAccesosIncorrectosDetalleRespuesta> intentos =
+                consultarIntentos(generacion.idExamen());
+
+        int totalIngresosAutorizados =
+                contarIngresosAutorizados(generacion.idExamen());
+
+        int totalPadron =
+                contarPadron(generacion.idExamen());
 
         return new ReporteAccesosIncorrectosRespuesta(
                 generacion.idReporte(),
@@ -145,7 +205,8 @@ public class ReporteAccesosIncorrectosServicio {
                 intentos.size(),
                 totalIngresosAutorizados,
                 totalPadron,
-                intentos);
+                intentos
+        );
     }
 
     @Transactional(readOnly = true)

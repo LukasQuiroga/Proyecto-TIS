@@ -100,6 +100,7 @@ function ResultadoHabilitacion({
       return undefined;
     }
 
+    const videoElement = videoRef.current;
     let activo = true;
 
     async function iniciarCamara() {
@@ -127,9 +128,9 @@ function ResultadoHabilitacion({
 
         streamRef.current = stream;
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+        if (videoElement) {
+          videoElement.srcObject = stream;
+          await videoElement.play();
         }
       } catch {
         if (activo) {
@@ -152,8 +153,8 @@ function ResultadoHabilitacion({
         streamRef.current = null;
       }
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      if (videoElement) {
+        videoElement.srcObject = null;
       }
     };
   }, [modalIncidenciaAbierto]);

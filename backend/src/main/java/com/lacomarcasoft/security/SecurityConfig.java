@@ -159,6 +159,11 @@ public class SecurityConfig {
                     "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
                 ))
 
+                .requestMatchers(
+                    "/api/situaciones-excepcionales",
+                    "/api/situaciones-excepcionales/**"
+                ).hasRole("ADMINISTRADOR")
+
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
 
@@ -240,16 +245,21 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/habilitaciones/**"
                 ).hasAnyRole("DOCENTE", "ADMINISTRADOR")
-                          
+
                 .requestMatchers(
                     HttpMethod.GET,
-                      "/api/estudiante/examenes"
+                    "/api/estudiante/examenes"
                 ).hasRole("ESTUDIANTE")
 
                 .requestMatchers(
                     "/api/examenes",
                     "/api/examenes/**"
                 ).hasAuthority("GESTIONAR_EXAMENES")
+
+                .requestMatchers(
+                    "/api/expulsiones",
+                    "/api/expulsiones/**"
+                ).hasRole("ADMINISTRADOR")
 
                 .anyRequest().authenticated()
             )

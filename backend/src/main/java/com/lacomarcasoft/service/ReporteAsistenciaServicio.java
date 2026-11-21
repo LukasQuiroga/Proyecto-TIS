@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
 @Service
 public class ReporteAsistenciaServicio {
 
+    private static final LocalDate FECHA_MINIMA_FILTRO_EXAMEN = LocalDate.of(2026, 1, 1);
+    private static final LocalDate FECHA_MAXIMA_FILTRO_EXAMEN = LocalDate.of(2028, 12, 31);
     private static final String TIPO_ACCION = "GENERAR_REPORTE_ASISTENCIA";
     private static final String TIPO_ACCION_AUSENTES = "GENERAR_REPORTE_AUSENTES";
     private static final Pattern SNAPSHOT_AUSENTES = Pattern.compile("snapshot=([A-Za-z0-9_-]+)");
@@ -45,34 +47,94 @@ public class ReporteAsistenciaServicio {
     }
 
     @Transactional(readOnly = true)
-    public List<ReporteAsistenciaExamenRespuesta> listarExamenes(String busqueda, LocalDate fecha) {
+    public List<ReporteAsistenciaExamenRespuesta> listarExamenes(
+            String busqueda,
+            LocalDate fecha) {
+        if (busqueda != null && busqueda.length() > 50) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La búsqueda no debe superar 50 caracteres"
+            );
+        }
+
+        if (busqueda != null && !busqueda.isBlank()
+                && !busqueda.matches("[\\p{L}\\p{N}\\s-]+")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La búsqueda solo puede contener letras, números, espacios y guiones"
+            );
+        }
+
+        if (fecha != null && (fecha.isBefore(FECHA_MINIMA_FILTRO_EXAMEN)
+                || fecha.isAfter(FECHA_MAXIMA_FILTRO_EXAMEN))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha debe estar entre 01/01/2026 y 31/12/2028"
+            );
+        }
+
         StringBuilder sql = new StringBuilder("""
-                SELECT e.id_examen, e.codigo, e.nombre_examen,
-                       a.nombre_asignatura, e.fecha_examen, e.hora_inicio
+                SELECT
+                    e.id_examen,
+                    e.codigo,
+                    e.nombre_examen,
+                    a.nombre_asignatura,
+                    e.fecha_examen,
+                    e.hora_inicio
                 FROM academico.examen e
-                JOIN academico.materia m ON m.id_materia = e.id_materia
-                JOIN academico.asignatura a ON a.id_asignatura = m.id_asignatura
+                JOIN academico.materia m
+                    ON m.id_materia = e.id_materia
+                JOIN academico.asignatura a
+                    ON a.id_asignatura = m.id_asignatura
                 WHERE 1 = 1
                 """);
-        java.util.ArrayList<Object> parametros = new java.util.ArrayList<>();
+
+        java.util.ArrayList<Object> parametros =
+                new java.util.ArrayList<>();
+
         if (busqueda != null && !busqueda.isBlank()) {
-            sql.append(" AND (LOWER(e.nombre_examen) LIKE ? OR LOWER(a.nombre_asignatura) LIKE ? OR LOWER(COALESCE(e.codigo, '')) LIKE ?)");
-            String filtro = "%" + busqueda.trim().toLowerCase() + "%";
+            String termino = busqueda.trim().toLowerCase(java.util.Locale.ROOT);
+            boolean unCaracter = termino.codePointCount(0, termino.length()) == 1;
+            String filtro = unCaracter
+                    ? termino + "%"
+                    : "%" + termino + "%";
+
+            sql.append("""
+                    AND (
+                        TRANSLATE(LOWER(e.nombre_examen), 'áéíóúü', 'aeiouu')
+                            LIKE TRANSLATE(LOWER(?), 'áéíóúü', 'aeiouu')
+                        OR TRANSLATE(LOWER(a.nombre_asignatura), 'áéíóúü', 'aeiouu')
+                            LIKE TRANSLATE(LOWER(?), 'áéíóúü', 'aeiouu')
+                        OR TRANSLATE(LOWER(COALESCE(e.codigo, '')), 'áéíóúü', 'aeiouu')
+                            LIKE TRANSLATE(LOWER(?), 'áéíóúü', 'aeiouu')
+                    )
+                    """);
             parametros.add(filtro);
             parametros.add(filtro);
             parametros.add(filtro);
         }
+        
         if (fecha != null) {
             sql.append(" AND e.fecha_examen = ?");
             parametros.add(Date.valueOf(fecha));
         }
-        sql.append(" ORDER BY e.fecha_examen DESC NULLS LAST, e.hora_inicio DESC NULLS LAST, e.id_examen DESC");
 
-        return jdbc.query(sql.toString(), (rs, fila) -> new ReporteAsistenciaExamenRespuesta(
-                rs.getLong("id_examen"), rs.getString("codigo"), rs.getString("nombre_examen"),
-                rs.getString("nombre_asignatura"), fecha(rs.getDate("fecha_examen")),
-                hora(rs.getTime("hora_inicio"))
-        ), parametros.toArray());
+        sql.append(" ORDER BY e.fecha_examen DESC NULLS LAST, " +
+            "e.hora_inicio DESC NULLS LAST, " +
+            "e.id_examen DESC");
+
+        return jdbc.query(
+                sql.toString(),
+                (rs, fila) -> new ReporteAsistenciaExamenRespuesta(
+                        rs.getLong("id_examen"),
+                        rs.getString("codigo"),
+                        rs.getString("nombre_examen"),
+                        rs.getString("nombre_asignatura"),
+                        fecha(rs.getDate("fecha_examen")),
+                        hora(rs.getTime("hora_inicio"))
+                ),
+                parametros.toArray()
+        );
     }
 
     @Transactional(readOnly = true)
