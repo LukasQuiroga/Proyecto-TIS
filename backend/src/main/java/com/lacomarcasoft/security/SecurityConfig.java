@@ -159,6 +159,11 @@ public class SecurityConfig {
                     "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
                 ))
 
+                .requestMatchers(
+                    "/api/situaciones-excepcionales",
+                    "/api/situaciones-excepcionales/**"
+                ).hasRole("ADMINISTRADOR")
+
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
 
