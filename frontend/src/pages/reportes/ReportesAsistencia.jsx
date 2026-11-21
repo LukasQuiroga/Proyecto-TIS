@@ -35,9 +35,8 @@ import {
   listarHistorialReportesAccesosIncorrectos,
   obtenerReporteAccesosIncorrectos
 } from '../../services/reporteAccesosIncorrectosService'
-import AvisoBusquedaExamen, {
-  validarBusquedaExamen
-} from './AvisoBusquedaExamen.jsx'
+import AvisoBusquedaExamen from './AvisoBusquedaExamen.jsx'
+import { validarBusquedaExamen } from './validarBusquedaExamen.js'
 import './ReportesAsistencia.css'
 import ReporteAusentes from './ReporteAusentes.jsx'
 
@@ -807,13 +806,8 @@ export default function ReportesAsistencia() {
                   id="fecha-examen-reporte"
                   name="fecha-examen-reporte"
                   type="date"
-<<<<<<< HEAD
                   min={FECHA_MINIMA_FILTRO_EXAMEN}
                   max={FECHA_MAXIMA_FILTRO_EXAMEN}
-=======
-                  min="0001-01-01"
-                  max="9999-12-31"
->>>>>>> origin/develop
                   value={fechaExamen}
                   onChange={(event) => {
                     setFechaExamen(event.target.value)

@@ -13,9 +13,8 @@ import {
   generarReporteAusentes,
   listarExamenesParaReporte
 } from '../../services/reporteAsistenciaService'
-import AvisoBusquedaExamen, {
-  validarBusquedaExamen
-} from './AvisoBusquedaExamen.jsx'
+import AvisoBusquedaExamen from './AvisoBusquedaExamen.jsx'
+import { validarBusquedaExamen } from './validarBusquedaExamen.js'
 import './ReporteAusentes.css'
 
 const FECHA_MINIMA_FILTRO_EXAMEN = '2026-01-01'
