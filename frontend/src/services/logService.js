@@ -6,12 +6,9 @@ export const TAMANIO_PAGINA_AUDITORIA = 10;
 
 export async function consultarLogs({
   busqueda = "",
-  usuario = "",
-  rol = "",
   tipoAccion = "",
   fechaDesde = "",
   fechaHasta = "",
-  idUsuario = "",
   estado = "TODOS",
   pagina = 0,
   tamanio = TAMANIO_PAGINA_AUDITORIA,
@@ -25,14 +22,6 @@ export async function consultarLogs({
     parametros.busqueda = busqueda.trim();
   }
 
-  if (usuario.trim()) {
-    parametros.usuario = usuario.trim();
-  }
-
-  if (rol) {
-    parametros.rol = rol;
-  }
-
   if (tipoAccion) {
     parametros.tipoAccion = tipoAccion;
   }
@@ -43,10 +32,6 @@ export async function consultarLogs({
 
   if (fechaHasta) {
     parametros.fechaHasta = fechaHasta;
-  }
-
-  if (idUsuario) {
-    parametros.idUsuario = idUsuario;
   }
 
   if (estado === "EXITOSA") {
