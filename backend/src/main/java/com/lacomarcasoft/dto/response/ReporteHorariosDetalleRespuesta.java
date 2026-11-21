@@ -6,5 +6,7 @@ public record ReporteHorariosDetalleRespuesta(
         Long idEstudiante,
         String codigoEstudiante,
         String nombreCompleto,
-        OffsetDateTime fechaHoraIngreso
-) {}
+        OffsetDateTime fechaHoraIngreso,
+        String carnetIdentidad
+) {
+}

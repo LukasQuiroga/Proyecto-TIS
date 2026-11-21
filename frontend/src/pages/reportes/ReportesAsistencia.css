@@ -615,3 +615,69 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+.ra-acciones-exportacion .ra-boton-excel,
+.ra-acciones-exportacion .ra-boton-pdf,
+.ra-acciones-exportacion .ra-boton-csv {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 11px 15px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ra-acciones-exportacion .ra-boton-excel {
+  background-color: #168447;
+  border-color: #168447;
+}
+
+.ra-acciones-exportacion .ra-boton-pdf {
+  background-color: #c92d39;
+  border-color: #c92d39;
+}
+
+.ra-acciones-exportacion .ra-boton-csv {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.ra-acciones-exportacion .ra-boton-excel:hover:not(:disabled) {
+  background-color: #116b39;
+}
+
+.ra-acciones-exportacion .ra-boton-pdf:hover:not(:disabled) {
+  background-color: #a8202b;
+}
+
+.ra-acciones-exportacion .ra-boton-csv:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.ra-acciones-exportacion button svg {
+  width: 15px;
+  height: 15px;
+  color: inherit;
+}
+
+.ra-acciones-exportacion button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ra-acciones-exportacion button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}

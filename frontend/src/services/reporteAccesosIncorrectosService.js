@@ -31,3 +31,11 @@ export async function descargarReporteAccesosIncorrectosExcel(idReporte) {
 
   return data
 }
+
+export async function descargarReporteAccesosIncorrectosPdf(idReporte) {
+  const { data } = await api.get(`/reportes/accesos-incorrectos/${idReporte}/pdf`, {
+    responseType: 'blob'
+  })
+
+  return data
+}
