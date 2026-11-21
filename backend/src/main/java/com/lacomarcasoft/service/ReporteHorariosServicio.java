@@ -371,6 +371,7 @@ public class ReporteHorariosServicio {
                 SELECT
                     u.id_usuario AS id_estudiante,
                     u.codigo_sis AS codigo_estudiante,
+                    u.carnet_identidad,
                     TRIM(
                         CONCAT(
                             COALESCE(u.nombre, ''),
@@ -390,13 +391,14 @@ public class ReporteHorariosServicio {
                     u.id_usuario ASC
                 """,
                 (rs, fila) -> new ReporteHorariosDetalleRespuesta(
-                        rs.getLong("id_estudiante"),
-                        rs.getString("codigo_estudiante"),
-                        rs.getString("nombre_completo"),
-                        rs.getObject(
-                                "fecha_hora_ingreso",
-                                OffsetDateTime.class
-                        )
+                    rs.getLong("id_estudiante"),
+                    rs.getString("codigo_estudiante"),
+                    rs.getString("nombre_completo"),
+                    rs.getObject(
+                            "fecha_hora_ingreso",
+                            OffsetDateTime.class
+                    ),
+                    rs.getString("carnet_identidad")
                 ),
                 idExamen
         );

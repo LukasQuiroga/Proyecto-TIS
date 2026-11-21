@@ -112,6 +112,31 @@ function fechaHoraIngresoLegible(valor) {
   }).format(fecha)
 }
 
+function esFechaValida(fecha) {
+  if (!fecha) return true
+
+  const coincidencia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha)
+
+  if (!coincidencia) return false
+
+  const anio = Number(coincidencia[1])
+  const mes = Number(coincidencia[2])
+  const dia = Number(coincidencia[3])
+
+  if (anio < 1 || mes < 1 || mes > 12 || dia < 1) {
+    return false
+  }
+
+  const fechaComprobacion = new Date(Date.UTC(2000, mes - 1, dia))
+  fechaComprobacion.setUTCFullYear(anio)
+
+  return (
+    fechaComprobacion.getUTCFullYear() === anio &&
+    fechaComprobacion.getUTCMonth() === mes - 1 &&
+    fechaComprobacion.getUTCDate() === dia
+  )
+}
+
 export default function ReportesAsistencia() {
   const [pestana, setPestana] = useState('generar')
   const [examenes, setExamenes] = useState([])
@@ -143,6 +168,8 @@ export default function ReportesAsistencia() {
   const [abriendoReporte, setAbriendoReporte] = useState(false)
   const [busquedaIntentos, setBusquedaIntentos] = useState('')
   const [paginaIntentos, setPaginaIntentos] = useState(1)
+  const [busquedaHorarios, setBusquedaHorarios] = useState('')
+  const [paginaHorarios, setPaginaHorarios] = useState(1)
   const [descargandoExcel, setDescargandoExcel] = useState(false)
 
   useEffect(() => {
@@ -260,10 +287,18 @@ export default function ReportesAsistencia() {
       (item) => item.tipoReporte === tipoHistorial
     )
   }, [historial, tipoHistorial])
+  
+  const solicitarExamenes = (fechaInvalida = false) => {
+    if (fechaInvalida || !esFechaValida(fechaExamen)) {
+      setError('La fecha ingresada no es válida.')
+      setCargandoExamenes(false)
+      return
+    }
 
-  const solicitarExamenes = () => {
     setCargandoExamenes(true)
     setError('')
+    setMensaje('')
+    setReporte(null)
     setSolicitudExamenes((anterior) => ({
       buscar: busquedaExamen,
       fecha: fechaExamen,
@@ -274,6 +309,8 @@ export default function ReportesAsistencia() {
   const solicitarHistorial = () => {
     setCargandoHistorial(true)
     setError('')
+    setMensaje('')
+    setReporte(null)
     setPestana('historial')
 
     setSolicitudHistorial((anterior) => ({
@@ -313,6 +350,8 @@ export default function ReportesAsistencia() {
       setReporte(data)
       setBusquedaIntentos('')
       setPaginaIntentos(1)
+      setBusquedaHorarios('')
+      setPaginaHorarios(1)
       setMensaje(
         `La generación del reporte de “${data.nombreExamen}” quedó registrada en el historial.`
       )
@@ -381,6 +420,8 @@ export default function ReportesAsistencia() {
       setEstadoEstudiantes('TODOS')
       setBusquedaIntentos('')
       setPaginaIntentos(1)
+      setBusquedaHorarios('')
+      setPaginaHorarios(1)
 
       requestAnimationFrame(() => {
         const idVista =
@@ -505,6 +546,44 @@ export default function ReportesAsistencia() {
       return coincideEstado && coincideTexto
     })
   }, [reporte, filtroEstudiantes, estadoEstudiantes])
+
+  const horariosVisibles = useMemo(() => {
+    if (!reporte || tipoReporteVisualizado !== 'HORARIOS_INGRESO') {
+      return []
+    }
+
+    const normalizar = (valor) =>
+      String(valor ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es')
+        .trim()
+
+    const busqueda = normalizar(busquedaHorarios)
+
+    return (reporte.estudiantes || []).filter((estudiante) => {
+      const texto = normalizar(
+        [
+          estudiante.nombreCompleto,
+          estudiante.codigoEstudiante,
+          estudiante.carnetIdentidad
+        ].join(' ')
+      )
+
+      return !busqueda || texto.includes(busqueda)
+    })
+  }, [reporte, tipoReporteVisualizado, busquedaHorarios])
+
+  const horariosPorPagina = 10
+  const totalPaginasHorarios = Math.max(
+    1,
+    Math.ceil(horariosVisibles.length / horariosPorPagina)
+  )
+
+  const horariosPaginados = horariosVisibles.slice(
+    (paginaHorarios - 1) * horariosPorPagina,
+    paginaHorarios * horariosPorPagina
+  )
 
   const intentosVisibles = useMemo(() => {
     if (
@@ -632,9 +711,20 @@ export default function ReportesAsistencia() {
           {tipoReporte === 'AUSENTES' ? <ReporteAusentes /> : <>
           <form
             className="ra-filtros"
+            noValidate
             onSubmit={(event) => {
               event.preventDefault()
-              solicitarExamenes()
+
+              const campoFecha = event.currentTarget.elements.namedItem(
+                'fecha-examen-reporte'
+              )
+
+              const fechaInvalida =
+                !campoFecha ||
+                !campoFecha.validity.valid ||
+                !esFechaValida(campoFecha.value)
+
+              solicitarExamenes(fechaInvalida)
             }}
           >
             <label className="ra-busqueda">
@@ -650,9 +740,16 @@ export default function ReportesAsistencia() {
               <span className="ra-campo-fecha">
                 <FiCalendar />
                 <input
+                  id="fecha-examen-reporte"
+                  name="fecha-examen-reporte"
                   type="date"
+                  min="0001-01-01"
+                  max="9999-12-31"
                   value={fechaExamen}
-                  onChange={(event) => setFechaExamen(event.target.value)}
+                  onChange={(event) => {
+                    setFechaExamen(event.target.value)
+                    setError('')
+                  }}
                 />
               </span>
             </label>
@@ -839,9 +936,11 @@ export default function ReportesAsistencia() {
                 {!cargandoHistorial && historialFiltrado.length === 0 && (
                   <tr>
                     <td colSpan="8" className="ra-vacio">
-                      {historial.length === 0
-                        ? 'Todavía no hay reportes disponibles.'
-                        : 'No hay reportes del tipo seleccionado.'}
+                      {solicitudHistorial.buscar.trim()
+                        ? 'No se encontraron reportes para la búsqueda realizada.'
+                        : historial.length === 0
+                          ? 'Todavía no hay reportes disponibles.'
+                          : 'No hay reportes del tipo seleccionado.'}
                     </td>
                   </tr>
                 )}
@@ -1128,6 +1227,21 @@ export default function ReportesAsistencia() {
                 Estudiantes ordenados por fecha y hora de ingreso.
               </p>
             </div>
+            <div className="ra-lista-filtros">
+              <label className="ra-busqueda">
+                <FiSearch />
+                <input
+                  type="search"
+                  value={busquedaHorarios}
+                  onChange={(event) => {
+                    setBusquedaHorarios(event.target.value)
+                    setPaginaHorarios(1)
+                  }}
+                  placeholder="Buscar por nombre, CI o RU..."
+                  aria-label="Buscar estudiante en horarios de ingreso"
+                />
+              </label>
+            </div>
           </div>
 
           {reporte.estudiantes?.length === 0 ? (
@@ -1151,10 +1265,10 @@ export default function ReportesAsistencia() {
                 </thead>
 
                 <tbody>
-                  {(reporte.estudiantes || []).map(
+                  {horariosPaginados.map(
                     (estudiante, indice) => (
                       <tr key={estudiante.idEstudiante}>
-                        <td>{indice + 1}</td>
+                        <td>{(paginaHorarios - 1) * horariosPorPagina + indice + 1}</td>
 
                         <td>
                           {estudiante.codigoEstudiante || '—'}
@@ -1172,14 +1286,68 @@ export default function ReportesAsistencia() {
                       </tr>
                     )
                   )}
+                  {horariosVisibles.length === 0 && (
+                    <tr>
+                      <td colSpan="4" className="ra-vacio">
+                        No se encontraron estudiantes para la búsqueda.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           )}
 
-          <p className="ra-conteo">
-            Total de ingresos registrados: {reporte.totalIngresos}
-          </p>
+          <div className="ra-paginacion">
+            <span className="ra-conteo">
+              Mostrando{' '}
+              {horariosVisibles.length === 0
+                ? 0
+                : (paginaHorarios - 1) * horariosPorPagina + 1}
+              {' '}a{' '}
+              {Math.min(
+                paginaHorarios * horariosPorPagina,
+                horariosVisibles.length
+              )}
+              {' '}de {horariosVisibles.length} ingresos
+              {horariosVisibles.length !== reporte.totalIngresos &&
+                ` (de ${reporte.totalIngresos} registrados)`}
+            </span>
+
+            {totalPaginasHorarios > 1 && (
+              <div className="ra-paginacion-botones">
+                <button
+                  type="button"
+                  className="ra-boton-secundario"
+                  onClick={() =>
+                    setPaginaHorarios((anterior) =>
+                      Math.max(1, anterior - 1)
+                    )
+                  }
+                  disabled={paginaHorarios === 1}
+                >
+                  Anterior
+                </button>
+
+                <span>
+                  Página {paginaHorarios} de {totalPaginasHorarios}
+                </span>
+
+                <button
+                  type="button"
+                  className="ra-boton-secundario"
+                  onClick={() =>
+                    setPaginaHorarios((anterior) =>
+                      Math.min(totalPaginasHorarios, anterior + 1)
+                    )
+                  }
+                  disabled={paginaHorarios >= totalPaginasHorarios}
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </div>
         </section>
       )}
 
@@ -1384,38 +1552,39 @@ export default function ReportesAsistencia() {
                   )}
                   {' '}de {intentosVisibles.length} intentos
                 </span>
+                {totalPaginasIntentos > 1 && (                
+                  <div className="ra-paginacion-botones">
+                    <button
+                      type="button"
+                      className="ra-boton-secundario"
+                      onClick={() =>
+                        setPaginaIntentos((anterior) =>
+                          Math.max(1, anterior - 1)
+                        )
+                      }
+                      disabled={paginaIntentos === 1}
+                    >
+                      Anterior
+                    </button>
 
-                <div className="ra-paginacion-botones">
-                  <button
-                    type="button"
-                    className="ra-boton-secundario"
-                    onClick={() =>
-                      setPaginaIntentos((anterior) =>
-                        Math.max(1, anterior - 1)
-                      )
-                    }
-                    disabled={paginaIntentos === 1}
-                  >
-                    Anterior
-                  </button>
+                    <span>
+                      Página {paginaIntentos} de {totalPaginasIntentos}
+                    </span>
 
-                  <span>
-                    Página {paginaIntentos} de {totalPaginasIntentos}
-                  </span>
-
-                  <button
-                    type="button"
-                    className="ra-boton-secundario"
-                    onClick={() =>
-                      setPaginaIntentos((anterior) =>
-                        Math.min(totalPaginasIntentos, anterior + 1)
-                      )
-                    }
-                    disabled={paginaIntentos >= totalPaginasIntentos}
-                  >
-                    Siguiente
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      className="ra-boton-secundario"
+                      onClick={() =>
+                        setPaginaIntentos((anterior) =>
+                          Math.min(totalPaginasIntentos, anterior + 1)
+                        )
+                      }
+                      disabled={paginaIntentos >= totalPaginasIntentos}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
