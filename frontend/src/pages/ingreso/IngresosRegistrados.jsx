@@ -1,6 +1,5 @@
-
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   FiCalendar,
   FiEye,
@@ -11,472 +10,423 @@ import {
   FiCheckCircle,
   FiClock,
   FiAlertTriangle,
-  FiRefreshCw,
-} from "react-icons/fi";
+  FiRefreshCw
+} from 'react-icons/fi'
 
 import {
   listarIngresosRegistrados,
   obtenerExamenesIngreso,
-  obtenerIngresoRegistrado,
-} from "../../services/validacionHabilitacionService";
+  obtenerIngresoRegistrado
+} from '../../services/validacionHabilitacionService'
 
-import { obtenerResumenIngresos } from "../../services/resumenIngresosService";
+import {
+  obtenerResumenIngresos,
+  listarRegistrosPorTipo
+} from '../../services/resumenIngresosService'
 import {
   FECHA_MINIMA_CONSULTA,
   FECHA_MAXIMA_CONSULTA,
   fechaConsultaValida,
-  obtenerMensajeFechaInvalida,
-} from "../../utils/fechaConsulta";
+  obtenerMensajeFechaInvalida
+} from '../../utils/fechaConsulta'
 
 import {
   LIMITE_BUSQUEDA_ESTUDIANTE,
-  limpiarBusquedaEstudiante,
-} from "../../utils/busquedaEstudiante";
+  limpiarBusquedaEstudiante
+} from '../../utils/busquedaEstudiante'
 
-import "./IngresosRegistrados.css";
+import './IngresosRegistrados.css'
 
 function formatearId(id) {
-  if (id == null) return "-";
-  return `IG-${String(id).padStart(3, "0")}`;
+  if (id == null) return '-'
+  return `IG-${String(id).padStart(3, '0')}`
 }
 
 function formatearFecha(valor) {
-  if (!valor) return "-";
+  if (!valor) return '-'
 
-  const fecha = new Date(valor);
+  const fecha = new Date(valor)
 
-  if (Number.isNaN(fecha.getTime())) return "-";
+  if (Number.isNaN(fecha.getTime())) return '-'
 
-  const dia = String(fecha.getDate()).padStart(2, "0");
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, '0')
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
 
-  return `${dia}/${mes}/${fecha.getFullYear()}`;
+  return `${dia}/${mes}/${fecha.getFullYear()}`
 }
 
 function formatearHora(valor) {
-  if (!valor) return "-";
+  if (!valor) return '-'
 
-  const fecha = new Date(valor);
+  const fecha = new Date(valor)
 
-  if (Number.isNaN(fecha.getTime())) return "-";
+  if (Number.isNaN(fecha.getTime())) return '-'
 
-  const horas = String(fecha.getHours()).padStart(2, "0");
-  const minutos = String(fecha.getMinutes()).padStart(2, "0");
-  const segundos = String(fecha.getSeconds()).padStart(2, "0");
+  const horas = String(fecha.getHours()).padStart(2, '0')
+  const minutos = String(fecha.getMinutes()).padStart(2, '0')
+  const segundos = String(fecha.getSeconds()).padStart(2, '0')
 
-  return `${horas}:${minutos}:${segundos}`;
+  return `${horas}:${minutos}:${segundos}`
 }
 
 function mensajeError(error, mensajePredeterminado) {
-  const estado = error?.response?.status;
+  const estado = error?.response?.status
 
   if (estado === 401) {
-    return "Tu sesión expiró. Inicia sesión nuevamente.";
+    return 'Tu sesión expiró. Inicia sesión nuevamente.'
   }
 
   if (estado === 403) {
-    return "No tienes permisos para consultar esta información.";
+    return 'No tienes permisos para consultar esta información.'
   }
 
   if (estado === 404) {
-    return "El registro solicitado ya no está disponible.";
+    return 'El registro solicitado ya no está disponible.'
   }
 
   if (estado >= 500) {
-    return "El servidor no pudo completar la consulta. Intenta nuevamente.";
+    return 'El servidor no pudo completar la consulta. Intenta nuevamente.'
   }
 
   if (!error?.response) {
-    return "No se pudo conectar con el servidor. Revisa la conexión e intenta nuevamente.";
+    return 'No se pudo conectar con el servidor. Revisa la conexión e intenta nuevamente.'
   }
 
-  const respuesta = error.response.data;
-  const detalle = respuesta?.mensaje || respuesta?.message;
+  const respuesta = error.response.data
+  const detalle = respuesta?.mensaje || respuesta?.message
 
-  return typeof detalle === "string" && detalle.trim()
-    ? detalle
-    : mensajePredeterminado;
+  return typeof detalle === 'string' && detalle.trim() ? detalle : mensajePredeterminado
 }
 
 function IngresosRegistrados() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  const [examenes, setExamenes] = useState([]);
-  const [ingresos, setIngresos] = useState([]);
+  const [examenes, setExamenes] = useState([])
+  const [ingresos, setIngresos] = useState([])
 
-  const [q, setQ] = useState("");
-  const [idExamen, setIdExamen] = useState("");
-  const [errorFecha, setErrorFecha] = useState("");
+  const [q, setQ] = useState('')
+  const [idExamen, setIdExamen] = useState('')
+  const [tipoConsulta, setTipoConsulta] = useState('INGRESADOS')
+  const [tipoAplicado, setTipoAplicado] = useState('INGRESADOS')
+  const [errorFecha, setErrorFecha] = useState('')
 
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-  const [errorExamenes, setErrorExamenes] = useState("");
-  const [errorDetalle, setErrorDetalle] = useState("");
-  const [pagina, setPagina] = useState(1);
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+  const [errorExamenes, setErrorExamenes] = useState('')
+  const [errorDetalle, setErrorDetalle] = useState('')
+  const [pagina, setPagina] = useState(1)
 
-  const [resumen, setResumen] = useState(null);
-  const [cargandoResumen, setCargandoResumen] = useState(true);
-  const [errorResumen, setErrorResumen] = useState("");
-  const [examenResumen, setExamenResumen] = useState("");
+  const [resumen, setResumen] = useState(null)
+  const [cargandoResumen, setCargandoResumen] = useState(true)
+  const [errorResumen, setErrorResumen] = useState('')
+  const [examenResumen, setExamenResumen] = useState('')
 
-  const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null);
-  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [ingresoSeleccionado, setIngresoSeleccionado] = useState(null)
+  const [cargandoDetalle, setCargandoDetalle] = useState(false)
 
-  const solicitudListado = useRef(0);
-  const solicitudDetalle = useRef(0);
-  const solicitudResumen = useRef(0);
-  const filtrosAplicados = useRef({});
-  const fechaInputRef = useRef(null);
+  const solicitudListado = useRef(0)
+  const solicitudDetalle = useRef(0)
+  const solicitudResumen = useRef(0)
+  const filtrosAplicados = useRef({})
+  const fechaInputRef = useRef(null)
 
-  const porPagina = 5;
+  const porPagina = 5
 
   useEffect(() => {
-    let activo = true;
+    let activo = true
 
     obtenerExamenesIngreso()
       .then((datos) => {
-        if (!activo) return;
+        if (!activo) return
 
         if (!Array.isArray(datos)) {
-          throw new Error("Respuesta de exámenes inválida");
+          throw new Error('Respuesta de exámenes inválida')
         }
 
-        setExamenes(datos);
+        setExamenes(datos)
       })
       .catch(() => {
         if (activo) {
-          setErrorExamenes(
-            "No se pudieron cargar los exámenes disponibles."
-          );
+          setErrorExamenes('No se pudieron cargar los exámenes disponibles.')
         }
-      });
+      })
 
     return () => {
-      activo = false;
-    };
-  }, []);
+      activo = false
+    }
+  }, [])
 
   const cargar = useCallback(async (filtros = {}) => {
-    const idSolicitud = ++solicitudListado.current;
+    const idSolicitud = ++solicitudListado.current
 
-    setCargando(true);
-    setError("");
+    setCargando(true)
+    setError('')
 
     try {
-      const datos = await listarIngresosRegistrados(filtros);
+      const tipo = filtros.tipo || 'INGRESADOS'
+      const datos =
+        tipo === 'PENDIENTES' || tipo === 'RECHAZADOS'
+          ? await listarRegistrosPorTipo(tipo, filtros)
+          : await listarIngresosRegistrados(filtros)
 
-      if (idSolicitud !== solicitudListado.current) return;
+      if (idSolicitud !== solicitudListado.current) return
 
       if (!Array.isArray(datos)) {
-        throw new Error(
-          "La respuesta del listado no tiene el formato esperado"
-        );
+        throw new Error('La respuesta del listado no tiene el formato esperado')
       }
 
-      setIngresos(datos);
-      setPagina(1);
+      const filtrados =
+        tipo === 'REGISTRADO' || tipo === 'SUSPENDIDO' || tipo === 'REINCORPORADO'
+          ? datos.filter((registro) => (registro.estado || 'REGISTRADO') === tipo)
+          : datos
+      setIngresos(filtrados)
+      setTipoAplicado(tipo)
+      setPagina(1)
     } catch (err) {
-      if (idSolicitud !== solicitudListado.current) return;
+      if (idSolicitud !== solicitudListado.current) return
 
-      setIngresos([]);
-      setPagina(1);
+      setIngresos([])
+      setPagina(1)
 
-      setError(
-        mensajeError(
-          err,
-          "No se pudieron cargar los ingresos registrados."
-        )
-      );
+      setError(mensajeError(err, 'No se pudieron cargar los ingresos registrados.'))
     } finally {
       if (idSolicitud === solicitudListado.current) {
-        setCargando(false);
+        setCargando(false)
       }
     }
-  }, []);
+  }, [])
 
-  const cargarResumen = useCallback(async (examen = "") => {
-    const idSolicitud = ++solicitudResumen.current;
+  const cargarResumen = useCallback(async (filtros = {}) => {
+    const idSolicitud = ++solicitudResumen.current
 
-    setCargandoResumen(true);
-    setErrorResumen("");
+    setCargandoResumen(true)
+    setErrorResumen('')
 
     try {
-      const datos = await obtenerResumenIngresos(examen);
+      const datos = await obtenerResumenIngresos(filtros)
 
-      if (idSolicitud !== solicitudResumen.current) return;
+      if (idSolicitud !== solicitudResumen.current) return
 
-      const claves = ["ingresados", "pendientes", "rechazados"];
+      const claves = ['ingresados', 'pendientes', 'rechazados']
 
       if (
         !datos ||
-        !claves.every(
-          (clave) =>
-            Number.isSafeInteger(datos[clave]) &&
-            datos[clave] >= 0
-        )
+        !claves.every((clave) => Number.isSafeInteger(datos[clave]) && datos[clave] >= 0)
       ) {
-        throw new Error(
-          "La respuesta de indicadores no tiene el formato esperado"
-        );
+        throw new Error('La respuesta de indicadores no tiene el formato esperado')
       }
 
-      setResumen(datos);
-      setExamenResumen(examen);
+      setResumen(datos)
+      setExamenResumen(filtros.idExamen || '')
     } catch (err) {
-      if (idSolicitud !== solicitudResumen.current) return;
+      if (idSolicitud !== solicitudResumen.current) return
 
-      setResumen(null);
+      setResumen(null)
 
-      setErrorResumen(
-        mensajeError(
-          err,
-          "No se pudieron cargar los indicadores."
-        )
-      );
+      setErrorResumen(mensajeError(err, 'No se pudieron cargar los indicadores.'))
     } finally {
       if (idSolicitud === solicitudResumen.current) {
-        setCargandoResumen(false);
+        setCargandoResumen(false)
       }
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    let activo = true;
+    let activo = true
 
     Promise.resolve().then(() => {
       if (activo) {
-        cargarResumen("");
+        cargarResumen({})
       }
-    });
+    })
 
     return () => {
-      activo = false;
-      solicitudResumen.current += 1;
-    };
-  }, [cargarResumen]);
+      activo = false
+      solicitudResumen.current += 1
+    }
+  }, [cargarResumen])
 
   useEffect(() => {
-    let activo = true;
+    let activo = true
 
     Promise.resolve().then(() => {
       if (activo) {
-        cargar({});
+        cargar({})
       }
-    });
+    })
 
     return () => {
-      activo = false;
-      solicitudListado.current += 1;
-    };
-  }, [cargar]);
+      activo = false
+      solicitudListado.current += 1
+    }
+  }, [cargar])
 
   const aplicarFiltros = () => {
-    if (cargando || cargandoResumen) return;
+    if (cargando || cargandoResumen) return
 
-    const campoFecha = fechaInputRef.current;
-    const fecha = campoFecha?.value ?? "";
+    const campoFecha = fechaInputRef.current
+    const fecha = campoFecha?.value ?? ''
 
     if (!campoFecha?.validity.valid || !fechaConsultaValida(fecha)) {
-      setErrorFecha(obtenerMensajeFechaInvalida());
-      return;
+      setErrorFecha(obtenerMensajeFechaInvalida())
+      return
     }
 
-    setErrorFecha("");
+    setErrorFecha('')
 
     const filtros = {
       q: q.trim(),
       idExamen,
       fecha,
-    };
+      tipo: tipoConsulta
+    }
 
-    filtrosAplicados.current = filtros;
+    filtrosAplicados.current = filtros
 
-    cargar(filtros);
-    cargarResumen(idExamen);
-  };
+    cargar(filtros)
+    cargarResumen(filtros)
+  }
 
   const actualizarDatos = () => {
-    if (cargando || cargandoResumen) return;
+    if (cargando || cargandoResumen) return
 
-    const filtros = filtrosAplicados.current;
+    const filtros = filtrosAplicados.current
 
-    cargar(filtros);
-    cargarResumen(filtros.idExamen || "");
-  };
+    cargar(filtros)
+    cargarResumen(filtros)
+  }
 
-  const total = ingresos.length;
+  const esIngresos = !['PENDIENTES', 'RECHAZADOS'].includes(tipoAplicado)
+  const nombreVista =
+    tipoAplicado === 'PENDIENTES'
+      ? 'estudiantes pendientes'
+      : tipoAplicado === 'RECHAZADOS'
+        ? 'intentos rechazados'
+        : 'ingresos registrados'
 
-  const totalPaginas = Math.max(
-    1,
-    Math.ceil(total / porPagina)
-  );
+  const total = ingresos.length
 
-  const paginaActual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaActual - 1) * porPagina;
+  const totalPaginas = Math.max(1, Math.ceil(total / porPagina))
 
-  const datosPagina = ingresos.slice(
-    inicio,
-    inicio + porPagina
-  );
+  const paginaActual = Math.min(pagina, totalPaginas)
+  const inicio = (paginaActual - 1) * porPagina
+
+  const datosPagina = ingresos.slice(inicio, inicio + porPagina)
 
   const paginas = useMemo(
-    () =>
-      Array.from(
-        { length: totalPaginas },
-        (_, i) => i + 1
-      ),
+    () => Array.from({ length: totalPaginas }, (_, i) => i + 1),
     [totalPaginas]
-  );
+  )
 
   const cambiarPagina = (nuevaPagina) => {
-    if (
-      nuevaPagina >= 1 &&
-      nuevaPagina <= totalPaginas
-    ) {
-      setPagina(nuevaPagina);
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+      setPagina(nuevaPagina)
     }
-  };
+  }
 
   const abrirDetalle = useCallback(async (idIngreso) => {
-    const idSolicitud = ++solicitudDetalle.current;
+    const idSolicitud = ++solicitudDetalle.current
 
-    setCargandoDetalle(true);
-    setErrorDetalle("");
+    setCargandoDetalle(true)
+    setErrorDetalle('')
 
     try {
-      const detalle = await obtenerIngresoRegistrado(idIngreso);
+      const detalle = await obtenerIngresoRegistrado(idIngreso)
 
-      if (idSolicitud !== solicitudDetalle.current) return;
+      if (idSolicitud !== solicitudDetalle.current) return
 
-      if (
-        !detalle ||
-        typeof detalle !== "object" ||
-        detalle.idIngreso == null
-      ) {
-        throw new Error(
-          "El detalle del ingreso no tiene el formato esperado"
-        );
+      if (!detalle || typeof detalle !== 'object' || detalle.idIngreso == null) {
+        throw new Error('El detalle del ingreso no tiene el formato esperado')
       }
 
-      setIngresoSeleccionado(detalle);
+      setIngresoSeleccionado(detalle)
     } catch (err) {
-      if (idSolicitud !== solicitudDetalle.current) return;
+      if (idSolicitud !== solicitudDetalle.current) return
 
-      setErrorDetalle(
-        mensajeError(
-          err,
-          "No se pudo cargar el ingreso seleccionado."
-        )
-      );
+      setErrorDetalle(mensajeError(err, 'No se pudo cargar el ingreso seleccionado.'))
     } finally {
       if (idSolicitud === solicitudDetalle.current) {
-        setCargandoDetalle(false);
+        setCargandoDetalle(false)
       }
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    const idIngreso = location.state?.idIngreso;
+    const idIngreso = location.state?.idIngreso
 
-    if (!idIngreso) return;
+    if (!idIngreso) return
 
-    let activo = true;
+    let activo = true
 
     Promise.resolve().then(() => {
-      if (!activo) return;
+      if (!activo) return
 
-      abrirDetalle(idIngreso);
+      abrirDetalle(idIngreso)
 
       navigate(location.pathname, {
         replace: true,
-        state: null,
-      });
-    });
+        state: null
+      })
+    })
 
     return () => {
-      activo = false;
-    };
-  }, [
-    location.state?.idIngreso,
-    location.pathname,
-    navigate,
-    abrirDetalle,
-  ]);
+      activo = false
+    }
+  }, [location.state?.idIngreso, location.pathname, navigate, abrirDetalle])
 
   const cerrarModal = useCallback(() => {
-    solicitudDetalle.current += 1;
-    setCargandoDetalle(false);
-    setErrorDetalle("");
-    setIngresoSeleccionado(null);
-  }, []);
+    solicitudDetalle.current += 1
+    setCargandoDetalle(false)
+    setErrorDetalle('')
+    setIngresoSeleccionado(null)
+  }, [])
 
   useEffect(() => {
-    if (!ingresoSeleccionado) return;
+    if (!ingresoSeleccionado) return
 
     const cerrarConEscape = (event) => {
-      if (event.key === "Escape") {
-        cerrarModal();
+      if (event.key === 'Escape') {
+        cerrarModal()
       }
-    };
+    }
 
-    document.addEventListener(
-      "keydown",
-      cerrarConEscape
-    );
+    document.addEventListener('keydown', cerrarConEscape)
 
     return () => {
-      document.removeEventListener(
-        "keydown",
-        cerrarConEscape
-      );
-    };
-  }, [ingresoSeleccionado, cerrarModal]);
+      document.removeEventListener('keydown', cerrarConEscape)
+    }
+  }, [ingresoSeleccionado, cerrarModal])
 
   return (
     <main className="ingresos-registrados-pagina">
-
       {/* ENCABEZADO */}
       <header className="ingresos-registrados-encabezado">
         <h1>Ingresos registrados</h1>
 
-        <p>
-          Consulte la fecha y hora de los ingresos
-          autorizados de los estudiantes.
-        </p>
+        <p>Consulte la fecha y hora de los ingresos autorizados de los estudiantes.</p>
       </header>
 
       {/* INDICADORES */}
-      <section
-        className="ingresos-registrados-resumen"
-        aria-label="Indicadores de ingresos"
-      >
+      <section className="ingresos-registrados-resumen" aria-label="Indicadores de ingresos">
         <div className="ingresos-registrados-resumen-encabezado">
           <h2>Resumen de ingresos</h2>
 
           <p>
-            {examenResumen
-              ? "Totales del examen seleccionado"
-              : "Totales de todos los exámenes"}
-            {" · "}
-            No incluyen los filtros de búsqueda ni fecha.
+            {examenResumen ? 'Totales del examen seleccionado' : 'Totales de todos los exámenes'}
+            {' · '}
+            Los tres totales aplican estudiante, examen y fecha; no se limitan al estado elegido.
+            Para pendientes, la fecha corresponde al examen.
           </p>
         </div>
 
         {errorResumen && (
-          <p
-            className="ingresos-registrados-resumen-error"
-            role="alert"
-          >
+          <p className="ingresos-registrados-resumen-error" role="alert">
             {errorResumen}
           </p>
         )}
 
-        <div
-          className="ingresos-registrados-resumen-grid"
-          aria-live="polite"
-        >
-
+        <div className="ingresos-registrados-resumen-grid" aria-live="polite">
           {/* INGRESADOS */}
           <article className="ingresos-registrados-resumen-tarjeta ingresos-registrados-resumen-ingresados">
             <div className="ingresos-registrados-resumen-icono">
@@ -484,19 +434,13 @@ function IngresosRegistrados() {
             </div>
 
             <div>
-              <p className="ingresos-registrados-resumen-etiqueta">
-                Ingresados
-              </p>
+              <p className="ingresos-registrados-resumen-etiqueta">Ingresados</p>
 
               <strong className="ingresos-registrados-resumen-cantidad">
-                {cargandoResumen
-                  ? "..."
-                  : (resumen?.ingresados ?? "—")}
+                {cargandoResumen ? '...' : (resumen?.ingresados ?? '—')}
               </strong>
 
-              <p className="ingresos-registrados-resumen-descripcion">
-                Registros de ingreso
-              </p>
+              <p className="ingresos-registrados-resumen-descripcion">Registros de ingreso</p>
             </div>
           </article>
 
@@ -507,14 +451,10 @@ function IngresosRegistrados() {
             </div>
 
             <div>
-              <p className="ingresos-registrados-resumen-etiqueta">
-                Pendientes
-              </p>
+              <p className="ingresos-registrados-resumen-etiqueta">Pendientes</p>
 
               <strong className="ingresos-registrados-resumen-cantidad">
-                {cargandoResumen
-                  ? "..."
-                  : (resumen?.pendientes ?? "—")}
+                {cargandoResumen ? '...' : (resumen?.pendientes ?? '—')}
               </strong>
 
               <p className="ingresos-registrados-resumen-descripcion">
@@ -530,19 +470,13 @@ function IngresosRegistrados() {
             </div>
 
             <div>
-              <p className="ingresos-registrados-resumen-etiqueta">
-                Rechazados
-              </p>
+              <p className="ingresos-registrados-resumen-etiqueta">Rechazados</p>
 
               <strong className="ingresos-registrados-resumen-cantidad">
-                {cargandoResumen
-                  ? "..."
-                  : (resumen?.rechazados ?? "—")}
+                {cargandoResumen ? '...' : (resumen?.rechazados ?? '—')}
               </strong>
 
-              <p className="ingresos-registrados-resumen-descripcion">
-                Intentos rechazados
-              </p>
+              <p className="ingresos-registrados-resumen-descripcion">Intentos rechazados</p>
             </div>
           </article>
         </div>
@@ -550,23 +484,18 @@ function IngresosRegistrados() {
 
       {/* LISTADO */}
       <section className="ingresos-registrados-contenedor">
-
         {/* ERROR DE EXÁMENES */}
         {errorExamenes && (
-          <p
-            className="ingresos-registrados-aviso-error"
-            role="alert"
-          >
+          <p className="ingresos-registrados-aviso-error" role="alert">
             {errorExamenes}
           </p>
         )}
 
         {/* FILTROS */}
         <div className="ingresos-registrados-filtros">
-
           {/* BUSCADOR */}
           <div className="ingresos-registrados-buscador">
-            <FiSearch className="ingresos-registrados-buscador-icono" style={{ top: "24px" }} />
+            <FiSearch className="ingresos-registrados-buscador-icono" style={{ top: '24px' }} />
 
             <input
               type="text"
@@ -580,24 +509,17 @@ function IngresosRegistrados() {
 
           {/* EXAMEN */}
           <div className="ingresos-registrados-campo">
-            <label htmlFor="filtro-examen-ingreso">
-              Examen
-            </label>
+            <label htmlFor="filtro-examen-ingreso">Examen</label>
 
             <select
               id="filtro-examen-ingreso"
               value={idExamen}
-              onChange={(event) =>
-                setIdExamen(event.target.value)
-              }
+              onChange={(event) => setIdExamen(event.target.value)}
             >
               <option value="">Todos</option>
 
               {examenes.map((examen) => (
-                <option
-                  key={examen.idExamen}
-                  value={examen.idExamen}
-                >
+                <option key={examen.idExamen} value={examen.idExamen}>
                   {examen.codigo && examen.nombreExamen
                     ? `${examen.codigo} - ${examen.nombreExamen}`
                     : examen.nombreExamen || examen.codigo}
@@ -606,11 +528,26 @@ function IngresosRegistrados() {
             </select>
           </div>
 
+          {/* ESTADO DEL LISTADO */}
+          <div className="ingresos-registrados-campo ingresos-registrados-campo-estado">
+            <label htmlFor="filtro-estado-ingreso">Estado</label>
+            <select
+              id="filtro-estado-ingreso"
+              value={tipoConsulta}
+              onChange={(event) => setTipoConsulta(event.target.value)}
+            >
+              <option value="INGRESADOS">Todos los ingresos</option>
+              <option value="REGISTRADO">Registrados</option>
+              <option value="SUSPENDIDO">Suspendidos</option>
+              <option value="REINCORPORADO">Reincorporados</option>
+              <option value="PENDIENTES">Pendientes</option>
+              <option value="RECHAZADOS">Rechazados (intentos)</option>
+            </select>
+          </div>
+
           {/* FECHA */}
           <div className="ingresos-registrados-campo">
-            <label htmlFor="filtro-fecha-ingreso">
-              Fecha
-            </label>
+            <label htmlFor="filtro-fecha-ingreso">Fecha</label>
 
             <div className="ingresos-registrados-fecha-wrapper">
               <FiCalendar className="ingresos-registrados-fecha-icono" />
@@ -623,22 +560,22 @@ function IngresosRegistrados() {
                 max={FECHA_MAXIMA_CONSULTA}
                 defaultValue=""
                 aria-invalid={Boolean(errorFecha)}
-                aria-describedby={errorFecha ? "error-fecha-ingreso" : undefined}
+                aria-describedby={errorFecha ? 'error-fecha-ingreso' : undefined}
                 onChange={(event) => {
-                  const campo = event.currentTarget;
+                  const campo = event.currentTarget
                   setErrorFecha(
                     campo.validity.valid && fechaConsultaValida(campo.value)
-                      ? ""
+                      ? ''
                       : obtenerMensajeFechaInvalida()
-                  );
+                  )
                 }}
                 onBlur={(event) => {
-                  const campo = event.currentTarget;
+                  const campo = event.currentTarget
                   setErrorFecha(
                     campo.validity.valid && fechaConsultaValida(campo.value)
-                      ? ""
+                      ? ''
                       : obtenerMensajeFechaInvalida()
-                  );
+                  )
                 }}
               />
             </div>
@@ -658,9 +595,7 @@ function IngresosRegistrados() {
           >
             <FiFilter />
 
-            <span>
-              {cargando ? "Filtrando..." : "Filtrar"}
-            </span>
+            <span>{cargando ? 'Filtrando...' : 'Filtrar'}</span>
           </button>
 
           {/* ACTUALIZAR */}
@@ -679,9 +614,9 @@ function IngresosRegistrados() {
         {/* MENSAJE DE RESULTADOS */}
         <div
           className={`ingresos-registrados-mensaje ${
-            error ? "ingresos-registrados-mensaje-error" : ""
+            error ? 'ingresos-registrados-mensaje-error' : ''
           }`}
-          role={error ? "alert" : "status"}
+          role={error ? 'alert' : 'status'}
           aria-live="polite"
         >
           <div className="ingresos-registrados-mensaje-icono">
@@ -690,25 +625,18 @@ function IngresosRegistrados() {
 
           <span>
             {cargando
-              ? "Cargando ingresos registrados..."
+              ? 'Cargando registros...'
               : error
                 ? error
                 : total === 0
-                  ? "No se encontraron ingresos registrados."
-                  : `Se encontraron ${total} ingreso${
-                      total === 1 ? "" : "s"
-                    } registrado${
-                      total === 1 ? "" : "s"
-                    }.`}
+                  ? `No se encontraron ${nombreVista}.`
+                  : `Se encontraron ${total} ${nombreVista}.`}
           </span>
         </div>
 
         {/* ERROR AL ABRIR DETALLE */}
         {errorDetalle && !ingresoSeleccionado && (
-          <p
-            className="ingresos-registrados-aviso-error"
-            role="alert"
-          >
+          <p className="ingresos-registrados-aviso-error" role="alert">
             {errorDetalle}
           </p>
         )}
@@ -723,100 +651,103 @@ function IngresosRegistrados() {
                 <th>Estudiante</th>
                 <th>Examen</th>
                 <th>Ambiente</th>
-                <th>Fecha de ingreso</th>
-                <th>Hora de ingreso</th>
+                <th>
+                  {tipoAplicado === 'PENDIENTES'
+                    ? 'Fecha del examen'
+                    : tipoAplicado === 'RECHAZADOS'
+                      ? 'Fecha del intento'
+                      : 'Fecha de ingreso'}
+                </th>
+                <th>{tipoAplicado === 'RECHAZADOS' ? 'Hora del intento' : 'Hora de ingreso'}</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <th>{esIngresos ? 'Acciones' : 'Información'}</th>
               </tr>
             </thead>
 
             <tbody>
               {!cargando &&
                 datosPagina.map((ingreso) => (
-                  <tr key={ingreso.idIngreso}>
-
+                  <tr
+                    key={
+                      esIngresos
+                        ? `ingreso-${ingreso.idIngreso}`
+                        : `${tipoAplicado}-${ingreso.idRegistro}-${ingreso.nombreExamen}`
+                    }
+                  >
                     <td>
-                      {formatearId(ingreso.idIngreso)}
+                      {esIngresos
+                        ? formatearId(ingreso.idIngreso)
+                        : tipoAplicado === 'PENDIENTES'
+                          ? '—'
+                          : `RE-${String(ingreso.idRegistro).padStart(3, '0')}`}
                     </td>
 
-                    <td>
-                      {ingreso.codigoUniversitario || "-"}
-                    </td>
+                    <td>{ingreso.codigoUniversitario || '-'}</td>
 
                     <td className="ingresos-registrados-estudiante">
-                      {ingreso.nombreEstudiante || "-"}
+                      {ingreso.nombreEstudiante || '-'}
+                    </td>
+
+                    <td>{ingreso.nombreExamen || '-'}</td>
+
+                    <td>{ingreso.ambiente || '-'}</td>
+
+                    <td>
+                      {esIngresos
+                        ? formatearFecha(ingreso.fechaHoraIngreso)
+                        : ingreso.fecha
+                          ? ingreso.fecha.split('-').reverse().join('/')
+                          : '-'}
                     </td>
 
                     <td>
-                      {ingreso.nombreExamen || "-"}
-                    </td>
-
-                    <td>
-                      {ingreso.ambiente || "-"}
-                    </td>
-
-                    <td>
-                      {formatearFecha(
-                        ingreso.fechaHoraIngreso
-                      )}
-                    </td>
-
-                    <td>
-                      {formatearHora(
-                        ingreso.fechaHoraIngreso
-                      )}
+                      {esIngresos ? formatearHora(ingreso.fechaHoraIngreso) : ingreso.hora || '-'}
                     </td>
 
                     <td>
                       <span
                         className={`ingresos-registrados-estado ${
-                          ingreso.estado === "SUSPENDIDO"
-                            ? "ingresos-registrados-estado-suspendido"
-                            : ""
+                          ingreso.estado === 'SUSPENDIDO'
+                            ? 'ingresos-registrados-estado-suspendido'
+                            : ''
                         }`}
                       >
-                        {ingreso.estado || "REGISTRADO"}
+                        {ingreso.estado || 'REGISTRADO'}
                       </span>
                     </td>
 
                     <td>
-                      <button
-                        type="button"
-                        className="ingresos-registrados-boton-ver"
-                        title="Ver detalle"
-                        aria-label={`Ver ingreso de ${
-                          ingreso.nombreEstudiante || "estudiante"
-                        }`}
-                        onClick={() =>
-                          abrirDetalle(ingreso.idIngreso)
-                        }
-                        disabled={cargandoDetalle}
-                      >
-                        <FiEye />
-                      </button>
+                      {esIngresos ? (
+                        <button
+                          type="button"
+                          className="ingresos-registrados-boton-ver"
+                          title="Ver detalle"
+                          aria-label={`Ver ingreso de ${ingreso.nombreEstudiante || 'estudiante'}`}
+                          onClick={() => abrirDetalle(ingreso.idIngreso)}
+                          disabled={cargandoDetalle}
+                        >
+                          <FiEye />
+                        </button>
+                      ) : (
+                        <span title={ingreso.detalle || ''}>{ingreso.detalle || '—'}</span>
+                      )}
                     </td>
                   </tr>
                 ))}
 
               {!cargando && datosPagina.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={9}
-                    className="ingresos-registrados-sin-resultados"
-                  >
+                  <td colSpan={9} className="ingresos-registrados-sin-resultados">
                     {error
-                      ? "No se pudo obtener la información."
-                      : "No hay ingresos registrados para los filtros seleccionados."}
+                      ? 'No se pudo obtener la información.'
+                      : 'No hay registros para los filtros seleccionados.'}
                   </td>
                 </tr>
               )}
 
               {cargando && (
                 <tr>
-                  <td
-                    colSpan={9}
-                    className="ingresos-registrados-sin-resultados"
-                  >
+                  <td colSpan={9} className="ingresos-registrados-sin-resultados">
                     Cargando registros...
                   </td>
                 </tr>
@@ -828,24 +759,19 @@ function IngresosRegistrados() {
         {/* PAGINACIÓN */}
         <div className="ingresos-registrados-paginacion">
           <div className="ingresos-registrados-paginacion-info">
-            Mostrando{" "}
-            {total === 0 ? 0 : inicio + 1}
-            {" - "}
+            Mostrando {total === 0 ? 0 : inicio + 1}
+            {' - '}
             {Math.min(inicio + porPagina, total)}
-            {" de "}
-            {total} ingresos registrados
+            {' de '}
+            {total} {nombreVista}
           </div>
 
           <div className="ingresos-registrados-paginacion-controles">
             <button
               type="button"
               className="ingresos-registrados-paginacion-boton"
-              onClick={() =>
-                cambiarPagina(paginaActual - 1)
-              }
-              disabled={
-                cargando || paginaActual === 1
-              }
+              onClick={() => cambiarPagina(paginaActual - 1)}
+              disabled={cargando || paginaActual === 1}
               aria-label="Página anterior"
             >
               ‹
@@ -856,18 +782,12 @@ function IngresosRegistrados() {
                 key={numero}
                 type="button"
                 className={`ingresos-registrados-paginacion-boton ${
-                  numero === paginaActual
-                    ? "activa"
-                    : ""
+                  numero === paginaActual ? 'activa' : ''
                 }`}
                 onClick={() => cambiarPagina(numero)}
                 disabled={cargando}
                 aria-label={`Página ${numero}`}
-                aria-current={
-                  numero === paginaActual
-                    ? "page"
-                    : undefined
-                }
+                aria-current={numero === paginaActual ? 'page' : undefined}
               >
                 {numero}
               </button>
@@ -876,13 +796,8 @@ function IngresosRegistrados() {
             <button
               type="button"
               className="ingresos-registrados-paginacion-boton"
-              onClick={() =>
-                cambiarPagina(paginaActual + 1)
-              }
-              disabled={
-                cargando ||
-                paginaActual === totalPaginas
-              }
+              onClick={() => cambiarPagina(paginaActual + 1)}
+              disabled={cargando || paginaActual === totalPaginas}
               aria-label="Página siguiente"
             >
               ›
@@ -897,7 +812,7 @@ function IngresosRegistrados() {
           className="ingresos-registrados-modal-overlay"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
-              cerrarModal();
+              cerrarModal()
             }
           }}
         >
@@ -908,16 +823,12 @@ function IngresosRegistrados() {
             aria-labelledby="detalle-ingreso-titulo"
           >
             <div className="ingresos-registrados-modal-header">
-              <h2 id="detalle-ingreso-titulo">
-                Detalle de ingreso
-              </h2>
+              <h2 id="detalle-ingreso-titulo">Detalle de ingreso</h2>
 
               <div className="ingresos-registrados-modal-acciones">
                 <button
                   type="button"
-                  onClick={() =>
-                    abrirDetalle(ingresoSeleccionado.idIngreso)
-                  }
+                  onClick={() => abrirDetalle(ingresoSeleccionado.idIngreso)}
                   className="ingresos-registrados-modal-actualizar"
                   disabled={cargandoDetalle}
                   aria-label="Actualizar detalle del ingreso"
@@ -938,115 +849,81 @@ function IngresosRegistrados() {
             </div>
 
             <div className="ingresos-registrados-modal-body">
-
               {/* ERROR INDEPENDIENTE DEL MODAL */}
               {errorDetalle && (
-                <p
-                  className="ingresos-registrados-aviso-error"
-                  role="alert"
-                >
+                <p className="ingresos-registrados-aviso-error" role="alert">
                   {errorDetalle}
                 </p>
               )}
 
               <div className="ingresos-registrados-modal-grid">
-
                 <div>
                   <label>ID</label>
-                  <p>
-                    {formatearId(
-                      ingresoSeleccionado.idIngreso
-                    )}
-                  </p>
+                  <p>{formatearId(ingresoSeleccionado.idIngreso)}</p>
                 </div>
 
                 <div>
                   <label>Código</label>
-                  <p>
-                    {ingresoSeleccionado.codigoUniversitario || "-"}
-                  </p>
+                  <p>{ingresoSeleccionado.codigoUniversitario || '-'}</p>
                 </div>
 
                 <div>
                   <label>Estudiante</label>
-                  <p>
-                    {ingresoSeleccionado.nombreEstudiante || "-"}
-                  </p>
+                  <p>{ingresoSeleccionado.nombreEstudiante || '-'}</p>
                 </div>
 
                 <div>
                   <label>Examen</label>
-                  <p>
-                    {ingresoSeleccionado.nombreExamen || "-"}
-                  </p>
+                  <p>{ingresoSeleccionado.nombreExamen || '-'}</p>
                 </div>
 
                 <div>
                   <label>Ambiente</label>
-                  <p>
-                    {ingresoSeleccionado.ambiente || "-"}
-                  </p>
+                  <p>{ingresoSeleccionado.ambiente || '-'}</p>
                 </div>
 
                 <div>
                   <label>Fecha de ingreso</label>
-                  <p>
-                    {formatearFecha(
-                      ingresoSeleccionado.fechaHoraIngreso
-                    )}
-                  </p>
+                  <p>{formatearFecha(ingresoSeleccionado.fechaHoraIngreso)}</p>
                 </div>
 
                 <div>
                   <label>Hora de ingreso</label>
-                  <p>
-                    {formatearHora(
-                      ingresoSeleccionado.fechaHoraIngreso
-                    )}
-                  </p>
+                  <p>{formatearHora(ingresoSeleccionado.fechaHoraIngreso)}</p>
                 </div>
 
                 <div>
                   <label>Fecha/Hora de salida</label>
                   <p>
                     {ingresoSeleccionado.fechaHoraSalida
-                      ? `${formatearFecha(
-                          ingresoSeleccionado.fechaHoraSalida
-                        )} ${formatearHora(
+                      ? `${formatearFecha(ingresoSeleccionado.fechaHoraSalida)} ${formatearHora(
                           ingresoSeleccionado.fechaHoraSalida
                         )}`
-                      : "-"}
+                      : '-'}
                   </p>
                 </div>
 
                 <div>
                   <label>Estado</label>
-                  <p>
-                    {ingresoSeleccionado.estado || "REGISTRADO"}
-                  </p>
+                  <p>{ingresoSeleccionado.estado || 'REGISTRADO'}</p>
                 </div>
 
                 <div>
                   <label>Motivo de suspensión</label>
-                  <p>
-                    {ingresoSeleccionado.motivoSuspension || "-"}
-                  </p>
+                  <p>{ingresoSeleccionado.motivoSuspension || '-'}</p>
                 </div>
 
                 <div>
                   <label>Motivo de reincorporación</label>
-                  <p>
-                    {ingresoSeleccionado.motivoReincorporacion || "-"}
-                  </p>
+                  <p>{ingresoSeleccionado.motivoReincorporacion || '-'}</p>
                 </div>
-
               </div>
             </div>
           </div>
         </div>
       )}
     </main>
-  );
+  )
 }
 
-export default IngresosRegistrados;
+export default IngresosRegistrados

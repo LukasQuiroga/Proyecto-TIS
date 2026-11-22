@@ -128,13 +128,15 @@ public class SecurityConfig {
                 ))
 
                 .requestMatchers(
-                    HttpMethod.GET,
+                      HttpMethod.GET,
                       "/api/ingresos/examenes/registrados/resumen",
+                      "/api/ingresos/examenes/registrados/resumen/listado",
                       "/api/ingresos/examenes/registrados"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                   "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                       "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
                 ))
+
 
                 .requestMatchers(
                     HttpMethod.GET,

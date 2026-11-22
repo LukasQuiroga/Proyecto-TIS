@@ -321,7 +321,7 @@ public class IngresoExamenServicio {
          try {
             LocalDate fechaLocal = LocalDate.parse(fecha.trim());
 
-            sql.append(" AND DATE(ie.fecha_hora_ingreso) = ?");
+            sql.append(" AND (ie.fecha_hora_ingreso AT TIME ZONE 'America/La_Paz')::date = ?");
             params.add(Date.valueOf(fechaLocal));
 
           } catch (java.time.format.DateTimeParseException ex) {

@@ -29,7 +29,7 @@
 .ingresos-registrados-filtros {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px;
 }
 
@@ -38,6 +38,7 @@
   flex: 1 1 280px;
   max-width: none;
   min-width: 220px;
+  margin-top: 22px;
 }
 
 .ingresos-registrados-buscador input {
@@ -110,7 +111,8 @@
 
 .ingresos-registrados-boton-filtrar {
   margin-left: 0;
-  align-self: flex-end;
+  align-self: flex-start;
+  margin-top: 22px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -155,8 +157,7 @@
   color: #c53030;
 }
 
-.ingresos-registrados-mensaje-error
-.ingresos-registrados-mensaje-icono {
+.ingresos-registrados-mensaje-error .ingresos-registrados-mensaje-icono {
   background: #c53030;
 }
 
@@ -354,7 +355,6 @@
   color: #1f2d3d;
 }
 
-
 .ingresos-registrados-resumen {
   margin-top: 20px;
 }
@@ -398,20 +398,17 @@
   border-radius: 10px;
 }
 
-.ingresos-registrados-resumen-ingresados
-.ingresos-registrados-resumen-icono {
+.ingresos-registrados-resumen-ingresados .ingresos-registrados-resumen-icono {
   background: #e6f7ed;
   color: #21834a;
 }
 
-.ingresos-registrados-resumen-pendientes
-.ingresos-registrados-resumen-icono {
+.ingresos-registrados-resumen-pendientes .ingresos-registrados-resumen-icono {
   background: #edf4ff;
   color: #1258b5;
 }
 
-.ingresos-registrados-resumen-rechazados
-.ingresos-registrados-resumen-icono {
+.ingresos-registrados-resumen-rechazados .ingresos-registrados-resumen-icono {
   background: #fff0f0;
   color: #c53030;
 }
@@ -451,6 +448,8 @@
   color: #164a86;
   font-weight: 600;
   cursor: pointer;
+  align-self: flex-start;
+  margin-top: 22px;
 }
 
 .ingresos-registrados-boton-actualizar:hover:not(:disabled) {
@@ -503,7 +502,6 @@
   outline-offset: 2px;
 }
 
-
 .ingresos-registrados-filtros > .ingresos-registrados-campo {
   flex: 1 1 230px;
   min-width: 0;
@@ -544,13 +542,13 @@
   }
 
   .ingresos-registrados-buscador {
+    margin-top: 0;
     flex: initial;
     max-width: 100%;
     min-width: 0;
   }
 
-  .ingresos-registrados-filtros
-  > .ingresos-registrados-campo {
+  .ingresos-registrados-filtros > .ingresos-registrados-campo {
     flex: initial;
     width: 100%;
   }
@@ -563,6 +561,7 @@
 
   .ingresos-registrados-boton-filtrar,
   .ingresos-registrados-boton-actualizar {
+    margin-top: 0;
     width: 100%;
     justify-content: center;
   }
@@ -584,4 +583,18 @@
   .ingresos-registrados-resumen-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Selector de estado añadido al grupo de filtros. */
+.ingresos-registrados-campo-estado {
+  flex: 0 1 190px;
+  min-width: 170px;
+}
+
+/* El aviso de fecha crece hacia abajo sin desplazar los otros filtros. */
+.ingresos-registrados-campo #error-fecha-ingreso {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }

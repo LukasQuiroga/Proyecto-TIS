@@ -38,14 +38,30 @@ class ResumenIngresosControladorTest {
         );
     }
 
+    private Authentication administradorAutorizado() {
+        return autenticacion(
+                "ROLE_ADMINISTRADOR",
+                "GENERAR_REPORTES"
+        );
+    }
+
     @Test
     void debeRechazarSolicitudSinSesion() {
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> controlador.obtenerResumen(null, null)
+                () -> controlador.obtenerResumen(
+                        null,
+                        null,
+                        null,
+                        null
+                )
         );
 
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals(
+                HttpStatus.UNAUTHORIZED,
+                ex.getStatusCode()
+        );
+
         verifyNoInteractions(jdbc);
     }
 
@@ -55,6 +71,8 @@ class ResumenIngresosControladorTest {
                 ResponseStatusException.class,
                 () -> controlador.obtenerResumen(
                         null,
+                        null,
+                        null,
                         autenticacion(
                                 "ROLE_DOCENTE",
                                 "CONTROL_INGRESO"
@@ -62,7 +80,11 @@ class ResumenIngresosControladorTest {
                 )
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(
+                HttpStatus.FORBIDDEN,
+                ex.getStatusCode()
+        );
+
         verifyNoInteractions(jdbc);
     }
 
@@ -72,11 +94,17 @@ class ResumenIngresosControladorTest {
                 ResponseStatusException.class,
                 () -> controlador.obtenerResumen(
                         null,
+                        null,
+                        null,
                         autenticacion("ROLE_ADMINISTRADOR")
                 )
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(
+                HttpStatus.FORBIDDEN,
+                ex.getStatusCode()
+        );
+
         verifyNoInteractions(jdbc);
     }
 
@@ -86,14 +114,17 @@ class ResumenIngresosControladorTest {
                 ResponseStatusException.class,
                 () -> controlador.obtenerResumen(
                         0L,
-                        autenticacion(
-                                "ROLE_ADMINISTRADOR",
-                                "GENERAR_REPORTES"
-                        )
+                        null,
+                        null,
+                        administradorAutorizado()
                 )
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                ex.getStatusCode()
+        );
+
         verifyNoInteractions(jdbc);
     }
 
@@ -111,14 +142,16 @@ class ResumenIngresosControladorTest {
                 ResponseStatusException.class,
                 () -> controlador.obtenerResumen(
                         999L,
-                        autenticacion(
-                                "ROLE_ADMINISTRADOR",
-                                "GENERAR_REPORTES"
-                        )
+                        null,
+                        null,
+                        administradorAutorizado()
                 )
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                ex.getStatusCode()
+        );
     }
 
     @Test
@@ -126,21 +159,142 @@ class ResumenIngresosControladorTest {
         when(
                 jdbc.queryForObject(
                         anyString(),
-                        eq(Long.class)
+                        eq(Long.class),
+                        any(Object[].class)
                 )
         ).thenReturn(16L, 24L, 29L);
 
         var respuesta = controlador.obtenerResumen(
                 null,
-                autenticacion(
-                        "ROLE_ADMINISTRADOR",
-                        "GENERAR_REPORTES"
-                )
+                null,
+                null,
+                administradorAutorizado()
         );
 
         assertEquals(16L, respuesta.ingresados());
         assertEquals(24L, respuesta.pendientes());
         assertEquals(29L, respuesta.rechazados());
+
+        verify(
+                jdbc,
+                times(3)
+        ).queryForObject(
+                anyString(),
+                eq(Long.class),
+                any(Object[].class)
+        );
+    }
+
+    @Test
+    void debeAceptarFiltrosDeEstudianteYFecha() {
+        when(
+                jdbc.queryForObject(
+                        anyString(),
+                        eq(Long.class),
+                        any(Object[].class)
+                )
+        ).thenReturn(1L, 2L, 3L);
+
+        var respuesta = controlador.obtenerResumen(
+                null,
+                "Leticia",
+                "2026-11-22",
+                administradorAutorizado()
+        );
+
+        assertEquals(1L, respuesta.ingresados());
+        assertEquals(2L, respuesta.pendientes());
+        assertEquals(3L, respuesta.rechazados());
+
+        verify(
+                jdbc,
+                times(3)
+        ).queryForObject(
+                anyString(),
+                eq(Long.class),
+                any(Object[].class)
+        );
+    }
+
+    @Test
+    void debeRechazarFechaConFormatoInvalido() {
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> controlador.obtenerResumen(
+                        null,
+                        null,
+                        "22-11-2026",
+                        administradorAutorizado()
+                )
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                ex.getStatusCode()
+        );
+
+        verifyNoInteractions(jdbc);
+    }
+
+    @Test
+    void debeRechazarFechaFueraDelRangoPermitido() {
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> controlador.obtenerResumen(
+                        null,
+                        null,
+                        "2029-01-01",
+                        administradorAutorizado()
+                )
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                ex.getStatusCode()
+        );
+
+        verifyNoInteractions(jdbc);
+    }
+
+    @Test
+    void debeRechazarBusquedaConCaracteresInvalidos() {
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> controlador.obtenerResumen(
+                        null,
+                        "Leticia@",
+                        null,
+                        administradorAutorizado()
+                )
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                ex.getStatusCode()
+        );
+
+        verifyNoInteractions(jdbc);
+    }
+
+    @Test
+    void debeRechazarBusquedaQueSupereCienCaracteres() {
+        String busqueda = "A".repeat(101);
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> controlador.obtenerResumen(
+                        null,
+                        busqueda,
+                        null,
+                        administradorAutorizado()
+                )
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                ex.getStatusCode()
+        );
+
+        verifyNoInteractions(jdbc);
     }
 }
-
