@@ -27,6 +27,11 @@ import {
   obtenerMensajeFechaInvalida
 } from '../../utils/fechaConsulta'
 
+import {
+  LIMITE_BUSQUEDA_ESTUDIANTE,
+  limpiarBusquedaEstudiante
+} from '../../utils/busquedaEstudiante'
+
 import './EstudiantesPendientes.css'
 
 const REGISTROS_POR_PAGINA = 5
@@ -238,7 +243,7 @@ function EstudiantesPendientes() {
   }
 
   const cambiarBusqueda = (valor) => {
-    setBusqueda(valor)
+    setBusqueda(limpiarBusquedaEstudiante(valor))
     setPagina(1)
   }
 
@@ -456,6 +461,7 @@ function EstudiantesPendientes() {
                 value={busqueda}
                 onChange={(event) => cambiarBusqueda(event.target.value)}
                 placeholder="Nombre o código universitario"
+                maxLength={LIMITE_BUSQUEDA_ESTUDIANTE}
               />
             </div>
           </div>

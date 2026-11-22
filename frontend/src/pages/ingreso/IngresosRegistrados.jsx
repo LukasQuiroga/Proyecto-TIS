@@ -28,6 +28,11 @@ import {
   obtenerMensajeFechaInvalida,
 } from "../../utils/fechaConsulta";
 
+import {
+  LIMITE_BUSQUEDA_ESTUDIANTE,
+  limpiarBusquedaEstudiante,
+} from "../../utils/busquedaEstudiante";
+
 import "./IngresosRegistrados.css";
 
 function formatearId(id) {
@@ -561,14 +566,14 @@ function IngresosRegistrados() {
 
           {/* BUSCADOR */}
           <div className="ingresos-registrados-buscador">
-            <FiSearch className="ingresos-registrados-buscador-icono" />
+            <FiSearch className="ingresos-registrados-buscador-icono" style={{ top: "24px" }} />
 
             <input
               type="text"
               placeholder="Buscar estudiante por código o nombre..."
               value={q}
-              onChange={(event) => setQ(event.target.value)}
-              maxLength={100}
+              onChange={(event) => setQ(limpiarBusquedaEstudiante(event.target.value))}
+              maxLength={LIMITE_BUSQUEDA_ESTUDIANTE}
               aria-label="Buscar estudiante por código o nombre"
             />
           </div>
