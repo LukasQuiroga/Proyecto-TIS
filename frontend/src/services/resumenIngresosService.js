@@ -1,15 +1,38 @@
+import api from './api'
 
-import api from "./api";
+// Los indicadores utilizan los mismos filtros de estudiante, examen y fecha.
+export async function obtenerResumenIngresos(filtros = {}) {
+  const { q, idExamen, fecha } = filtros
+  const params = {}
 
-// Consulta los indicadores de ingresos registrados.
-// Si se proporciona idExamen, obtiene el resumen de ese examen.
-export async function obtenerResumenIngresos(idExamen = "") {
-  const params = idExamen ? { idExamen } : {};
+  if (q?.trim()) params.q = q.trim()
 
-  const { data } = await api.get(
-    "/ingresos/examenes/registrados/resumen",
-    { params }
-  );
+  if (idExamen !== undefined && idExamen !== null && idExamen !== '') {
+    params.idExamen = idExamen
+  }
 
-  return data;
+  if (fecha) params.fecha = fecha
+
+  const { data } = await api.get('/ingresos/examenes/registrados/resumen', {
+    params
+  })
+
+  return data
+}
+
+// Consulta de solo lectura para las vistas de pendientes y rechazos.
+export async function listarRegistrosPorTipo(tipo, filtros = {}) {
+  const params = { tipo }
+
+  if (filtros.q?.trim()) params.q = filtros.q.trim()
+
+  if (filtros.idExamen !== undefined && filtros.idExamen !== null && filtros.idExamen !== '') {
+    params.idExamen = filtros.idExamen
+  }
+
+  if (filtros.fecha) params.fecha = filtros.fecha
+
+  const { data } = await api.get('/ingresos/examenes/registrados/resumen/listado', { params })
+
+  return data
 }
