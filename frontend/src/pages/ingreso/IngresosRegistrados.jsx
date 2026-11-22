@@ -21,6 +21,12 @@ import {
 } from "../../services/validacionHabilitacionService";
 
 import { obtenerResumenIngresos } from "../../services/resumenIngresosService";
+import {
+  FECHA_MINIMA_CONSULTA,
+  FECHA_MAXIMA_CONSULTA,
+  fechaConsultaValida,
+  obtenerMensajeFechaInvalida,
+} from "../../utils/fechaConsulta";
 
 import "./IngresosRegistrados.css";
 
@@ -96,7 +102,7 @@ function IngresosRegistrados() {
 
   const [q, setQ] = useState("");
   const [idExamen, setIdExamen] = useState("");
-  const [fecha, setFecha] = useState("");
+  const [errorFecha, setErrorFecha] = useState("");
 
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -116,6 +122,7 @@ function IngresosRegistrados() {
   const solicitudDetalle = useRef(0);
   const solicitudResumen = useRef(0);
   const filtrosAplicados = useRef({});
+  const fechaInputRef = useRef(null);
 
   const porPagina = 5;
 
@@ -261,6 +268,16 @@ function IngresosRegistrados() {
 
   const aplicarFiltros = () => {
     if (cargando || cargandoResumen) return;
+
+    const campoFecha = fechaInputRef.current;
+    const fecha = campoFecha?.value ?? "";
+
+    if (!campoFecha?.validity.valid || !fechaConsultaValida(fecha)) {
+      setErrorFecha(obtenerMensajeFechaInvalida());
+      return;
+    }
+
+    setErrorFecha("");
 
     const filtros = {
       q: q.trim(),
@@ -594,14 +611,37 @@ function IngresosRegistrados() {
               <FiCalendar className="ingresos-registrados-fecha-icono" />
 
               <input
+                ref={fechaInputRef}
                 id="filtro-fecha-ingreso"
                 type="date"
-                value={fecha}
-                onChange={(event) =>
-                  setFecha(event.target.value)
-                }
+                min={FECHA_MINIMA_CONSULTA}
+                max={FECHA_MAXIMA_CONSULTA}
+                defaultValue=""
+                aria-invalid={Boolean(errorFecha)}
+                aria-describedby={errorFecha ? "error-fecha-ingreso" : undefined}
+                onChange={(event) => {
+                  const campo = event.currentTarget;
+                  setErrorFecha(
+                    campo.validity.valid && fechaConsultaValida(campo.value)
+                      ? ""
+                      : obtenerMensajeFechaInvalida()
+                  );
+                }}
+                onBlur={(event) => {
+                  const campo = event.currentTarget;
+                  setErrorFecha(
+                    campo.validity.valid && fechaConsultaValida(campo.value)
+                      ? ""
+                      : obtenerMensajeFechaInvalida()
+                  );
+                }}
               />
             </div>
+            {errorFecha && (
+              <p id="error-fecha-ingreso" className="ingresos-registrados-aviso-error" role="alert">
+                {errorFecha}
+              </p>
+            )}
           </div>
 
           {/* FILTRAR */}

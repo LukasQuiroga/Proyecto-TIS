@@ -20,6 +20,12 @@ import {
 } from '../../services/validacionHabilitacionService'
 
 import { obtenerResumenIngresos } from '../../services/resumenIngresosService'
+import {
+  FECHA_MINIMA_CONSULTA,
+  FECHA_MAXIMA_CONSULTA,
+  fechaConsultaValida,
+  obtenerMensajeFechaInvalida
+} from '../../utils/fechaConsulta'
 
 import './EstudiantesPendientes.css'
 
@@ -64,6 +70,8 @@ function EstudiantesPendientes() {
 
   const [busqueda, setBusqueda] = useState('')
   const [fecha, setFecha] = useState('')
+  const [errorFecha, setErrorFecha] = useState('')
+  const fechaInputRef = useRef(null)
   const [carrera, setCarrera] = useState('')
   const [pagina, setPagina] = useState(1)
 
@@ -218,10 +226,15 @@ function EstudiantesPendientes() {
   const finRegistro = Math.min(paginaActual * REGISTROS_POR_PAGINA, estudiantesFiltrados.length)
 
   const cambiarExamen = (valor) => {
+    if (fechaInputRef.current) {
+      fechaInputRef.current.value = ''
+    }
+
     setIdExamen(valor)
     setPagina(1)
     setCarrera('')
     setFecha('')
+    setErrorFecha('')
   }
 
   const cambiarBusqueda = (valor) => {
@@ -229,7 +242,15 @@ function EstudiantesPendientes() {
     setPagina(1)
   }
 
-  const cambiarFecha = (valor) => {
+  const cambiarFecha = (campo) => {
+    const valor = campo.value
+
+    if (!campo.validity.valid || !fechaConsultaValida(valor)) {
+      setErrorFecha(obtenerMensajeFechaInvalida())
+      return
+    }
+
+    setErrorFecha('')
     setFecha(valor)
     setPagina(1)
   }
@@ -240,8 +261,13 @@ function EstudiantesPendientes() {
   }
 
   const limpiarFiltros = () => {
+    if (fechaInputRef.current) {
+      fechaInputRef.current.value = ''
+    }
+
     setBusqueda('')
     setFecha('')
+    setErrorFecha('')
     setCarrera('')
     setPagina(1)
     cambiarExamen('')
@@ -345,7 +371,7 @@ function EstudiantesPendientes() {
     }
   }, [estudianteSeleccionado])
 
-  const hayFiltros = busqueda.trim() !== '' || idExamen !== '' || fecha !== '' || carrera !== ''
+  const hayFiltros = busqueda.trim() !== '' || idExamen !== '' || fecha !== '' || carrera !== '' || Boolean(errorFecha)
 
   return (
     <main className="pendientes-pagina">
@@ -458,11 +484,29 @@ function EstudiantesPendientes() {
             <label htmlFor="pendientes-fecha">Fecha del examen</label>
 
             <input
+              ref={fechaInputRef}
               id="pendientes-fecha"
               type="date"
-              value={fecha}
-              onChange={(event) => cambiarFecha(event.target.value)}
+              min={FECHA_MINIMA_CONSULTA}
+              max={FECHA_MAXIMA_CONSULTA}
+              defaultValue=""
+              aria-invalid={Boolean(errorFecha)}
+              aria-describedby={errorFecha ? 'error-pendientes-fecha' : undefined}
+              onChange={(event) => cambiarFecha(event.currentTarget)}
+              onBlur={(event) => {
+                const campo = event.currentTarget
+                if (!campo.validity.valid || !fechaConsultaValida(campo.value)) {
+                  setErrorFecha(obtenerMensajeFechaInvalida())
+                } else {
+                  setErrorFecha('')
+                }
+              }}
             />
+            {errorFecha && (
+              <p id="error-pendientes-fecha" role="alert" style={{ color: '#b42318', fontSize: '0.875rem' }}>
+                {errorFecha}
+              </p>
+            )}
           </div>
 
           <div className="pendientes-selector">
