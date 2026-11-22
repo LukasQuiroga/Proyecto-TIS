@@ -19,6 +19,7 @@ function fechaLocalISO(valor) {
 
 const NOMBRE_REGEX = /^[\p{L}]+( [\p{L}]+)*$/u;
 const CODIGO_EXAMEN_REGEX = /^[A-Z]{3}-[0-9]{3}$/;
+const LONGITUD_MAXIMA_VEREDICTO = 200;
 
 export default function IntentosNoAutorizados() {
   const [examenes, setExamenes] = useState([]);
@@ -37,6 +38,7 @@ export default function IntentosNoAutorizados() {
   const [incidenteResolver, setIncidenteResolver] = useState(null);
   const [veredictoResolver, setVeredictoResolver] = useState("");
   const [guardandoResolver, setGuardandoResolver] = useState(false);
+  const [confirmarCierreResolver, setConfirmarCierreResolver] = useState(false);
   const [errorResolver, setErrorResolver] = useState("");
   const [fotografiaResolver, setFotografiaResolver] = useState(null);
   const [cargandoFoto, setCargandoFoto] = useState(false);
@@ -112,6 +114,7 @@ export default function IntentosNoAutorizados() {
   const abrirResolver = async (fila) => {
     setErrorResolver("");
     setVeredictoResolver("");
+    setConfirmarCierreResolver(false);
     setGuardandoResolver(false);
     setFotografiaResolver(null);
     setCargandoFoto(true);
@@ -147,8 +150,18 @@ export default function IntentosNoAutorizados() {
     setModalResolverAbierto(false);
     setIncidenteResolver(null);
     setVeredictoResolver("");
+    setConfirmarCierreResolver(false);
     setErrorResolver("");
     setFotografiaResolver(null);
+  };
+
+  const solicitarCerrarResolver = () => {
+    if (guardandoResolver) return;
+    if (veredictoResolver.trim()) {
+      setConfirmarCierreResolver(true);
+      return;
+    }
+    cerrarResolver();
   };
 
   const marcarResuelta = async () => {
@@ -163,8 +176,10 @@ export default function IntentosNoAutorizados() {
       return;
     }
 
-    if (veredicto.length > 300) {
-      setErrorResolver("El veredicto no puede superar 300 caracteres.");
+    if (veredicto.length > LONGITUD_MAXIMA_VEREDICTO) {
+      setErrorResolver(
+        `El veredicto no puede superar ${LONGITUD_MAXIMA_VEREDICTO} caracteres.`
+      );
       return;
     }
 
@@ -325,11 +340,11 @@ export default function IntentosNoAutorizados() {
       </div>}
 
       {modalResolverAbierto && incidenteResolver && (
-        <div className="hu23-fondo" role="presentation" onClick={() => cerrarResolver()}>
+        <div className="hu23-fondo" role="presentation" onClick={() => solicitarCerrarResolver()}>
           <section className="hu23-modal" role="dialog" aria-modal="true" aria-label="Resolver incidencia" onClick={(e) => e.stopPropagation()}>
             <div className="hu23-modal-cabecera">
               <h2>Resolver incidencia #{incidenteResolver.idIntento}</h2>
-              <button aria-label="Cerrar" onClick={() => cerrarResolver()}><FiX /></button>
+              <button aria-label="Cerrar" onClick={() => solicitarCerrarResolver()}><FiX /></button>
             </div>
             <dl>
               <div>
@@ -386,15 +401,47 @@ export default function IntentosNoAutorizados() {
                 onChange={(e) => setVeredictoResolver(e.target.value)}
                 placeholder="El estudiante será..."
                 rows={8}
+                maxLength={LONGITUD_MAXIMA_VEREDICTO}
               />
+              <small className="hu23-veredicto-contador">
+                {veredictoResolver.length}/{LONGITUD_MAXIMA_VEREDICTO} caracteres (máximo {LONGITUD_MAXIMA_VEREDICTO})
+              </small>
               <div className="hu23-veredicto-acciones">
-                <button type="button" className="hu23-boton-cancelar" onClick={() => cerrarResolver()} disabled={guardandoResolver}>
+                <button type="button" className="hu23-boton-cancelar" onClick={() => solicitarCerrarResolver()} disabled={guardandoResolver}>
                   <FiX aria-hidden="true" /> Cancelar
                 </button>
                 <button type="button" className="hu23-boton-resolver" onClick={() => void marcarResuelta()} disabled={guardandoResolver}>
                   <FiCheck aria-hidden="true" /> {guardandoResolver ? "Resolviendo..." : "Marcar como resuelta"}
                 </button>
               </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {confirmarCierreResolver && (
+        <div className="hu23-fondo" role="presentation" onClick={() => setConfirmarCierreResolver(false)}>
+          <section
+            className="hu23-modal hu23-modal-confirmacion"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="hu23-confirmar-cierre-titulo"
+            aria-describedby="hu23-confirmar-cierre-texto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FiAlertCircle className="hu23-confirmar-icono" aria-hidden="true" />
+            <h2 id="hu23-confirmar-cierre-titulo">Descartar cambios</h2>
+            <p id="hu23-confirmar-cierre-texto">
+              El veredicto que ingresaste se perderá si cierras esta ventana.
+              ¿Deseas continuar?
+            </p>
+            <div className="hu23-confirmar-acciones">
+              <button type="button" className="hu23-boton-resolver" onClick={() => setConfirmarCierreResolver(false)}>
+                Seguir editando
+              </button>
+              <button type="button" className="hu23-boton-cancelar" onClick={() => cerrarResolver()}>
+                Descartar cambios
+              </button>
             </div>
           </section>
         </div>

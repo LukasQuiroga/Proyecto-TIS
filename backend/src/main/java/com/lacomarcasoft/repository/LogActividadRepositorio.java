@@ -7,11 +7,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -239,6 +239,16 @@ public class LogActividadRepositorio {
         );
     }
 
+    private String construirPatronLike(String texto) {
+
+        String normalizado = texto
+                .trim()
+                .toLowerCase()
+                .replaceAll("[\\s_-]+", "%");
+
+        return "%" + normalizado + "%";
+    }
+
     private String construirCondiciones(
             String busqueda,
             String usuario,
@@ -252,7 +262,7 @@ public class LogActividadRepositorio {
     ) {
 
         StringBuilder condiciones =
-                new StringBuilder();
+                new StringBuilder(" WHERE 1 = 1\n");
 
         if (
                 busqueda != null
@@ -275,11 +285,7 @@ public class LogActividadRepositorio {
 
             parametros.addValue(
                     "busqueda",
-                    "%" +
-                    busqueda
-                            .trim()
-                            .toLowerCase()
-                    + "%"
+                    construirPatronLike(busqueda)
             );
         }
 
@@ -343,29 +349,26 @@ public class LogActividadRepositorio {
         if (fechaDesde != null) {
 
             condiciones.append(
-                    " AND l.fecha >= :fechaDesde\n"
+                    " AND (l.fecha AT TIME ZONE 'America/La_Paz')::date"
+                            + " >= :fechaDesde\n"
             );
 
             parametros.addValue(
                     "fechaDesde",
-                    fechaDesde
-                            .atStartOfDay(ZoneOffset.UTC)
-                            .toOffsetDateTime()
+                    Date.valueOf(fechaDesde)
             );
         }
 
         if (fechaHasta != null) {
 
             condiciones.append(
-                    " AND l.fecha < :fechaHasta\n"
+                    " AND (l.fecha AT TIME ZONE 'America/La_Paz')::date"
+                            + " <= :fechaHasta\n"
             );
 
             parametros.addValue(
                     "fechaHasta",
-                    fechaHasta
-                            .plusDays(1)
-                            .atStartOfDay(ZoneOffset.UTC)
-                            .toOffsetDateTime()
+                    Date.valueOf(fechaHasta)
             );
         }
 

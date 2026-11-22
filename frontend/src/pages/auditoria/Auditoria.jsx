@@ -65,6 +65,7 @@ function formatearFecha(valor) {
   const fecha = new Date(valor);
 
   return fecha.toLocaleString("es-BO", {
+    timeZone: "America/La_Paz",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
