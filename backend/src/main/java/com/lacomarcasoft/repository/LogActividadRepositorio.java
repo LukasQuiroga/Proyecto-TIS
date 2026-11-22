@@ -239,6 +239,16 @@ public class LogActividadRepositorio {
         );
     }
 
+    private String construirPatronLike(String texto) {
+
+        String normalizado = texto
+                .trim()
+                .toLowerCase()
+                .replaceAll("[\\s_-]+", "%");
+
+        return "%" + normalizado + "%";
+    }
+
     private String construirCondiciones(
             String busqueda,
             String usuario,
@@ -252,7 +262,7 @@ public class LogActividadRepositorio {
     ) {
 
         StringBuilder condiciones =
-                new StringBuilder();
+                new StringBuilder(" WHERE 1 = 1\n");
 
         if (
                 busqueda != null
@@ -275,11 +285,7 @@ public class LogActividadRepositorio {
 
             parametros.addValue(
                     "busqueda",
-                    "%" +
-                    busqueda
-                            .trim()
-                            .toLowerCase()
-                    + "%"
+                    construirPatronLike(busqueda)
             );
         }
 
