@@ -20,6 +20,7 @@ import {
 } from '../../services/validacionHabilitacionService'
 
 import { obtenerResumenIngresos } from '../../services/resumenIngresosService'
+import { obtenerCarreras } from '../../services/carreraService'
 import {
   FECHA_MINIMA_CONSULTA,
   FECHA_MAXIMA_CONSULTA,
@@ -69,6 +70,8 @@ function normalizarTexto(valor) {
 function EstudiantesPendientes() {
   const [examenes, setExamenes] = useState([])
   const [idExamen, setIdExamen] = useState('')
+  const [carrerasDisponibles, setCarrerasDisponibles] = useState([])
+  const [errorCarreras, setErrorCarreras] = useState('')
 
   const [estudiantes, setEstudiantes] = useState([])
   const [resumen, setResumen] = useState(null)
@@ -112,6 +115,35 @@ function EstudiantesPendientes() {
       .catch(() => {
         if (activo) {
           setErrorExamenes('No se pudieron cargar los exámenes disponibles.')
+        }
+      })
+
+    return () => {
+      activo = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let activo = true
+
+    obtenerCarreras()
+      .then((respuesta) => {
+        if (!activo) return
+
+        const datos = respuesta.data
+        if (!Array.isArray(datos)) {
+          throw new Error('Catálogo de carreras inválido')
+        }
+
+        const nombres = [...new Set(datos.map((item) => item.nombre?.trim()).filter(Boolean))]
+        nombres.sort((a, b) => a.localeCompare(b, 'es'))
+        setCarrerasDisponibles(nombres)
+        setErrorCarreras('')
+      })
+      .catch(() => {
+        if (activo) {
+          setCarrerasDisponibles([])
+          setErrorCarreras('No se pudo cargar el catálogo de carreras. Intenta actualizar la página.')
         }
       })
 
@@ -183,20 +215,6 @@ function EstudiantesPendientes() {
     }
   }, [idExamen, cargarDatos])
 
-  const carrerasDisponibles = useMemo(() => {
-    const carreras = new Set()
-
-    estudiantes.forEach((estudiante) => {
-      const valor = estudiante.carrera?.trim()
-
-      if (valor) {
-        carreras.add(valor)
-      }
-    })
-
-    return Array.from(carreras).sort((a, b) => a.localeCompare(b, 'es'))
-  }, [estudiantes])
-
   const estudiantesFiltrados = useMemo(() => {
     const texto = normalizarTexto(busqueda)
 
@@ -213,7 +231,11 @@ function EstudiantesPendientes() {
 
       const coincideFecha = !fecha || estudiante.fechaExamen === fecha
 
-      const coincideCarrera = !carrera || estudiante.carrera === carrera
+      const coincideCarrera =
+        !carrera ||
+        String(estudiante.carrera ?? '')
+          .split(',')
+          .some((nombre) => normalizarTexto(nombre) === normalizarTexto(carrera))
 
       return coincideBusqueda && coincideFecha && coincideCarrera
     })
@@ -541,6 +563,12 @@ function EstudiantesPendientes() {
         {errorExamenes && (
           <p className="pendientes-error" role="alert">
             {errorExamenes}
+          </p>
+        )}
+
+        {errorCarreras && (
+          <p className="pendientes-error" role="alert">
+            {errorCarreras}
           </p>
         )}
 
