@@ -1,4 +1,3 @@
-
 .situacion-pagina {
   width: 100%;
   max-width: 1120px;
@@ -88,7 +87,9 @@
   font-size: 14px;
   line-height: 1.5;
   color: #1e293b;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .situacion-campo input,
@@ -98,7 +99,8 @@
 
 .situacion-campo textarea {
   min-height: 130px;
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
 }
 
 .situacion-campo input:focus,
