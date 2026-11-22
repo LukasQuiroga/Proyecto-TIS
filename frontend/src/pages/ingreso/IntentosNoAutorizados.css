@@ -268,9 +268,17 @@
     background:white;
 }
 
+.hu23-veredicto-contador {
+    display:block;
+    margin-top:6px;
+    font-size:12px;
+    color:#5b708c;
+}
+
 .hu23-veredicto-acciones {
     display:flex;
     gap:12px;
+    margin-top:12px;
 }
 
 .hu23-boton-resolver,

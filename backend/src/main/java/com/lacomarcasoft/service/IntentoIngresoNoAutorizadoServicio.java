@@ -187,10 +187,10 @@ public class IntentoIngresoNoAutorizadoServicio {
             );
         }
 
-        if (veredictoLimpio.length() > 300) {
+        if (veredictoLimpio.length() > 200) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "El veredicto no puede superar 300 caracteres"
+                "El veredicto no puede superar 200 caracteres"
             );
         }
 

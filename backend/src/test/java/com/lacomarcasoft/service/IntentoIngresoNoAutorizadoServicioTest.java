@@ -93,15 +93,35 @@ class IntentoIngresoNoAutorizadoServicioTest {
         assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
     }
 
-    // CA: el veredicto no puede superar los 300 caracteres
+    // CA: el veredicto no puede superar los 200 caracteres
     @Test
     void debeRechazarResolverConVeredictoExcesivo() {
         ResponseStatusException error = assertThrows(
             ResponseStatusException.class,
-            () -> servicio.resolver(10L, "a".repeat(301))
+            () -> servicio.resolver(10L, "a".repeat(201))
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+    }
+
+    // CA: se acepta un veredicto de exactamente 200 caracteres
+    @Test
+    void debeAceptarVeredictoDe200Caracteres() {
+        String veredicto = "a".repeat(200);
+
+        when(jdbc.query(
+            anyString(),
+            ArgumentMatchers.<RowMapper<IntentoIngresoNoAutorizadoServicio.Intento>>any(),
+            eq(10L)
+        )).thenReturn(List.of(incidenciaPendiente()));
+        when(acceso.verificarExamenActual(2L)).thenReturn(null);
+        when(acceso.obtenerDocenteAutenticado()).thenReturn(7L);
+        when(jdbc.update(anyString(), any(), any(), any())).thenReturn(1);
+
+        MensajeRespuesta respuesta = servicio.resolver(10L, veredicto);
+
+        assertNotNull(respuesta);
+        verify(jdbc).update(anyString(), eq(veredicto), eq(7L), eq(10L));
     }
 
     // CA: el veredicto solo admite letras, numeros y espacios

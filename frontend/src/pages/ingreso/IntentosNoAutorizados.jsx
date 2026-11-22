@@ -19,6 +19,7 @@ function fechaLocalISO(valor) {
 
 const NOMBRE_REGEX = /^[\p{L}]+( [\p{L}]+)*$/u;
 const CODIGO_EXAMEN_REGEX = /^[A-Z]{3}-[0-9]{3}$/;
+const LONGITUD_MAXIMA_VEREDICTO = 200;
 
 export default function IntentosNoAutorizados() {
   const [examenes, setExamenes] = useState([]);
@@ -163,8 +164,10 @@ export default function IntentosNoAutorizados() {
       return;
     }
 
-    if (veredicto.length > 300) {
-      setErrorResolver("El veredicto no puede superar 300 caracteres.");
+    if (veredicto.length > LONGITUD_MAXIMA_VEREDICTO) {
+      setErrorResolver(
+        `El veredicto no puede superar ${LONGITUD_MAXIMA_VEREDICTO} caracteres.`
+      );
       return;
     }
 
@@ -386,7 +389,11 @@ export default function IntentosNoAutorizados() {
                 onChange={(e) => setVeredictoResolver(e.target.value)}
                 placeholder="El estudiante será..."
                 rows={8}
+                maxLength={LONGITUD_MAXIMA_VEREDICTO}
               />
+              <small className="hu23-veredicto-contador">
+                {veredictoResolver.length}/{LONGITUD_MAXIMA_VEREDICTO} caracteres (máximo {LONGITUD_MAXIMA_VEREDICTO})
+              </small>
               <div className="hu23-veredicto-acciones">
                 <button type="button" className="hu23-boton-cancelar" onClick={() => cerrarResolver()} disabled={guardandoResolver}>
                   <FiX aria-hidden="true" /> Cancelar
