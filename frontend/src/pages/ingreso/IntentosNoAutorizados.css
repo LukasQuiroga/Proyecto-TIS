@@ -162,6 +162,29 @@
     padding:22px;
     box-shadow:0 15px 50px #001b3c30}
 
+.hu23-modal-confirmacion {
+    width:min(420px,100%);
+    text-align:center}
+
+.hu23-confirmar-icono {
+    font-size:34px;
+    color:#d97706}
+
+.hu23-modal-confirmacion h2 {
+    font-size:18px;
+    margin:8px 0}
+
+.hu23-modal-confirmacion p {
+    color:#5b708c;
+    font-size:14px;
+    line-height:1.5;
+    margin:0}
+
+.hu23-confirmar-acciones {
+    display:flex;
+    gap:12px;
+    margin-top:22px}
+
 .hu23-modal-cabecera {
     display:flex;
     justify-content:space-between;
