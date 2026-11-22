@@ -20,6 +20,18 @@ import {
 } from '../../services/validacionHabilitacionService'
 
 import { obtenerResumenIngresos } from '../../services/resumenIngresosService'
+import { obtenerCarreras } from '../../services/carreraService'
+import {
+  FECHA_MINIMA_CONSULTA,
+  FECHA_MAXIMA_CONSULTA,
+  fechaConsultaValida,
+  obtenerMensajeFechaInvalida
+} from '../../utils/fechaConsulta'
+
+import {
+  LIMITE_BUSQUEDA_ESTUDIANTE,
+  limpiarBusquedaEstudiante
+} from '../../utils/busquedaEstudiante'
 
 import './EstudiantesPendientes.css'
 
@@ -58,12 +70,16 @@ function normalizarTexto(valor) {
 function EstudiantesPendientes() {
   const [examenes, setExamenes] = useState([])
   const [idExamen, setIdExamen] = useState('')
+  const [carrerasDisponibles, setCarrerasDisponibles] = useState([])
+  const [errorCarreras, setErrorCarreras] = useState('')
 
   const [estudiantes, setEstudiantes] = useState([])
   const [resumen, setResumen] = useState(null)
 
   const [busqueda, setBusqueda] = useState('')
   const [fecha, setFecha] = useState('')
+  const [errorFecha, setErrorFecha] = useState('')
+  const fechaInputRef = useRef(null)
   const [carrera, setCarrera] = useState('')
   const [pagina, setPagina] = useState(1)
 
@@ -99,6 +115,35 @@ function EstudiantesPendientes() {
       .catch(() => {
         if (activo) {
           setErrorExamenes('No se pudieron cargar los exámenes disponibles.')
+        }
+      })
+
+    return () => {
+      activo = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let activo = true
+
+    obtenerCarreras()
+      .then((respuesta) => {
+        if (!activo) return
+
+        const datos = respuesta.data
+        if (!Array.isArray(datos)) {
+          throw new Error('Catálogo de carreras inválido')
+        }
+
+        const nombres = [...new Set(datos.map((item) => item.nombre?.trim()).filter(Boolean))]
+        nombres.sort((a, b) => a.localeCompare(b, 'es'))
+        setCarrerasDisponibles(nombres)
+        setErrorCarreras('')
+      })
+      .catch(() => {
+        if (activo) {
+          setCarrerasDisponibles([])
+          setErrorCarreras('No se pudo cargar el catálogo de carreras. Intenta actualizar la página.')
         }
       })
 
@@ -170,20 +215,6 @@ function EstudiantesPendientes() {
     }
   }, [idExamen, cargarDatos])
 
-  const carrerasDisponibles = useMemo(() => {
-    const carreras = new Set()
-
-    estudiantes.forEach((estudiante) => {
-      const valor = estudiante.carrera?.trim()
-
-      if (valor) {
-        carreras.add(valor)
-      }
-    })
-
-    return Array.from(carreras).sort((a, b) => a.localeCompare(b, 'es'))
-  }, [estudiantes])
-
   const estudiantesFiltrados = useMemo(() => {
     const texto = normalizarTexto(busqueda)
 
@@ -192,11 +223,19 @@ function EstudiantesPendientes() {
 
       const codigo = normalizarTexto(estudiante.codigoUniversitario)
 
-      const coincideBusqueda = !texto || nombre.includes(texto) || codigo.includes(texto)
+      const coincideBusqueda =
+        !texto ||
+        (texto.length === 1 && /^\p{L}$/u.test(texto)
+          ? nombre.startsWith(texto)
+          : nombre.includes(texto) || codigo.includes(texto))
 
       const coincideFecha = !fecha || estudiante.fechaExamen === fecha
 
-      const coincideCarrera = !carrera || estudiante.carrera === carrera
+      const coincideCarrera =
+        !carrera ||
+        String(estudiante.carrera ?? '')
+          .split(',')
+          .some((nombre) => normalizarTexto(nombre) === normalizarTexto(carrera))
 
       return coincideBusqueda && coincideFecha && coincideCarrera
     })
@@ -218,18 +257,31 @@ function EstudiantesPendientes() {
   const finRegistro = Math.min(paginaActual * REGISTROS_POR_PAGINA, estudiantesFiltrados.length)
 
   const cambiarExamen = (valor) => {
+    if (fechaInputRef.current) {
+      fechaInputRef.current.value = ''
+    }
+
     setIdExamen(valor)
     setPagina(1)
     setCarrera('')
     setFecha('')
+    setErrorFecha('')
   }
 
   const cambiarBusqueda = (valor) => {
-    setBusqueda(valor)
+    setBusqueda(limpiarBusquedaEstudiante(valor))
     setPagina(1)
   }
 
-  const cambiarFecha = (valor) => {
+  const cambiarFecha = (campo) => {
+    const valor = campo.value
+
+    if (!campo.validity.valid || !fechaConsultaValida(valor)) {
+      setErrorFecha(obtenerMensajeFechaInvalida())
+      return
+    }
+
+    setErrorFecha('')
     setFecha(valor)
     setPagina(1)
   }
@@ -240,8 +292,13 @@ function EstudiantesPendientes() {
   }
 
   const limpiarFiltros = () => {
+    if (fechaInputRef.current) {
+      fechaInputRef.current.value = ''
+    }
+
     setBusqueda('')
     setFecha('')
+    setErrorFecha('')
     setCarrera('')
     setPagina(1)
     cambiarExamen('')
@@ -345,7 +402,7 @@ function EstudiantesPendientes() {
     }
   }, [estudianteSeleccionado])
 
-  const hayFiltros = busqueda.trim() !== '' || idExamen !== '' || fecha !== '' || carrera !== ''
+  const hayFiltros = busqueda.trim() !== '' || idExamen !== '' || fecha !== '' || carrera !== '' || Boolean(errorFecha)
 
   return (
     <main className="pendientes-pagina">
@@ -430,6 +487,7 @@ function EstudiantesPendientes() {
                 value={busqueda}
                 onChange={(event) => cambiarBusqueda(event.target.value)}
                 placeholder="Nombre o código universitario"
+                maxLength={LIMITE_BUSQUEDA_ESTUDIANTE}
               />
             </div>
           </div>
@@ -458,11 +516,29 @@ function EstudiantesPendientes() {
             <label htmlFor="pendientes-fecha">Fecha del examen</label>
 
             <input
+              ref={fechaInputRef}
               id="pendientes-fecha"
               type="date"
-              value={fecha}
-              onChange={(event) => cambiarFecha(event.target.value)}
+              min={FECHA_MINIMA_CONSULTA}
+              max={FECHA_MAXIMA_CONSULTA}
+              defaultValue=""
+              aria-invalid={Boolean(errorFecha)}
+              aria-describedby={errorFecha ? 'error-pendientes-fecha' : undefined}
+              onChange={(event) => cambiarFecha(event.currentTarget)}
+              onBlur={(event) => {
+                const campo = event.currentTarget
+                if (!campo.validity.valid || !fechaConsultaValida(campo.value)) {
+                  setErrorFecha(obtenerMensajeFechaInvalida())
+                } else {
+                  setErrorFecha('')
+                }
+              }}
             />
+            {errorFecha && (
+              <p id="error-pendientes-fecha" role="alert" style={{ color: '#b42318', fontSize: '0.875rem' }}>
+                {errorFecha}
+              </p>
+            )}
           </div>
 
           <div className="pendientes-selector">
@@ -487,6 +563,12 @@ function EstudiantesPendientes() {
         {errorExamenes && (
           <p className="pendientes-error" role="alert">
             {errorExamenes}
+          </p>
+        )}
+
+        {errorCarreras && (
+          <p className="pendientes-error" role="alert">
+            {errorCarreras}
           </p>
         )}
 
