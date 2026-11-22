@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -22,12 +21,10 @@ const DATOS_INICIALES = {
 };
 
 const TAMANO_MAXIMO = 5 * 1024 * 1024;
+const FECHA_MINIMA = "1900-01-01";
+const FECHA_MAXIMA = "2100-12-31";
 
-const TIPOS_ARCHIVO = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-];
+const TIPOS_ARCHIVO = ["application/pdf", "image/jpeg", "image/png"];
 
 function RegistrarSituacionExcepcional() {
   const navigate = useNavigate();
@@ -35,6 +32,7 @@ function RegistrarSituacionExcepcional() {
   const [datos, setDatos] = useState(DATOS_INICIALES);
   const [examenes, setExamenes] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
+  const [busquedaEstudiante, setBusquedaEstudiante] = useState("");
 
   const [archivo, setArchivo] = useState(null);
   const [claveArchivo, setClaveArchivo] = useState(0);
@@ -59,9 +57,7 @@ function RegistrarSituacionExcepcional() {
     const cargarExamenes = async () => {
       try {
         const respuesta = await obtenerCatalogoExamenes();
-        const lista = Array.isArray(respuesta.data)
-          ? respuesta.data
-          : [];
+        const lista = Array.isArray(respuesta.data) ? respuesta.data : [];
 
         if (activo) {
           setExamenes(lista);
@@ -70,10 +66,7 @@ function RegistrarSituacionExcepcional() {
       } catch (error) {
         if (activo) {
           setErrorCarga(
-            obtenerErrorSituacion(
-              error,
-              "No se pudieron cargar los exámenes.",
-            ),
+            obtenerErrorSituacion(error, "No se pudieron cargar los exámenes."),
           );
         }
       } finally {
@@ -101,14 +94,10 @@ function RegistrarSituacionExcepcional() {
       setCargandoEstudiantes(true);
 
       try {
-        const respuesta = await obtenerEstudiantesExamen(
-          datos.idExamen,
-        );
+        const respuesta = await obtenerEstudiantesExamen(datos.idExamen);
 
         if (activo) {
-          setEstudiantes(
-            Array.isArray(respuesta.data) ? respuesta.data : [],
-          );
+          setEstudiantes(Array.isArray(respuesta.data) ? respuesta.data : []);
         }
       } catch (error) {
         if (activo) {
@@ -134,6 +123,22 @@ function RegistrarSituacionExcepcional() {
     };
   }, [datos.idExamen]);
 
+  const textoBusquedaEstudiante = busquedaEstudiante
+    .trim()
+    .toLocaleLowerCase("es");
+
+  const estudiantesFiltrados = estudiantes.filter((estudiante) =>
+    [
+      estudiante.nombreEstudiante,
+      estudiante.codigoSis,
+      estudiante.carnetIdentidad,
+    ].some((valor) =>
+      String(valor ?? "")
+        .toLocaleLowerCase("es")
+        .includes(textoBusquedaEstudiante),
+    ),
+  );
+
   const actualizarCampo = (campo, valor) => {
     setDatos((anterior) => ({
       ...anterior,
@@ -143,6 +148,7 @@ function RegistrarSituacionExcepcional() {
 
     if (campo === "idExamen") {
       setEstudiantes([]);
+      setBusquedaEstudiante("");
       setErrorCarga("");
     }
 
@@ -204,7 +210,24 @@ function RegistrarSituacionExcepcional() {
     }
 
     if (!datos.fechaOcurrencia) {
-      nuevos.fechaOcurrencia = "Seleccione la fecha de ocurrencia.";
+      nuevos.fechaOcurrencia = "Seleccione una fecha de ocurrencia válida.";
+    } else {
+      const fecha = datos.fechaOcurrencia;
+      const formatoValido = /^\d{4}-\d{2}-\d{2}$/.test(fecha);
+      const fechaConvertida = formatoValido
+        ? new Date(`${fecha}T00:00:00Z`)
+        : null;
+
+      if (
+        !formatoValido ||
+        fecha < FECHA_MINIMA ||
+        fecha > FECHA_MAXIMA ||
+        Number.isNaN(fechaConvertida.getTime()) ||
+        fechaConvertida.toISOString().slice(0, 10) !== fecha
+      ) {
+        nuevos.fechaOcurrencia =
+          "La fecha ingresada no es válida. Introduzca una fecha entre 1900 y 2100.";
+      }
     }
 
     if (!datos.horaOcurrencia) {
@@ -255,9 +278,7 @@ function RegistrarSituacionExcepcional() {
       if (!identificador) {
         const respuesta = await registrarSituacionExcepcional({
           idExamen: Number(datos.idExamen),
-          idEstudiante: datos.idEstudiante
-            ? Number(datos.idEstudiante)
-            : null,
+          idEstudiante: datos.idEstudiante ? Number(datos.idEstudiante) : null,
           tipoSituacion: datos.tipoSituacion.trim(),
           descripcion: datos.descripcion.trim(),
           fechaOcurrencia: datos.fechaOcurrencia,
@@ -326,8 +347,8 @@ function RegistrarSituacionExcepcional() {
       <header className="situacion-encabezado">
         <h1>Registrar situación excepcional</h1>
         <p>
-          Registre una incidencia ocurrida durante un examen.
-          Los campos marcados con * son obligatorios.
+          Registre una incidencia ocurrida durante un examen. Los campos
+          marcados con * son obligatorios.
         </p>
       </header>
 
@@ -368,19 +389,13 @@ function RegistrarSituacionExcepcional() {
         <section className="situacion-tarjeta">
           <form onSubmit={registrar} noValidate>
             <fieldset
-              disabled={
-                guardando ||
-                registroCreado ||
-                registroSinIdentificador
-              }
+              disabled={guardando || registroCreado || registroSinIdentificador}
             >
               <legend>Información de la situación</legend>
 
               <div className="situacion-grid">
                 <div className="situacion-campo">
-                  <label htmlFor="situacion-examen">
-                    Examen *
-                  </label>
+                  <label htmlFor="situacion-examen">Examen *</label>
 
                   <select
                     id="situacion-examen"
@@ -398,19 +413,14 @@ function RegistrarSituacionExcepcional() {
                     </option>
 
                     {examenes.map((examen) => (
-                      <option
-                        key={examen.idExamen}
-                        value={examen.idExamen}
-                      >
+                      <option key={examen.idExamen} value={examen.idExamen}>
                         {examen.nombreExamen}
                       </option>
                     ))}
                   </select>
 
                   {errores.idExamen && (
-                    <span className="situacion-error">
-                      {errores.idExamen}
-                    </span>
+                    <span className="situacion-error">{errores.idExamen}</span>
                   )}
                 </div>
 
@@ -419,15 +429,29 @@ function RegistrarSituacionExcepcional() {
                     Estudiante (opcional)
                   </label>
 
+                  <label htmlFor="situacion-buscar-estudiante">
+                    Buscar estudiante
+                  </label>
+
+                  <input
+                    id="situacion-buscar-estudiante"
+                    type="search"
+                    value={busquedaEstudiante}
+                    onChange={(e) => {
+                      setBusquedaEstudiante(e.target.value);
+                      actualizarCampo("idEstudiante", "");
+                    }}
+                    placeholder="Nombre, apellido, CI o código SIS"
+                    disabled={!datos.idExamen || cargandoEstudiantes}
+                  />
+
                   <select
                     id="situacion-estudiante"
                     value={datos.idEstudiante}
                     onChange={(e) =>
                       actualizarCampo("idEstudiante", e.target.value)
                     }
-                    disabled={
-                      !datos.idExamen || cargandoEstudiantes
-                    }
+                    disabled={!datos.idExamen || cargandoEstudiantes}
                   >
                     <option value="">
                       {cargandoEstudiantes
@@ -435,7 +459,7 @@ function RegistrarSituacionExcepcional() {
                         : "Sin estudiante específico"}
                     </option>
 
-                    {estudiantes.map((estudiante) => (
+                    {estudiantesFiltrados.map((estudiante) => (
                       <option
                         key={estudiante.idEstudiante}
                         value={estudiante.idEstudiante}
@@ -445,15 +469,22 @@ function RegistrarSituacionExcepcional() {
                     ))}
                   </select>
 
+                  {textoBusquedaEstudiante &&
+                    !cargandoEstudiantes &&
+                    estudiantesFiltrados.length === 0 && (
+                      <small role="status">
+                        No se encontraron estudiantes que coincidan con la
+                        búsqueda.
+                      </small>
+                    )}
+
                   <small>
                     Déjelo vacío si la situación afectó a todo el examen.
                   </small>
                 </div>
 
                 <div className="situacion-campo">
-                  <label htmlFor="situacion-tipo">
-                    Tipo de situación *
-                  </label>
+                  <label htmlFor="situacion-tipo">Tipo de situación *</label>
 
                   <input
                     id="situacion-tipo"
@@ -475,13 +506,13 @@ function RegistrarSituacionExcepcional() {
                 </div>
 
                 <div className="situacion-campo">
-                  <label htmlFor="situacion-fecha">
-                    Fecha de ocurrencia *
-                  </label>
+                  <label htmlFor="situacion-fecha">Fecha de ocurrencia *</label>
 
                   <input
                     id="situacion-fecha"
                     type="date"
+                    min={FECHA_MINIMA}
+                    max={FECHA_MAXIMA}
                     value={datos.fechaOcurrencia}
                     onChange={(e) =>
                       actualizarCampo("fechaOcurrencia", e.target.value)
@@ -497,9 +528,7 @@ function RegistrarSituacionExcepcional() {
                 </div>
 
                 <div className="situacion-campo">
-                  <label htmlFor="situacion-hora">
-                    Hora de ocurrencia *
-                  </label>
+                  <label htmlFor="situacion-hora">Hora de ocurrencia *</label>
 
                   <input
                     id="situacion-hora"
@@ -554,28 +583,20 @@ function RegistrarSituacionExcepcional() {
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
                 onChange={seleccionarArchivo}
-                disabled={
-                  guardando ||
-                  finalizado ||
-                  registroSinIdentificador
-                }
+                disabled={guardando || finalizado || registroSinIdentificador}
               />
 
-              <small>
-                PDF, JPG o PNG. Tamaño máximo: 5 MB.
-              </small>
+              <small>PDF, JPG o PNG. Tamaño máximo: 5 MB.</small>
 
               {errores.archivo && (
-                <span className="situacion-error">
-                  {errores.archivo}
-                </span>
+                <span className="situacion-error">{errores.archivo}</span>
               )}
             </div>
 
             {registroCreado && (
               <div className="situacion-aviso">
-                El registro {idRegistrado} ya existe.
-                Solo se reintentará adjuntar la evidencia.
+                El registro {idRegistrado} ya existe. Solo se reintentará
+                adjuntar la evidencia.
               </div>
             )}
 
@@ -593,9 +614,7 @@ function RegistrarSituacionExcepcional() {
                 type="submit"
                 className="situacion-guardar"
                 disabled={
-                  guardando ||
-                  cargandoExamenes ||
-                  registroSinIdentificador
+                  guardando || cargandoExamenes || registroSinIdentificador
                 }
               >
                 {guardando

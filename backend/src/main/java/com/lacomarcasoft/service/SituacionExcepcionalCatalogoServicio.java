@@ -28,7 +28,9 @@ public class SituacionExcepcionalCatalogoServicio {
 
     public record EstudianteOpcion(
             Long idEstudiante,
-            String nombreEstudiante
+            String nombreEstudiante,
+            String codigoSis,
+            String carnetIdentidad
     ) {
     }
 
@@ -84,7 +86,9 @@ public class SituacionExcepcionalCatalogoServicio {
                 )
                 .map(usuario -> new EstudianteOpcion(
                         usuario.getIdUsuario(),
-                        usuario.getNombre() + " " + usuario.getApellido()
+                        usuario.getNombre() + " " + usuario.getApellido(),
+                        usuario.getCodigoSis(),
+                        usuario.getCarnetIdentidad()
                 ))
                 .sorted(Comparator.comparing(
                         EstudianteOpcion::nombreEstudiante,

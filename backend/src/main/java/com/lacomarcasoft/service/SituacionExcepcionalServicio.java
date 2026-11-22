@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -118,6 +119,16 @@ public class SituacionExcepcionalServicio {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Debe indicar la fecha y hora de la situacion"
+            );
+        }
+
+        LocalDate fecha = solicitud.fechaOcurrencia();
+
+        if (fecha.isBefore(LocalDate.of(1900, 1, 1))
+                || fecha.isAfter(LocalDate.of(2100, 12, 31))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha ingresada no es valida. Introduzca una fecha entre 1900 y 2100."
             );
         }
 

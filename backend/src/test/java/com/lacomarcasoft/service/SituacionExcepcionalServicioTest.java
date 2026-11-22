@@ -196,6 +196,39 @@ class SituacionExcepcionalServicioTest {
     }
 
     @Test
+    void rechazaFechasFueraDelRangoPermitido() {
+        Usuario administrador = crearUsuario("ADMINISTRADOR");
+        autenticar(5L, administrador, "ADMINISTRADOR");
+
+        when(examenRepositorio.findById(8L))
+                .thenReturn(Optional.of(mock(Examen.class)));
+
+        for (LocalDate fechaInvalida : List.of(
+                LocalDate.of(1800, 1, 1),
+                LocalDate.of(2101, 1, 1)
+        )) {
+            var solicitud = new RegistrarSituacionExcepcionalSolicitud(
+                    8L,
+                    null,
+                    "Interrupcion del examen",
+                    "Corte de energia electrica",
+                    fechaInvalida,
+                    LocalTime.of(10, 30)
+            );
+
+            ResponseStatusException error = assertThrows(
+                    ResponseStatusException.class,
+                    () -> servicio.registrar(solicitud)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+            assertTrue(error.getReason().contains("entre 1900 y 2100"));
+        }
+
+        verifyNoInteractions(situacionRepositorio);
+    }
+
+    @Test
     void rechazaExamenInexistente() {
         Usuario administrador = crearUsuario("ADMINISTRADOR");
         autenticar(5L, administrador, "ADMINISTRADOR");

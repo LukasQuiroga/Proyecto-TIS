@@ -4,6 +4,9 @@ package com.lacomarcasoft.controller;
 import com.lacomarcasoft.dto.request.RegistrarSituacionExcepcionalSolicitud;
 import com.lacomarcasoft.dto.response.SituacionExcepcionalResumenRespuesta;
 import com.lacomarcasoft.dto.response.SituacionExcepcionalDetalleRespuesta;
+import com.lacomarcasoft.dto.response.MensajeRespuesta;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.lacomarcasoft.service.SituacionExcepcionalServicio;
 import org.springframework.http.HttpStatus;
@@ -38,6 +41,17 @@ public class SituacionExcepcionalControlador {
                 .body(new RegistroRespuesta(
                         idSituacion,
                         "Situacion excepcional registrada correctamente"
+                ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<MensajeRespuesta> manejarSolicitudInvalida(
+            HttpMessageNotReadableException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new MensajeRespuesta(
+                        "Los datos enviados no son validos. Revise la fecha y el formato de los campos."
                 ));
     }
 
