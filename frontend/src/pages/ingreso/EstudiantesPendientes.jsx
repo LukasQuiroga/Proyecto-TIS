@@ -205,7 +205,11 @@ function EstudiantesPendientes() {
 
       const codigo = normalizarTexto(estudiante.codigoUniversitario)
 
-      const coincideBusqueda = !texto || nombre.includes(texto) || codigo.includes(texto)
+      const coincideBusqueda =
+        !texto ||
+        (texto.length === 1 && /^\p{L}$/u.test(texto)
+          ? nombre.startsWith(texto)
+          : nombre.includes(texto) || codigo.includes(texto))
 
       const coincideFecha = !fecha || estudiante.fechaExamen === fecha
 
