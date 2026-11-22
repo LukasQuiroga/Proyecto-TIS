@@ -93,7 +93,30 @@ class SituacionExcepcionalControladorTest {
                         "La descripcion es obligatoria"
                 ));
     }
-        @Test
+
+    @Test
+    void fechaMalformadaDevuelve400SinExponerErrorTecnico() throws Exception {
+        mvc.perform(post("/api/situaciones-excepcionales")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "idExamen": 8,
+                      "idEstudiante": null,
+                      "tipoSituacion": "Interrupcion del examen",
+                      "descripcion": "Corte de energia electrica",
+                      "fechaOcurrencia": "131312-11-21",
+                      "horaOcurrencia": "10:30:00"
+                    }
+                    """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value(
+                        "Los datos enviados no son validos. Revise la fecha y el formato de los campos."
+                ));
+
+        verifyNoInteractions(servicio);
+    }
+
+    @Test
     void historialRecibeFiltrosYDevuelve200() throws Exception {
         when(servicio.listarHistorial(8L, 12L, "Interrupcion"))
                 .thenReturn(List.of());

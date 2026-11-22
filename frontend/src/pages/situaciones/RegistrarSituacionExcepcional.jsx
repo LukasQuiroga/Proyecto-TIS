@@ -21,6 +21,8 @@ const DATOS_INICIALES = {
 };
 
 const TAMANO_MAXIMO = 5 * 1024 * 1024;
+const FECHA_MINIMA = "1900-01-01";
+const FECHA_MAXIMA = "2100-12-31";
 
 const TIPOS_ARCHIVO = ["application/pdf", "image/jpeg", "image/png"];
 
@@ -208,7 +210,24 @@ function RegistrarSituacionExcepcional() {
     }
 
     if (!datos.fechaOcurrencia) {
-      nuevos.fechaOcurrencia = "Seleccione la fecha de ocurrencia.";
+      nuevos.fechaOcurrencia = "Seleccione una fecha de ocurrencia válida.";
+    } else {
+      const fecha = datos.fechaOcurrencia;
+      const formatoValido = /^\d{4}-\d{2}-\d{2}$/.test(fecha);
+      const fechaConvertida = formatoValido
+        ? new Date(`${fecha}T00:00:00Z`)
+        : null;
+
+      if (
+        !formatoValido ||
+        fecha < FECHA_MINIMA ||
+        fecha > FECHA_MAXIMA ||
+        Number.isNaN(fechaConvertida.getTime()) ||
+        fechaConvertida.toISOString().slice(0, 10) !== fecha
+      ) {
+        nuevos.fechaOcurrencia =
+          "La fecha ingresada no es válida. Introduzca una fecha entre 1900 y 2100.";
+      }
     }
 
     if (!datos.horaOcurrencia) {
@@ -492,6 +511,8 @@ function RegistrarSituacionExcepcional() {
                   <input
                     id="situacion-fecha"
                     type="date"
+                    min={FECHA_MINIMA}
+                    max={FECHA_MAXIMA}
                     value={datos.fechaOcurrencia}
                     onChange={(e) =>
                       actualizarCampo("fechaOcurrencia", e.target.value)
