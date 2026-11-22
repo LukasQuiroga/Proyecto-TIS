@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,6 +73,64 @@ class LogActividadRepositorioTest {
         assertEquals(
                 "%actualizar%examen%",
                 parametros.getValue().getValue("busqueda")
+        );
+    }
+
+    @Test
+    void consultarFiltraFechasEnZonaBolivia() {
+        doReturn(List.of())
+                .when(jdbcTemplate)
+                .query(
+                        anyString(),
+                        any(SqlParameterSource.class),
+                        any(RowMapper.class)
+                );
+
+        LocalDate fecha = LocalDate.of(2026, 11, 22);
+
+        repositorio.consultar(
+                null,
+                null,
+                null,
+                null,
+                fecha,
+                fecha,
+                null,
+                null,
+                0,
+                10
+        );
+
+        ArgumentCaptor<String> sql =
+                ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<SqlParameterSource> parametros =
+                ArgumentCaptor.forClass(
+                        SqlParameterSource.class
+                );
+
+        verify(jdbcTemplate).query(
+                sql.capture(),
+                parametros.capture(),
+                any(RowMapper.class)
+        );
+
+        String consulta = sql.getValue();
+
+        assertTrue(consulta.contains(
+                "(l.fecha AT TIME ZONE 'America/La_Paz')::date"
+                        + " >= :fechaDesde"
+        ));
+        assertTrue(consulta.contains(
+                "(l.fecha AT TIME ZONE 'America/La_Paz')::date"
+                        + " <= :fechaHasta"
+        ));
+        assertEquals(
+                Date.valueOf(fecha),
+                parametros.getValue().getValue("fechaDesde")
+        );
+        assertEquals(
+                Date.valueOf(fecha),
+                parametros.getValue().getValue("fechaHasta")
         );
     }
 
