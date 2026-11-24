@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "ExamPass - Control de ingreso a exámenes",
+  "short_name": "ExamPass",
+  "description": "Sistema de control de ingreso a exámenes.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f8fc",
+  "theme_color": "#0b5cab",
+  "icons": [
+    {
+      "purpose": "any",
+      "src": "/icons/exampass-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any maskable",
+      "src": "/icons/exampass-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
