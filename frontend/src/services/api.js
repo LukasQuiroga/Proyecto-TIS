@@ -4,6 +4,7 @@ import {
   obtenerRespuestaGet,
   limpiarCacheOffline,
 } from "../offline/cacheApi.js";
+import { encolarOperacion, sincronizarCola } from "../offline/outbox.js";
 
 const CLAVE_SESION = "exampass_sesion";
 const api = axios.create({
@@ -61,13 +62,56 @@ function esEndpointPublico(config) {
   return /^\/?(?:api\/)?auth\/(?:login|recuperacion\/.*)$/.test(ruta);
 }
 
-api.interceptors.request.use((config) => {
+function esEndpointSensible(config) {
+  const ruta = config?.url || "";
+  return (
+    /(?:^|\/)auth\//i.test(ruta) ||
+    /(?:^|\/)(?:contrasena|password)(?:\/|$)/i.test(ruta)
+  );
+}
+
+api.interceptors.request.use(async (config) => {
   if (esEndpointPublico(config)) {
     delete config.headers.Authorization;
     return config;
   }
   const token = tokenActual();
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  const metodo = (config.method || "get").toLowerCase();
+  if (
+    token &&
+    metodo !== "get" &&
+    !config.offlineReplay &&
+    !navigator.onLine &&
+    !esEndpointSensible(config)
+  ) {
+    await encolarOperacion(config);
+    window.dispatchEvent(
+      new CustomEvent("exampass:offline-operation-queued", {
+        detail: { method: metodo.toUpperCase(), url: config.url },
+      }),
+    );
+    const error = new Error(
+      "El cambio quedó guardado en este dispositivo para sincronizarse.",
+    );
+    error.code = "ERR_OFFLINE_QUEUED";
+    error.isOfflineQueued = true;
+    error.config = config;
+    error.response = {
+      status: 202,
+      data: {
+        mensaje:
+          "Cambio guardado en este dispositivo; pendiente de sincronización.",
+        message:
+          "Cambio guardado en este dispositivo; pendiente de sincronización.",
+        isOfflineQueued: true,
+      },
+      config,
+    };
+    throw error;
+  }
+
   return config;
 });
 
@@ -82,12 +126,52 @@ api.interceptors.response.use(
     if (
       !error.response &&
       error.config &&
-      (error.config.method || "get").toLowerCase() === "get"
+      (error.config.method || "get").toLowerCase() !== "get" &&
+      !error.config.offlineReplay &&
+      tokenActual() &&
+      !esEndpointSensible(error.config)
     ) {
+      try {
+        await encolarOperacion(error.config, {
+          estado: "revision",
+          mensaje:
+            "No se confirmó si el servidor aplicó este cambio. Verifica antes de reintentarlo.",
+        });
+        window.dispatchEvent(
+          new CustomEvent("exampass:offline-operation-review", {
+            detail: {
+              method: error.config.method?.toUpperCase(),
+              url: error.config.url,
+            },
+          }),
+        );
+      } catch (errorCola) {
+        console.warn("No se pudo guardar el cambio para revisión:", errorCola);
+      }
+    }
+
+    const respuestaServidorNoDisponible =
+      error.response?.status >= 500 && error.response?.status <= 599;
+    if (
+      error.config &&
+      (error.config.method || "get").toLowerCase() === "get" &&
+      (!error.response || respuestaServidorNoDisponible)
+    ) {
+      window.dispatchEvent(new Event("exampass:offline-cache"));
       const respuestaLocal = await obtenerRespuestaGet(error.config);
       if (respuestaLocal) {
-        window.dispatchEvent(new Event("exampass:offline-cache"));
         return respuestaLocal;
+      }
+      if (!navigator.onLine) {
+        error.code = "ERR_OFFLINE_CACHE_MISS";
+        error.response = {
+          status: 503,
+          data: {
+            mensaje:
+              "No hay datos guardados para esta consulta en este dispositivo. Conéctate y vuelve a cargarla.",
+          },
+          config: error.config,
+        };
       }
     }
 
@@ -121,3 +205,11 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+if (typeof window !== "undefined") {
+  const sincronizarPendientes = () => void sincronizarCola(api);
+  window.addEventListener("online", sincronizarPendientes);
+  window.addEventListener("exampass:session-ready", sincronizarPendientes);
+  window.addEventListener("load", sincronizarPendientes, { once: true });
+  if (document.readyState === "complete") sincronizarPendientes();
+}

@@ -70,9 +70,14 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(async () => {
-        return (await caches.match("/index.html")) || (await caches.match("/"));
-      }),
+      fetch(request)
+        .then(async (response) => {
+          if (response.ok) return response;
+          return (await caches.match("/index.html")) || response;
+        })
+        .catch(async () => {
+          return (await caches.match("/index.html")) || (await caches.match("/"));
+        }),
     );
     return;
   }

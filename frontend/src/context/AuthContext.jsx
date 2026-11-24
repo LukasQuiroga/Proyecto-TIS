@@ -76,6 +76,7 @@ export function AuthProvider({ children }) {
     sesionRef.current = nuevaSesion
     setSesion(nuevaSesion)
     setCargando(false)
+    window.dispatchEvent(new Event('exampass:session-ready'))
   }, [])
 
   const limpiarSesionEnPestana = useCallback(() => {

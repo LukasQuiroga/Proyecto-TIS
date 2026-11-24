@@ -1,8 +1,10 @@
 const NOMBRE_BD = "exampass-offline";
-const VERSION_BD = 1;
+const VERSION_BD = 2;
 const ALMACEN = "respuestas-get";
+export const ALMACEN_COLA = "cola-operaciones";
 const MAX_RESPUESTAS_CACHEADAS = 200;
-const MAX_BYTES_RESPUESTA = 2_000_000;
+const MAX_BYTES_RESPUESTA = 10_000_000;
+const MAX_BYTES_CACHE = 50_000_000;
 let aperturaBd;
 
 function idUsuarioActual() {
@@ -28,8 +30,18 @@ function abrirBd() {
       if (!bd.objectStoreNames.contains(ALMACEN)) {
         bd.createObjectStore(ALMACEN, { keyPath: "clave" });
       }
+      if (!bd.objectStoreNames.contains(ALMACEN_COLA)) {
+        bd.createObjectStore(ALMACEN_COLA, { keyPath: "id" });
+      }
     };
-    solicitud.onsuccess = () => resolve(solicitud.result);
+    solicitud.onsuccess = () => {
+      const bd = solicitud.result;
+      bd.onversionchange = () => {
+        bd.close();
+        aperturaBd = null;
+      };
+      resolve(bd);
+    };
     solicitud.onerror = () => reject(solicitud.error);
     solicitud.onblocked = () =>
       reject(new Error("La base local está bloqueada."));
@@ -40,6 +52,11 @@ function abrirBd() {
 
   return aperturaBd;
 }
+
+export {
+  abrirBd as abrirBaseOffline,
+  idUsuarioActual as obtenerIdUsuarioActual,
+};
 
 function serializarParametros(parametros) {
   if (!parametros) return "";
@@ -66,6 +83,24 @@ function crearClave(config, idUsuario) {
   return `${idUsuario}|${metodo}|${url.pathname}${consulta ? `?${consulta}` : ""}`;
 }
 
+function contieneCampoSensible(valor) {
+  if (!valor || typeof valor !== "object") return false;
+  return Object.entries(valor).some(
+    ([nombre, dato]) =>
+      /password|contrasena|contraseña|token|secret|clave/i.test(nombre) ||
+      contieneCampoSensible(dato),
+  );
+}
+
+function bytesRespuesta(data) {
+  if (data instanceof Blob) return data.size;
+  if (data instanceof ArrayBuffer) return data.byteLength;
+  if (ArrayBuffer.isView(data)) return data.byteLength;
+
+  const serializado = JSON.stringify(data);
+  return serializado ? new TextEncoder().encode(serializado).byteLength : 0;
+}
+
 export async function guardarRespuestaGet(response) {
   const config = response.config;
   const idUsuario = idUsuarioActual();
@@ -75,14 +110,15 @@ export async function guardarRespuestaGet(response) {
     !response.status ||
     response.status < 200 ||
     response.status >= 300 ||
-    config.responseType === "blob" ||
-    config.responseType === "arraybuffer"
+    contieneCampoSensible(response.data)
   ) {
     return;
   }
 
   try {
-    if (JSON.stringify(response.data).length > MAX_BYTES_RESPUESTA) return;
+    const bytes = bytesRespuesta(response.data);
+    if (!bytes) return;
+    if (bytes > MAX_BYTES_RESPUESTA) return;
 
     const bd = await abrirBd();
     if (!bd) return;
@@ -94,18 +130,27 @@ export async function guardarRespuestaGet(response) {
       data: response.data,
       status: response.status,
       actualizado: Date.now(),
+      bytes,
     });
-    const conteo = almacen.count();
-    conteo.onsuccess = () => {
-      if (conteo.result <= MAX_RESPUESTAS_CACHEADAS) return;
+    const todas = almacen.getAll();
+    todas.onsuccess = () => {
+      const registros = todas.result.sort(
+        (a, b) => a.actualizado - b.actualizado,
+      );
+      let totalBytes = registros.reduce((total, registro) => {
+        const bytesRegistro = registro.bytes ?? bytesRespuesta(registro.data);
+        return total + bytesRegistro;
+      }, 0);
 
-      const todas = almacen.getAll();
-      todas.onsuccess = () => {
-        const antiguas = todas.result
-          .sort((a, b) => a.actualizado - b.actualizado)
-          .slice(0, conteo.result - MAX_RESPUESTAS_CACHEADAS);
-        antiguas.forEach((registro) => almacen.delete(registro.clave));
-      };
+      while (
+        registros.length > MAX_RESPUESTAS_CACHEADAS ||
+        totalBytes > MAX_BYTES_CACHE
+      ) {
+        const antiguo = registros.shift();
+        if (!antiguo) break;
+        totalBytes -= antiguo.bytes ?? bytesRespuesta(antiguo.data);
+        almacen.delete(antiguo.clave);
+      }
     };
   } catch (error) {
     console.warn("No se pudo guardar la consulta para uso offline:", error);
@@ -142,6 +187,7 @@ export async function obtenerRespuestaGet(config) {
           request: null,
           desdeCacheOffline: true,
           cacheActualizada: registro.actualizado,
+          cacheBytes: registro.bytes,
         });
       };
       solicitud.onerror = () => reject(solicitud.error);
