@@ -1,4 +1,9 @@
 import axios from "axios";
+import {
+  guardarRespuestaGet,
+  obtenerRespuestaGet,
+  limpiarCacheOffline,
+} from "../offline/cacheApi.js";
 
 const CLAVE_SESION = "exampass_sesion";
 const api = axios.create({
@@ -39,6 +44,7 @@ function normalizarErrorHtml(error) {
 }
 
 function limpiarSesionLocal() {
+  void limpiarCacheOffline();
   sessionStorage.removeItem("usuario");
   sessionStorage.removeItem("token");
   sessionStorage.removeItem("ultimaActividad");
@@ -66,9 +72,25 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response) => {
+    void guardarRespuestaGet(response);
+    window.dispatchEvent(new Event("exampass:online-response"));
+    return response;
+  },
+  async (error) => {
     normalizarErrorHtml(error);
+    if (
+      !error.response &&
+      error.config &&
+      (error.config.method || "get").toLowerCase() === "get"
+    ) {
+      const respuestaLocal = await obtenerRespuestaGet(error.config);
+      if (respuestaLocal) {
+        window.dispatchEvent(new Event("exampass:offline-cache"));
+        return respuestaLocal;
+      }
+    }
+
     if (error.response?.status !== 401 || esEndpointPublico(error.config)) {
       return Promise.reject(error);
     }

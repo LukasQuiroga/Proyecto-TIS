@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AuthContext } from './authContext'
 import { obtenerPermisosActuales } from '../services/authService'
+import { limpiarCacheOffline } from '../offline/cacheApi.js'
 
 const CLAVE_SESION = 'exampass_sesion'
 const CLAVE_SALIDA = 'exampass_ultima_salida'
@@ -78,6 +79,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const limpiarSesionEnPestana = useCallback(() => {
+    void limpiarCacheOffline()
     sessionStorage.removeItem('usuario')
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('ultimaActividad')

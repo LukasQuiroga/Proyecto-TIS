@@ -1,0 +1,15 @@
+.estado-conexion-offline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #fff4db;
+  border-bottom: 1px solid #f1d28a;
+  color: #684a06;
+  font-size: 13px;
+}
+
+.estado-conexion-offline svg {
+  flex: 0 0 auto;
+  font-size: 17px;
+}
