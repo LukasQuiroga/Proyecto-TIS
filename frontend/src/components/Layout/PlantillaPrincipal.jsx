@@ -4,6 +4,7 @@ import Navbar from "../Navbar/Navbar.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import useInactividad from "../../hooks/useInactividad.js";
 import {useAuth} from "../../context/useAuth";
+import EstadoConexion from "../EstadoConexion/EstadoConexion.jsx";
 import "./PlantillaPrincipal.css";
 
 function PlantillaPrincipal(){
@@ -45,6 +46,8 @@ function PlantillaPrincipal(){
             >
 
                 <Navbar/>
+
+                <EstadoConexion />
 
                 <main className="plantilla-contenido">
                     <Outlet/>

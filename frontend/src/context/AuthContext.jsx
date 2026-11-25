@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AuthContext } from './authContext'
 import { obtenerPermisosActuales } from '../services/authService'
+import { limpiarCacheOffline } from '../offline/cacheApi.js'
 
 const CLAVE_SESION = 'exampass_sesion'
 const CLAVE_SALIDA = 'exampass_ultima_salida'
@@ -75,9 +76,11 @@ export function AuthProvider({ children }) {
     sesionRef.current = nuevaSesion
     setSesion(nuevaSesion)
     setCargando(false)
+    window.dispatchEvent(new Event('exampass:session-ready'))
   }, [])
 
   const limpiarSesionEnPestana = useCallback(() => {
+    void limpiarCacheOffline()
     sessionStorage.removeItem('usuario')
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('ultimaActividad')
