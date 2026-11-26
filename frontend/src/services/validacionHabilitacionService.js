@@ -34,9 +34,24 @@ export async function identificarEstudiantePorDocumento(idExamen, documento) {
 }
 
 export async function identificarEstudiantePorDocumentoSinExamen(documento) {
-  const { data } = await api.get("/ingresos/examenes/identificar-documento", {
-    params: { documento: documento.trim() },
-  });
+  let data;
+  try {
+    const respuesta = await api.get(
+      "/ingresos/examenes/identificar-documento",
+      {
+        params: { documento: documento.trim() },
+      },
+    );
+    data = respuesta.data;
+  } catch (error) {
+    if (
+      navigator.onLine &&
+      !["ERR_OFFLINE_CACHE_MISS", "ERR_NETWORK"].includes(error.code) &&
+      !(error.response?.status >= 500)
+    )
+      throw error;
+    data = await buscarEstudianteEnPadronOffline("documento", documento);
+  }
 
   await prepararIngresoOffline(data.idEstudiante);
 
@@ -226,11 +241,23 @@ export async function consultarHabilitacionPorDocumento(
 }
 
 export async function identificarEstudiantePorCodigoSinExamen(codigo) {
-  const { data } = await api.get("/ingresos/examenes/identificar-codigo", {
-    params: {
-      codigo: codigo.trim(),
-    },
-  });
+  let data;
+  try {
+    const respuesta = await api.get("/ingresos/examenes/identificar-codigo", {
+      params: {
+        codigo: codigo.trim(),
+      },
+    });
+    data = respuesta.data;
+  } catch (error) {
+    if (
+      navigator.onLine &&
+      !["ERR_OFFLINE_CACHE_MISS", "ERR_NETWORK"].includes(error.code) &&
+      !(error.response?.status >= 500)
+    )
+      throw error;
+    data = await buscarEstudianteEnPadronOffline("codigo", codigo);
+  }
 
   await prepararIngresoOffline(data.idEstudiante);
 
@@ -302,6 +329,65 @@ async function prepararIngresoOffline(idEstudiante, idsExamenes = null) {
     );
     window.dispatchEvent(new Event("exampass:offline-admission-failed"));
   }
+}
+
+async function buscarEstudianteEnPadronOffline(tipo, valor) {
+  const buscado = String(valor || "")
+    .trim()
+    .toLocaleLowerCase();
+  const examenes = await obtenerExamenesIdentificacionDocumento();
+  const listas = await Promise.all(
+    examenes.map((examen) => obtenerEstudiantesIngreso(examen.idExamen)),
+  );
+  const estudiantes = new Map();
+
+  listas.flat().forEach((estudiante) => {
+    const codigo = String(estudiante.codigoUniversitario || "").trim();
+    if (codigo && estudiante.idEstudiante) {
+      estudiantes.set(String(estudiante.idEstudiante), {
+        ...estudiante,
+        codigo,
+      });
+    }
+  });
+
+  for (const estudiante of estudiantes.values()) {
+    if (
+      tipo === "codigo" &&
+      estudiante.codigo.toLocaleLowerCase() === buscado
+    ) {
+      return {
+        idEstudiante: estudiante.idEstudiante,
+        codigoUniversitario: estudiante.codigoUniversitario,
+        nombreEstudiante: estudiante.nombreEstudiante,
+        tieneFoto: false,
+      };
+    }
+
+    try {
+      const respuesta = await api.get("/ingresos/examenes/identificar-codigo", {
+        params: { codigo: estudiante.codigo },
+      });
+      const perfil = respuesta.data;
+      if (
+        tipo === "documento" &&
+        String(perfil.documentoIdentidad || "")
+          .trim()
+          .toLocaleLowerCase() === buscado
+      ) {
+        return perfil;
+      }
+    } catch {
+      // Algunos estudiantes pueden no tener una ficha de identificación cacheada.
+    }
+  }
+
+  const error = new Error(
+    "No hay datos guardados para esta consulta en este dispositivo. Conéctate para actualizar los datos del docente.",
+  );
+  error.code = "ERR_OFFLINE_CACHE_MISS";
+  error.response = { status: 503, data: { mensaje: error.message } };
+  throw error;
 }
 
 export async function obtenerFotoEstudiantePorCodigo(idEstudiante, codigo) {

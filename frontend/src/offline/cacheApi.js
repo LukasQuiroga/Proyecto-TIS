@@ -2,9 +2,9 @@ const NOMBRE_BD = "exampass-offline";
 const VERSION_BD = 2;
 const ALMACEN = "respuestas-get";
 export const ALMACEN_COLA = "cola-operaciones";
-const MAX_RESPUESTAS_CACHEADAS = 200;
+const MAX_RESPUESTAS_CACHEADAS = 10_000;
 const MAX_BYTES_RESPUESTA = 10_000_000;
-const MAX_BYTES_CACHE = 50_000_000;
+const MAX_BYTES_CACHE = 250_000_000;
 let aperturaBd;
 
 function idUsuarioActual() {

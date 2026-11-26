@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AuthContext } from './authContext'
 import { obtenerPermisosActuales } from '../services/authService'
 import { limpiarCacheOffline } from '../offline/cacheApi.js'
+import { prepararDatosIngresoDocente } from '../offline/prepararDatosIngreso.js'
 
 const CLAVE_SESION = 'exampass_sesion'
 const CLAVE_SALIDA = 'exampass_ultima_salida'
@@ -81,6 +82,7 @@ export function AuthProvider({ children }) {
 
   const limpiarSesionEnPestana = useCallback(() => {
     void limpiarCacheOffline()
+    sessionStorage.removeItem('exampass_preparacion_ingreso')
     sessionStorage.removeItem('usuario')
     sessionStorage.removeItem('token')
     sessionStorage.removeItem('ultimaActividad')
@@ -186,6 +188,23 @@ export function AuthProvider({ children }) {
       clearInterval(intervalo)
     }
   }, [usuario, token])
+
+  useEffect(() => {
+    if (
+      !usuario?.idUsuario ||
+      !token ||
+      usuario.nombreRol?.toUpperCase() !== 'DOCENTE'
+    ) {
+      return undefined
+    }
+
+    const preparar = () => {
+      if (navigator.onLine) void prepararDatosIngresoDocente(usuario.idUsuario)
+    }
+    preparar()
+    window.addEventListener('online', preparar)
+    return () => window.removeEventListener('online', preparar)
+  }, [usuario?.idUsuario, usuario?.nombreRol, token])
 
   return (
     <AuthContext.Provider
