@@ -38,6 +38,8 @@ export async function identificarEstudiantePorDocumentoSinExamen(documento) {
     params: { documento: documento.trim() },
   });
 
+  await prepararIngresoOffline(data.idEstudiante);
+
   return data;
 }
 
@@ -56,6 +58,7 @@ export async function identificarEstudiantePorQr(idExamen, token) {
     `/ingresos/examenes/${idExamen}/identificar-qr`,
     { token },
   );
+  await prepararIngresoOffline(data.idEstudiante, [idExamen]);
   return data;
 }
 
@@ -145,9 +148,13 @@ export async function obtenerFotoIntento(idIntento) {
 }
 
 export async function registrarIngresoExamen(idExamen, idEstudiante) {
+  const solicitud = { idEstudiante };
+  if (!navigator.onLine)
+    solicitud.fechaHoraDispositivo = new Date().toISOString();
+
   const { data } = await api.post(
     "/ingresos/examenes/" + idExamen + "/ingresos",
-    { idEstudiante },
+    solicitud,
   );
   return data;
 }
@@ -225,7 +232,76 @@ export async function identificarEstudiantePorCodigoSinExamen(codigo) {
     },
   });
 
+  await prepararIngresoOffline(data.idEstudiante);
+
   return data;
+}
+
+async function prepararIngresoOffline(idEstudiante, idsExamenes = null) {
+  if (!navigator.onLine || !idEstudiante) return;
+
+  window.dispatchEvent(new Event("exampass:offline-admission-preparing"));
+
+  try {
+    const todosLosExamenes = await obtenerExamenesIdentificacionDocumento();
+    const examenes = idsExamenes
+      ? todosLosExamenes.filter((examen) =>
+          idsExamenes.some(
+            (idExamen) => Number(idExamen) === Number(examen.idExamen),
+          ),
+        )
+      : todosLosExamenes;
+    const examenesValidos = examenes.filter((examen) => examen?.idExamen);
+    let siguiente = 0;
+    let preparados = 0;
+
+    const prepararExamen = async () => {
+      while (siguiente < examenesValidos.length) {
+        const examen = examenesValidos[siguiente++];
+        const idExamen = Number(examen.idExamen);
+        const resultados = await Promise.allSettled([
+          comprobarCorrespondencia(idExamen, Number(idEstudiante)),
+          consultarHabilitacion(idExamen, Number(idEstudiante)),
+          consultarIngresoRegistrado(idExamen, Number(idEstudiante)),
+        ]);
+
+        if (resultados.some((resultado) => resultado.status === "rejected")) {
+          console.warn(
+            "No se prepararon todos los datos offline para el examen",
+            idExamen,
+          );
+        } else {
+          preparados += 1;
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(2, examenesValidos.length) }, () =>
+        prepararExamen(),
+      ),
+    );
+
+    if (preparados === 0 && examenesValidos.length > 0) {
+      window.dispatchEvent(new Event("exampass:offline-admission-failed"));
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("exampass:offline-admission-ready", {
+          detail: {
+            examenes: preparados,
+            total: examenesValidos.length,
+            idEstudiante,
+          },
+        }),
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "No se pudieron preparar todos los datos de ingreso offline:",
+      error,
+    );
+    window.dispatchEvent(new Event("exampass:offline-admission-failed"));
+  }
 }
 
 export async function obtenerFotoEstudiantePorCodigo(idEstudiante, codigo) {

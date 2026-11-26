@@ -241,6 +241,33 @@ export async function obtenerEstadoCola() {
   }
 }
 
+export async function obtenerIngresoEnCola(idExamen, idEstudiante) {
+  const estado = await obtenerEstadoCola();
+  const rutaEsperada = `/ingresos/examenes/${idExamen}/ingresos`;
+
+  return (
+    estado.operaciones.find((operacion) => {
+      if (
+        operacion.method !== "POST" ||
+        !operacion.url?.split("?")[0].endsWith(rutaEsperada)
+      ) {
+        return false;
+      }
+
+      let cuerpo = operacion.cuerpo?.valor;
+      if (operacion.cuerpo?.tipo === "texto" && typeof cuerpo === "string") {
+        try {
+          cuerpo = JSON.parse(cuerpo);
+        } catch {
+          return false;
+        }
+      }
+
+      return String(cuerpo?.idEstudiante) === String(idEstudiante);
+    }) || null
+  );
+}
+
 async function actualizarOperacion(id, cambios) {
   const transaccion = await nuevaTransaccion("readwrite");
   const almacen = transaccion.objectStore(ALMACEN_COLA);

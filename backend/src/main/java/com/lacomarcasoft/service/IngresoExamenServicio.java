@@ -135,6 +135,15 @@ public class IngresoExamenServicio {
             Long idExamen,
             Long idEstudiante,
             Long idResponsable) {
+        return registrar(idExamen, idEstudiante, idResponsable, null);
+    }
+
+    @Transactional
+    public EstadoIngresoRespuesta registrar(
+            Long idExamen,
+            Long idEstudiante,
+            Long idResponsable,
+            OffsetDateTime fechaHoraDispositivo) {
 
         validarIds(idExamen, idEstudiante);
 
@@ -186,13 +195,31 @@ public class IngresoExamenServicio {
             );
         }
 
-        int insertados = jdbc.update("""
-            INSERT INTO academico.ingreso_examen
-                (id_examen, id_estudiante, id_responsable)
-            VALUES (?, ?, ?)
-            ON CONFLICT ON CONSTRAINT uq_ingreso_examen_estudiante
-            DO NOTHING
-            """, idExamen, idEstudiante, idResponsable);
+        int insertados;
+        if (fechaHoraDispositivo != null) {
+            if (fechaHoraDispositivo.isAfter(OffsetDateTime.now().plusMinutes(5))) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha del ingreso no puede estar en el futuro"
+                );
+            }
+
+            insertados = jdbc.update("""
+                INSERT INTO academico.ingreso_examen
+                    (id_examen, id_estudiante, id_responsable, fecha_hora_ingreso)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT ON CONSTRAINT uq_ingreso_examen_estudiante
+                DO NOTHING
+                """, idExamen, idEstudiante, idResponsable, fechaHoraDispositivo);
+        } else {
+            insertados = jdbc.update("""
+                INSERT INTO academico.ingreso_examen
+                    (id_examen, id_estudiante, id_responsable)
+                VALUES (?, ?, ?)
+                ON CONFLICT ON CONSTRAINT uq_ingreso_examen_estudiante
+                DO NOTHING
+                """, idExamen, idEstudiante, idResponsable);
+        }
 
         if (insertados == 0) {
             intentos.registrar(idExamen, idEstudiante, idResponsable,

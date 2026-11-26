@@ -126,7 +126,8 @@ public class IngresoExamenControlador {
         EstadoIngresoRespuesta respuesta = servicio.registrar(
             idExamen,
             solicitud.idEstudiante(),
-            responsable
+            responsable,
+            solicitud.fechaHoraDispositivo()
         );
 
         auditoria.registrar(

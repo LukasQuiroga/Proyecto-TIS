@@ -70,6 +70,10 @@ function esEndpointSensible(config) {
   );
 }
 
+function esValidacionConEfectos(config) {
+  return /\/habilitacion\/verificar-ingreso(?:\?|$)/i.test(config?.url || "");
+}
+
 api.interceptors.request.use(async (config) => {
   if (esEndpointPublico(config)) {
     delete config.headers.Authorization;
@@ -84,7 +88,8 @@ api.interceptors.request.use(async (config) => {
     metodo !== "get" &&
     !config.offlineReplay &&
     !navigator.onLine &&
-    !esEndpointSensible(config)
+    !esEndpointSensible(config) &&
+    !esValidacionConEfectos(config)
   ) {
     await encolarOperacion(config);
     window.dispatchEvent(
@@ -116,8 +121,8 @@ api.interceptors.request.use(async (config) => {
 });
 
 api.interceptors.response.use(
-  (response) => {
-    void guardarRespuestaGet(response);
+  async (response) => {
+    await guardarRespuestaGet(response);
     window.dispatchEvent(new Event("exampass:online-response"));
     return response;
   },
@@ -129,7 +134,8 @@ api.interceptors.response.use(
       (error.config.method || "get").toLowerCase() !== "get" &&
       !error.config.offlineReplay &&
       tokenActual() &&
-      !esEndpointSensible(error.config)
+      !esEndpointSensible(error.config) &&
+      !esValidacionConEfectos(error.config)
     ) {
       try {
         await encolarOperacion(error.config, {

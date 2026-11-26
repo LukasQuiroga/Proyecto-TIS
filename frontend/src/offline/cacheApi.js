@@ -122,8 +122,17 @@ export async function guardarRespuestaGet(response) {
 
     const bd = await abrirBd();
     if (!bd) return;
+    let resolveGuardado;
+    let rejectGuardado;
+    const guardado = new Promise((resolve, reject) => {
+      resolveGuardado = resolve;
+      rejectGuardado = reject;
+    });
     const transaccion = bd.transaction(ALMACEN, "readwrite");
     const almacen = transaccion.objectStore(ALMACEN);
+    transaccion.oncomplete = resolveGuardado;
+    transaccion.onerror = () => rejectGuardado(transaccion.error);
+    transaccion.onabort = () => rejectGuardado(transaccion.error);
     almacen.put({
       clave: crearClave(config, idUsuario),
       idUsuario: String(idUsuario),
@@ -152,6 +161,14 @@ export async function guardarRespuestaGet(response) {
         almacen.delete(antiguo.clave);
       }
     };
+    todas.onerror = () => {
+      try {
+        transaccion.abort();
+      } catch {
+        rejectGuardado(todas.error);
+      }
+    };
+    await guardado;
   } catch (error) {
     console.warn("No se pudo guardar la consulta para uso offline:", error);
   }
