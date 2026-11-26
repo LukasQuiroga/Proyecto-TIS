@@ -20,23 +20,37 @@ export default function EstadoConexion() {
       })
     }
     const cambioEnCola = (evento) => {
-      const operacion = evento.detail
       setAvisoCambio(
-        `El cambio ${operacion?.method || ''} quedó guardado en este dispositivo y se enviará al recuperar internet.`,
+        `El cambio ${evento.detail?.method || ''} quedó guardado en este dispositivo y se enviará al recuperar internet.`,
       )
       actualizarCola()
     }
     const cambioParaRevision = () => {
-      setAvisoCambio(
-        'La conexión se interrumpió durante el envío. El cambio quedó en revisión para evitar duplicarlo automáticamente.',
-      )
+      setAvisoCambio('La conexión se interrumpió durante el envío. El cambio quedó en revisión para evitar duplicarlo automáticamente.')
       actualizarCola()
+    }
+    const preparandoIngreso = () => {
+      setAvisoCambio('Preparando exámenes y validaciones para registrar ingresos sin conexión...')
+    }
+    const ingresoPreparado = (evento) => {
+      const cantidad = evento.detail?.examenes ?? 0
+      const total = evento.detail?.total ?? cantidad
+      setAvisoCambio(
+        cantidad > 0
+          ? `Ingreso offline preparado para ${cantidad} de ${total} examen${total === 1 ? '' : 'es'} de este estudiante.`
+          : 'No se encontraron exámenes disponibles para preparar el ingreso offline.',
+      )
+    }
+    const ingresoNoPreparado = () => {
+      setAvisoCambio('No se pudieron preparar los datos de ingreso offline. Mantén la conexión e inténtalo de nuevo.')
     }
     const sincronizacionCompleta = () => {
       void obtenerEstadoCola().then((estado) => {
         if (!activo) return
         setCola(estado)
-        if (estado.pendientes === 0) setAvisoCambio('Los cambios pendientes se sincronizaron.')
+        if (estado.pendientes === 0 && estado.revision === 0 && estado.rechazadas === 0) {
+          setAvisoCambio('Los cambios pendientes se sincronizaron.')
+        }
       })
     }
     const temporizador = setTimeout(actualizarCola, 0)
@@ -48,6 +62,9 @@ export default function EstadoConexion() {
     window.addEventListener('exampass:offline-operation-queued', cambioEnCola)
     window.addEventListener('exampass:offline-operation-review', cambioParaRevision)
     window.addEventListener('exampass:offline-sync-complete', sincronizacionCompleta)
+    window.addEventListener('exampass:offline-admission-preparing', preparandoIngreso)
+    window.addEventListener('exampass:offline-admission-ready', ingresoPreparado)
+    window.addEventListener('exampass:offline-admission-failed', ingresoNoPreparado)
     return () => {
       activo = false
       clearTimeout(temporizador)
@@ -59,6 +76,9 @@ export default function EstadoConexion() {
       window.removeEventListener('exampass:offline-operation-queued', cambioEnCola)
       window.removeEventListener('exampass:offline-operation-review', cambioParaRevision)
       window.removeEventListener('exampass:offline-sync-complete', sincronizacionCompleta)
+      window.removeEventListener('exampass:offline-admission-preparing', preparandoIngreso)
+      window.removeEventListener('exampass:offline-admission-ready', ingresoPreparado)
+      window.removeEventListener('exampass:offline-admission-failed', ingresoNoPreparado)
     }
   }, [])
 

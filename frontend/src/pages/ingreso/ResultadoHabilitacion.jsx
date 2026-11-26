@@ -11,12 +11,14 @@ import {
 } from "react-icons/fi";
 
 import {
+  consultarHabilitacion,
   consultarIngresoRegistrado,
   obtenerIngresoRegistrado,
   registrarIntentoIngresoDuplicadoConFoto,
   registrarIngresoExamen,
   verificarIngresoYRegistrarRechazo,
 } from "../../services/validacionHabilitacionService";
+import { obtenerIngresoEnCola } from "../../offline/outbox.js";
 
 import "./ValidarHabilitacion.css";
 
@@ -167,10 +169,12 @@ function ResultadoHabilitacion({
       try {
         let solicitud = verificacionesEnCurso.current.get(claveIngreso);
         if (!solicitud) {
-          solicitud = verificarIngresoYRegistrarRechazo(
-            Number(idExamen),
-            Number(idEstudiante)
-          );
+          solicitud = navigator.onLine
+            ? verificarIngresoYRegistrarRechazo(
+                Number(idExamen),
+                Number(idEstudiante)
+              )
+            : consultarHabilitacion(Number(idExamen), Number(idEstudiante));
           verificacionesEnCurso.current.set(claveIngreso, solicitud);
         }
         const datos = await solicitud;
@@ -264,10 +268,27 @@ function ResultadoHabilitacion({
           clave: claveIngreso,
           registrado: datos.ingresoRegistrado === true,
           duplicado: datos.ingresoRegistrado === true,
+          pendienteSync: false,
           datos,
           detalle: null,
           error: "",
         });
+
+        const ingresoEnCola = await obtenerIngresoEnCola(idExamen, idEstudiante);
+        if (ingresoEnCola && !datos.ingresoRegistrado) {
+          setEstadoIngreso({
+            clave: claveIngreso,
+            registrado: false,
+            duplicado: false,
+            pendienteSync: ingresoEnCola.estado !== "rechazada",
+            datos: null,
+            detalle: null,
+            error:
+              ingresoEnCola.estado === "rechazada"
+                ? ingresoEnCola.mensaje || "El servidor rechazó el registro de ingreso."
+                : "El ingreso está guardado en este dispositivo y espera sincronizarse.",
+          });
+        }
 
         if (datos.ingresoRegistrado === true) {
           setModalDuplicadoAbierto(true);
@@ -311,6 +332,7 @@ function ResultadoHabilitacion({
           clave: claveIngreso,
           registrado: false,
           duplicado: false,
+          pendienteSync: false,
           datos: null,
           detalle: null,
           error:
@@ -359,11 +381,25 @@ function ResultadoHabilitacion({
         clave: claveIngreso,
         registrado: true,
         duplicado: false,
+        pendienteSync: false,
         datos,
         detalle: null,
         error: "",
       });
     } catch (err) {
+      if (err.isOfflineQueued) {
+        setEstadoIngreso({
+          clave: claveIngreso,
+          registrado: false,
+          duplicado: false,
+          pendienteSync: true,
+          datos: null,
+          detalle: null,
+          error: "El ingreso quedó guardado en este dispositivo. Se confirmará al sincronizarse.",
+        });
+        return;
+      }
+
       const duplicado = err.response?.status === 409;
 
       setEstadoIngreso({
@@ -417,6 +453,57 @@ function ResultadoHabilitacion({
       setGuardandoIngreso(false);
     }
   };
+
+  useEffect(() => {
+    if (!ingresoActual?.pendienteSync) return undefined;
+    let activo = true;
+
+    const revisarIngresoSincronizado = async () => {
+      if (!navigator.onLine) return;
+      try {
+        const operacion = await obtenerIngresoEnCola(idExamen, idEstudiante);
+        if (operacion?.estado === "rechazada") {
+          if (!activo) return;
+          setEstadoIngreso((actual) =>
+            actual?.clave === claveIngreso
+              ? {
+                  ...actual,
+                  pendienteSync: false,
+                  error: operacion.mensaje || "El servidor rechazó el registro de ingreso.",
+                }
+              : actual
+          );
+          return;
+        }
+        if (operacion) return;
+
+        const datos = await consultarIngresoRegistrado(
+          Number(idExamen),
+          Number(idEstudiante)
+        );
+        if (!activo || !datos.ingresoRegistrado) return;
+        setEstadoIngreso({
+          clave: claveIngreso,
+          registrado: true,
+          duplicado: false,
+          pendienteSync: false,
+          datos,
+          detalle: null,
+          error: "",
+        });
+      } catch {
+        // La cola local conserva el estado hasta que el servidor responda.
+      }
+    };
+
+    window.addEventListener("online", revisarIngresoSincronizado);
+    window.addEventListener("exampass:outbox-updated", revisarIngresoSincronizado);
+    return () => {
+      activo = false;
+      window.removeEventListener("online", revisarIngresoSincronizado);
+      window.removeEventListener("exampass:outbox-updated", revisarIngresoSincronizado);
+    };
+  }, [ingresoActual?.pendienteSync, idExamen, idEstudiante, claveIngreso]);
 
   const abrirRegistroExistente = () => {
     setModalDuplicadoAbierto(true);
@@ -640,7 +727,23 @@ function ResultadoHabilitacion({
 
       {/* Registro de asistencia */}
 
-      {!cargando && habilitado && !ingresoActual?.registrado && (
+      {!cargando && habilitado && ingresoActual?.pendienteSync && (
+        <section
+          className="validacion-panel ingreso-existente-panel ingreso-pendiente-sync"
+          aria-live="polite"
+        >
+          <div className="ingreso-existente-aviso ingreso-pendiente-sync-aviso" role="status">
+            <span className="ingreso-existente-icono" aria-hidden="true"><FiInfo /></span>
+            <div className="ingreso-existente-contenido">
+              <strong>Ingreso guardado sin conexión</strong>
+              <p>El registro se enviará al recuperar internet. Quedará confirmado cuando el servidor valide el examen, la habilitación y que no exista otro ingreso.</p>
+            </div>
+            <span className="ingreso-existente-etiqueta ingreso-pendiente-sync-etiqueta">PENDIENTE</span>
+          </div>
+        </section>
+      )}
+
+      {!cargando && habilitado && !ingresoActual?.registrado && !ingresoActual?.pendienteSync && (
         <section
           className="validacion-panel"
           aria-live="polite"
