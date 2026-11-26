@@ -2,13 +2,26 @@ import { useEffect, useState } from 'react'
 import { FiRefreshCw, FiTrash2, FiWifiOff } from 'react-icons/fi'
 import api from '../../services/api.js'
 import { descartarOperacion, obtenerEstadoCola, reintentarOperacion } from '../../offline/outbox.js'
+import { leerEstadoPreparacionIngreso } from '../../offline/prepararDatosIngreso.js'
 import './EstadoConexion.css'
+
+function mensajePreparacion(estado) {
+  if (!estado || estado.estado === 'error') return ''
+  if (estado.estado === 'preparando') {
+    return `Guardando datos para uso sin conexión: ${estado.completados} de ${estado.total || '…'} registros.`
+  }
+  if (estado.estado === 'listo') {
+    const avisoFallos = estado.fallidos ? ` Quedaron ${estado.fallidos} consultas sin guardar.` : ''
+    return `Datos offline listos: ${estado.examenes} exámenes y ${estado.estudiantes} estudiantes.${avisoFallos}`
+  }
+  return ''
+}
 
 export default function EstadoConexion() {
   const [sinConexion, setSinConexion] = useState(() => !navigator.onLine)
   const [cola, setCola] = useState({ pendientes: 0, revision: 0, rechazadas: 0, operaciones: [] })
   const [mostrarCola, setMostrarCola] = useState(false)
-  const [avisoCambio, setAvisoCambio] = useState('')
+  const [avisoCambio, setAvisoCambio] = useState(() => mensajePreparacion(leerEstadoPreparacionIngreso()))
 
   useEffect(() => {
     let activo = true
@@ -44,6 +57,9 @@ export default function EstadoConexion() {
     const ingresoNoPreparado = () => {
       setAvisoCambio('No se pudieron preparar los datos de ingreso offline. Mantén la conexión e inténtalo de nuevo.')
     }
+    const sincronizacionIngreso = (evento) => {
+      setAvisoCambio(mensajePreparacion(evento.detail))
+    }
     const sincronizacionCompleta = () => {
       void obtenerEstadoCola().then((estado) => {
         if (!activo) return
@@ -65,6 +81,7 @@ export default function EstadoConexion() {
     window.addEventListener('exampass:offline-admission-preparing', preparandoIngreso)
     window.addEventListener('exampass:offline-admission-ready', ingresoPreparado)
     window.addEventListener('exampass:offline-admission-failed', ingresoNoPreparado)
+    window.addEventListener('exampass:offline-admission-sync', sincronizacionIngreso)
     return () => {
       activo = false
       clearTimeout(temporizador)
@@ -79,6 +96,7 @@ export default function EstadoConexion() {
       window.removeEventListener('exampass:offline-admission-preparing', preparandoIngreso)
       window.removeEventListener('exampass:offline-admission-ready', ingresoPreparado)
       window.removeEventListener('exampass:offline-admission-failed', ingresoNoPreparado)
+      window.removeEventListener('exampass:offline-admission-sync', sincronizacionIngreso)
     }
   }, [])
 
