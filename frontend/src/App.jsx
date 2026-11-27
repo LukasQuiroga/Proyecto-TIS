@@ -53,8 +53,30 @@ import Habilitaciones from "./pages/habilitaciones/Habilitaciones.jsx";
 function AccesoSoloDocenteHabilitaciones({ children }) {
   const { usuario } = useAuth();
 
-  if (!usuario || usuario.nombreRol?.trim().toUpperCase() !== "DOCENTE") {
-    return <Navigate to="/" replace />;
+  if (!usuario) {
+    return <Navigate to="/?iniciar-sesion=1" replace />;
+  }
+
+  const rolActual = usuario.nombreRol?.trim().toUpperCase();
+
+  const rolesPredefinidos = [
+    "ADMINISTRADOR",
+    "DOCENTE",
+    "ESTUDIANTE",
+    "AUXILIAR",
+    "PERSONAL DE INGRESO",
+  ];
+
+  const esRolPersonalizado =
+    Boolean(rolActual) && !rolesPredefinidos.includes(rolActual);
+
+  const rolPermitido = rolActual === "DOCENTE" || esRolPersonalizado;
+
+  const tienePermiso =
+    usuario.permisos?.includes("GESTIONAR_HABILITACIONES") ?? false;
+
+  if (!rolPermitido || !tienePermiso) {
+    return <AccesoDenegado />;
   }
 
   return children;
@@ -90,11 +112,10 @@ function AccesoSoloAdministrador({ children }) {
 
 function AccesoReportes({ children }) {
   const { usuario } = useAuth();
-  const esAdministrador =
-    usuario?.nombreRol?.trim().toUpperCase() === "ADMINISTRADOR";
+
   const tienePermiso = usuario?.permisos?.includes("GENERAR_REPORTES") ?? false;
 
-  if (!esAdministrador || !tienePermiso) {
+  if (!tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -119,10 +140,25 @@ function AccesoControlIngreso({ children }) {
     return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
-  const esDocente = usuario.nombreRol?.trim().toUpperCase() === "DOCENTE";
+  const rolActual = usuario.nombreRol?.trim().toUpperCase();
+
+  const rolesPredefinidos = [
+    "ADMINISTRADOR",
+    "DOCENTE",
+    "ESTUDIANTE",
+    "AUXILIAR",
+    "PERSONAL DE INGRESO",
+  ];
+
+  const esRolPersonalizado = !rolesPredefinidos.includes(rolActual);
+
+  const rolPermitido =
+    ["DOCENTE", "AUXILIAR", "PERSONAL DE INGRESO"].includes(rolActual) ||
+    esRolPersonalizado;
+
   const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
-  if (!esDocente || !tienePermiso) {
+  if (!rolPermitido || !tienePermiso) {
     return <AccesoDenegado />;
   }
 
@@ -137,6 +173,38 @@ function AccesoSoloAdministradorExpulsiones({ children }) {
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
+function AccesoInscripcionQrDocente({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/?iniciar-sesion=1" replace />;
+  }
+
+  const rolActual = usuario.nombreRol?.trim().toUpperCase();
+
+  const rolesPredefinidos = [
+    "ADMINISTRADOR",
+    "DOCENTE",
+    "ESTUDIANTE",
+    "AUXILIAR",
+    "PERSONAL DE INGRESO",
+  ];
+
+  const esRolPersonalizado =
+    Boolean(rolActual) && !rolesPredefinidos.includes(rolActual);
+
+  const autorizado =
+    rolActual === "DOCENTE" ||
+    (esRolPersonalizado &&
+      usuario.permisos?.includes("GESTIONAR_MATERIAS"));
+
+  if (!autorizado) {
     return <AccesoDenegado />;
   }
 
@@ -256,7 +324,11 @@ function App() {
             {/* HU12 - Inscripción de estudiantes mediante QR */}
             <Route
               path="/asignaturas/inscripcion-qr"
-              element={<InscripcionQr />}
+              element={
+                <AccesoInscripcionQrDocente>
+                  <InscripcionQr />
+                </AccesoInscripcionQrDocente>
+              }
             />
 
             {/* HU12 - Confirmación de inscripción del estudiante */}

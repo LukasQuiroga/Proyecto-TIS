@@ -43,10 +43,23 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
     return usuario?.permisos?.includes(permiso) ?? false;
   };
   const rolActual = usuario?.nombreRol?.trim().toUpperCase();
-  const puedeConsultarIngresos =
-    rolActual === "ADMINISTRADOR" && tienePermiso("GENERAR_REPORTES");
+
+  const rolesPredefinidos = [
+    "ADMINISTRADOR",
+    "DOCENTE",
+    "ESTUDIANTE",
+    "AUXILIAR",
+    "PERSONAL DE INGRESO",
+  ];
+
+  const esRolPersonalizado =
+    Boolean(rolActual) && !rolesPredefinidos.includes(rolActual);
+
+  const puedeConsultarIngresos = tienePermiso("GENERAR_REPORTES");
   const puedeIdentificarDocumento =
-    rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO");
+    (["DOCENTE", "AUXILIAR", "PERSONAL DE INGRESO"].includes(rolActual) ||
+      esRolPersonalizado) &&
+    tienePermiso("CONTROL_INGRESO");
   return (
     <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
       <button
@@ -144,7 +157,8 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
-            {usuario?.nombreRol === "DOCENTE" && (
+            {(rolActual === "DOCENTE" ||
+              (esRolPersonalizado && tienePermiso("GESTIONAR_MATERIAS"))) && (
               <Opcion to="/asignaturas/inscripcion-qr" icono={<FiMaximize />}>
                 Inscripción QR
               </Opcion>
@@ -180,11 +194,12 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
-            {usuario?.nombreRol === "DOCENTE" && (
-              <Opcion to="/habilitaciones" icono={<FiGrid />}>
-                Habilitaciones
-              </Opcion>
-            )}
+            {(rolActual === "DOCENTE" || esRolPersonalizado) &&
+              tienePermiso("GESTIONAR_HABILITACIONES") && (
+                <Opcion to="/habilitaciones" icono={<FiGrid />}>
+                  Habilitaciones
+                </Opcion>
+              )}
 
             {(puedeIdentificarDocumento || puedeConsultarIngresos) && (
               <>
@@ -204,7 +219,7 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                 </button>
                 {ingresoAbierto && (
                   <div className="sidebar-submenu">
-                    {rolActual === "DOCENTE" && (
+                    {puedeIdentificarDocumento && (
                       <>
                         <NavLink
                           to="/ingreso/identificar-qr"

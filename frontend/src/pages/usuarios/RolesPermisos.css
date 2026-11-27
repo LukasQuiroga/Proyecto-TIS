@@ -248,6 +248,10 @@
 
 .modal-contenedor {
   width: 450px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
   background: #ffffff;
   border-radius: 10px;
   padding: 25px;
@@ -397,6 +401,42 @@
   font-weight: bold;
 }
 
+.permisos-bloque-fijo {
+  margin-top: 16px;
+}
+
+.permisos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.permiso-item-fijo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #eef4fb;
+  border-radius: 8px;
+  border: 1px solid #d9e5f2;
+}
+
+.permiso-item-fijo input {
+  width: 16px;
+  height: 16px;
+}
+
+.permiso-item-fijo span {
+  color: #163d74;
+  font-weight: 500;
+}
+
+.permisos-nota-fija {
+  margin-top: 16px;
+  color: #6b7c93;
+  font-size: 14px;
+}
+
 @media (max-width: 1000px) {
   .roles-permisos-contenido {
     grid-template-columns: 1fr;
@@ -407,4 +447,30 @@
     width: 100%;
     box-sizing: border-box;
   }
+}
+
+.permisosModalScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #a9bfd8 #eef4fb;
+}
+
+.permisosModalScroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.permisosModalScroll::-webkit-scrollbar-track {
+  background: #eef4fb;
+  border-radius: 8px;
+}
+
+.permisosModalScroll::-webkit-scrollbar-thumb {
+  background: #a9bfd8;
+  border-radius: 8px;
 }

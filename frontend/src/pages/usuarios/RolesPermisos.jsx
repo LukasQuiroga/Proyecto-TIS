@@ -4,13 +4,57 @@ import { obtenerRoles, obtenerPermisos, actualizarPermisosRol,
   crearRol as crearRolServicio
 } from "../../services/rolService";
 
+const PERMISOS_DOCENTE = [
+  "GESTIONAR_USUARIOS",
+  "GESTIONAR_MATERIAS",
+  "GESTIONAR_EXAMENES",
+  "GESTIONAR_HABILITACIONES",
+  "CONTROL_INGRESO",
+];
+
+const PERMISOS_CONTROL_INGRESO = ["CONTROL_INGRESO"];
+const accesosFijosEstudiante = [
+  "Inscripción QR",
+  "Mis materias",
+  "Mis exámenes",
+];
+
 function RolesPermisos() {
 
     const [roles, setRoles] = useState([]);
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
-    const esAdministrador = rolSeleccionado?.nombre === "ADMINISTRADOR";
+    const nombreRol = rolSeleccionado?.nombre?.trim().toUpperCase();
+    const esAdministrador = nombreRol === "ADMINISTRADOR";
+    const esEstudiante = nombreRol === "ESTUDIANTE";
+    const permisosFijos = esAdministrador || esEstudiante;
     const [permisos, setPermisos] = useState([]);
-    const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);    
+    const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
+    const permisosPermitidos = permisos.filter((permiso) => {
+        if (!rolSeleccionado) {
+            return false;
+        }
+
+        if (esAdministrador) {
+            return permiso.nombrePermiso !== "GESTIONAR_EXAMENES";
+        }
+
+        if (esEstudiante) {
+            return false;
+        }
+
+        if (nombreRol === "DOCENTE") {
+            return PERMISOS_DOCENTE.includes(permiso.nombrePermiso);
+        }
+
+        if (
+            nombreRol === "AUXILIAR" ||
+            nombreRol === "PERSONAL DE INGRESO"
+        ) {
+            return PERMISOS_CONTROL_INGRESO.includes(permiso.nombrePermiso);
+        }
+
+        return true;
+    });    
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -111,7 +155,7 @@ function RolesPermisos() {
 
     const seleccionarTodosLosPermisos = () => {
         setPermisosSeleccionados(
-            permisos.map((permiso) => permiso.idPermiso)
+            permisosPermitidos.map((permiso) => permiso.idPermiso),
         );
     };
 
@@ -327,7 +371,7 @@ function RolesPermisos() {
                         </p>
                     )}
 
-                    {rolSeleccionado && !esAdministrador && (
+                    {rolSeleccionado && !permisosFijos && (
                         <div className="acciones-permisos">
                             <button
                                 type="button"
@@ -346,10 +390,26 @@ function RolesPermisos() {
                     )}
         
                     <div className="lista-permisos">
+                        {esEstudiante && (
+                            <div className="permisos-bloque-fijo">
+                                <div className="permisos-lista">
+                                    {accesosFijosEstudiante.map((acceso) => (
+                                    <label key={acceso} className="permiso-item permiso-item-fijo">
+                                        <input type="checkbox" checked disabled />
+                                        <span>{acceso}</span>
+                                    </label>
+                                    ))}
+                                </div>
+
+                                <p className="permisos-nota-fija">
+                                    Estos accesos son fijos y no se pueden modificar.
+                                </p>
+                                </div>
+                        )}
                         {
                             rolSeleccionado ? (
 
-                                permisos.map((permiso) => (
+                                permisosPermitidos.map((permiso) => (
 
                                     <label
                                         key={permiso.idPermiso}
@@ -407,12 +467,17 @@ function RolesPermisos() {
                     </div>
                     
                     {
-                        !esAdministrador && (
+                        rolSeleccionado && !permisosFijos && (
                             <div className="acciones">
                                 <button
                                     className="cancelar"
                                     disabled={!rolSeleccionado}
-                                >
+                                    onClick={() => {
+                                        setPermisosSeleccionados(
+                                        rolSeleccionado.permisos.map((permiso) => permiso.idPermiso),
+                                        );
+                                    }}
+                                    >
                                     Cancelar
                                 </button>
 
@@ -489,40 +554,26 @@ function RolesPermisos() {
               </div>
 
 
-              <div className="modal-permisos">
+                <div className="modal-permisos">
+                    <label>Permisos</label>
 
-                <label>
-                  Permisos
-                </label>
+                    <div className="permisosModalScroll">
+                        {permisos.map((permiso) => (
+                        <label
+                            key={permiso.idPermiso}
+                            className="permiso-checkbox"
+                        >
+                            <input
+                            type="checkbox"
+                            checked={nuevoRol.permisos.includes(permiso.idPermiso)}
+                            onChange={() => cambiarPermisoNuevoRol(permiso)}
+                            />
 
-                {
-                  permisos.map((permiso) => (
-
-                    <label
-                      key={permiso.idPermiso}
-                      className="permiso-checkbox"
-                    >
-
-                      <input
-                        type="checkbox"
-                        checked={
-                            nuevoRol.permisos.includes(
-                               permiso.idPermiso
-                            )
-                        }
-                        onChange={() =>
-                          cambiarPermisoNuevoRol(permiso)
-                        }
-                      />
-
-                      {permiso.descripcion}
-
-                    </label>
-
-                  ))
-                }
-
-              </div>
+                            {permiso.descripcion}
+                        </label>
+                        ))}
+                    </div>
+                </div>
 
 
               <div className="modal-acciones">
