@@ -7,7 +7,8 @@ import com.lacomarcasoft.modelo.Permiso;
 import com.lacomarcasoft.modelo.Rol;
 import com.lacomarcasoft.repository.PermisoRepositorio;
 import com.lacomarcasoft.repository.RolRepositorio;
-
+import java.util.Locale;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,17 @@ import java.util.List;
 
 @Service
 public class RolServicio {
+        private static final Set<String> PERMISOS_DOCENTE = Set.of(
+                "GESTIONAR_USUARIOS",
+                "GESTIONAR_MATERIAS",
+                "GESTIONAR_EXAMENES",
+                "GESTIONAR_HABILITACIONES",
+                "CONTROL_INGRESO"
+        );
 
+        private static final Set<String> PERMISOS_CONTROL_INGRESO = Set.of(
+                "CONTROL_INGRESO"
+        );       
     private final RolRepositorio rolRepositorio;
     private final PermisoRepositorio permisoRepositorio;
 
@@ -88,36 +99,76 @@ public class RolServicio {
         );
 
     }
-    public Rol actualizarPermisos(
-        Long idRol,
-        List<Long> idsPermisos
-    ){
 
-        if(
-                idsPermisos == null ||
-                idsPermisos.isEmpty()
-        ){
-                throw new IllegalArgumentException(
-                        "Debe asignar al menos un permiso al rol."
-                );
-        }
+        public Rol actualizarPermisos(
+                Long idRol,
+                List<Long> idsPermisos
+        ) {
         Rol rol = buscar(idRol);
 
-        if ("ADMINISTRADOR".equalsIgnoreCase(rol.getNombreRol())) {
+        String nombreRol = rol.getNombreRol()
+                .trim()
+                .toUpperCase(Locale.ROOT);
+
+        if ("ADMINISTRADOR".equals(nombreRol)) {
                 throw new IllegalArgumentException(
                         "No se pueden modificar los permisos del rol ADMINISTRADOR."
                 );
         }
 
-        List<Permiso> permisos =
-                permisoRepositorio.findAllById(idsPermisos);
+        if ("ESTUDIANTE".equals(nombreRol)) {
+                throw new IllegalArgumentException(
+                        "Los accesos del rol ESTUDIANTE son fijos."
+                );
+        }
 
-        rol.setPermisos(
-                permisos
-        );
+        if (idsPermisos == null || idsPermisos.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Debe asignar al menos un permiso al rol."
+                );
+        }
+
+        if (idsPermisos.contains(null)) {
+                throw new IllegalArgumentException(
+                        "Los identificadores de permisos no son válidos."
+                );
+        }
+
+        List<Long> idsUnicos = idsPermisos.stream()
+                .distinct()
+                .toList();
+
+        List<Permiso> permisos = permisoRepositorio.findAllById(idsUnicos);
+
+        if (permisos.size() != idsUnicos.size()) {
+                throw new IllegalArgumentException(
+                        "Uno o más permisos no existen."
+                );
+        }
+
+        Set<String> permitidos = switch (nombreRol) {
+                case "DOCENTE" -> PERMISOS_DOCENTE;
+                case "AUXILIAR", "PERSONAL DE INGRESO" -> PERMISOS_CONTROL_INGRESO;
+                default -> null;
+        };
+
+        if (permitidos != null) {
+                boolean tienePermisoNoPermitido = permisos.stream()
+                        .anyMatch(permiso ->
+                                !permitidos.contains(permiso.getNombrePermiso())
+                        );
+
+                if (tienePermisoNoPermitido) {
+                throw new IllegalArgumentException(
+                        "El rol no puede recibir uno o más de los permisos seleccionados."
+                );
+                }
+        }
+
+        rol.setPermisos(permisos);
 
         return rolRepositorio.save(rol);
-     }
+        }
 
         public RolRespuesta crear(
                 CrearRolSolicitud solicitud

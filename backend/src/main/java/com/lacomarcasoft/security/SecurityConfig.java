@@ -21,7 +21,18 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
+    private static final String ACCESO_IDENTIFICACION =
+        "hasAuthority('CONTROL_INGRESO') and (" +
+        "hasAnyRole('DOCENTE', 'AUXILIAR', 'PERSONAL DE INGRESO') " +
+        "or !hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+        "'AUXILIAR', 'PERSONAL DE INGRESO'))";
 
+    private static final String ACCESO_INSCRIPCION_QR_DOCENTE =
+        "hasRole('DOCENTE') or (" +
+        "hasAuthority('GESTIONAR_MATERIAS') and " +
+        "!hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+        "'AUXILIAR', 'PERSONAL DE INGRESO'))";
+        
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*}")
@@ -115,7 +126,7 @@ public class SecurityConfig {
                     "/api/ingresos/examenes/identificar-documento/examenes"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
+                    ACCESO_IDENTIFICACION
                 ))
                 
                 .requestMatchers(
@@ -123,9 +134,7 @@ public class SecurityConfig {
                     "/api/ingresos/examenes/pendientes",
                     "/api/ingresos/examenes/pendientes/*/estudiantes/*"
                 )
-                .access(new WebExpressionAuthorizationManager(
-                    "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
-                ))
+                .hasAuthority("GENERAR_REPORTES")
 
                 .requestMatchers(
                       HttpMethod.GET,
@@ -133,9 +142,7 @@ public class SecurityConfig {
                       "/api/ingresos/examenes/registrados/resumen/listado",
                       "/api/ingresos/examenes/registrados"
                 )
-                .access(new WebExpressionAuthorizationManager(
-                       "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
-                ))
+                .hasAuthority("GENERAR_REPORTES")
 
 
                 .requestMatchers(
@@ -143,22 +150,31 @@ public class SecurityConfig {
                       "/api/ingresos/examenes/registrados/*"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                   "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
-                   "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
+                    "hasAuthority('GENERAR_REPORTES') " +
+                    "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
                 ))
 
                 .requestMatchers(
-                       HttpMethod.GET,
-                       "/api/ingresos/examenes/disponibles"
+                    HttpMethod.GET,
+                    "/api/ingresos/examenes/disponibles"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                        "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
-                        "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
+                    "hasAuthority('GENERAR_REPORTES') or (" +
+                    ACCESO_IDENTIFICACION +
+                    ")"
+                ))
+
+                .requestMatchers(
+                    "/api/ingresos/examenes/intentos-no-autorizados",
+                    "/api/ingresos/examenes/intentos-no-autorizados/**"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
                 ))
 
                 .requestMatchers("/api/ingresos/examenes/**")
                 .access(new WebExpressionAuthorizationManager(
-                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
+                    ACCESO_IDENTIFICACION
                 ))
 
                 .requestMatchers(
@@ -167,53 +183,125 @@ public class SecurityConfig {
                 ).hasRole("ADMINISTRADOR")
 
                 .requestMatchers("/api/logs/**")
-                .hasRole("ADMINISTRADOR")
+                .hasAuthority("VER_AUDITORIA")
 
-                .requestMatchers("/api/reportes/**")
+                .requestMatchers(
+                    "/api/reportes",
+                    "/api/reportes/**"
+                )
+                .hasAuthority("GENERAR_REPORTES")
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/usuarios/importar",
+                    "/api/usuarios/importar/analizar",
+                    "/api/usuarios/detectar-duplicados"
+                )
+                .hasAuthority("IMPORTAR_USUARIOS")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/usuarios/verificar-codigo-sis"
+                )
+                .hasAuthority("REGISTRAR_USUARIOS")
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/usuarios"
+                )
+                .hasAuthority("REGISTRAR_USUARIOS")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/usuarios/materias"
+                )
+                .hasAnyAuthority(
+                    "REGISTRAR_USUARIOS",
+                    "GESTIONAR_USUARIOS",
+                    "GESTIONAR_EXAMENES"
+                )
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/usuarios",
+                    "/api/usuarios/paginado",
+                    "/api/usuarios/*"
+                )
+                .hasAuthority("GESTIONAR_USUARIOS")
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/usuarios/*"
+                )
+                .hasAuthority("GESTIONAR_USUARIOS")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/roles"
+                )
                 .access(new WebExpressionAuthorizationManager(
-                    "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                    "hasAnyAuthority('GESTIONAR_ROLES', 'REGISTRAR_USUARIOS')"
                 ))
+
+                .requestMatchers(
+                    "/api/roles",
+                    "/api/roles/**",
+                    "/api/permisos",
+                    "/api/permisos/**"
+                )
+                .hasAuthority("GESTIONAR_ROLES")
 
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/asignaturas",
                     "/api/asignaturas/"
-                ).hasRole("ADMINISTRADOR")
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAuthority('GESTIONAR_MATERIAS') and (" +
+                    "hasRole('ADMINISTRADOR') or " +
+                    "!hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+                    "'AUXILIAR', 'PERSONAL DE INGRESO'))"
+                ))
 
                 .requestMatchers(
                     HttpMethod.GET,
-                    "/api/inscripciones-qr/materias/docente"
-                ).hasRole("DOCENTE")
+                    "/api/asignaturas",
+                    "/api/asignaturas/",
+                    "/api/asignaturas/**"
+                )
+                .hasAuthority("GESTIONAR_MATERIAS")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/inscripciones-qr/materias/docente",
+                    "/api/inscripciones-qr/materias/*/activo",
+                    "/api/inscripciones-qr/materias/*/estudiantes"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    ACCESO_INSCRIPCION_QR_DOCENTE
+                ))
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/inscripciones-qr/materias/*/generar",
+                    "/api/inscripciones-qr/materias/*/renovar"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    ACCESO_INSCRIPCION_QR_DOCENTE
+                ))
+
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/inscripciones-qr/materias/*/desactivar"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    ACCESO_INSCRIPCION_QR_DOCENTE
+                ))
 
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/inscripciones-qr/materias/estudiante"
                 ).hasRole("ESTUDIANTE")
-
-                .requestMatchers(
-                    HttpMethod.POST,
-                    "/api/inscripciones-qr/materias/*/generar"
-                ).hasRole("DOCENTE")
-
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/inscripciones-qr/materias/*/activo"
-                ).hasRole("DOCENTE")
-
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/api/inscripciones-qr/materias/*/estudiantes"
-                ).hasRole("DOCENTE")
-
-                .requestMatchers(
-                    HttpMethod.POST,
-                    "/api/inscripciones-qr/materias/*/renovar"
-                ).hasRole("DOCENTE")
-
-                .requestMatchers(
-                    HttpMethod.PATCH,
-                    "/api/inscripciones-qr/materias/*/desactivar"
-                ).hasRole("DOCENTE")
 
                 .requestMatchers(
                     HttpMethod.POST,
@@ -228,25 +316,50 @@ public class SecurityConfig {
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/habilitaciones/motivos"
-                ).hasRole("ADMINISTRADOR")
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAuthority('GESTIONAR_HABILITACIONES') and (" +
+                    "hasRole('ADMINISTRADOR') or " +
+                    "!hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+                    "'AUXILIAR', 'PERSONAL DE INGRESO'))"
+                ))
 
                 .requestMatchers(
                     HttpMethod.PUT,
                     "/api/habilitaciones/motivos/*"
-                ).hasRole("ADMINISTRADOR")
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAuthority('GESTIONAR_HABILITACIONES') and (" +
+                    "hasRole('ADMINISTRADOR') or " +
+                    "!hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+                    "'AUXILIAR', 'PERSONAL DE INGRESO'))"
+                ))
 
                 .requestMatchers(
                     HttpMethod.PATCH,
                     "/api/habilitaciones/motivos/*/estado"
-                ).hasRole("ADMINISTRADOR")
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAuthority('GESTIONAR_HABILITACIONES') and (" +
+                    "hasRole('ADMINISTRADOR') or " +
+                    "!hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+                    "'AUXILIAR', 'PERSONAL DE INGRESO'))"
+                ))
 
                 .requestMatchers(
                     "/api/habilitaciones/examenes/**"
-                ).hasRole("DOCENTE")
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasAuthority('GESTIONAR_HABILITACIONES') and (" +
+                    "hasRole('DOCENTE') or " +
+                    "!hasAnyRole('ADMINISTRADOR', 'DOCENTE', 'ESTUDIANTE', " +
+                    "'AUXILIAR', 'PERSONAL DE INGRESO'))"
+                ))
 
                 .requestMatchers(
                     "/api/habilitaciones/**"
-                ).hasAnyRole("DOCENTE", "ADMINISTRADOR")
+                )
+                .hasAuthority("GESTIONAR_HABILITACIONES")
 
                 .requestMatchers(
                     HttpMethod.GET,
