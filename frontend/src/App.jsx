@@ -9,7 +9,6 @@ import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 
 import Inicio from "./pages/Inicio/Inicio.jsx";
 
-import Login from "./pages/auth/Login.jsx";
 import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
 import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
 import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
@@ -65,7 +64,7 @@ function AccesoSoloEstudiante({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ESTUDIANTE") {
@@ -79,7 +78,7 @@ function AccesoSoloAdministrador({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
@@ -102,11 +101,22 @@ function AccesoReportes({ children }) {
   return children;
 }
 
+function RedirigirInicioSesion() {
+  const { usuario, token } = useAuth();
+
+  return (
+    <Navigate
+      to={usuario && token ? "/" : "/?iniciar-sesion=1"}
+      replace
+    />
+  );
+}
+
 function AccesoControlIngreso({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
   const esDocente = usuario.nombreRol?.trim().toUpperCase() === "DOCENTE";
@@ -123,7 +133,7 @@ function AccesoSoloAdministradorExpulsiones({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
@@ -142,7 +152,10 @@ function App() {
         <Routes>
           {/* RUTAS PUBLICAS */}
 
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/login"
+            element={<RedirigirInicioSesion />}
+          />
 
           <Route
             path="/recuperar-contrasena"

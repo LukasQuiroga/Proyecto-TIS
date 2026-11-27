@@ -22,7 +22,7 @@ function PermisosActualizadosModal() {
 
         cerrarSesion();
 
-        navigate("/login");
+        navigate("/?iniciar-sesion=1");
 
     };
 
