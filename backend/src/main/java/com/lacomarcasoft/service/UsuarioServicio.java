@@ -1508,30 +1508,6 @@ public class UsuarioServicio {
 
     }
 
-    public Usuario cambiarRol(
-            Long idUsuario,
-            Long idRol
-    ){
-
-        Usuario usuario = buscar(idUsuario);
-
-        Rol rol =
-                rolRepositorio.findById(idRol)
-                        .orElseThrow(
-                                () -> new RuntimeException(
-                                        "Rol no encontrado"
-                                )
-                        );
-
-
-        usuario.setRol(
-                rol
-        );
-
-        return usuarioRepositorio.save(usuario);
-
-    }
-
     private UsuarioRespuesta convertirRespuesta(
             Usuario usuario
     ){

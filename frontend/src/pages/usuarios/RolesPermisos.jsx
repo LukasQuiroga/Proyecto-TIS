@@ -3,7 +3,6 @@ import "./RolesPermisos.css";
 import { obtenerRoles, obtenerPermisos, actualizarPermisosRol,
   crearRol as crearRolServicio
 } from "../../services/rolService";
-import AsignacionRoles from "./AsignacionRoles";
 
 function RolesPermisos() {
 
@@ -11,8 +10,7 @@ function RolesPermisos() {
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
     const esAdministrador = rolSeleccionado?.nombre === "ADMINISTRADOR";
     const [permisos, setPermisos] = useState([]);
-    const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
-    const [pestana, setPestana] = useState("roles");
+    const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);    
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -231,25 +229,6 @@ function RolesPermisos() {
         <p>Gestione los roles del sistema y los permisos asociados a cada uno.</p>
       </div>
 
-      <div className="roles-permisos-tabs">
-        <button
-            className={pestana === "roles" ? "activo" : ""}
-            onClick={() => setPestana("roles")}
-        >
-            Roles
-        </button>
-
-        <button
-            className={pestana === "asignacion" ? "activo" : ""}
-            onClick={() => setPestana("asignacion")}
-        >
-            Asignación de Roles
-        </button>
-      </div>
-
-      {
-        pestana === "roles" && (
-
             <div className="roles-permisos-contenido">
 
                 <section className="lista-roles">
@@ -453,15 +432,6 @@ function RolesPermisos() {
                     }
                 </section>
             </div>
-
-        )
-      }
-
-      {
-          pestana === "asignacion" && (
-              <AsignacionRoles />
-          )
-      }
 
       {
         modalNuevoRol && (

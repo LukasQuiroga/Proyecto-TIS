@@ -2,7 +2,6 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.response.MateriaRespuesta;
 import com.lacomarcasoft.dto.request.ActualizarUsuarioSolicitud;
-import com.lacomarcasoft.dto.request.CambiarRolSolicitud;
 import com.lacomarcasoft.dto.request.DetectarDuplicadosSolicitud;
 import com.lacomarcasoft.dto.request.ImportarUsuariosSolicitud;
 import com.lacomarcasoft.dto.request.RegistrarUsuarioSolicitud;
@@ -264,93 +263,6 @@ public class UsuarioControlador {
         );
 
     }
-
-
-    @PutMapping("/{id}/rol")
-    public ResponseEntity<UsuarioRespuesta> cambiarRol(
-
-            @PathVariable Long id,
-
-            @Valid
-            @RequestBody CambiarRolSolicitud solicitud,
-
-            Authentication authentication,
-
-            HttpServletRequest request
-
-
-    ){
-
-        Usuario usuario =
-
-                usuarioServicio.cambiarRol(
-                        id,
-                        solicitud.idRol()
-                );
-
-        registrarAuditoriaCambioRol(
-                authentication,
-                request,
-                id,
-                solicitud.idRol()
-        );
-
-
-        return ResponseEntity.ok(
-                usuarioServicio.buscarRespuesta(
-                        usuario.getIdUsuario()
-                )
-
-        );
-
-
-    }
-
-
-    private void registrarAuditoriaCambioRol(
-
-            Authentication authentication,
-            HttpServletRequest request,
-            Long idUsuarioModificado,
-            Long idRolNuevo
-    ){
-
-        try {
-
-            Long idUsuarioResponsable =
-
-                    authentication != null
-                    && authentication.getDetails() instanceof Long id
-                            ? id
-                            : null;
-
-            logActividadServicio.registrar(
-
-                    idUsuarioResponsable,
-
-                    "CAMBIAR_ROL_USUARIO",
-
-                    "Se cambió el rol del usuario "
-                    + idUsuarioModificado
-                    + " al rol "
-                    + idRolNuevo,
-
-                    request.getRemoteAddr(),
-
-                    true
-
-            );
-
-        } catch (Exception e) {
-
-            LOG.error(
-                    "No se pudo registrar la auditoría",
-                    e
-            );
-
-        }
-    }
-
 
     private void registrarAuditoria(
 

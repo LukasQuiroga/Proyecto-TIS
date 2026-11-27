@@ -1,61 +1,51 @@
-import api from "./api";
+import api from './api'
 
-const API = "/usuarios";
+const API = '/usuarios'
 
 export const obtenerUsuarios = () => {
-  return api.get(API);
-};
+  return api.get(API)
+}
 
 export const registrarUsuario = (usuario, idUsuarioResponsable) => {
   return api.post(API, usuario, {
     headers: {
-      "X-Usuario-Id": idUsuarioResponsable || "",
-    },
-  });
-};
+      'X-Usuario-Id': idUsuarioResponsable || ''
+    }
+  })
+}
 
 export const analizarImportacion = (datos) => {
-  return api.post(`${API}/importar/analizar`, datos);
-};
+  return api.post(`${API}/importar/analizar`, datos)
+}
 
 export const importarUsuarios = (datos, idUsuarioResponsable) => {
   return api.post(`${API}/importar`, datos, {
     headers: {
-      "X-Usuario-Id": idUsuarioResponsable || "",
-    },
-  });
-};
+      'X-Usuario-Id': idUsuarioResponsable || ''
+    }
+  })
+}
 
 export const obtenerUsuario = (id) => {
-  return api.get(`${API}/${id}`);
-};
+  return api.get(`${API}/${id}`)
+}
 
 export const obtenerMaterias = () => {
-  return api.get(`${API}/materias`);
-};
+  return api.get(`${API}/materias`)
+}
 
-export const obtenerUsuariosPaginado = (
-  pagina = 0,
-  tamanio = 10,
-  filtros = {},
-) => {
+export const obtenerUsuariosPaginado = (pagina = 0, tamanio = 10, filtros = {}) => {
   return api.get(`${API}/paginado`, {
     params: {
       page: pagina,
       size: tamanio,
       ...Object.fromEntries(
-        Object.entries(filtros).filter(
-          ([, valor]) => valor && valor !== "TODOS",
-        ),
-      ),
-    },
-  });
-};
+        Object.entries(filtros).filter(([, valor]) => valor && valor !== 'TODOS')
+      )
+    }
+  })
+}
 
 export const modificarUsuario = (id, usuario) => {
-  return api.put(`${API}/${id}`, usuario);
-};
-
-export const cambiarRolUsuario = (id, idRol) => {
-  return api.put(`${API}/${id}/rol`, { idRol });
-};
+  return api.put(`${API}/${id}`, usuario)
+}
