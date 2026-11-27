@@ -31,7 +31,7 @@ function obtenerRol(usuario) {
   return "Sin rol";
 }
 
-function Navbar() {
+function Navbar({ abrirLogin }) {
   const { usuario, token, cerrarSesion } = useAuth();
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -149,7 +149,7 @@ function Navbar() {
                       cerrarSesion();
 
                       navigate(
-                          "/login",
+                          "/?iniciar-sesion=1",
                           {replace:true}
                       );
                   }}
@@ -164,7 +164,11 @@ function Navbar() {
         <button
           type="button"
           className="navbar-login"
-          onClick={() => navigate("/login")}
+          onClick={() =>
+            abrirLogin
+              ? abrirLogin()
+              : navigate("/?iniciar-sesion=1")
+          }
         >
           <FiLogIn />
           <span>Iniciar sesión</span>

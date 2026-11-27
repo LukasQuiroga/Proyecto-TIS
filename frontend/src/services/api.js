@@ -203,8 +203,12 @@ api.interceptors.response.use(
 
     limpiarSesionLocal();
 
-    if (window.location.pathname !== "/login") {
-      window.location.replace("/login");
+    const yaEstaEnInicioSesion =
+      window.location.pathname === "/" &&
+      new URLSearchParams(window.location.search).has("iniciar-sesion");
+
+    if (!yaEstaEnInicioSesion) {
+      window.location.replace("/?iniciar-sesion=1");
     }
     return Promise.reject(error);
   },

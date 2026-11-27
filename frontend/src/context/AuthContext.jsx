@@ -130,8 +130,13 @@ export function AuthProvider({ children }) {
       } else if (tipo === 'CERRAR_SESION' && sesionRef.current.token) {
         limpiarSesionEnPestana()
         setPermisosActualizados(false)
-        if (window.location.pathname !== '/login') {
-          window.location.replace('/login')
+        const yaEstaEnInicioSesion =
+          window.location.pathname === '/' &&
+          new URLSearchParams(window.location.search)
+            .has('iniciar-sesion')
+
+        if (!yaEstaEnInicioSesion) {
+          window.location.replace('/?iniciar-sesion=1')
         }
       }
     }

@@ -12,7 +12,7 @@ function ProtectedPermission({
     if(!usuario){
         return (
             <Navigate
-                to="/login"
+                to="/?iniciar-sesion=1"
                 replace
             />
         );

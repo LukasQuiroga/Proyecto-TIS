@@ -1,0 +1,248 @@
+.modal-login-fondo{
+    position:fixed;
+    inset:0;
+    background:rgba(9,23,48,.55);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    box-sizing:border-box;
+    z-index:2000;
+}
+
+.modal-login{
+    width:420px;
+    max-width:100%;
+    max-height:calc(100vh - 40px);
+    overflow-y:auto;
+    position:relative;
+    background:#ffffff;
+    padding:42px 40px 34px;
+    border-radius:16px;
+    box-shadow:0 20px 60px rgba(9,23,48,.28);
+    box-sizing:border-box;
+}
+
+.modal-login-cerrar{
+    position:absolute;
+    top:12px;
+    right:14px;
+    width:32px;
+    height:32px;
+    border:none;
+    border-radius:50%;
+    background:transparent;
+    color:#718096;
+    font-size:26px;
+    line-height:1;
+    cursor:pointer;
+}
+
+.modal-login-cerrar:hover:not(:disabled){
+    background:#f1f5f9;
+    color:#163b63;
+}
+
+.modal-login-cerrar:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.modal-login h1{
+    text-align:center;
+    color:#163b63;
+    font-size:32px;
+    font-weight:700;
+    margin:0 0 12px;
+}
+
+.modal-login-description{
+    text-align:center;
+    color:#7a8795;
+    font-size:15px;
+    margin:0 0 30px;
+}
+
+.modal-login label{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    color:#34495e;
+    margin-bottom:10px;
+}
+
+.modal-login-input{
+    width:100%;
+    height:48px;
+    border:1px solid #d8e1eb;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    padding:0 14px;
+    gap:10px;
+    margin-bottom:18px;
+    box-sizing:border-box;
+}
+
+.modal-login-input:focus-within{
+    border-color:#0869d8;
+    box-shadow:0 0 0 3px rgba(8,105,216,.12);
+}
+
+.modal-login-input input{
+    border:none;
+    outline:none;
+    width:100%;
+    height:100%;
+    font-size:14px;
+    color:#163b63;
+    background:transparent;
+}
+
+.modal-login-ojo{
+    border:none;
+    background:transparent;
+    color:#7a8795;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    cursor:pointer;
+    padding:4px;
+}
+
+.modal-login-options{
+    margin-top:10px;
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    font-size:13px;
+}
+
+.modal-login-olvidaste{
+    border:none;
+    background:none;
+    color:#2563eb;
+    cursor:pointer;
+    font-size:14px;
+    padding:0;
+}
+
+.modal-login-olvidaste:hover{
+    text-decoration:underline;
+}
+
+.modal-login-enviar,
+.modal-login-cancelar,
+.modal-login-aceptar{
+    width:100%;
+    height:50px;
+    border-radius:8px;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.modal-login-enviar{
+    margin-top:30px;
+    border:none;
+    background:#0869d8;
+    color:#ffffff;
+}
+
+.modal-login-enviar:hover:not(:disabled){
+    background:#0558b7;
+}
+
+.modal-login-cancelar{
+    margin-top:12px;
+    border:1px solid #0869d8;
+    background:#ffffff;
+    color:#0869d8;
+}
+
+.modal-login-cancelar:hover:not(:disabled){
+    background:#eaf3ff;
+}
+
+.modal-login-enviar:disabled,
+.modal-login-cancelar:disabled{
+    opacity:.7;
+    cursor:not-allowed;
+}
+
+.modal-login-icono{
+    width:50px;
+    height:50px;
+    margin:6px auto 0;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#ffffff;
+    font-size:30px;
+    font-weight:bold;
+}
+
+.modal-login-icono-error{
+    background:#ef4444;
+}
+
+.modal-login-icono-exito{
+    background:#22c55e;
+}
+
+.modal-login h2{
+    text-align:center;
+    color:#163b63;
+    margin:15px 0 8px;
+}
+
+.modal-login p{
+    text-align:center;
+    color:#718096;
+    font-size:14px;
+    margin:0 0 20px;
+}
+
+.modal-login-aceptar{
+    height:38px;
+    border:none;
+    background:#0869d8;
+    color:#ffffff;
+}
+
+.modal-login-aceptar:hover{
+    background:#0558b7;
+}
+
+.modal-login-progreso{
+    height:5px;
+    background:#0869d8;
+    border-radius:5px;
+    margin-top:15px;
+    animation:modal-login-cargar 2s linear;
+}
+
+@keyframes modal-login-cargar{
+    from{
+        width:0;
+    }
+
+    to{
+        width:100%;
+    }
+}
+
+@media(max-width:600px){
+    .modal-login-fondo{
+        padding:14px;
+    }
+
+    .modal-login{
+        padding:38px 24px 28px;
+    }
+
+    .modal-login h1{
+        font-size:27px;
+    }
+}

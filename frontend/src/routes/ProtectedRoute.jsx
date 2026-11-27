@@ -13,7 +13,7 @@ function ProtectedRoute({ children }) {
     if (!usuario || !token) {
         return (
             <Navigate
-                to="/login"
+                to="/?iniciar-sesion=1"
                 state={{
                     from: {
                         pathname: location.pathname,

@@ -33,7 +33,7 @@ function useInactividad() {
       );
       if (actual?.token !== token) return;
       cerrarSesion();
-      navigate("/login", { replace: true });
+      navigate("/?iniciar-sesion=1", { replace: true });
     }
 
     function comprobarInactividad() {

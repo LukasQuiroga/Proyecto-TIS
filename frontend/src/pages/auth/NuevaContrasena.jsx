@@ -41,7 +41,7 @@ function NuevaContrasena(){
         if(!correo || !token){
 
             navigate(
-                "/login",
+                "/?iniciar-sesion=1",
                 {
                     replace:true
                 }
@@ -67,7 +67,7 @@ function NuevaContrasena(){
         );
 
         navigate(
-            "/login",
+            "/?iniciar-sesion=1",
             {
                 replace:true
             }
@@ -148,7 +148,7 @@ function NuevaContrasena(){
             setTimeout(()=>{
 
                 navigate(
-                    "/login",
+                    "/?iniciar-sesion=1",
                     {
                         replace:true
                     }

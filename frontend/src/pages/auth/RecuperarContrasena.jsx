@@ -260,7 +260,7 @@ function RecuperarContrasena(){
                     className="volver"
                     onClick={
                         ()=>navigate(
-                            "/login"
+                            "/?iniciar-sesion=1"
                         )
                     }
                 >
