@@ -34,11 +34,20 @@ export const obtenerMaterias = () => {
   return api.get(`${API}/materias`);
 };
 
-export const obtenerUsuariosPaginado = (pagina = 0, tamanio = 7) => {
+export const obtenerUsuariosPaginado = (
+  pagina = 0,
+  tamanio = 10,
+  filtros = {},
+) => {
   return api.get(`${API}/paginado`, {
     params: {
       page: pagina,
       size: tamanio,
+      ...Object.fromEntries(
+        Object.entries(filtros).filter(
+          ([, valor]) => valor && valor !== "TODOS",
+        ),
+      ),
     },
   });
 };

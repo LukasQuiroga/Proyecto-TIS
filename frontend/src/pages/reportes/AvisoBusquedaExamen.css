@@ -1,0 +1,98 @@
+.aviso-busqueda-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 35 65 / 55%);
+}
+
+.aviso-busqueda-modal {
+  position: relative;
+  width: min(100%, 30rem);
+  padding: 2rem;
+  border: 1px solid #d7e2f1;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1.25rem 3rem rgb(13 38 76 / 24%);
+  color: #13335c;
+  text-align: center;
+}
+
+.aviso-busqueda-cerrar {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #526985;
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+
+.aviso-busqueda-cerrar:hover {
+  background: #f1f5fb;
+}
+
+.aviso-busqueda-icono {
+  display: grid;
+  width: 3.75rem;
+  height: 3.75rem;
+  margin: 0 auto 1rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff3e8;
+  color: #e56a16;
+  font-size: 1.9rem;
+}
+
+.aviso-busqueda-modal h2 {
+  margin: 0 2rem 0.65rem;
+  color: #102f58;
+  font-size: 1.35rem;
+}
+
+.aviso-busqueda-modal p {
+  margin: 0 0 1.5rem;
+  color: #526985;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.aviso-busqueda-confirmar {
+  min-width: 8.5rem;
+  padding: 0.7rem 1.25rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: #0866df;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.aviso-busqueda-confirmar:hover {
+  background: #0758c2;
+}
+
+.aviso-busqueda-confirmar:focus-visible,
+.aviso-busqueda-cerrar:focus-visible {
+  outline: 3px solid #8dbdff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .aviso-busqueda-modal {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .aviso-busqueda-modal h2 {
+    font-size: 1.15rem;
+  }
+}

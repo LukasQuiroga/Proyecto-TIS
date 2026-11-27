@@ -23,6 +23,24 @@ export const formatearTipoEvaluacion = (valor) => {
   return valor ? String(valor) : "—";
 };
 
+export const formatearFechaExamen = (valor) => {
+  if (!valor) {
+    return "—";
+  }
+
+  const fecha = new Date(`${valor}T00:00:00`);
+
+  if (Number.isNaN(fecha.getTime())) {
+    return String(valor);
+  }
+
+  return fecha.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+};
+
 export const obtenerEstadoExamen = (valor) => {
   const clave = sinAcentos(valor).replace(/\s+/g, "_");
 

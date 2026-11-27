@@ -9,7 +9,6 @@ import PlantillaPrincipal from "./components/Layout/PlantillaPrincipal.jsx";
 
 import Inicio from "./pages/Inicio/Inicio.jsx";
 
-import Login from "./pages/auth/Login.jsx";
 import RecuperarContrasena from "./pages/auth/RecuperarContrasena.jsx";
 import VerificarCodigo from "./pages/auth/VerificarCodigo.jsx";
 import NuevaContrasena from "./pages/auth/NuevaContrasena.jsx";
@@ -30,17 +29,22 @@ import MisMaterias from "./pages/asignaturas/MisMaterias.jsx";
 import Examenes from "./pages/examenes/Examenes.jsx";
 import MisExamenes from "./pages/examenes/MisExamenes.jsx";
 import RegistrarExamen from "./pages/examenes/RegistrarExamen.jsx";
+import RegistrarSituacionExcepcional from "./pages/situaciones/RegistrarSituacionExcepcional.jsx";
+import HistorialSituacionesExcepcionales from "./pages/situaciones/HistorialSituacionesExcepcionales.jsx";
 import AccesoNoAutorizadoExamenes from "./pages/examenes/AccesoNoAutorizadoExamenes.jsx";
 import IdentificarDocumento from "./pages/ingreso/IdentificarDocumento.jsx";
 import ComprobarExamenCorrespondiente from "./pages/ingreso/ComprobarExamenCorrespondiente";
 import IdentificarCodigo from "./pages/ingreso/IdentificarCodigo.jsx";
 import IdentificarQr from "./pages/ingreso/IdentificarQr.jsx";
 import IngresosRegistrados from "./pages/ingreso/IngresosRegistrados.jsx";
+import EstudiantesPendientes from "./pages/ingreso/EstudiantesPendientes.jsx";
+import Expulsiones from "./pages/expulsiones/Expulsiones.jsx";
 import IntentosNoAutorizados from "./pages/ingreso/IntentosNoAutorizados.jsx";
 import AccesoDenegado from "./routes/AccesoDenegado.jsx";
 import { useAuth } from "./context/useAuth";
 
 import Auditoria from "./pages/auditoria/Auditoria.jsx";
+import ReportesAsistencia from "./pages/reportes/ReportesAsistencia.jsx";
 
 import Perfil from "./pages/perfil/Perfil.jsx";
 import EditarPerfil from "./pages/perfil/EditarPerfil.jsx";
@@ -60,7 +64,7 @@ function AccesoSoloEstudiante({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
   if (usuario.nombreRol?.trim().toUpperCase() !== "ESTUDIANTE") {
@@ -70,22 +74,69 @@ function AccesoSoloEstudiante({ children }) {
   return children;
 }
 
-function AccesoControlIngreso({ children, permitirAdministrador = false }) {
+function AccesoSoloAdministrador({ children }) {
   const { usuario } = useAuth();
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/?iniciar-sesion=1" replace />;
   }
 
-  const rolActual = usuario.nombreRol?.trim().toUpperCase();
-  const esDocente = rolActual === "DOCENTE";
-  const esAdministrador = rolActual === "ADMINISTRADOR";
+  if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
+    return <AccesoDenegado />;
+  }
 
+  return children;
+}
+
+function AccesoReportes({ children }) {
+  const { usuario } = useAuth();
+  const esAdministrador =
+    usuario?.nombreRol?.trim().toUpperCase() === "ADMINISTRADOR";
+  const tienePermiso = usuario?.permisos?.includes("GENERAR_REPORTES") ?? false;
+
+  if (!esAdministrador || !tienePermiso) {
+    return <AccesoDenegado />;
+  }
+
+  return children;
+}
+
+function RedirigirInicioSesion() {
+  const { usuario, token } = useAuth();
+
+  return (
+    <Navigate
+      to={usuario && token ? "/" : "/?iniciar-sesion=1"}
+      replace
+    />
+  );
+}
+
+function AccesoControlIngreso({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/?iniciar-sesion=1" replace />;
+  }
+
+  const esDocente = usuario.nombreRol?.trim().toUpperCase() === "DOCENTE";
   const tienePermiso = usuario.permisos?.includes("CONTROL_INGRESO") ?? false;
 
-  const rolAutorizado = esDocente || (permitirAdministrador && esAdministrador);
+  if (!esDocente || !tienePermiso) {
+    return <AccesoDenegado />;
+  }
 
-  if (!rolAutorizado || !tienePermiso) {
+  return children;
+}
+
+function AccesoSoloAdministradorExpulsiones({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return <Navigate to="/?iniciar-sesion=1" replace />;
+  }
+
+  if (usuario.nombreRol?.trim().toUpperCase() !== "ADMINISTRADOR") {
     return <AccesoDenegado />;
   }
 
@@ -101,7 +152,10 @@ function App() {
         <Routes>
           {/* RUTAS PUBLICAS */}
 
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/login"
+            element={<RedirigirInicioSesion />}
+          />
 
           <Route
             path="/recuperar-contrasena"
@@ -261,6 +315,24 @@ function App() {
               }
             />
 
+            <Route
+              path="/situaciones-excepcionales/registro"
+              element={
+                <AccesoSoloAdministrador>
+                  <RegistrarSituacionExcepcional />
+                </AccesoSoloAdministrador>
+              }
+            />
+
+            <Route
+              path="/situaciones-excepcionales/historial"
+              element={
+                <AccesoSoloAdministrador>
+                  <HistorialSituacionesExcepcionales />
+                </AccesoSoloAdministrador>
+              }
+            />
+
             {/* HABILITACIONES */}
             <Route
               path="/habilitaciones"
@@ -275,7 +347,7 @@ function App() {
             <Route
               path="/ingreso/identificar-documento"
               element={
-                <AccesoControlIngreso permitirAdministrador>
+                <AccesoControlIngreso>
                   <IdentificarDocumento />
                 </AccesoControlIngreso>
               }
@@ -284,7 +356,7 @@ function App() {
             <Route
               path="/ingreso/comprobar-examen"
               element={
-                <AccesoControlIngreso permitirAdministrador>
+                <AccesoControlIngreso>
                   <ComprobarExamenCorrespondiente />
                 </AccesoControlIngreso>
               }
@@ -311,9 +383,18 @@ function App() {
             <Route
               path="/ingreso/ingresos-registrados"
               element={
-                <ProtectedPermission permiso="CONTROL_INGRESO">
+                <AccesoReportes>
                   <IngresosRegistrados />
-                </ProtectedPermission>
+                </AccesoReportes>
+              }
+            />
+
+            <Route
+              path="/ingreso/estudiantes-pendientes"
+              element={
+                <AccesoReportes>
+                  <EstudiantesPendientes />
+                </AccesoReportes>
               }
             />
 
@@ -326,7 +407,25 @@ function App() {
               }
             />
 
+            <Route
+              path="/expulsiones"
+              element={
+                <AccesoSoloAdministradorExpulsiones>
+                  <Expulsiones />
+                </AccesoSoloAdministradorExpulsiones>
+              }
+            />
+
             {/* AUDITORIA */}
+
+            <Route
+              path="/reportes"
+              element={
+                <AccesoReportes>
+                  <ReportesAsistencia />
+                </AccesoReportes>
+              }
+            />
 
             <Route
               path="/auditoria"

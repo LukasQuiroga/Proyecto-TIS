@@ -6,6 +6,7 @@ import {
 } from "react-icons/fi";
 import {
   actualizarFotoPerfil,
+  actualizarDocumentoPerfil,
   actualizarTelefonoPerfil,
   cambiarContrasenaPerfil,
   obtenerFotoPerfil,
@@ -22,6 +23,7 @@ function EditarPerfil() {
   const fotoPersistidaRef = useRef(null);
   const [perfil, setPerfil] = useState(null);
   const [telefono, setTelefono] = useState("");
+  const [documento, setDocumento] = useState("");
   const [foto, setFoto] = useState("");
   const [archivo, setArchivo] = useState(null);
   const [fotoTemporal, setFotoTemporal] = useState("");
@@ -41,13 +43,16 @@ function EditarPerfil() {
         if (!activo) return;
         setPerfil(respuesta);
         setTelefono(respuesta.usuario?.celular || "");
+        setDocumento(respuesta.usuario?.carnetIdentidad || "");
         if (respuesta.fotoPerfil) {
           try {
             const blob = await obtenerFotoPerfil();
             if (!activo) return;
-            const url = URL.createObjectURL(blob);
-            fotoPersistidaRef.current = url;
-            setFoto(url);
+            if (blob.size > 0) {
+              const url = URL.createObjectURL(blob);
+              fotoPersistidaRef.current = url;
+              setFoto(url);
+            }
           } catch {
             if (activo) setFoto("");
           }
@@ -77,7 +82,8 @@ function EditarPerfil() {
   const nombre = [usuario?.nombre, usuario?.apellido].filter(Boolean).join(" ") || "Usuario";
   const huboCambiosClave = Object.values(contrasenas).some(Boolean);
   const telefonoCambiado = telefono.trim() !== (usuario?.celular || "");
-  const hayCambios = Boolean(archivo || telefonoCambiado || huboCambiosClave);
+  const documentoCambiado = documento.trim() !== (usuario?.carnetIdentidad || "");
+  const hayCambios = Boolean(archivo || telefonoCambiado || documentoCambiado || huboCambiosClave);
 
   const cambiarFoto = (event) => {
     const seleccionado = event.target.files?.[0];
@@ -107,6 +113,10 @@ function EditarPerfil() {
       setError("El número de teléfono debe contener como máximo 10 dígitos.");
       return;
     }
+    if (documentoCambiado && documento.trim() && !/^\d{1,30}$/.test(documento.trim())) {
+      setError("El documento de identidad debe contener hasta 30 dígitos.");
+      return;
+    }
     if (huboCambiosClave) {
       if (!contrasenas.contrasenaActual || !contrasenas.nuevaContrasena || !contrasenas.confirmarContrasena) {
         setError("Completa los tres campos de contraseña.");
@@ -130,19 +140,33 @@ function EditarPerfil() {
         completados.push("teléfono");
         setPerfil((anterior) => ({ ...anterior, usuario: { ...anterior.usuario, celular: telefono.trim() } }));
       }
+      if (documentoCambiado) {
+        const documentoActualizado = documento.trim();
+        const respuesta = await actualizarDocumentoPerfil(documentoActualizado || null);
+        completados.push("documento de identidad");
+        setPerfil((anterior) => ({
+          ...anterior,
+          usuario: {
+            ...anterior.usuario,
+            carnetIdentidad: respuesta.usuario?.carnetIdentidad ?? documentoActualizado,
+          },
+        }));
+      }
       if (archivo) {
         await actualizarFotoPerfil(archivo);
         completados.push("fotografía");
         setArchivo(null);
         try {
           const blob = await obtenerFotoPerfil();
-          const nuevaUrl = URL.createObjectURL(blob);
-          if (fotoPersistidaRef.current) {
-            URL.revokeObjectURL(fotoPersistidaRef.current);
+          if (blob.size > 0) {
+            const nuevaUrl = URL.createObjectURL(blob);
+            if (fotoPersistidaRef.current) {
+              URL.revokeObjectURL(fotoPersistidaRef.current);
+            }
+            fotoPersistidaRef.current = nuevaUrl;
+            setFoto(nuevaUrl);
+            setFotoTemporal("");
           }
-          fotoPersistidaRef.current = nuevaUrl;
-          setFoto(nuevaUrl);
-          setFotoTemporal("");
         } catch (errorRecuperacion) {
           console.warn("No se pudo actualizar la vista previa de la fotografía:", errorRecuperacion);
         }
@@ -181,10 +205,9 @@ function EditarPerfil() {
             <div className="hu13-edicion-grid">
               <section className="hu13-tarjeta hu13-seccion hu13-bloqueo">
                 <h3><FiLock /> Datos institucionales</h3>
-                <p className="hu13-ayuda">Esta información solo puede modificarla un administrador.</p>
+                <p className="hu13-ayuda">El nombre, correo, rol y estado solo puede modificarlos un administrador.</p>
                 <div className="hu13-campos">
                   <label>Nombre completo<input value={nombre} disabled readOnly /></label>
-                  <label>Documento de identidad<input value={usuario.carnetIdentidad || ""} disabled readOnly /></label>
                   <label>Correo electrónico<input value={usuario.correo || ""} disabled readOnly /></label>
                   <label>Rol<input value={usuario.nombreRol || ""} disabled readOnly /></label>
                   <label>Estado<input value={usuario.activo ? "Activo" : "Inactivo"} disabled readOnly /></label>
@@ -207,6 +230,18 @@ function EditarPerfil() {
                     </div>
                   </div>
                   <div className="hu13-campos">
+                    <label>
+                      Documento de identidad
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={documento}
+                        onChange={(e) => setDocumento(e.target.value.replace(/\D/g, "").slice(0, 30))}
+                        maxLength={30}
+                        placeholder="Número de documento"
+                      />
+                    </label>
                     <label>
                       Teléfono de contacto
                       <input

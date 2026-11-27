@@ -87,6 +87,11 @@ public class SecurityConfig {
                 ).authenticated()
 
                 .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/perfil/me/documento"
+                ).authenticated()
+
+                .requestMatchers(
                     HttpMethod.PUT,
                     "/api/perfil/me/contrasena"
                 ).authenticated()
@@ -110,7 +115,45 @@ public class SecurityConfig {
                     "/api/ingresos/examenes/identificar-documento/examenes"
                 )
                 .access(new WebExpressionAuthorizationManager(
-                    "hasAnyRole('DOCENTE', 'ADMINISTRADOR') and hasAuthority('CONTROL_INGRESO')"
+                    "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
+                ))
+                
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/ingresos/examenes/pendientes",
+                    "/api/ingresos/examenes/pendientes/*/estudiantes/*"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                    "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
+
+                .requestMatchers(
+                      HttpMethod.GET,
+                      "/api/ingresos/examenes/registrados/resumen",
+                      "/api/ingresos/examenes/registrados/resumen/listado",
+                      "/api/ingresos/examenes/registrados"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                       "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
+
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                      "/api/ingresos/examenes/registrados/*"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                   "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
+                   "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
+                ))
+
+                .requestMatchers(
+                       HttpMethod.GET,
+                       "/api/ingresos/examenes/disponibles"
+                )
+                .access(new WebExpressionAuthorizationManager(
+                        "(hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')) " +
+                        "or (hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO'))"
                 ))
 
                 .requestMatchers("/api/ingresos/examenes/**")
@@ -118,8 +161,18 @@ public class SecurityConfig {
                     "hasRole('DOCENTE') and hasAuthority('CONTROL_INGRESO')"
                 ))
 
+                .requestMatchers(
+                    "/api/situaciones-excepcionales",
+                    "/api/situaciones-excepcionales/**"
+                ).hasRole("ADMINISTRADOR")
+
                 .requestMatchers("/api/logs/**")
                 .hasRole("ADMINISTRADOR")
+
+                .requestMatchers("/api/reportes/**")
+                .access(new WebExpressionAuthorizationManager(
+                    "hasRole('ADMINISTRADOR') and hasAuthority('GENERAR_REPORTES')"
+                ))
 
                 .requestMatchers(
                     HttpMethod.POST,
@@ -194,16 +247,21 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/habilitaciones/**"
                 ).hasAnyRole("DOCENTE", "ADMINISTRADOR")
-                          
+
                 .requestMatchers(
                     HttpMethod.GET,
-                      "/api/estudiante/examenes"
+                    "/api/estudiante/examenes"
                 ).hasRole("ESTUDIANTE")
 
                 .requestMatchers(
                     "/api/examenes",
                     "/api/examenes/**"
                 ).hasAuthority("GESTIONAR_EXAMENES")
+
+                .requestMatchers(
+                    "/api/expulsiones",
+                    "/api/expulsiones/**"
+                ).hasRole("ADMINISTRADOR")
 
                 .anyRequest().authenticated()
             )

@@ -44,6 +44,46 @@
   font-size: 22px;
 }
 
+.auditoria-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.auditoria-tiempo-real {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6a7e9c;
+  font-size: 11px;
+}
+
+.auditoria-tiempo-real-punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #159447;
+  box-shadow: 0 0 0 3px rgba(21, 148, 71, 0.14);
+}
+
+.auditoria-tiempo-real-punto-activo {
+  background: #1769d2;
+  box-shadow: 0 0 0 3px rgba(23, 105, 210, 0.14);
+  animation: auditoria-pulso 1s ease-in-out infinite;
+}
+
+@keyframes auditoria-pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .auditoria-alerta {
   display: flex;
   align-items: flex-start;
@@ -651,6 +691,10 @@
 @media (max-width: 820px) {
   .auditoria-encabezado {
     flex-direction: column;
+  }
+
+  .auditoria-estado {
+    align-items: flex-start;
   }
 
 .auditoria-resumen {

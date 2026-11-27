@@ -31,7 +31,7 @@ function obtenerRol(usuario) {
   return "Sin rol";
 }
 
-function Navbar() {
+function Navbar({ abrirLogin }) {
   const { usuario, token, cerrarSesion } = useAuth();
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -56,6 +56,13 @@ function Navbar() {
       try {
         const imagen = await obtenerFotoPerfil();
         if (!activo || numeroSolicitud !== solicitud) return;
+
+        if (!imagen || imagen.size === 0) {
+          if (urlActual) URL.revokeObjectURL(urlActual);
+          urlActual = null;
+          setFotoPerfilUrl(null);
+          return;
+        }
 
         const nuevaUrl = URL.createObjectURL(imagen);
         if (urlActual) URL.revokeObjectURL(urlActual);
@@ -142,7 +149,7 @@ function Navbar() {
                       cerrarSesion();
 
                       navigate(
-                          "/",
+                          "/?iniciar-sesion=1",
                           {replace:true}
                       );
                   }}
@@ -157,7 +164,11 @@ function Navbar() {
         <button
           type="button"
           className="navbar-login"
-          onClick={() => navigate("/login")}
+          onClick={() =>
+            abrirLogin
+              ? abrirLogin()
+              : navigate("/?iniciar-sesion=1")
+          }
         >
           <FiLogIn />
           <span>Iniciar sesión</span>

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { FiAlertCircle, FiCalendar, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
-import { listarIntentosNoAutorizados, obtenerExamenesIngreso } from "../../services/validacionHabilitacionService";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiClipboard, FiEye, FiInfo, FiRefreshCw, FiSearch, FiUsers, FiX } from "react-icons/fi";
+import { listarIntentosNoAutorizados, obtenerExamenesIngreso, obtenerFotoIntento, resolverIncidencia } from "../../services/validacionHabilitacionService";
+import { buscarExamenPorCodigo } from "../../services/habilitacionService";
 import "./IntentosNoAutorizados.css";
 
 function formatearFecha(valor) {
@@ -16,6 +17,10 @@ function fechaLocalISO(valor) {
   return new Date(fecha.getTime() - zona).toISOString().slice(0, 10);
 }
 
+const NOMBRE_REGEX = /^[\p{L}]+( [\p{L}]+)*$/u;
+const CODIGO_EXAMEN_REGEX = /^[A-Z]{3}-[0-9]{3}$/;
+const LONGITUD_MAXIMA_VEREDICTO = 200;
+
 export default function IntentosNoAutorizados() {
   const [examenes, setExamenes] = useState([]);
   const [filas, setFilas] = useState([]);
@@ -27,9 +32,19 @@ export default function IntentosNoAutorizados() {
   const [examenSeleccionado, setExamenSeleccionado] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [errorValidacion, setErrorValidacion] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
+  const [modalResolverAbierto, setModalResolverAbierto] = useState(false);
+  const [incidenteResolver, setIncidenteResolver] = useState(null);
+  const [veredictoResolver, setVeredictoResolver] = useState("");
+  const [guardandoResolver, setGuardandoResolver] = useState(false);
+  const [confirmarCierreResolver, setConfirmarCierreResolver] = useState(false);
+  const [errorResolver, setErrorResolver] = useState("");
+  const [fotografiaResolver, setFotografiaResolver] = useState(null);
+  const [cargandoFoto, setCargandoFoto] = useState(false);
   const [pagina, setPagina] = useState(1);
   const porPagina = 10;
+  const fotografiaResolverUrlRef = useRef(null);
 
   useEffect(() => {
     let vigente = true;
@@ -50,6 +65,145 @@ export default function IntentosNoAutorizados() {
       setError(err.response?.data?.mensaje || "No se pudo consultar el historial.");
     } finally {
       setCargando(false);
+    }
+  };
+
+  const manejarCambioBusqueda = (event) => {
+    const valor = event.target.value.replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ");
+    setBusqueda(valor);
+    setErrorValidacion("");
+  };
+
+  const manejarCambioCodigoExamen = (event) => {
+    const valor = event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    setCodigoExamen(valor);
+    if (!valor || CODIGO_EXAMEN_REGEX.test(valor)) {
+      setErrorValidacion("");
+    }
+  };
+
+  const aplicarFiltros = async () => {
+    const busquedaLimpia = (busqueda || "").trim();
+    const codigoLimpio = (codigoExamen || "").trim();
+    if (codigoLimpio && !CODIGO_EXAMEN_REGEX.test(codigoLimpio)) {
+      setErrorValidacion("El código de examen debe tener el formato AAA-999, por ejemplo TEX-312.");
+      return;
+    }
+    if (busquedaLimpia && !NOMBRE_REGEX.test(busquedaLimpia)) {
+      setErrorValidacion("El nombre solo admite letras y espacios.");
+      return;
+    }
+    setErrorValidacion("");
+    if (codigoLimpio) {
+      try {
+        const idExamen = await buscarExamenPorCodigo(codigoLimpio);
+        setExamenSeleccionado(String(idExamen));
+        setCodigoAplicado("");
+        await cargar({ q: busquedaLimpia, idExamen: String(idExamen) });
+        return;
+      } catch {
+        setErrorValidacion(`No se encontró el examen con el código ${codigoLimpio}.`);
+        return;
+      }
+    }
+    setExamenSeleccionado("");
+    setCodigoAplicado("");
+    await cargar({ q: busquedaLimpia });
+  };
+
+  const abrirResolver = async (fila) => {
+    setErrorResolver("");
+    setVeredictoResolver("");
+    setConfirmarCierreResolver(false);
+    setGuardandoResolver(false);
+    setFotografiaResolver(null);
+    setCargandoFoto(true);
+
+    setIncidenteResolver(fila);
+    setModalResolverAbierto(true);
+
+    try {
+      const foto = await obtenerFotoIntento(fila.idIntento);
+      if (fotografiaResolverUrlRef.current) {
+        URL.revokeObjectURL(fotografiaResolverUrlRef.current);
+      }
+      fotografiaResolverUrlRef.current = foto
+        ? URL.createObjectURL(foto)
+        : null;
+      setFotografiaResolver(fotografiaResolverUrlRef.current);
+    } catch {
+      if (fotografiaResolverUrlRef.current) {
+        URL.revokeObjectURL(fotografiaResolverUrlRef.current);
+      }
+      fotografiaResolverUrlRef.current = null;
+      setFotografiaResolver(null);
+    } finally {
+      setCargandoFoto(false);
+    }
+  };
+
+  const cerrarResolver = () => {
+    if (fotografiaResolverUrlRef.current) {
+      URL.revokeObjectURL(fotografiaResolverUrlRef.current);
+      fotografiaResolverUrlRef.current = null;
+    }
+    setModalResolverAbierto(false);
+    setIncidenteResolver(null);
+    setVeredictoResolver("");
+    setConfirmarCierreResolver(false);
+    setErrorResolver("");
+    setFotografiaResolver(null);
+  };
+
+  const solicitarCerrarResolver = () => {
+    if (guardandoResolver) return;
+    if (veredictoResolver.trim()) {
+      setConfirmarCierreResolver(true);
+      return;
+    }
+    cerrarResolver();
+  };
+
+  const marcarResuelta = async () => {
+    if (!incidenteResolver?.idIntento) {
+      return;
+    }
+
+    const veredicto = (veredictoResolver || "").trim();
+
+    if (!veredicto) {
+      setErrorResolver("El veredicto es obligatorio.");
+      return;
+    }
+
+    if (veredicto.length > LONGITUD_MAXIMA_VEREDICTO) {
+      setErrorResolver(
+        `El veredicto no puede superar ${LONGITUD_MAXIMA_VEREDICTO} caracteres.`
+      );
+      return;
+    }
+
+    if (!/^[\p{L}\p{N}\s]+$/u.test(veredicto)) {
+      setErrorResolver("El veredicto solo admite letras, numeros y espacios.");
+      return;
+    }
+
+    setGuardandoResolver(true);
+    setErrorResolver("");
+
+    try {
+      await resolverIncidencia(incidenteResolver.idIntento, veredicto);
+      setModalResolverAbierto(false);
+      setIncidenteResolver(null);
+      await cargar();
+    } catch (err) {
+      setErrorResolver(
+        err.response?.data?.mensaje ||
+          err.response?.data?.message ||
+          "No se pudo resolver la incidencia."
+      );
+    } finally {
+      setGuardandoResolver(false);
     }
   };
 
@@ -116,26 +270,23 @@ export default function IntentosNoAutorizados() {
         </div>
         <form className="hu23-filtros" onSubmit={(event) => {
           event.preventDefault();
-          setCodigoAplicado(codigoExamen.trim().toLowerCase());
-          cargar({ q: busqueda });
+          aplicarFiltros();
         }}>
-          <label className="hu23-busqueda"><FiSearch /><input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por estudiante o código..." /></label>
           <label className="hu23-busqueda">
-            <FiSearch />
-            <input
-              type="search"
-              value={codigoExamen}
-              onChange={(e) => setCodigoExamen(e.target.value)}
-              placeholder="Buscar por código de examen..."
-              aria-label="Código de examen"
-            />
+            <span>Buscar por nombre</span>
+            <span><FiSearch /><input value={busqueda} onChange={manejarCambioBusqueda} placeholder="Ejemplo: Joel Taborga" /></span>
+          </label>
+          <label className="hu23-busqueda">
+            <span>Buscar por código de examen</span>
+            <span><FiSearch /><input type="search" value={codigoExamen} onChange={manejarCambioCodigoExamen} placeholder="Ejemplo: TEX-312" aria-label="Código de examen" /></span>
           </label>
           <label className="hu23-filtro-fecha"><span>Fecha desde</span><span><FiCalendar /><input type="date" value={fechaDesde} max={fechaHasta || undefined} onChange={(e) => { setFechaDesde(e.target.value); setPagina(1); }} /></span></label>
           <label className="hu23-filtro-fecha"><span>Fecha hasta</span><span><FiCalendar /><input type="date" value={fechaHasta} min={fechaDesde || undefined} onChange={(e) => { setFechaHasta(e.target.value); setPagina(1); }} /></span></label>
           <label className="hu23-filtro-examen"><span>Examen</span><select value={examenSeleccionado} onChange={(e) => { setExamenSeleccionado(e.target.value); setPagina(1); }}><option value="">Todos los exámenes</option>{examenes.map((examen) => <option key={examen.idExamen} value={examen.idExamen}>{examen.nombreExamen || examen.codigo || `Examen ${examen.idExamen}`}</option>)}</select></label>
           <button type="submit" disabled={cargando}>Buscar</button>
-          <button type="button" className="hu23-refrescar" title="Actualizar" onClick={() => { setCodigoAplicado(codigoExamen.trim().toLowerCase()); cargar({ q: busqueda }); }}><FiRefreshCw /></button>
+          <button type="button" className="hu23-refrescar" title="Actualizar" onClick={aplicarFiltros}><FiRefreshCw /></button>
         </form>
+        {errorValidacion && <p role="alert" className="hu23-error">{errorValidacion}</p>}
         <div className="hu23-aviso-reporte"><FiInfo /><span>Solo se incluyen accesos rechazados. Los ingresos autorizados no forman parte de este reporte.</span></div>
         {error && <p role="alert" className="hu23-error">{error}</p>}
         <section className="hu23-seccion-reporte">
@@ -151,7 +302,13 @@ export default function IntentosNoAutorizados() {
             <td><strong>{fila.nombreEstudiante || "No identificado"}</strong><small>{fila.identificadorIntentado || "—"}</small></td>
             <td>{fila.metodoIdentificacion}</td><td>{fila.nombreExamen}</td>
             <td><span className="hu23-motivo">{fila.motivoRechazo}</span></td><td>{fila.responsable}</td>
-            <td><button className="hu23-ver" onClick={() => setSeleccionado(fila)} type="button"><FiEye /> Ver</button></td>
+            <td>
+              {String(fila.motivoRechazo || "").toLowerCase() === "ingreso duplicado" && String(fila.estado || "PENDIENTE") !== "RESUELTA" ? (
+                <button className="hu23-ver" onClick={() => void abrirResolver(fila)} type="button"><FiCheckCircle /> Resolver incidencia</button>
+              ) : (
+                <button className="hu23-ver" onClick={() => setSeleccionado(fila)} type="button"><FiEye /> Ver</button>
+              )}
+            </td>
           </tr>)}{!cargando && visibles.length === 0 && <tr><td colSpan={7} className="hu23-vacio">No hay intentos registrados.</td></tr>}</tbody>
         </table></div>
         <div className="hu23-pie"><span>Mostrando {visibles.length} de {filasFiltradas.length} intentos</span><div><button type="button" disabled={pagina === 1} onClick={() => setPagina(p => p-1)}>Anterior</button> {pagina} / {total} <button type="button" disabled={pagina === total} onClick={() => setPagina(p => p+1)}>Siguiente</button></div></div>
@@ -174,10 +331,121 @@ export default function IntentosNoAutorizados() {
                 ]
               : []),
             ["Responsable", seleccionado.responsable],
+            ...(String(seleccionado.motivoRechazo || "").toLowerCase().includes("ingreso duplicado")
+              ? [["Veredicto", seleccionado.veredicto || "—"]]
+              : []),
           ].map(([titulo, valor]) => <div key={titulo}><dt>{titulo}</dt><dd>{valor || "—"}</dd></div>)}</dl>
           <button className="hu23-cerrar" onClick={() => setSeleccionado(null)}>Cerrar</button>
         </section>
       </div>}
+
+      {modalResolverAbierto && incidenteResolver && (
+        <div className="hu23-fondo" role="presentation" onClick={() => solicitarCerrarResolver()}>
+          <section className="hu23-modal" role="dialog" aria-modal="true" aria-label="Resolver incidencia" onClick={(e) => e.stopPropagation()}>
+            <div className="hu23-modal-cabecera">
+              <h2>Resolver incidencia #{incidenteResolver.idIntento}</h2>
+              <button aria-label="Cerrar" onClick={() => solicitarCerrarResolver()}><FiX /></button>
+            </div>
+            <dl>
+              <div>
+                <dt>Estudiante</dt>
+                <dd>{incidenteResolver.nombreEstudiante || "No identificado"}</dd>
+              </div>
+              <div>
+                <dt>CodSiS</dt>
+                <dd>{incidenteResolver.codigoUniversitario || "—"}</dd>
+              </div>
+              <div>
+                <dt>CI</dt>
+                <dd>{incidenteResolver.carnetIdentidad || "—"}</dd>
+              </div>
+              <div>
+                <dt>Examen</dt>
+                <dd>{incidenteResolver.nombreExamen}</dd>
+              </div>
+              <div>
+                <dt>Fecha y hora</dt>
+                <dd>{formatearFecha(incidenteResolver.fechaHora)}</dd>
+              </div>
+              <div>
+                <dt>Responsable</dt>
+                <dd>{incidenteResolver.responsable}</dd>
+              </div>
+              <div>
+                <dt>Estado</dt>
+                <dd>{incidenteResolver.estado}</dd>
+              </div>
+              <div>
+                <dt>Motivo de rechazo</dt>
+                <dd>{incidenteResolver.motivoRechazo}</dd>
+              </div>
+            </dl>
+            {cargandoFoto && (
+              <div className="hu23-evidencia">
+                <p className="hu23-evidencia-caption">Infractor</p>
+                <div className="hu23-evidencia-spinner" />
+              </div>
+            )}
+            {fotografiaResolver && (
+              <div className="hu23-evidencia">
+                <p className="hu23-evidencia-caption">Infractor</p>
+                <img src={fotografiaResolver} alt="Evidencia del intento" />
+              </div>
+            )}
+            {errorResolver && <p role="alert">{errorResolver}</p>}
+            <div className="hu23-veredicto">
+              <label className="hu23-veredicto-label" htmlFor="veredictoResolver">Veredicto</label>
+              <textarea
+                id="veredictoResolver"
+                value={veredictoResolver}
+                onChange={(e) => setVeredictoResolver(e.target.value)}
+                placeholder="El estudiante será..."
+                rows={8}
+                maxLength={LONGITUD_MAXIMA_VEREDICTO}
+              />
+              <small className="hu23-veredicto-contador">
+                {veredictoResolver.length}/{LONGITUD_MAXIMA_VEREDICTO} caracteres (máximo {LONGITUD_MAXIMA_VEREDICTO})
+              </small>
+              <div className="hu23-veredicto-acciones">
+                <button type="button" className="hu23-boton-cancelar" onClick={() => solicitarCerrarResolver()} disabled={guardandoResolver}>
+                  <FiX aria-hidden="true" /> Cancelar
+                </button>
+                <button type="button" className="hu23-boton-resolver" onClick={() => void marcarResuelta()} disabled={guardandoResolver}>
+                  <FiCheck aria-hidden="true" /> {guardandoResolver ? "Resolviendo..." : "Marcar como resuelta"}
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {confirmarCierreResolver && (
+        <div className="hu23-fondo" role="presentation" onClick={() => setConfirmarCierreResolver(false)}>
+          <section
+            className="hu23-modal hu23-modal-confirmacion"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="hu23-confirmar-cierre-titulo"
+            aria-describedby="hu23-confirmar-cierre-texto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FiAlertCircle className="hu23-confirmar-icono" aria-hidden="true" />
+            <h2 id="hu23-confirmar-cierre-titulo">Descartar cambios</h2>
+            <p id="hu23-confirmar-cierre-texto">
+              El veredicto que ingresaste se perderá si cierras esta ventana.
+              ¿Deseas continuar?
+            </p>
+            <div className="hu23-confirmar-acciones">
+              <button type="button" className="hu23-boton-resolver" onClick={() => setConfirmarCierreResolver(false)}>
+                Seguir editando
+              </button>
+              <button type="button" className="hu23-boton-cancelar" onClick={() => cerrarResolver()}>
+                Descartar cambios
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

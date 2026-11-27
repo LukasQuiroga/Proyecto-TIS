@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 
@@ -30,6 +31,7 @@ public class IngresoExamenServicio {
     private final AccesoExamenDocenteServicio accesoExamenDocente;
     private final ComprobacionCorrespondenciaServicio correspondencia;
     private final IntentoIngresoNoAutorizadoServicio intentos;
+    private final IntentoFotoServicio intentoFoto;
 
     public IngresoExamenServicio(
             JdbcTemplate jdbc,
@@ -38,7 +40,8 @@ public class IngresoExamenServicio {
             ValidacionHabilitacionIngresoServicio validacionHabilitacion,
             AccesoExamenDocenteServicio accesoExamenDocente,
             IntentoIngresoNoAutorizadoServicio intentos,
-            ComprobacionCorrespondenciaServicio correspondencia) {
+            ComprobacionCorrespondenciaServicio correspondencia,
+            IntentoFotoServicio intentoFoto) {
         this.jdbc = jdbc;
         this.examenes = examenes;
         this.usuarios = usuarios;
@@ -46,6 +49,7 @@ public class IngresoExamenServicio {
         this.accesoExamenDocente = accesoExamenDocente;
         this.intentos = intentos;
         this.correspondencia = correspondencia;
+        this.intentoFoto = intentoFoto;
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +68,8 @@ public class IngresoExamenServicio {
     public void registrarIntentoDuplicado(
             Long idExamen,
             Long idEstudiante,
-            Long idResponsable) {
+            Long idResponsable,
+            MultipartFile foto) {
 
         validarIds(idExamen, idEstudiante);
 
@@ -108,13 +113,20 @@ public class IngresoExamenServicio {
             .filter(codigo -> codigo != null && !codigo.isBlank())
             .orElse(String.valueOf(idEstudiante));
 
+        String fotoReferencia = intentoFoto.guardarEvidencia(
+            idExamen,
+            idEstudiante,
+            foto
+        );
+
         intentos.registrar(
             idExamen,
             idEstudiante,
             idResponsable,
             identificador,
             "SISTEMA",
-            "Ingreso duplicado"
+            "Ingreso duplicado",
+            fotoReferencia
         );
     }
 
@@ -123,6 +135,15 @@ public class IngresoExamenServicio {
             Long idExamen,
             Long idEstudiante,
             Long idResponsable) {
+        return registrar(idExamen, idEstudiante, idResponsable, null);
+    }
+
+    @Transactional
+    public EstadoIngresoRespuesta registrar(
+            Long idExamen,
+            Long idEstudiante,
+            Long idResponsable,
+            OffsetDateTime fechaHoraDispositivo) {
 
         validarIds(idExamen, idEstudiante);
 
@@ -167,24 +188,42 @@ public class IngresoExamenServicio {
 
         if (!habilitacion.puedeContinuar()) {
             intentos.registrar(idExamen, idEstudiante, idResponsable,
-                String.valueOf(idEstudiante), "SISTEMA", habilitacion.mensaje());
+                String.valueOf(idEstudiante), "SISTEMA", habilitacion.mensaje(), null);
             throw new ResponseStatusException(
                 HttpStatus.FORBIDDEN,
                 habilitacion.mensaje()
             );
         }
 
-        int insertados = jdbc.update("""
-            INSERT INTO academico.ingreso_examen
-                (id_examen, id_estudiante, id_responsable)
-            VALUES (?, ?, ?)
-            ON CONFLICT ON CONSTRAINT uq_ingreso_examen_estudiante
-            DO NOTHING
-            """, idExamen, idEstudiante, idResponsable);
+        int insertados;
+        if (fechaHoraDispositivo != null) {
+            if (fechaHoraDispositivo.isAfter(OffsetDateTime.now().plusMinutes(5))) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha del ingreso no puede estar en el futuro"
+                );
+            }
+
+            insertados = jdbc.update("""
+                INSERT INTO academico.ingreso_examen
+                    (id_examen, id_estudiante, id_responsable, fecha_hora_ingreso)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT ON CONSTRAINT uq_ingreso_examen_estudiante
+                DO NOTHING
+                """, idExamen, idEstudiante, idResponsable, fechaHoraDispositivo);
+        } else {
+            insertados = jdbc.update("""
+                INSERT INTO academico.ingreso_examen
+                    (id_examen, id_estudiante, id_responsable)
+                VALUES (?, ?, ?)
+                ON CONFLICT ON CONSTRAINT uq_ingreso_examen_estudiante
+                DO NOTHING
+                """, idExamen, idEstudiante, idResponsable);
+        }
 
         if (insertados == 0) {
             intentos.registrar(idExamen, idEstudiante, idResponsable,
-                String.valueOf(idEstudiante), "SISTEMA", "Ingreso duplicado");
+                String.valueOf(idEstudiante), "SISTEMA", "Ingreso duplicado", null);
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT,
                 "Este estudiante ya tiene un ingreso registrado para este examen."
@@ -286,6 +325,13 @@ public class IngresoExamenServicio {
 
         List<Object> params = new ArrayList<>();
 
+        if (idExamen != null && idExamen <= 0) {
+            throw new ResponseStatusException(
+               HttpStatus.BAD_REQUEST,
+               "El identificador del examen debe ser mayor a cero."
+            );
+        }
+
         if (q != null && !q.trim().isEmpty()) {
             String filtro = "%" + q.trim().toLowerCase() + "%";
             sql.append(" AND (LOWER(COALESCE(u.codigo_sis,'')) LIKE ? OR LOWER(TRIM(CONCAT(COALESCE(u.nombre,''), ' ', COALESCE(u.apellido,'')))) LIKE ?)");
@@ -293,18 +339,24 @@ public class IngresoExamenServicio {
             params.add(filtro);
         }
 
-        if (idExamen != null && idExamen > 0) {
-            sql.append(" AND e.id_examen = ?");
-            params.add(idExamen);
+        if (idExamen != null) {
+             sql.append(" AND e.id_examen = ?");
+             params.add(idExamen);
         }
 
-        if (fecha != null && !fecha.trim().isEmpty()) {
-            try {
-                LocalDate fechaLocal = LocalDate.parse(fecha.trim());
-                sql.append(" AND DATE(ie.fecha_hora_ingreso) = ?");
-                params.add(Date.valueOf(fechaLocal));
-            } catch (Exception ignored) {
-            }
+       if (fecha != null && !fecha.trim().isEmpty()) {
+         try {
+            LocalDate fechaLocal = LocalDate.parse(fecha.trim());
+
+            sql.append(" AND (ie.fecha_hora_ingreso AT TIME ZONE 'America/La_Paz')::date = ?");
+            params.add(Date.valueOf(fechaLocal));
+
+          } catch (java.time.format.DateTimeParseException ex) {
+            throw new ResponseStatusException(
+             HttpStatus.BAD_REQUEST,
+             "Fecha invalida. Use el formato AAAA-MM-DD."
+            );
+          }
         }
 
         sql.append(" ORDER BY ie.fecha_hora_ingreso DESC");
@@ -337,6 +389,7 @@ public class IngresoExamenServicio {
                 ie.id_ingreso,
                 ie.id_examen,
                 ie.id_estudiante,
+                u.carnet_identidad,
                 u.codigo_sis,
                 TRIM(CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, ''))) AS nombre_estudiante,
                 e.nombre_examen,
@@ -356,6 +409,7 @@ public class IngresoExamenServicio {
                 rs.getLong("id_examen"),
                 rs.getLong("id_estudiante"),
                 rs.getString("codigo_sis"),
+                rs.getString("carnet_identidad"),
                 rs.getString("nombre_estudiante"),
                 rs.getString("nombre_examen"),
                 rs.getString("ambiente"),

@@ -19,7 +19,6 @@ import {
 import { FaGraduationCap } from "react-icons/fa";
 import { useAuth } from "../../context/useAuth";
 import "./Sidebar.css";
-
 function Opcion({ to, icono, children, exacta = false }) {
   return (
     <NavLink
@@ -32,27 +31,22 @@ function Opcion({ to, icono, children, exacta = false }) {
       }
     >
       <span className="sidebar-icono">{icono}</span>
-
       <span className="sidebar-texto">{children}</span>
     </NavLink>
   );
 }
-
 function Sidebar({ sidebarAbierto, cambiarSidebar }) {
   const [usuariosAbierto, setUsuariosAbierto] = useState(false);
   const [ingresoAbierto, setIngresoAbierto] = useState(false);
   const { usuario } = useAuth();
-
   const tienePermiso = (permiso) => {
     return usuario?.permisos?.includes(permiso) ?? false;
   };
-
   const rolActual = usuario?.nombreRol?.trim().toUpperCase();
-
+  const puedeConsultarIngresos =
+    rolActual === "ADMINISTRADOR" && tienePermiso("GENERAR_REPORTES");
   const puedeIdentificarDocumento =
-    tienePermiso("CONTROL_INGRESO") &&
-    (rolActual === "DOCENTE" || rolActual === "ADMINISTRADOR");
-
+    rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO");
   return (
     <aside className={sidebarAbierto ? "sidebar abierto" : "sidebar cerrado"}>
       <button
@@ -62,21 +56,17 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
       >
         <FiMenu />
       </button>
-
       {sidebarAbierto && (
         <>
           <NavLink to="/" className="sidebar-logo">
             <div className="sidebar-logo-icono">
               <FaGraduationCap />
             </div>
-
             <div className="sidebar-logo-texto">
               <strong>ExamPass</strong>
-
               <span>Gestion de ingreso a examenes</span>
             </div>
           </NavLink>
-
           <nav className="sidebar-menu">
             <Opcion to="/" exacta icono={<FiHome />}>
               Inicio
@@ -95,14 +85,11 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                   <span className="sidebar-icono">
                     <FiUsers />
                   </span>
-
                   <span className="sidebar-texto">Usuarios</span>
-
                   <span className="sidebar-flecha">
                     {usuariosAbierto ? <FiChevronUp /> : <FiChevronDown />}
                   </span>
                 </button>
-
                 {usuariosAbierto && (
                   <div className="sidebar-submenu">
                     {tienePermiso("GESTIONAR_USUARIOS") && (
@@ -118,7 +105,6 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         Listado de usuarios
                       </NavLink>
                     )}
-
                     {tienePermiso("IMPORTAR_USUARIOS") && (
                       <NavLink
                         to="/usuarios/importar"
@@ -127,7 +113,6 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         Importar usuarios
                       </NavLink>
                     )}
-
                     {tienePermiso("GESTIONAR_ROLES") && (
                       <NavLink
                         to="/usuarios/roles-permisos"
@@ -140,7 +125,6 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         Roles y permisos
                       </NavLink>
                     )}
-
                     {tienePermiso("REGISTRAR_USUARIOS") && (
                       <NavLink
                         to="/usuarios/registro"
@@ -172,13 +156,37 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
               </Opcion>
             )}
 
+            {rolActual === "ADMINISTRADOR" && (
+              <Opcion
+                to="/situaciones-excepcionales/registro"
+                icono={<FiAlertTriangle />}
+              >
+                Situaciones excepcionales
+              </Opcion>
+            )}
+
+            {rolActual === "ADMINISTRADOR" && (
+              <Opcion
+                to="/situaciones-excepcionales/historial"
+                icono={<FiClock />}
+              >
+                Historial de situaciones
+              </Opcion>
+            )}
+
+            {rolActual === "ADMINISTRADOR" && (
+              <Opcion to="/expulsiones" icono={<FiAlertTriangle />}>
+                Registrar expulsiones
+              </Opcion>
+            )}
+
             {usuario?.nombreRol === "DOCENTE" && (
               <Opcion to="/habilitaciones" icono={<FiGrid />}>
                 Habilitaciones
               </Opcion>
             )}
 
-            {puedeIdentificarDocumento && (
+            {(puedeIdentificarDocumento || puedeConsultarIngresos) && (
               <>
                 <button
                   type="button"
@@ -194,7 +202,6 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                     {ingresoAbierto ? <FiChevronUp /> : <FiChevronDown />}
                   </span>
                 </button>
-
                 {ingresoAbierto && (
                   <div className="sidebar-submenu">
                     {rolActual === "DOCENTE" && (
@@ -209,7 +216,6 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         >
                           Por código QR
                         </NavLink>
-
                         <NavLink
                           to="/ingreso/identificar-codigo"
                           className={({ isActive }) =>
@@ -222,19 +228,19 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         </NavLink>
                       </>
                     )}
-
-                    <NavLink
-                      to="/ingreso/identificar-documento"
-                      className={({ isActive }) =>
-                        `sidebar-subopcion ${
-                          isActive ? "sidebar-subopcion-activa" : ""
-                        }`
-                      }
-                    >
-                      Por documento de identidad
-                    </NavLink>
-
-                    {rolActual === "DOCENTE" && (
+                    {puedeIdentificarDocumento && (
+                      <NavLink
+                        to="/ingreso/identificar-documento"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Por documento de identidad
+                      </NavLink>
+                    )}
+                    {puedeConsultarIngresos && (
                       <NavLink
                         to="/ingreso/ingresos-registrados"
                         className={({ isActive }) =>
@@ -246,13 +252,28 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
                         Ingresos registrados
                       </NavLink>
                     )}
+                    {puedeConsultarIngresos && (
+                      <NavLink
+                        to="/ingreso/estudiantes-pendientes"
+                        className={({ isActive }) =>
+                          `sidebar-subopcion ${
+                            isActive ? "sidebar-subopcion-activa" : ""
+                          }`
+                        }
+                      >
+                        Estudiantes pendientes
+                      </NavLink>
+                    )}
                   </div>
                 )}
               </>
             )}
 
             {rolActual === "DOCENTE" && tienePermiso("CONTROL_INGRESO") && (
-              <Opcion to="/ingreso/intentos-no-autorizados" icono={<FiAlertTriangle />}>
+              <Opcion
+                to="/ingreso/intentos-no-autorizados"
+                icono={<FiAlertTriangle />}
+              >
                 Incidencias
               </Opcion>
             )}
@@ -276,13 +297,9 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
             )}
 
             {tienePermiso("GENERAR_REPORTES") && (
-              <div className="sidebar-opcion">
-                <span className="sidebar-icono">
-                  <FiBarChart2 />
-                </span>
-
-                <span className="sidebar-texto">Reportes</span>
-              </div>
+              <Opcion to="/reportes" icono={<FiBarChart2 />}>
+                Reportes
+              </Opcion>
             )}
 
             {tienePermiso("VER_AUDITORIA") && (
@@ -296,5 +313,4 @@ function Sidebar({ sidebarAbierto, cambiarSidebar }) {
     </aside>
   );
 }
-
 export default Sidebar;

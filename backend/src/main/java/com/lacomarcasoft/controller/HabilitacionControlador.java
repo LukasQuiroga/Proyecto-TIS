@@ -5,7 +5,9 @@ import com.lacomarcasoft.dto.request.ModificarHabilitacionMasivaSolicitud;
 import com.lacomarcasoft.dto.response.HabilitacionRespuesta;
 import com.lacomarcasoft.dto.response.HistorialHabilitacionRespuesta;
 import com.lacomarcasoft.dto.response.ResultadoHabilitacionMasiva;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.service.HabilitacionServicio;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -20,9 +22,14 @@ import java.util.Set;
 @RequestMapping("/api/habilitaciones")
 public class HabilitacionControlador {
     private final HabilitacionServicio servicio;
+    private final AuditoriaAccionesServicio auditoria;
 
-    public HabilitacionControlador(HabilitacionServicio servicio) {
+    public HabilitacionControlador(
+            HabilitacionServicio servicio,
+            AuditoriaAccionesServicio auditoria
+    ) {
         this.servicio = servicio;
+        this.auditoria = auditoria;
     }
 
     @GetMapping("/examenes/codigo/{codigo}")
@@ -49,15 +56,30 @@ public class HabilitacionControlador {
     public HabilitacionRespuesta modificar(
             @PathVariable Long idExamen,
             @Valid @RequestBody ModificarHabilitacionSolicitud solicitud,
-            Authentication auth) {
-        return servicio.modificar(idExamen, solicitud, usuario(auth));
+            Authentication auth,
+            HttpServletRequest request) {
+
+        HabilitacionRespuesta respuesta =
+                servicio.modificar(idExamen, solicitud, usuario(auth));
+
+        auditoria.registrar(
+                auth,
+                request,
+                "ACTUALIZAR_HABILITACION",
+                "Actualización de la habilitación del estudiante "
+                        + solicitud.idEstudiante()
+                        + " en el examen " + idExamen
+        );
+
+        return respuesta;
     }
 
     @PutMapping("/examenes/{idExamen}/masivo")
     public ResultadoHabilitacionMasiva modificarMasivo(
             @PathVariable Long idExamen,
             @Valid @RequestBody ModificarHabilitacionMasivaSolicitud solicitud,
-            Authentication auth) {
+            Authentication auth,
+            HttpServletRequest request) {
         Long responsableId = usuario(auth);
         servicio.listar(idExamen, responsableId);
 
@@ -97,12 +119,25 @@ public class HabilitacionControlador {
             }
         }
 
-        return new ResultadoHabilitacionMasiva(
-            solicitud.estudiantes().size(),
-            exitosos,
-            resultados.size() - exitosos,
-            resultados
+        ResultadoHabilitacionMasiva resultado =
+                new ResultadoHabilitacionMasiva(
+                    solicitud.estudiantes().size(),
+                    exitosos,
+                    resultados.size() - exitosos,
+                    resultados
+                );
+
+        auditoria.registrar(
+                auth,
+                request,
+                "ACTUALIZAR_HABILITACION_MASIVA",
+                "Actualización masiva de habilitaciones del examen "
+                        + idExamen + ": " + exitosos
+                        + " correctas y "
+                        + (resultados.size() - exitosos) + " fallidas"
         );
+
+        return resultado;
     }
 
     @GetMapping("/examenes/{idExamen}/estudiantes/{idEstudiante}/historial")

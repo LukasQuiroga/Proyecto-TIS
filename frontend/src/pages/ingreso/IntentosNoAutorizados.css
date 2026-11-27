@@ -21,13 +21,13 @@
 
 .hu23-filtros {
     display:flex;
-    gap:10px;
+    gap:12px;
     padding:15px;
     align-items:center;
     flex-wrap:wrap}
 
-.hu23-filtros select,.hu23-busqueda {
-    height:39px;
+.hu23-filtros select {
+    height:48px;
     border:1px solid #d5dfeb;
     background:white;
     border-radius:5px;
@@ -37,9 +37,20 @@
 
 .hu23-busqueda {
     flex:1;
+    display:grid;
+    gap:4px;
+    color:#526b94;
+    font-size:11px}
+
+.hu23-busqueda>span:last-child {
     display:flex;
     align-items:center;
-    gap:8px}
+    gap:8px;
+    height:48px;
+    padding:0 8px;
+    border:1px solid #d5dfeb;
+    border-radius:5px;
+    background:#fff}
 
 .hu23-busqueda input {
     border:0;
@@ -146,8 +157,33 @@
     background:white;
     border-radius:8px;
     width:min(560px,100%);
+    max-height:calc(100vh - 40px);
+    overflow-y:auto;
     padding:22px;
     box-shadow:0 15px 50px #001b3c30}
+
+.hu23-modal-confirmacion {
+    width:min(420px,100%);
+    text-align:center}
+
+.hu23-confirmar-icono {
+    font-size:34px;
+    color:#d97706}
+
+.hu23-modal-confirmacion h2 {
+    font-size:18px;
+    margin:8px 0}
+
+.hu23-modal-confirmacion p {
+    color:#5b708c;
+    font-size:14px;
+    line-height:1.5;
+    margin:0}
+
+.hu23-confirmar-acciones {
+    display:flex;
+    gap:12px;
+    margin-top:22px}
 
 .hu23-modal-cabecera {
     display:flex;
@@ -187,6 +223,136 @@
     border-radius:5px;
     float:right;
     cursor:pointer}
+
+.hu23-evidencia {
+    display:grid;
+    gap:10px;
+    margin-top:26px;
+}
+
+.hu23-evidencia img {
+    display:block;
+    max-width:100%;
+    max-height:300px;
+    width:auto;
+    height:auto;
+    object-fit:contain;
+    margin:0 auto;
+    background:#f8fafc;
+    border:1px solid #e4ebf3;
+    border-radius:6px;
+}
+
+.hu23-evidencia-caption {
+    margin:0;
+    font-size:16px;
+    font-weight:600;
+    color:#5b708c;
+    text-align:center;}
+
+.hu23-evidencia-spinner {
+    width:34px;
+    height:34px;
+    border:3px solid #dce7f2;
+    border-top-color:#0864e8;
+    border-radius:50%;
+    animation: hu23-evidencia-girar 0.8s linear infinite;
+    justify-self: center;
+}
+
+@keyframes hu23-evidencia-girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.hu23-veredicto {
+    margin-top: 40px;
+}
+
+.hu23-veredicto-label {
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:#5b708c;
+    margin-bottom: 8px;
+}
+
+.hu23-modal textarea {
+    width:100%;
+    min-height:140px;
+    resize:vertical;
+    border:1px solid #d5dfeb;
+    border-radius:5px;
+    padding:10px 12px;
+    font:inherit;
+    font-size:14px;
+    color:#273e5c;
+    background:white;
+}
+
+.hu23-veredicto-contador {
+    display:block;
+    margin-top:6px;
+    font-size:12px;
+    color:#5b708c;
+}
+
+.hu23-veredicto-acciones {
+    display:flex;
+    gap:12px;
+    margin-top:12px;
+}
+
+.hu23-boton-resolver,
+.hu23-boton-cancelar {
+    flex:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    height:44px;
+    padding:0 20px;
+    border:0;
+    border-radius:10px;
+    color:#FFFFFF;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.hu23-boton-resolver {
+    background:#38A9EB;
+}
+
+.hu23-boton-resolver:hover:not(:disabled) {
+    background:#218DCE;
+}
+
+.hu23-boton-cancelar {
+    background:#DC3545;
+}
+
+.hu23-boton-cancelar:hover:not(:disabled) {
+    background:#B52A38;
+}
+
+.hu23-boton-resolver:focus-visible {
+    outline:2px solid #218DCE;
+    outline-offset:2px;
+}
+
+.hu23-boton-cancelar:focus-visible {
+    outline:2px solid #B52A38;
+    outline-offset:2px;
+}
+
+.hu23-boton-resolver:disabled,
+.hu23-boton-cancelar:disabled {
+    opacity:0.6;
+    cursor:not-allowed;
+}
 
 @media (max-width: 700px) {
     .hu23-pagina {
@@ -250,7 +416,7 @@
     display:flex;
     align-items:center;
     gap:6px;
-    height:39px;
+    height:48px;
     padding:0 8px;
     border:1px solid #d5dfeb;
     border-radius:5px;
@@ -258,7 +424,7 @@
 
 .hu23-filtro-fecha svg {flex:0 0 auto;color:#617ba5}
 .hu23-filtro-fecha input {width:130px;min-width:0;border:0;outline:0;color:#273e5c;font:inherit}
-.hu23-filtro-examen select {height:39px;min-width:150px;padding:0 9px;border:1px solid #d5dfeb;border-radius:5px;color:#273e5c;background:#fff}
+.hu23-filtro-examen select {height:48px;min-width:150px;padding:0 9px;border:1px solid #d5dfeb;border-radius:5px;color:#273e5c;background:#fff}
 
 .hu23-aviso-reporte {
     display:flex;

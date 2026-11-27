@@ -5,11 +5,15 @@ import com.lacomarcasoft.dto.request.RegistrarIngresoSolicitud;
 import com.lacomarcasoft.dto.response.EstadoIngresoRespuesta;
 import com.lacomarcasoft.dto.response.IngresoRegistradoDetalleRespuesta;
 import com.lacomarcasoft.dto.response.IngresoRegistradoRespuesta;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.service.IngresoExamenServicio;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -20,10 +24,13 @@ import java.util.Map;
 public class IngresoExamenControlador {
 
     private final IngresoExamenServicio servicio;
+    private final AuditoriaAccionesServicio auditoria;
 
     public IngresoExamenControlador(
-            IngresoExamenServicio servicio) {
+            IngresoExamenServicio servicio,
+            AuditoriaAccionesServicio auditoria) {
         this.servicio = servicio;
+        this.auditoria = auditoria;
     }
 
     @GetMapping("/{idExamen}/estudiantes/{idEstudiante}")
@@ -34,12 +41,17 @@ public class IngresoExamenControlador {
         return servicio.consultar(idExamen, idEstudiante);
     }
 
-    @PostMapping("/{idExamen}/estudiantes/{idEstudiante}/intentos-duplicados")
+    @PostMapping(
+            value = "/{idExamen}/estudiantes/{idEstudiante}/intentos-duplicados",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void registrarIntentoDuplicado(
             @PathVariable Long idExamen,
             @PathVariable Long idEstudiante,
-            Authentication auth) {
+            @RequestParam("foto") MultipartFile archivo,
+            Authentication auth,
+            HttpServletRequest request) {
 
         Long responsable =
             auth != null && auth.getDetails() instanceof Long id
@@ -49,7 +61,17 @@ public class IngresoExamenControlador {
         servicio.registrarIntentoDuplicado(
             idExamen,
             idEstudiante,
-            responsable
+            responsable,
+            archivo
+        );
+
+        auditoria.registrar(
+            auth,
+            request,
+            "REGISTRAR_INTENTO_DUPLICADO",
+            "Intento de ingreso duplicado del estudiante "
+                    + idEstudiante + " en el examen " + idExamen,
+            false
         );
     }
 
@@ -70,9 +92,22 @@ public class IngresoExamenControlador {
     @PutMapping("/registrados/{idIngreso}")
     public IngresoRegistradoDetalleRespuesta actualizarRegistrado(
             @PathVariable Long idIngreso,
-            @Valid @RequestBody ActualizarIngresoSolicitud solicitud) {
+            @Valid @RequestBody ActualizarIngresoSolicitud solicitud,
+            Authentication auth,
+            HttpServletRequest request) {
 
-        return servicio.actualizarRegistrado(idIngreso, solicitud);
+        IngresoRegistradoDetalleRespuesta respuesta =
+                servicio.actualizarRegistrado(idIngreso, solicitud);
+
+        auditoria.registrar(
+            auth,
+            request,
+            "ACTUALIZAR_INGRESO",
+            "Actualización del ingreso #" + idIngreso
+                    + " del estudiante " + respuesta.idEstudiante()
+        );
+
+        return respuesta;
     }
 
     @PostMapping("/{idExamen}/ingresos")
@@ -80,18 +115,31 @@ public class IngresoExamenControlador {
     public EstadoIngresoRespuesta registrar(
             @PathVariable Long idExamen,
             @Valid @RequestBody RegistrarIngresoSolicitud solicitud,
-            Authentication auth) {
+            Authentication auth,
+            HttpServletRequest request) {
 
         Long responsable =
             auth != null && auth.getDetails() instanceof Long id
                 ? id
                 : null;
 
-        return servicio.registrar(
+        EstadoIngresoRespuesta respuesta = servicio.registrar(
             idExamen,
             solicitud.idEstudiante(),
-            responsable
+            responsable,
+            solicitud.fechaHoraDispositivo()
         );
+
+        auditoria.registrar(
+            auth,
+            request,
+            "REGISTRAR_INGRESO",
+            "Registro de ingreso del estudiante "
+                    + solicitud.idEstudiante()
+                    + " al examen " + idExamen
+        );
+
+        return respuesta;
     }
 
     @ExceptionHandler(ResponseStatusException.class)

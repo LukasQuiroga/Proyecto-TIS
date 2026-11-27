@@ -48,8 +48,16 @@ export const obtenerMensajeErrorExamen = (
 
   const mensajeBackend = error?.response?.data;
 
-  if (typeof mensajeBackend === "string" && mensajeBackend.trim()) {
+  if (
+    typeof mensajeBackend === "string" &&
+    mensajeBackend.trim() &&
+    !/<\s*!doctype\s+html|<\s*html[\s>]|<\s*body[\s>]/i.test(mensajeBackend)
+  ) {
     return mensajeBackend;
+  }
+
+  if ([502, 503, 504].includes(error?.response?.status)) {
+    return "El servicio no está disponible en este momento. Intenta nuevamente en unos minutos.";
   }
 
   if (

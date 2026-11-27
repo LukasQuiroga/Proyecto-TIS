@@ -2,8 +2,11 @@ package com.lacomarcasoft.controller;
 
 import com.lacomarcasoft.dto.request.LoginRequest;
 import com.lacomarcasoft.dto.response.LoginRespuesta;
+import com.lacomarcasoft.service.AuditoriaAccionesServicio;
 import com.lacomarcasoft.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,14 +17,20 @@ import java.util.List;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuditoriaAccionesServicio auditoria;
 
-    public AuthController(AuthService authService){
+    public AuthController(
+        AuthService authService,
+        AuditoriaAccionesServicio auditoria
+    ){
         this.authService=authService;
+        this.auditoria=auditoria;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(
-        @RequestBody LoginRequest request
+        @RequestBody LoginRequest request,
+        HttpServletRequest httpRequest
     ){
 
         try{
@@ -29,9 +38,28 @@ public class AuthController {
             LoginRespuesta respuesta=
                 authService.login(request);
 
+            auditoria.registrar(
+                respuesta.usuario().idUsuario(),
+                httpRequest,
+                "INICIAR_SESION",
+                "Inicio de sesión en el sistema",
+                true
+            );
+
             return ResponseEntity.ok(respuesta);
 
         }catch(Exception e){
+
+            auditoria.registrar(
+                (Long) null,
+                httpRequest,
+                "INICIAR_SESION",
+                "Intento de inicio de sesión fallido"
+                    + (request != null && request.correo() != null
+                        ? " para " + request.correo()
+                        : ""),
+                false
+            );
 
             return ResponseEntity
                 .badRequest()
@@ -45,7 +73,9 @@ public class AuthController {
             value="Authorization",
             required=false
         )
-        String authorization
+        String authorization,
+        Authentication authentication,
+        HttpServletRequest httpRequest
     ){
 
         try{
@@ -59,11 +89,25 @@ public class AuthController {
                     authorization.substring(7);
 
                 authService.logout(token);
+
+                auditoria.registrar(
+                    authentication,
+                    httpRequest,
+                    "CERRAR_SESION",
+                    "Cierre de sesión en el sistema"
+                );
             }
 
             return ResponseEntity.ok().build();
 
         }catch(Exception e){
+
+            auditoria.registrarFallo(
+                authentication,
+                httpRequest,
+                "CERRAR_SESION",
+                "No se pudo cerrar la sesión"
+            );
 
             return ResponseEntity.ok().build();
         }

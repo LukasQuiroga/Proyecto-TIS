@@ -3,18 +3,22 @@ import { useNavigate } from "react-router-dom";
 
 import {
   FiAlertCircle,
+  FiCamera,
+  FiCheckCircle,
   FiFileText,
   FiInfo,
   FiX,
 } from "react-icons/fi";
 
 import {
+  consultarHabilitacion,
   consultarIngresoRegistrado,
   obtenerIngresoRegistrado,
-  registrarIntentoIngresoDuplicado,
+  registrarIntentoIngresoDuplicadoConFoto,
   registrarIngresoExamen,
   verificarIngresoYRegistrarRechazo,
 } from "../../services/validacionHabilitacionService";
+import { obtenerIngresoEnCola } from "../../offline/outbox.js";
 
 import "./ValidarHabilitacion.css";
 
@@ -33,10 +37,17 @@ function ResultadoHabilitacion({
 
   const [modalDuplicadoAbierto, setModalDuplicadoAbierto] =
     useState(false);
+  const [modalIncidenciaAbierto, setModalIncidenciaAbierto] =
+    useState(false);
   const [errorRegistroIntento, setErrorRegistroIntento] = useState("");
+  const [fotografia, setFotografia] = useState(null);
+  const [fotografiaUrl, setFotografiaUrl] = useState(null);
+  const [guardandoIncidencia, setGuardandoIncidencia] = useState(false);
+  const [errorIncidencia, setErrorIncidencia] = useState("");
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   const registrandoActual = useRef(false);
-  const intentosDuplicadosEnviados = useRef(new Set());
   const verificacionesEnCurso = useRef(new Map());
 
   const claveIngreso = `${idExamen}:${idEstudiante}`;
@@ -85,6 +96,71 @@ function ResultadoHabilitacion({
     };
   }, [modalDuplicadoAbierto]);
 
+  // Control de la camara para captura de evidencia
+  useEffect(() => {
+    if (!modalIncidenciaAbierto) {
+      return undefined;
+    }
+
+    const videoElement = videoRef.current;
+    let activo = true;
+
+    async function iniciarCamara() {
+      setErrorIncidencia("");
+
+      if (
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia !== "function"
+      ) {
+        setErrorIncidencia(
+          "El dispositivo no dispone de la API de la cámara."
+        );
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+
+        if (!activo) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        streamRef.current = stream;
+
+        if (videoElement) {
+          videoElement.srcObject = stream;
+          await videoElement.play();
+        }
+      } catch {
+        if (activo) {
+          setErrorIncidencia(
+            "No se pudo acceder a la cámara. Verifique los permisos."
+          );
+        }
+      }
+    }
+
+    void iniciarCamara();
+
+    return () => {
+      activo = false;
+
+      const stream = streamRef.current;
+
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+
+      if (videoElement) {
+        videoElement.srcObject = null;
+      }
+    };
+  }, [modalIncidenciaAbierto]);
+
   // Consultar habilitación
   useEffect(() => {
     let activo = true;
@@ -93,10 +169,12 @@ function ResultadoHabilitacion({
       try {
         let solicitud = verificacionesEnCurso.current.get(claveIngreso);
         if (!solicitud) {
-          solicitud = verificarIngresoYRegistrarRechazo(
-            Number(idExamen),
-            Number(idEstudiante)
-          );
+          solicitud = navigator.onLine
+            ? verificarIngresoYRegistrarRechazo(
+                Number(idExamen),
+                Number(idEstudiante)
+              )
+            : consultarHabilitacion(Number(idExamen), Number(idEstudiante));
           verificacionesEnCurso.current.set(claveIngreso, solicitud);
         }
         const datos = await solicitud;
@@ -189,28 +267,32 @@ function ResultadoHabilitacion({
         setEstadoIngreso({
           clave: claveIngreso,
           registrado: datos.ingresoRegistrado === true,
+          duplicado: datos.ingresoRegistrado === true,
+          pendienteSync: false,
           datos,
           detalle: null,
           error: "",
         });
 
+        const ingresoEnCola = await obtenerIngresoEnCola(idExamen, idEstudiante);
+        if (ingresoEnCola && !datos.ingresoRegistrado) {
+          setEstadoIngreso({
+            clave: claveIngreso,
+            registrado: false,
+            duplicado: false,
+            pendienteSync: ingresoEnCola.estado !== "rechazada",
+            datos: null,
+            detalle: null,
+            error:
+              ingresoEnCola.estado === "rechazada"
+                ? ingresoEnCola.mensaje || "El servidor rechazó el registro de ingreso."
+                : "El ingreso está guardado en este dispositivo y espera sincronizarse.",
+          });
+        }
+
         if (datos.ingresoRegistrado === true) {
           setModalDuplicadoAbierto(true);
           setErrorRegistroIntento("");
-          if (!intentosDuplicadosEnviados.current.has(claveIngreso)) {
-            intentosDuplicadosEnviados.current.add(claveIngreso);
-            void registrarIntentoIngresoDuplicado(
-              Number(idExamen),
-              Number(idEstudiante)
-            ).catch((errRegistro) => {
-              intentosDuplicadosEnviados.current.delete(claveIngreso);
-              setErrorRegistroIntento(
-                errRegistro.response?.data?.mensaje ||
-                  errRegistro.response?.data?.message ||
-                  "No se pudo guardar este rechazo en el historial."
-              );
-            });
-          }
         }
 
         if (
@@ -249,6 +331,8 @@ function ResultadoHabilitacion({
         setEstadoIngreso({
           clave: claveIngreso,
           registrado: false,
+          duplicado: false,
+          pendienteSync: false,
           datos: null,
           detalle: null,
           error:
@@ -296,16 +380,32 @@ function ResultadoHabilitacion({
       setEstadoIngreso({
         clave: claveIngreso,
         registrado: true,
+        duplicado: false,
+        pendienteSync: false,
         datos,
         detalle: null,
         error: "",
       });
     } catch (err) {
+      if (err.isOfflineQueued) {
+        setEstadoIngreso({
+          clave: claveIngreso,
+          registrado: false,
+          duplicado: false,
+          pendienteSync: true,
+          datos: null,
+          detalle: null,
+          error: "El ingreso quedó guardado en este dispositivo. Se confirmará al sincronizarse.",
+        });
+        return;
+      }
+
       const duplicado = err.response?.status === 409;
 
       setEstadoIngreso({
         clave: claveIngreso,
         registrado: duplicado,
+        duplicado,
         datos: null,
         detalle: null,
         error: duplicado
@@ -354,6 +454,57 @@ function ResultadoHabilitacion({
     }
   };
 
+  useEffect(() => {
+    if (!ingresoActual?.pendienteSync) return undefined;
+    let activo = true;
+
+    const revisarIngresoSincronizado = async () => {
+      if (!navigator.onLine) return;
+      try {
+        const operacion = await obtenerIngresoEnCola(idExamen, idEstudiante);
+        if (operacion?.estado === "rechazada") {
+          if (!activo) return;
+          setEstadoIngreso((actual) =>
+            actual?.clave === claveIngreso
+              ? {
+                  ...actual,
+                  pendienteSync: false,
+                  error: operacion.mensaje || "El servidor rechazó el registro de ingreso.",
+                }
+              : actual
+          );
+          return;
+        }
+        if (operacion) return;
+
+        const datos = await consultarIngresoRegistrado(
+          Number(idExamen),
+          Number(idEstudiante)
+        );
+        if (!activo || !datos.ingresoRegistrado) return;
+        setEstadoIngreso({
+          clave: claveIngreso,
+          registrado: true,
+          duplicado: false,
+          pendienteSync: false,
+          datos,
+          detalle: null,
+          error: "",
+        });
+      } catch {
+        // La cola local conserva el estado hasta que el servidor responda.
+      }
+    };
+
+    window.addEventListener("online", revisarIngresoSincronizado);
+    window.addEventListener("exampass:outbox-updated", revisarIngresoSincronizado);
+    return () => {
+      activo = false;
+      window.removeEventListener("online", revisarIngresoSincronizado);
+      window.removeEventListener("exampass:outbox-updated", revisarIngresoSincronizado);
+    };
+  }, [ingresoActual?.pendienteSync, idExamen, idEstudiante, claveIngreso]);
+
   const abrirRegistroExistente = () => {
     setModalDuplicadoAbierto(true);
   };
@@ -361,6 +512,119 @@ function ResultadoHabilitacion({
   const idIngresoExistente =
     ingresoActual?.detalle?.idIngreso ||
     ingresoActual?.datos?.idIngreso;
+
+  const iniciarCaptura = async () => {
+    setErrorIncidencia("");
+    setFotografia(null);
+
+    if (
+      !navigator.mediaDevices ||
+      typeof navigator.mediaDevices.getUserMedia !== "function"
+    ) {
+      setErrorIncidencia(
+        "El dispositivo no dispone de la API de la cámara."
+      );
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        capturarFoto();
+      }
+    } catch {
+      setErrorIncidencia(
+        "No se pudo acceder a la cámara. Verifique los permisos."
+      );
+    }
+  };
+
+  const detenerCaptura = () => {
+    const stream = streamRef.current;
+
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const capturarFoto = () => {
+    const video = videoRef.current;
+
+    if (!video || !video.videoWidth) {
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const contexto = canvas.getContext("2d");
+    contexto.drawImage(video, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        setFotografiaUrl(url);
+        setFotografia(
+          new File([blob], "evidencia.jpg", { type: "image/jpeg" })
+        );
+      }
+    }, "image/jpeg", 0.8);
+  };
+
+  const cerrarModalIncidencia = () => {
+    detenerCaptura();
+    if (fotografiaUrl) {
+      URL.revokeObjectURL(fotografiaUrl);
+    }
+    setModalIncidenciaAbierto(false);
+    setFotografia(null);
+    setFotografiaUrl(null);
+    setErrorIncidencia("");
+  };
+
+  const guardarIncidencia = async () => {
+    if (!fotografia) {
+      setErrorIncidencia(
+        "Debe capturar una fotografia de la persona que intento ingresar."
+      );
+      return;
+    }
+
+    setGuardandoIncidencia(true);
+    setErrorIncidencia("");
+
+    try {
+      await registrarIntentoIngresoDuplicadoConFoto(
+        Number(idExamen),
+        Number(idEstudiante),
+        fotografia
+      );
+
+      setModalIncidenciaAbierto(false);
+      setModalDuplicadoAbierto(false);
+      setFotografia(null);
+    } catch (error) {
+      setErrorIncidencia(
+        error.response?.data?.mensaje ||
+          error.response?.data?.message ||
+          "No se pudo registrar la incidencia. Verifique la conexion."
+      );
+    } finally {
+      setGuardandoIncidencia(false);
+    }
+  };
 
   return (
     <div className="validacion-integrada">
@@ -463,7 +727,23 @@ function ResultadoHabilitacion({
 
       {/* Registro de asistencia */}
 
-      {!cargando && habilitado && !ingresoActual?.registrado && (
+      {!cargando && habilitado && ingresoActual?.pendienteSync && (
+        <section
+          className="validacion-panel ingreso-existente-panel ingreso-pendiente-sync"
+          aria-live="polite"
+        >
+          <div className="ingreso-existente-aviso ingreso-pendiente-sync-aviso" role="status">
+            <span className="ingreso-existente-icono" aria-hidden="true"><FiInfo /></span>
+            <div className="ingreso-existente-contenido">
+              <strong>Ingreso guardado sin conexión</strong>
+              <p>El registro se enviará al recuperar internet. Quedará confirmado cuando el servidor valide el examen, la habilitación y que no exista otro ingreso.</p>
+            </div>
+            <span className="ingreso-existente-etiqueta ingreso-pendiente-sync-etiqueta">PENDIENTE</span>
+          </div>
+        </section>
+      )}
+
+      {!cargando && habilitado && !ingresoActual?.registrado && !ingresoActual?.pendienteSync && (
         <section
           className="validacion-panel"
           aria-live="polite"
@@ -510,7 +790,7 @@ function ResultadoHabilitacion({
         </section>
       )}
 
-      {!cargando && ingresoActual?.registrado && (
+      {!cargando && ingresoActual?.registrado && ingresoActual?.duplicado && (
         <section className="validacion-panel ingreso-existente-panel" aria-live="polite">
           <div className="ingreso-existente-aviso" role="status">
             <span className="ingreso-existente-icono" aria-hidden="true"><FiAlertCircle /></span>
@@ -529,9 +809,27 @@ function ResultadoHabilitacion({
         </section>
       )}
 
+      {!cargando && ingresoActual?.registrado && !ingresoActual?.duplicado && (
+        <section className="validacion-panel ingreso-existente-panel ingreso-registro-confirmado" aria-live="polite">
+          <div className="ingreso-existente-aviso ingreso-registro-confirmado-aviso" role="status">
+            <span className="ingreso-existente-icono ingreso-registro-confirmado-icono" aria-hidden="true"><FiCheckCircle /></span>
+            <div className="ingreso-existente-contenido">
+              <strong>Asistencia registrada</strong>
+              <p>El ingreso de {nombreEstudiante || `el estudiante ${idEstudiante}`} se registró correctamente para {nombreExamen || "este examen"}.</p>
+            </div>
+            <span className="ingreso-existente-etiqueta ingreso-registro-confirmado-etiqueta">REGISTRADO</span>
+          </div>
+          <button type="button" className="validacion-boton ingreso-existente-boton" onClick={() => navigate("/ingreso/ingresos-registrados", { state: { idIngreso: idIngresoExistente } })}>
+            <FiFileText aria-hidden="true" />
+            Ver asistencia registrada
+            <span aria-hidden="true">→</span>
+          </button>
+        </section>
+      )}
+
       {/* Modal de ingreso existente */}
 
-      {ingresoActual?.registrado &&
+      {ingresoActual?.registrado && ingresoActual?.duplicado &&
         modalDuplicadoAbierto && (
           <div
             className="duplicado-modal-overlay"
@@ -641,6 +939,16 @@ function ResultadoHabilitacion({
                   type="button"
                   className="duplicado-modal-boton-secundario"
                   onClick={() =>
+                    setModalIncidenciaAbierto(true)
+                  }
+                >
+                  Registrar incidencia
+                </button>
+
+                <button
+                  type="button"
+                  className="duplicado-modal-boton-secundario"
+                  onClick={() =>
                     setModalDuplicadoAbierto(false)
                   }
                 >
@@ -671,6 +979,135 @@ function ResultadoHabilitacion({
             </section>
           </div>
         )}
+
+      {ingresoActual?.registrado && ingresoActual?.duplicado && modalIncidenciaAbierto && (
+        <div
+          className="duplicado-modal-overlay"
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget) {
+              cerrarModalIncidencia();
+            }
+          }}
+        >
+          <section
+            className="duplicado-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="incidencia-titulo"
+            aria-describedby="incidencia-descripcion"
+          >
+            <button
+              type="button"
+              className="duplicado-modal-cerrar-icono"
+              onClick={() => cerrarModalIncidencia()}
+              aria-label="Cerrar incidencia"
+            >
+              <FiX aria-hidden="true" />
+            </button>
+
+            <div className="duplicado-modal-icono" aria-hidden="true">
+              <FiCamera />
+            </div>
+
+            <h2 id="incidencia-titulo">Registrar incidencia</h2>
+
+            <p className="duplicado-modal-subtitulo">
+              Evidencia fotografica del intento duplicado
+            </p>
+
+            <p
+              id="incidencia-descripcion"
+              className="duplicado-modal-descripcion"
+            >
+              Registre la fotografia del intento duplicado de{" "}
+              {nombreEstudiante || `el estudiante ${idEstudiante}`}{" "}
+              para {nombreExamen || "este examen"}.
+            </p>
+
+            <div className="duplicado-modal-datos">
+              <div>
+                <span>Estudiante</span>
+                <strong>
+                  {nombreEstudiante || `Estudiante ${idEstudiante}`}
+                </strong>
+              </div>
+              <div>
+                <span>CodSiS</span>
+                <strong>
+                  {codigoEstudiante ||
+                    ingresoActual?.detalle?.codigoUniversitario ||
+                    "—"}
+                </strong>
+                <span>CI</span>
+                <strong>
+                  {ingresoActual?.detalle?.carnetIdentidad ||
+                    "—"}
+                </strong>
+              </div>
+              <div>
+                <span>Examen</span>
+                <strong>
+                  {ingresoActual?.detalle?.nombreExamen ||
+                    nombreExamen ||
+                    `Examen ${idExamen}`}
+                </strong>
+              </div>
+            </div>
+
+            {errorIncidencia && (
+              <p className="duplicado-modal-error-historial" role="alert">
+                {errorIncidencia}
+              </p>
+            )}
+
+            <video
+              ref={videoRef}
+              className="duplicado-modal-video"
+              autoPlay
+              playsInline
+              muted
+            />
+
+            <div className="duplicado-modal-acciones">
+              <button
+                type="button"
+                className="duplicado-modal-boton-secundario"
+                onClick={() => void iniciarCaptura()}
+              >
+                Tomar fotografia
+              </button>
+            </div>
+
+            {fotografia && (
+              <div className="duplicado-modal-foto">
+                <img
+                  src={fotografiaUrl}
+                  alt="Evidencia del intento duplicado"
+                />
+              </div>
+            )}
+
+            <div className="duplicado-modal-acciones duplicado-modal-acciones-final">
+              <button
+                type="button"
+                className="duplicado-modal-boton-secundario"
+                onClick={() => cerrarModalIncidencia()}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="duplicado-modal-boton-principal"
+                onClick={() => void guardarIncidencia()}
+                disabled={guardandoIncidencia}
+              >
+                {guardandoIncidencia ? "Guardando..." : "Guardar incidencia"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

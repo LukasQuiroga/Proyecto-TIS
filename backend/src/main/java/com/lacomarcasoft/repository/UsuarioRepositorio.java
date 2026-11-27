@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +26,50 @@ public interface UsuarioRepositorio
     Optional<Usuario> findByCarnetIdentidad(
         String carnetIdentidad
    );
+
+    @Query(
+        value = """
+            SELECT u.*
+            FROM seguridad.usuario u
+            JOIN seguridad.rol r ON r.id_rol = u.id_rol
+            WHERE (:nombre IS NULL OR LOWER(CONVERT_FROM(CAST(u.nombre AS bytea), 'UTF8'))
+                    LIKE LOWER(CONCAT('%', CAST(:nombre AS text), '%')))
+              AND (:apellido IS NULL OR LOWER(CONVERT_FROM(CAST(u.apellido AS bytea), 'UTF8'))
+                    LIKE LOWER(CONCAT('%', CAST(:apellido AS text), '%')))
+              AND (:ci IS NULL OR CONVERT_FROM(CAST(u.carnet_identidad AS bytea), 'UTF8')
+                    LIKE CONCAT('%', CAST(:ci AS text), '%'))
+              AND (:correo IS NULL OR LOWER(CONVERT_FROM(CAST(u.correo AS bytea), 'UTF8'))
+                    LIKE LOWER(CONCAT('%', CAST(:correo AS text), '%')))
+              AND (:rol IS NULL OR UPPER(r.nombre_rol) = UPPER(CAST(:rol AS text)))
+              AND (:activo IS NULL OR u.activo = :activo)
+            ORDER BY u.apellido ASC, u.nombre ASC, u.id_usuario ASC
+            """,
+        countQuery = """
+            SELECT COUNT(*)
+            FROM seguridad.usuario u
+            JOIN seguridad.rol r ON r.id_rol = u.id_rol
+            WHERE (:nombre IS NULL OR LOWER(CONVERT_FROM(CAST(u.nombre AS bytea), 'UTF8'))
+                    LIKE LOWER(CONCAT('%', CAST(:nombre AS text), '%')))
+              AND (:apellido IS NULL OR LOWER(CONVERT_FROM(CAST(u.apellido AS bytea), 'UTF8'))
+                    LIKE LOWER(CONCAT('%', CAST(:apellido AS text), '%')))
+              AND (:ci IS NULL OR CONVERT_FROM(CAST(u.carnet_identidad AS bytea), 'UTF8')
+                    LIKE CONCAT('%', CAST(:ci AS text), '%'))
+              AND (:correo IS NULL OR LOWER(CONVERT_FROM(CAST(u.correo AS bytea), 'UTF8'))
+                    LIKE LOWER(CONCAT('%', CAST(:correo AS text), '%')))
+              AND (:rol IS NULL OR UPPER(r.nombre_rol) = UPPER(CAST(:rol AS text)))
+              AND (:activo IS NULL OR u.activo = :activo)
+            """,
+        nativeQuery = true
+    )
+    Page<Usuario> buscarPaginado(
+        @Param("nombre") String nombre,
+        @Param("apellido") String apellido,
+        @Param("ci") String ci,
+        @Param("correo") String correo,
+        @Param("rol") String rol,
+        @Param("activo") Boolean activo,
+        Pageable pageable
+    );
 
 Optional<Usuario> findByCodigoSis(
         String codigoSis

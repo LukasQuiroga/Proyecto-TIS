@@ -12,6 +12,8 @@
     z-index:40;
     box-shadow:4px 0 18px rgba(9,54,97,.12);
     overflow:hidden;
+    display:flex;
+    flex-direction:column;
     transition:width .28s ease;
 }
 
@@ -91,6 +93,21 @@
 
 .sidebar-menu{
     padding:10px 0 16px;
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(219,234,255,.45) transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar{
+    width:6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb{
+    background:rgba(219,234,255,.45);
+    border-radius:999px;
 }
 
 .sidebar-opcion{
